@@ -72,6 +72,7 @@
             
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center space-x-8">
+                <a href="#events" class="text-accent hover:text-red-600 font-bold transition">Events 🔥</a>
                 <a href="#programs" class="text-gray-700 hover:text-secondary font-medium transition">Programs</a>
                 <a href="#coaches" class="text-gray-700 hover:text-secondary font-medium transition">Coaches</a>
                 <a href="#about" class="text-gray-700 hover:text-secondary font-medium transition">About</a>
@@ -97,6 +98,7 @@
     <!-- Mobile Menu -->
     <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
         <div class="px-2 pt-2 pb-3 space-y-1">
+            <a href="#events" class="block px-3 py-2 text-accent font-bold hover:bg-red-50 rounded">🔥 Events</a>
             <a href="#programs" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Programs</a>
             <a href="#coaches" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Coaches</a>
             <a href="#about" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">About</a>
@@ -150,6 +152,86 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- Upcoming Events Banner -->
+<section id="events" class="bg-gradient-to-r from-accent to-red-700 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8">
+            <span class="inline-block bg-white/20 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">🔥 UPCOMING EVENTS</span>
+            <h2 class="text-3xl md:text-4xl font-bold">Don't Miss Out!</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <!-- Event 1: Serie A Elite Clinic - U13 -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <span class="bg-white text-accent px-3 py-1 rounded-full text-xs font-bold">ELITE CLINIC</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold">DEC 22</div>
+                        <div class="text-sm text-white/80">Sunday</div>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Serie A Elite Indoor Winter Clinic</h3>
+                <p class="text-white/80 mb-3">U13 Age Group</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <span class="mr-2">🕐</span> Session 1: 9:00 AM - 10:30 AM
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">🕐</span> Session 2: 10:30 AM - 12:00 PM
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">👥</span> 20 players max per session
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">💰</span> $75 per session
+                    </div>
+                </div>
+                <a href="/book?event=serie-a-u13-dec22" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                    Reserve Your Spot
+                </a>
+            </div>
+
+            <!-- Event 2: Serie A Elite Clinic - U19 -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <span class="bg-white text-accent px-3 py-1 rounded-full text-xs font-bold">ELITE CLINIC</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold">DEC 23</div>
+                        <div class="text-sm text-white/80">Monday</div>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Serie A Elite Indoor Winter Clinic</h3>
+                <p class="text-white/80 mb-3">U19 Age Group</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <span class="mr-2">🕐</span> Session 1: 9:00 AM - 10:30 AM
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">🕐</span> Session 2: 10:30 AM - 12:00 PM
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">👥</span> 20 players max per session
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">💰</span> $75 per session
+                    </div>
+                </div>
+                <a href="/book?event=serie-a-u19-dec23" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                    Reserve Your Spot
+                </a>
+            </div>
+        </div>
+
+        <p class="text-center mt-6 text-white/80">
+            <span class="inline-block animate-pulse">⚡</span> Limited spots available - Book now to secure your place!
+        </p>
     </div>
 </section>
 
