@@ -1,56 +1,138 @@
 # Atletas World
 
-Client-specific project for Atletas World.
+Custom Django platform for Atletas World soccer training business.
+
+## Features
+
+- **Client Portal**: Personal accounts, booking history, progress tracking
+- **Coach Dashboard**: Schedule management, client info, performance stats
+- **Booking System**: Integrated scheduling with Google Calendar sync
+- **Payment Processing**: Stripe integration with full revenue tracking
+- **Analytics Dashboard**: Business intelligence and reporting
+- **Review System**: Automated reviews and testimonials
 
 ## Project Structure
 
 ```
 atletasworld/
-├── src/                     # Client's specific source code
-├── public/                  # Static content
+├── src/                     # Django source code
+│   ├── atletasworld/        # Main Django project
+│   ├── clients/             # Client management app
+│   ├── coaches/             # Coach management app
+│   ├── bookings/            # Booking/scheduling app
+│   ├── payments/            # Stripe payment processing
+│   ├── analytics/           # Business analytics
+│   └── reviews/             # Review system
+├── static/                  # Static files (CSS, JS, images)
+├── templates/               # HTML templates
+├── media/                   # User uploaded files
+├── public/                  # Public assets
 ├── resources/               # Shared resources (git submodule)
-├── .gitignore               # Git ignore file
-└── README.md                # This file
+├── requirements.txt         # Python dependencies
+└── .github/workflows/       # CI/CD pipelines
 ```
 
 ## Setup
 
-1. Clone the repository with submodules:
-   ```bash
-   git clone --recurse-submodules https://github.com/slach80/atletasworld.git
-   ```
+### 1. Clone the repository
 
-2. If already cloned, initialize submodules:
-   ```bash
-   git submodule update --init --recursive
-   ```
+```bash
+git clone --recurse-submodules https://github.com/slach80/atletasworld.git
+cd atletasworld
+```
+
+### 2. Create virtual environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure environment
+
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+### 5. Run migrations
+
+```bash
+cd src
+python manage.py migrate
+```
+
+### 6. Create superuser
+
+```bash
+python manage.py createsuperuser
+```
+
+### 7. Run development server
+
+```bash
+python manage.py runserver
+```
+
+Visit http://localhost:8000/admin to access the admin panel.
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SECRET_KEY` | Django secret key | - |
+| `DEBUG` | Debug mode | `False` |
+| `DATABASE_URL` | Database connection string | `sqlite:///db.sqlite3` |
+| `STRIPE_PUBLIC_KEY` | Stripe publishable key | - |
+| `STRIPE_SECRET_KEY` | Stripe secret key | - |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | - |
 
 ## Shared Resources
 
-The `resources/` directory is a git submodule linking to [share-resources](https://github.com/slach80/share-resources). It contains reusable assets, scripts, and configurations shared across projects.
+The `resources/` directory is a git submodule linking to [share-resources](https://github.com/slach80/share-resources).
 
-### Using Shared Scripts
-
-Use the shared build and deploy scripts during development:
+### Update shared resources
 
 ```bash
-# Run the shared build script
-./resources/scripts/build.sh
-
-# Run the shared deploy script
-./resources/scripts/deploy.sh
-```
-
-### Updating Shared Resources
-
-When updates are pushed to shared-resources, update the submodule:
-
-```bash
-# Pull latest changes from shared-resources
 git submodule update --remote resources
-
-# Commit the submodule update
 git add resources
 git commit -m "Update shared-resources submodule"
 git push
 ```
+
+## Development
+
+### Running tests
+
+```bash
+cd src
+python manage.py test
+```
+
+### Using shared scripts
+
+```bash
+./resources/scripts/build.sh
+./resources/scripts/deploy.sh
+```
+
+## Deployment
+
+The project uses GitHub Actions for CI/CD. On push to `main`:
+
+1. Runs tests with PostgreSQL
+2. Collects static files
+3. Deploys to production
+
+See `.github/workflows/deploy.yml` for details.
+
+## Documentation
+
+- [Platform Comparison](resources/docs/platform_comparison.md) - Detailed comparison with current Squarespace setup
+- [Setup Guide](resources/docs/setup-guide.md) - Shared resources setup guide

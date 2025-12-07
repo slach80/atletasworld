@@ -1,0 +1,44 @@
+# Django Core
+Django>=4.2,<5.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Authentication
+django-allauth>=0.57.0
+
+# Payment Processing
+stripe>=7.0.0
+
+# Google Calendar Integration
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.1.0
+
+# Task Queue
+celery>=5.3.0
+redis>=5.0.0
+
+# Email
+django-anymail>=10.2
+
+# Environment Variables
+python-dotenv>=1.0.0
+django-environ>=0.11.2
+
+# Static Files & Media
+whitenoise>=6.6.0
+django-storages>=1.14.2
+boto3>=1.28.0
+
+# Production Server
+gunicorn>=21.2.0
+
+# Development
+django-debug-toolbar>=4.2.0
+pytest-django>=4.5.0
+
+# Utilities
+Pillow>=10.1.0
+python-dateutil>=2.8.2
