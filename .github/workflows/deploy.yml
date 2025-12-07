@@ -1,0 +1,19 @@
+name: Deploy Client Site
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Build the site
+        run: ./resources/scripts/build.sh
+
+      - name: Deploy the site
+        run: ./resources/scripts/deploy.sh
