@@ -3,8 +3,8 @@ Django>=4.2,<5.0
 djangorestframework>=3.14.0
 django-cors-headers>=4.3.0
 
-# Database
-psycopg2-binary>=2.9.9
+# Database (install psycopg2-binary for PostgreSQL, optional for SQLite dev)
+# psycopg2-binary>=2.9.9  # Uncomment for PostgreSQL
 
 # Authentication
 django-allauth>=0.57.0
