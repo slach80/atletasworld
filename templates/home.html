@@ -1,149 +1,755 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atletas World - Soccer Training</title>
+    <title>Atletas World - Elite Soccer Training & Development</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a1a1a',     // Deep black (professional)
+                        secondary: '#2ecc71',    // Vibrant green (energy)
+                        accent: '#e74c3c',       // Bold red (passion)
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .hero-gradient {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(46, 204, 113, 0.85) 100%), 
+                        url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/ad365857-512c-49ea-a74d-fadedb744770/nz9_0059_53907201547_o.jpg');
+            background-size: cover;
+            background-position: center;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            color: #fff;
+        .card-hover {
+            transition: all 0.4s ease;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-        }
-        .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #00d4ff;
-        }
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            margin-left: 30px;
-            transition: color 0.3s;
-        }
-        nav a:hover {
-            color: #00d4ff;
-        }
-        .hero {
-            text-align: center;
-            padding: 100px 20px;
-        }
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            background: linear-gradient(90deg, #00d4ff, #00ff88);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero p {
-            font-size: 1.3rem;
-            color: #ccc;
-            max-width: 600px;
-            margin: 0 auto 40px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 15px 40px;
-            background: linear-gradient(90deg, #00d4ff, #00ff88);
-            color: #1a1a2e;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            padding: 60px 0;
-        }
-        .feature {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            transition: transform 0.3s;
-        }
-        .feature:hover {
+        .card-hover:hover {
             transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
         }
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
+        .feature-badge {
+            animation: pulse 2s infinite;
         }
-        .feature h3 {
-            margin-bottom: 15px;
-            color: #00d4ff;
-        }
-        .feature p {
-            color: #aaa;
-        }
-        footer {
-            text-align: center;
-            padding: 40px;
-            color: #666;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <div class="logo">Atletas World</div>
-            <nav>
-                <a href="/admin/">Admin</a>
-                <a href="/accounts/login/">Login</a>
-            </nav>
-        </header>
+<body class="bg-gray-50">
 
-        <section class="hero">
-            <h1>Train Like a Champion</h1>
-            <p>Professional soccer training for athletes of all levels. Book sessions with expert coaches and track your progress.</p>
-            <a href="/accounts/signup/" class="btn">Get Started</a>
-        </section>
 
-        <section class="features">
-            <div class="feature">
-                <div class="feature-icon">⚽</div>
-                <h3>Expert Coaches</h3>
-                <p>Train with certified professionals who have played at the highest levels.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">📅</div>
-                <h3>Easy Booking</h3>
-                <p>Schedule sessions online with real-time availability and instant confirmation.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">📊</div>
-                <h3>Track Progress</h3>
-                <p>Monitor your development with detailed analytics and performance metrics.</p>
-            </div>
-        </section>
-
-        <footer>
-            <p>&copy; 2024 Atletas World. All rights reserved.</p>
-        </footer>
+<!-- Top Bar with Quick Actions -->
+<div class="bg-primary text-white py-2 text-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div class="flex items-center space-x-6">
+            <span>📧 info@atletasworld.com</span>
+            <span>📱 (555) 123-4567</span>
+        </div>
+        <div class="hidden md:flex items-center space-x-4">
+            <a href="/login" class="hover:text-secondary transition">Coach Login</a>
+            <span class="text-gray-400">|</span>
+            <a href="/login" class="hover:text-secondary transition">Client Portal</a>
+        </div>
     </div>
+</div>
+
+<!-- Navigation -->
+<nav class="bg-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <div class="text-3xl font-bold text-primary">⚽ ATLETAS WORLD</div>
+                </div>
+            </div>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#programs" class="text-gray-700 hover:text-secondary font-medium transition">Programs</a>
+                <a href="#coaches" class="text-gray-700 hover:text-secondary font-medium transition">Coaches</a>
+                <a href="#about" class="text-gray-700 hover:text-secondary font-medium transition">About</a>
+                <a href="#fundraising" class="text-gray-700 hover:text-secondary font-medium transition">Fundraising</a>
+                <a href="#testimonials" class="text-gray-700 hover:text-secondary font-medium transition">Reviews</a>
+                <a href="/admin" class="text-gray-700 hover:text-secondary font-medium transition">Admin</a>
+                <a href="/book" class="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-lg">
+                    Book Now
+                </a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-btn" class="text-gray-700 hover:text-secondary">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            <a href="#programs" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Programs</a>
+            <a href="#coaches" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Coaches</a>
+            <a href="#about" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">About</a>
+            <a href="#fundraising" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Fundraising</a>
+            <a href="#testimonials" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Reviews</a>
+            <a href="/admin" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Admin</a>
+            <a href="/book" class="block px-3 py-2 bg-accent text-white hover:bg-red-600 rounded">Book Now</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-32 md:py-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <div class="inline-block bg-accent/90 text-white px-6 py-2 rounded-full text-sm font-semibold mb-6 feature-badge">
+                🚀 NEW PLATFORM - Advanced Analytics & Client Management
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                Welcome to Atletas World
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 text-gray-100 max-w-3xl mx-auto">
+                Empowering athletes of all levels with tailored training programs. Your success is our priority.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#programs" class="bg-accent text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
+                    Explore Programs
+                </a>
+                <a href="/admin" class="bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">
+                    View Admin Dashboard
+                </a>
+            </div>
+            
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 max-w-4xl mx-auto">
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6">
+                    <div class="text-4xl font-bold text-accent">500+</div>
+                    <div class="text-gray-200 text-sm">Athletes Trained</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6">
+                    <div class="text-4xl font-bold text-accent">5</div>
+                    <div class="text-gray-200 text-sm">Expert Coaches</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6">
+                    <div class="text-4xl font-bold text-accent">4.9★</div>
+                    <div class="text-gray-200 text-sm">Average Rating</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6">
+                    <div class="text-4xl font-bold text-accent">15+</div>
+                    <div class="text-gray-200 text-sm">Years Experience</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Platform Features Banner -->
+<section class="bg-gradient-to-r from-primary to-gray-800 text-white py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-4 gap-6 text-center">
+            <div>
+                <div class="text-3xl mb-2">📊</div>
+                <div class="font-semibold">Business Analytics</div>
+                <div class="text-sm text-gray-300">Track revenue & growth</div>
+            </div>
+            <div>
+                <div class="text-3xl mb-2">💳</div>
+                <div class="font-semibold">Integrated Payments</div>
+                <div class="text-sm text-gray-300">Stripe processing</div>
+            </div>
+            <div>
+                <div class="text-3xl mb-2">📅</div>
+                <div class="font-semibold">Smart Scheduling</div>
+                <div class="text-sm text-gray-300">Google Calendar sync</div>
+            </div>
+            <div>
+                <div class="text-3xl mb-2">👥</div>
+                <div class="font-semibold">Client Portal</div>
+                <div class="text-sm text-gray-300">Full account management</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section (Their Content) -->
+<section id="about" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Our Mission</h2>
+                <div class="space-y-4 text-lg text-gray-700">
+                    <p>
+                        In Atletas World, we want you to succeed. Our mission is to empower athletes of all levels by providing tailored training programs that align with your individual goals.
+                    </p>
+                    <p>
+                        Whether you're striving for peak performance, rehabilitation from an injury, or simply aiming to enhance your overall fitness, our experienced trainers are here to guide you every step of the way.
+                    </p>
+                    <p>
+                        We understand that each athlete has unique needs and challenges. That's why we emphasize a personalized approach to training, incorporating the latest techniques and sports science to maximize your potential.
+                    </p>
+                    <p>
+                        Success in sports is not just about physical capability; it also involves mental strength and resilience. At Atletas World, we focus on holistic development, integrating psychological coaching and nutrition guidance into our training regimens.
+                    </p>
+                </div>
+            </div>
+            <div class="relative">
+                <img src="https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/d69c34be-9afc-48bf-ba06-08cacabe6eca/nz9_0181_53908342723_o.jpg" 
+                     alt="Training session" 
+                     class="rounded-2xl shadow-2xl">
+                <div class="absolute -bottom-6 -left-6 bg-accent text-white p-6 rounded-2xl shadow-xl">
+                    <div class="text-3xl font-bold">Your Success</div>
+                    <div class="text-lg">Is Our Priority</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Programs Section -->
+<section id="programs" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Training Programs</h2>
+            <p class="text-xl text-gray-600">Personalized training that aligns with your goals</p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Program 1 -->
+            <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-secondary">
+                <div class="h-48 bg-gradient-to-br from-secondary to-green-600 flex items-center justify-center">
+                    <span class="text-7xl">🎯</span>
+                </div>
+                <div class="p-8">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-2xl font-bold text-gray-900">Individual Training</h3>
+                        <span class="bg-accent text-white px-3 py-1 rounded-full text-xs font-semibold">POPULAR</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        One-on-one personalized training focused on your specific goals. Technical development, tactical awareness, and performance optimization.
+                    </p>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            60-minute focused sessions
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Custom training plan
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Video analysis included
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Progress tracking dashboard
+                        </div>
+                    </div>
+                    <div class="border-t pt-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-3xl font-bold text-primary">$75</span>
+                            <span class="text-gray-600">per session</span>
+                        </div>
+                        <a href="/book?program=individual" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program 2 -->
+            <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-accent">
+                <div class="h-48 bg-gradient-to-br from-accent to-orange-500 flex items-center justify-center">
+                    <span class="text-7xl">👥</span>
+                </div>
+                <div class="p-8">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-2xl font-bold text-gray-900">Small Group</h3>
+                        <span class="bg-secondary text-white px-3 py-1 rounded-full text-xs font-semibold">BEST VALUE</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        Train with 3-5 athletes in competitive environment. Team dynamics, passing sequences, and game situations.
+                    </p>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            90-minute sessions
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            3-5 players maximum
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Competitive drills
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Group performance analytics
+                        </div>
+                    </div>
+                    <div class="border-t pt-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-3xl font-bold text-primary">$45</span>
+                            <span class="text-gray-600">per session</span>
+                        </div>
+                        <a href="/book?program=group" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program 3 -->
+            <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-primary">
+                <div class="h-48 bg-gradient-to-br from-primary to-gray-700 flex items-center justify-center">
+                    <span class="text-7xl">🧤</span>
+                </div>
+                <div class="p-8">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-2xl font-bold text-gray-900">Goalkeeper</h3>
+                        <span class="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold">SPECIALIST</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        Specialized goalkeeper training. Shot-stopping, positioning, distribution, crosses, and 1v1 situations with expert GK coach.
+                    </p>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            60-minute GK sessions
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Specialized equipment
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Reaction training
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            Save percentage tracking
+                        </div>
+                    </div>
+                    <div class="border-t pt-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-3xl font-bold text-primary">$80</span>
+                            <span class="text-gray-600">per session</span>
+                        </div>
+                        <a href="/book?program=goalkeeper" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Coaches Section -->
+    <section id="coaches" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Our Expert Coaches</h2>
+                <p class="text-xl text-gray-600">Professional trainers with proven track records</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Coach Cards with Real Photos -->
+                <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="h-80 bg-cover bg-center" style="background-image: url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/28540d3f-5f81-4366-b674-7369ca64b8c6/nz9_0823_53907200737_o.jpg');">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Coach Martinez</h3>
+                        <p class="text-secondary font-semibold mb-4">Technical Director</p>
+                        <p class="text-gray-600 mb-4">
+                            15 years coaching experience. Former professional player. Specializes in youth development and technical skills.
+                        </p>
+                        <div class="flex items-center justify-between text-sm mb-4">
+                            <span class="flex items-center">⭐ <span class="ml-1 font-bold">4.9/5</span></span>
+                            <span class="text-gray-500">250+ sessions</span>
+                        </div>
+                        <a href="/coach/1" class="block text-center border-2 border-secondary text-secondary py-2 rounded-lg font-semibold hover:bg-secondary hover:text-white transition">
+                            View Profile & Schedule
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="h-80 bg-cover bg-center" style="background-image: url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/f26dda8f-46ff-4bfc-810e-91f5b8a91297/nz9_0635_53907200902_o.jpg');">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Coach Silva</h3>
+                        <p class="text-secondary font-semibold mb-4">Tactical Specialist</p>
+                        <p class="text-gray-600 mb-4">
+                            UEFA A License holder. Expert in game analysis and tactical development. Focus on competitive players.
+                        </p>
+                        <div class="flex items-center justify-between text-sm mb-4">
+                            <span class="flex items-center">⭐ <span class="ml-1 font-bold">5.0/5</span></span>
+                            <span class="text-gray-500">180+ sessions</span>
+                        </div>
+                        <a href="/coach/2" class="block text-center border-2 border-secondary text-secondary py-2 rounded-lg font-semibold hover:bg-secondary hover:text-white transition">
+                            View Profile & Schedule
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="h-80 bg-cover bg-center" style="background-image: url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/37e87278-1f89-4fc8-954d-d19c38f1380a/nz9_0111_53908440529_o.jpg');">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Coach Johnson</h3>
+                        <p class="text-secondary font-semibold mb-4">Goalkeeper Coach</p>
+                        <p class="text-gray-600 mb-4">
+                            Former college goalkeeper. 10 years GK coaching experience. Specializes in shot-stopping and distribution.
+                        </p>
+                        <div class="flex items-center justify-between text-sm mb-4">
+                            <span class="flex items-center">⭐ <span class="ml-1 font-bold">4.8/5</span></span>
+                            <span class="text-gray-500">120+ sessions</span>
+                        </div>
+                        <a href="/coach/3" class="block text-center border-2 border-secondary text-secondary py-2 rounded-lg font-semibold hover:bg-secondary hover:text-white transition">
+                            View Profile & Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fundraising Section (Their Feature) -->
+    <section id="fundraising" class="py-20 bg-gradient-to-r from-accent to-red-600 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Support Our Mission</h2>
+                <p class="text-xl text-white/90">Help us make quality soccer training accessible to all athletes</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h3 class="text-3xl font-bold mb-6">Community Impact</h3>
+                    <div class="space-y-4 text-lg">
+                        <p>
+                            At Atletas World, we believe every athlete deserves access to quality coaching, regardless of their financial situation.
+                        </p>
+                        <p>
+                            Your contributions help us provide scholarships, equipment, and training opportunities to underserved youth in our community.
+                        </p>
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 mt-8">
+                            <div class="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div class="text-3xl font-bold">50+</div>
+                                    <div class="text-sm">Scholarships</div>
+                                </div>
+                                <div>
+                                    <div class="text-3xl font-bold">$25K</div>
+                                    <div class="text-sm">Raised</div>
+                                </div>
+                                <div>
+                                    <div class="text-3xl font-bold">100+</div>
+                                    <div class="text-sm">Lives Changed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white text-gray-900 rounded-2xl p-8 shadow-2xl">
+                    <h3 class="text-2xl font-bold mb-6">Make a Donation</h3>
+                    <div class="space-y-4">
+                        <button class="w-full bg-accent text-white py-4 rounded-lg font-semibold hover:bg-red-600 transition text-lg">
+                            $25 - Equipment Fund
+                        </button>
+                        <button class="w-full bg-accent text-white py-4 rounded-lg font-semibold hover:bg-red-600 transition text-lg">
+                            $50 - One Training Session
+                        </button>
+                        <button class="w-full bg-accent text-white py-4 rounded-lg font-semibold hover:bg-red-600 transition text-lg">
+                            $100 - Monthly Scholarship
+                        </button>
+                        <button class="w-full border-2 border-accent text-accent py-4 rounded-lg font-semibold hover:bg-accent hover:text-white transition text-lg">
+                            Custom Amount
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-6 text-center">
+                        🏆 100% of donations go directly to athlete support programs
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">What Athletes Say</h2>
+                <p class="text-xl text-gray-600">Real results from real players</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-2xl p-8 shadow-xl border-t-4 border-secondary">
+                    <div class="flex mb-4">
+                        <span class="text-2xl">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <p class="text-gray-700 mb-6 italic text-lg">
+                        "The platform makes everything so easy! I can track my progress, book sessions, and communicate with my coach all in one place. My game has improved tremendously!"
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white font-bold mr-3">
+                            MR
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">Marcus Rodriguez</div>
+                            <div class="text-sm text-gray-600">U17 Midfielder</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-8 shadow-xl border-t-4 border-accent">
+                    <div class="flex mb-4">
+                        <span class="text-2xl">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <p class="text-gray-700 mb-6 italic text-lg">
+                        "As a parent, I love being able to see my daughter's progress reports and upcoming sessions. The coaches provide detailed feedback after every training. Highly recommend!"
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-white font-bold mr-3">
+                            SK
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">Sarah Kim</div>
+                            <div class="text-sm text-gray-600">Parent</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-8 shadow-xl border-t-4 border-primary">
+                    <div class="flex mb-4">
+                        <span class="text-2xl">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <p class="text-gray-700 mb-6 italic text-lg">
+                        "Coach Johnson transformed my goalkeeping. The video analysis feature helped me identify weaknesses I never knew I had. Best training investment I've made!"
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold mr-3">
+                            DL
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">David Lopez</div>
+                            <div class="text-sm text-gray-600">U19 Goalkeeper</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Preview Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Powerful Admin Dashboard</h2>
+                <p class="text-xl text-gray-600">Everything you need to run your business efficiently</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-12">
+                <div class="space-y-6">
+                    <div class="flex items-start">
+                        <div class="bg-secondary/10 rounded-xl p-3 mr-4">
+                            <svg class="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Real-Time Analytics</h3>
+                            <p class="text-gray-600">Track revenue, client growth, program popularity, and coach performance with live dashboards and exportable reports.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-accent/10 rounded-xl p-3 mr-4">
+                            <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Payment Management</h3>
+                            <p class="text-gray-600">Integrated Stripe payments, automatic invoicing, refund processing, and detailed financial reporting all in one place.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-primary/10 rounded-xl p-3 mr-4">
+                            <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Smart Scheduling</h3>
+                            <p class="text-gray-600">Manage coach availability, prevent double-bookings, sync with Google Calendar, and send automated reminders.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-secondary/10 rounded-xl p-3 mr-4">
+                            <svg class="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Client Portal</h3>
+                            <p class="text-gray-600">Clients manage their own accounts, view session history, provide feedback, and track their progress independently.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-100 rounded-2xl p-8 flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">📊</div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">See It In Action</h3>
+                        <p class="text-gray-600 mb-6">
+                            Login credentials for demo:<br>
+                            <span class="font-mono bg-white px-3 py-1 rounded mt-2 inline-block">owner1 / demo123</span>
+                        </p>
+                        <a href="/admin" class="inline-block bg-accent text-white px-8 py-4 rounded-full font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
+                            Explore Admin Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="bg-gradient-to-r from-primary to-gray-800 text-white py-20">
+        <div class="max-w-4xl mx-auto text-center px-4">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Transform Your Training?</h2>
+            <p class="text-xl mb-8 text-gray-100">
+                Join hundreds of athletes who have elevated their game with Atletas World's personalized approach
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/book" class="bg-accent text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
+                    Book Your First Session
+                </a>
+                <a href="#contact" class="bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">
+                    Contact Us
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4">⚽ ATLETAS WORLD</h3>
+                    <p class="text-gray-400">Empowering athletes through tailored training programs and holistic development.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4 text-secondary">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#programs" class="hover:text-secondary transition">Programs</a></li>
+                        <li><a href="#coaches" class="hover:text-secondary transition">Coaches</a></li>
+                        <li><a href="#about" class="hover:text-secondary transition">About</a></li>
+                        <li><a href="#fundraising" class="hover:text-secondary transition">Fundraising</a></li>
+                        <li><a href="/book" class="hover:text-secondary transition">Book Session</a></li>
+                        <li><a href="/admin" class="hover:text-secondary transition">Admin Login</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4 text-secondary">Contact</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center">
+                            <span class="mr-2">📧</span> info@atletasworld.com
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2">📱</span> (555) 123-4567
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2">📍</span> Your Location
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4 text-secondary">Hours</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li>Mon-Fri: 3pm - 9pm</li>
+                        <li>Saturday: 9am - 6pm</li>
+                        <li>Sunday: 10am - 4pm</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-400 mb-4 md:mb-0">&copy; 2024 Atletas World. All rights reserved.</p>
+                    <div class="flex space-x-4">
+                        <span class="bg-secondary/20 text-secondary px-4 py-2 rounded-full text-sm font-semibold">
+                            💡 Custom Platform - Not Squarespace
+                        </span>
+                        <span class="bg-accent/20 text-accent px-4 py-2 rounded-full text-sm font-semibold">
+                            🚀 Full Ownership
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </body>
+
+
 </html>
