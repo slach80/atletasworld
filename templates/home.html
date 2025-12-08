@@ -53,9 +53,9 @@
             <span>📱 (555) 123-4567</span>
         </div>
         <div class="hidden md:flex items-center space-x-4">
-            <a href="/login" class="hover:text-secondary transition">Coach Login</a>
+            <a href="/coach-portal/dashboard/" class="hover:text-secondary transition">Coach Portal</a>
             <span class="text-gray-400">|</span>
-            <a href="/login" class="hover:text-secondary transition">Client Portal</a>
+            <a href="/portal/dashboard/" class="hover:text-secondary transition">Client Portal</a>
         </div>
     </div>
 </div>
@@ -66,7 +66,9 @@
         <div class="flex justify-between h-20">
             <div class="flex items-center">
                 <div class="flex-shrink-0 flex items-center">
-                    <div class="text-3xl font-bold text-primary">⚽ ATLETAS WORLD</div>
+                    <a href="/">
+                        <img src="/media/APC-logo.jpg" alt="Atletas World" class="h-14 w-auto">
+                    </a>
                 </div>
             </div>
             
@@ -98,13 +100,14 @@
     <!-- Mobile Menu -->
     <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
         <div class="px-2 pt-2 pb-3 space-y-1">
-            <a href="#events" class="block px-3 py-2 text-accent font-bold hover:bg-red-50 rounded">🔥 Events</a>
+            <!-- Portal Links -->
+            <a href="/portal/dashboard/" class="block px-3 py-2 bg-secondary text-white font-semibold rounded">Client Portal</a>
+            <a href="/coach-portal/dashboard/" class="block px-3 py-2 bg-primary text-white font-semibold rounded">Coach Portal</a>
+            <hr class="my-2">
+            <a href="#events" class="block px-3 py-2 text-accent font-bold hover:bg-red-50 rounded">Events</a>
             <a href="#programs" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Programs</a>
             <a href="#coaches" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Coaches</a>
             <a href="#about" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">About</a>
-            <a href="#fundraising" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Fundraising</a>
-            <a href="#testimonials" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Reviews</a>
-            <a href="/admin" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded">Admin</a>
             <a href="/book" class="block px-3 py-2 bg-accent text-white hover:bg-red-600 rounded">Book Now</a>
         </div>
     </div>
@@ -164,7 +167,7 @@
         </div>
 
         <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <!-- Event 1: Serie A Elite Clinic - U13 -->
+            <!-- Event 1: Serie A Elite Clinic - U13-U15 -->
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
                 <div class="flex items-start justify-between mb-4">
                     <div>
@@ -176,27 +179,30 @@
                     </div>
                 </div>
                 <h3 class="text-xl font-bold mb-2">Serie A Elite Indoor Winter Clinic</h3>
-                <p class="text-white/80 mb-3">U13 Age Group</p>
+                <p class="text-white/80 mb-3">U13-U15 Age Group</p>
                 <div class="space-y-2 text-sm">
                     <div class="flex items-center">
-                        <span class="mr-2">🕐</span> Session 1: 9:00 AM - 10:30 AM
+                        <span class="mr-2">🕐</span> 9:00-10:30 AM or 10:30 AM-12:00 PM
                     </div>
                     <div class="flex items-center">
-                        <span class="mr-2">🕐</span> Session 2: 10:30 AM - 12:00 PM
+                        <span class="mr-2">⏱️</span> 90 minutes per session
                     </div>
                     <div class="flex items-center">
-                        <span class="mr-2">👥</span> 20 players max per session
+                        <span class="mr-2">📍</span> APC Indoor Facility
                     </div>
                     <div class="flex items-center">
-                        <span class="mr-2">💰</span> $75 per session
+                        <span class="mr-2">👥</span> 20 players max per class
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">💰</span> $75
                     </div>
                 </div>
-                <a href="/book?event=serie-a-u13-dec22" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                <a href="/book" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
                     Reserve Your Spot
                 </a>
             </div>
 
-            <!-- Event 2: Serie A Elite Clinic - U19 -->
+            <!-- Event 2: Serie A Elite Clinic - U16-U19 -->
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
                 <div class="flex items-start justify-between mb-4">
                     <div>
@@ -208,22 +214,25 @@
                     </div>
                 </div>
                 <h3 class="text-xl font-bold mb-2">Serie A Elite Indoor Winter Clinic</h3>
-                <p class="text-white/80 mb-3">U19 Age Group</p>
+                <p class="text-white/80 mb-3">U16-U19 Age Group</p>
                 <div class="space-y-2 text-sm">
                     <div class="flex items-center">
-                        <span class="mr-2">🕐</span> Session 1: 9:00 AM - 10:30 AM
+                        <span class="mr-2">🕐</span> 9:00-10:30 AM or 10:30 AM-12:00 PM
                     </div>
                     <div class="flex items-center">
-                        <span class="mr-2">🕐</span> Session 2: 10:30 AM - 12:00 PM
+                        <span class="mr-2">⏱️</span> 90 minutes per session
                     </div>
                     <div class="flex items-center">
-                        <span class="mr-2">👥</span> 20 players max per session
+                        <span class="mr-2">📍</span> APC Indoor Facility
                     </div>
                     <div class="flex items-center">
-                        <span class="mr-2">💰</span> $75 per session
+                        <span class="mr-2">👥</span> 20 players max per class
+                    </div>
+                    <div class="flex items-center">
+                        <span class="mr-2">💰</span> $75
                     </div>
                 </div>
-                <a href="/book?event=serie-a-u19-dec23" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                <a href="/book" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
                     Reserve Your Spot
                 </a>
             </div>
@@ -238,26 +247,36 @@
 <!-- Platform Features Banner -->
 <section class="bg-gradient-to-r from-primary to-gray-800 text-white py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-4 gap-6 text-center">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
             <div>
-                <div class="text-3xl mb-2">📊</div>
-                <div class="font-semibold">Business Analytics</div>
-                <div class="text-sm text-gray-300">Track revenue & growth</div>
+                <div class="text-2xl mb-1">👨‍👩‍👧</div>
+                <div class="font-semibold text-sm">Client Portal</div>
+                <div class="text-xs text-gray-300">Book & track progress</div>
             </div>
             <div>
-                <div class="text-3xl mb-2">💳</div>
-                <div class="font-semibold">Integrated Payments</div>
-                <div class="text-sm text-gray-300">Stripe processing</div>
+                <div class="text-2xl mb-1">🏋️</div>
+                <div class="font-semibold text-sm">Coach Portal</div>
+                <div class="text-xs text-gray-300">Manage players & schedule</div>
             </div>
             <div>
-                <div class="text-3xl mb-2">📅</div>
-                <div class="font-semibold">Smart Scheduling</div>
-                <div class="text-sm text-gray-300">Google Calendar sync</div>
+                <div class="text-2xl mb-1">📋</div>
+                <div class="font-semibold text-sm">Player Assessments</div>
+                <div class="text-xs text-gray-300">Track athlete growth</div>
             </div>
             <div>
-                <div class="text-3xl mb-2">👥</div>
-                <div class="font-semibold">Client Portal</div>
-                <div class="text-sm text-gray-300">Full account management</div>
+                <div class="text-2xl mb-1">📅</div>
+                <div class="font-semibold text-sm">Smart Scheduling</div>
+                <div class="text-xs text-gray-300">Flexible availability</div>
+            </div>
+            <div>
+                <div class="text-2xl mb-1">🔔</div>
+                <div class="font-semibold text-sm">Notifications</div>
+                <div class="text-xs text-gray-300">Keep parents informed</div>
+            </div>
+            <div>
+                <div class="text-2xl mb-1">📊</div>
+                <div class="font-semibold text-sm">Analytics</div>
+                <div class="text-xs text-gray-300">Business insights</div>
             </div>
         </div>
     </div>
@@ -314,10 +333,10 @@
                 <div class="p-8">
                     <div class="flex justify-between items-start mb-4">
                         <h3 class="text-2xl font-bold text-gray-900">Captains Soccer Club</h3>
-                        <span class="bg-accent text-white px-3 py-1 rounded-full text-xs font-semibold">POPULAR</span>
+                        <span class="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold">TEAM</span>
                     </div>
                     <p class="text-gray-600 mb-6">
-                        Team-focused training sessions designed to develop fundamentals, teamwork, and game intelligence for club players.
+                        Team-focused training sessions for coaches and teams. Build fundamentals, teamwork, and game intelligence together.
                     </p>
                     <div class="space-y-3 mb-6">
                         <div class="flex items-center text-gray-700">
@@ -424,7 +443,7 @@
                         <span class="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold">ELITE</span>
                     </div>
                     <p class="text-gray-600 mb-6">
-                        Intensive 90-minute indoor clinic with 20 players max. December sessions for U13 and U19 age groups.
+                        90-minute intensive indoor clinic. Two time slots: 9-10:30am or 10:30am-12pm. Dec 22 (U13-U15) & Dec 23 (U16-U19).
                     </p>
                     <div class="space-y-3 mb-6">
                         <div class="flex items-center text-gray-700">
@@ -437,13 +456,13 @@
                             <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
                             </svg>
-                            20 players cap per class
+                            20 players max per class
                         </div>
                         <div class="flex items-center text-gray-700">
                             <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
                             </svg>
-                            U13 & U19 age groups
+                            U13-U15 (Dec 22) & U16-U19 (Dec 23)
                         </div>
                         <div class="flex items-center text-gray-700">
                             <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -512,13 +531,13 @@
                     </div>
                     <div class="p-6">
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">Mirko Trapletti</h3>
-                        <p class="text-secondary font-semibold mb-4">Head Coach & Founder | Goalkeeper Specialist</p>
+                        <p class="text-secondary font-semibold mb-4">Head Coach & Founder | Tactics & Conditioning</p>
                         <p class="text-gray-600 mb-4">
-                            Professional soccer and performance coach with 10+ years of international experience gained by working with youth academy, college, and pro clubs. Founder of Atletas World, specializing in goalkeeper development.
+                            Professional soccer and performance coach with 10+ years of international experience gained by working with youth academy, college, and pro clubs. Founder of Atletas World, specializing in tactical development and athletic conditioning.
                         </p>
                         <div class="flex items-center justify-between text-sm mb-4">
                             <span class="flex items-center">⭐ <span class="ml-1 font-bold">5.0/5</span></span>
-                            <span class="text-gray-500">300+ sessions</span>
+                            <span class="text-gray-500">1000+ sessions</span>
                         </div>
                         <div class="flex space-x-2 mb-4">
                             <a href="https://www.instagram.com/mtrapcoach/" target="_blank" class="text-pink-500 hover:text-pink-600">
@@ -546,7 +565,7 @@
                         </p>
                         <div class="flex items-center justify-between text-sm mb-4">
                             <span class="flex items-center">⭐ <span class="ml-1 font-bold">5.0/5</span></span>
-                            <span class="text-gray-500">200+ sessions</span>
+                            <span class="text-gray-500">800+ sessions</span>
                         </div>
                         <div class="flex space-x-2 mb-4">
                             <a href="https://www.instagram.com/luckylefty_15/" target="_blank" class="text-pink-500 hover:text-pink-600">
@@ -689,77 +708,91 @@
         </div>
     </section>
 
-    <!-- Admin Preview Section -->
+    <!-- Portal Features Section -->
     <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Powerful Admin Dashboard</h2>
-                <p class="text-xl text-gray-600">Everything you need to run your business efficiently</p>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Complete Platform Experience</h2>
+                <p class="text-xl text-gray-600">Separate portals for coaches, clients, and administrators</p>
             </div>
-            
-            <div class="grid md:grid-cols-2 gap-12">
-                <div class="space-y-6">
-                    <div class="flex items-start">
-                        <div class="bg-secondary/10 rounded-xl p-3 mr-4">
-                            <svg class="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">Real-Time Analytics</h3>
-                            <p class="text-gray-600">Track revenue, client growth, program popularity, and coach performance with live dashboards and exportable reports.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start">
-                        <div class="bg-accent/10 rounded-xl p-3 mr-4">
-                            <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">Payment Management</h3>
-                            <p class="text-gray-600">Integrated Stripe payments, automatic invoicing, refund processing, and detailed financial reporting all in one place.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start">
-                        <div class="bg-primary/10 rounded-xl p-3 mr-4">
-                            <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">Smart Scheduling</h3>
-                            <p class="text-gray-600">Manage coach availability, prevent double-bookings, sync with Google Calendar, and send automated reminders.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start">
-                        <div class="bg-secondary/10 rounded-xl p-3 mr-4">
-                            <svg class="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">Client Portal</h3>
-                            <p class="text-gray-600">Clients manage their own accounts, view session history, provide feedback, and track their progress independently.</p>
-                        </div>
-                    </div>
+
+            <div class="grid md:grid-cols-3 gap-8 mb-12">
+                <!-- Coach Portal -->
+                <div class="bg-gradient-to-br from-primary to-gray-800 rounded-2xl p-8 text-white">
+                    <div class="text-4xl mb-4">🏋️</div>
+                    <h3 class="text-2xl font-bold mb-4">Coach Portal</h3>
+                    <ul class="space-y-3 text-gray-200 mb-6">
+                        <li class="flex items-center"><span class="mr-2">✓</span> Dashboard with today's sessions</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> View all trained players</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Set availability & schedule</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Player assessments & ratings</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Notify parents directly</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Track attendance</li>
+                    </ul>
+                    <a href="/coach-portal/dashboard/" class="block text-center bg-white text-primary py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+                        Try Coach Portal →
+                    </a>
+                    <p class="text-xs text-gray-400 mt-2 text-center">mirko@atletasworld.com / coach123</p>
                 </div>
-                
-                <div class="bg-gray-100 rounded-2xl p-8 flex items-center justify-center">
-                    <div class="text-center">
-                        <div class="text-6xl mb-4">📊</div>
-                        <h3 class="text-2xl font-bold text-gray-900 mb-4">See It In Action</h3>
-                        <p class="text-gray-600 mb-6">
-                            Login credentials for demo:<br>
-                            <span class="font-mono bg-white px-3 py-1 rounded mt-2 inline-block">owner1 / demo123</span>
-                        </p>
-                        <a href="/admin" class="inline-block bg-accent text-white px-8 py-4 rounded-full font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
-                            Explore Admin Dashboard
-                        </a>
-                    </div>
+
+                <!-- Client Portal -->
+                <div class="bg-gradient-to-br from-secondary to-green-600 rounded-2xl p-8 text-white">
+                    <div class="text-4xl mb-4">👨‍👩‍👧</div>
+                    <h3 class="text-2xl font-bold mb-4">Client Portal</h3>
+                    <ul class="space-y-3 text-gray-100 mb-6">
+                        <li class="flex items-center"><span class="mr-2">✓</span> Personal dashboard</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Manage player profiles</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Book training sessions</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> View packages & history</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Receive assessments</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Track player progress</li>
+                    </ul>
+                    <a href="/portal/dashboard/" class="block text-center bg-white text-secondary py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+                        Try Client Portal →
+                    </a>
+                    <p class="text-xs text-gray-200 mt-2 text-center">testparent@example.com / demo123</p>
+                </div>
+
+                <!-- Admin Portal -->
+                <div class="bg-gradient-to-br from-accent to-red-600 rounded-2xl p-8 text-white">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-2xl font-bold mb-4">Admin Dashboard</h3>
+                    <ul class="space-y-3 text-gray-100 mb-6">
+                        <li class="flex items-center"><span class="mr-2">✓</span> Full business analytics</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Manage all users & coaches</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Payment & revenue tracking</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Program management</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Booking oversight</li>
+                        <li class="flex items-center"><span class="mr-2">✓</span> Create coach accounts</li>
+                    </ul>
+                    <a href="/admin" class="block text-center bg-white text-accent py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+                        Explore Admin →
+                    </a>
+                    <p class="text-xs text-gray-200 mt-2 text-center">Full access for owners</p>
+                </div>
+            </div>
+
+            <!-- Key Features Grid -->
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-gray-50 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-3">📋</div>
+                    <h4 class="font-bold text-gray-900 mb-2">Player Assessments</h4>
+                    <p class="text-sm text-gray-600">Rate effort, technical skills, tactical awareness, and more. Parents see progress reports.</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-3">📅</div>
+                    <h4 class="font-bold text-gray-900 mb-2">Smart Scheduling</h4>
+                    <p class="text-sm text-gray-600">Coaches set availability, clients book sessions. Automatic conflict detection.</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-3">🔔</div>
+                    <h4 class="font-bold text-gray-900 mb-2">Parent Notifications</h4>
+                    <p class="text-sm text-gray-600">Coaches notify parents about schedule changes, progress, and important updates.</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-6 text-center">
+                    <div class="text-3xl mb-3">🔐</div>
+                    <h4 class="font-bold text-gray-900 mb-2">Role-Based Access</h4>
+                    <p class="text-sm text-gray-600">Secure user groups: Coaches, Clients, and Admins with appropriate permissions.</p>
                 </div>
             </div>
         </div>

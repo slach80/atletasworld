@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Dashboard - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-primary text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                    <span class="ml-4 text-lg font-semibold">Coach Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'coaches:dashboard' %}" class="text-secondary font-semibold">Dashboard</a>
+                    <a href="{% url 'coaches:schedule' %}" class="hover:text-secondary transition">Schedule</a>
+                    <a href="{% url 'coaches:my_players' %}" class="hover:text-secondary transition">My Players</a>
+                    <a href="{% url 'coaches:assessments' %}" class="hover:text-secondary transition">Assessments</a>
+                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Welcome Header -->
+        <div class="bg-gradient-to-r from-secondary to-green-600 rounded-xl p-6 mb-6 text-white">
+            <h1 class="text-2xl font-bold">Welcome, Coach {{ coach.user.first_name }}!</h1>
+            <p class="text-white/80">{{ today|date:"l, F j, Y" }}</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-4 text-center">
+                <p class="text-3xl font-bold text-secondary">{{ stats.todays_sessions }}</p>
+                <p class="text-gray-500 text-sm">Today's Sessions</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 text-center">
+                <p class="text-3xl font-bold text-blue-500">{{ stats.weeks_sessions }}</p>
+                <p class="text-gray-500 text-sm">This Week</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 text-center">
+                <p class="text-3xl font-bold text-accent">{{ stats.pending_assessments }}</p>
+                <p class="text-gray-500 text-sm">Pending Assessments</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 text-center">
+                <p class="text-3xl font-bold text-purple-500">{{ stats.total_students_this_month }}</p>
+                <p class="text-gray-500 text-sm">Students This Month</p>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Today's Sessions -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Today's Sessions</h2>
+                    <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary text-sm hover:underline">View All</a>
+                </div>
+                {% if todays_blocks %}
+                <div class="space-y-3">
+                    {% for block in todays_blocks %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-semibold">{{ block.start_time|time:"g:i A" }} - {{ block.end_time|time:"g:i A" }}</p>
+                            <p class="text-sm text-gray-500">{{ block.get_session_type_display }} {% if block.current_participants > 0 %}({{ block.current_participants }}/{{ block.max_participants }}){% endif %}</p>
+                        </div>
+                        <a href="{% url 'coaches:session_attendance' block.id %}" class="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-green-600">Attendance</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">No sessions scheduled for today.</p>
+                {% endif %}
+            </div>
+
+            <!-- Upcoming Sessions -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Upcoming Sessions</h2>
+                    <a href="{% url 'coaches:schedule' %}" class="text-secondary text-sm hover:underline">Manage Schedule</a>
+                </div>
+                {% if upcoming_blocks %}
+                <div class="space-y-3">
+                    {% for block in upcoming_blocks %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-semibold">{{ block.date|date:"D, M j" }}</p>
+                            <p class="text-sm text-gray-500">{{ block.start_time|time:"g:i A" }} - {{ block.get_session_type_display }}</p>
+                        </div>
+                        <span class="{% if block.current_participants > 0 %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-500{% endif %} px-2 py-1 rounded text-xs">{{ block.current_participants }}/{{ block.max_participants }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">No upcoming sessions.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pending Assessments -->
+        {% if pending_assessments %}
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Pending Assessments</h2>
+                <a href="{% url 'coaches:assessments' %}" class="text-secondary text-sm hover:underline">View All</a>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for booking in pending_assessments %}
+                <div class="border rounded-lg p-4">
+                    <p class="font-semibold">{{ booking.player }}</p>
+                    <p class="text-sm text-gray-500">{{ booking.scheduled_date|date:"M j" }} - {{ booking.program.name }}</p>
+                    <a href="{% url 'coaches:create_assessment' booking.id %}" class="mt-2 inline-block bg-accent text-white px-3 py-1 rounded text-sm hover:bg-red-600">Add Assessment</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{% url 'coaches:add_bulk_schedule' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
+                    <svg class="w-8 h-8 text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="text-sm font-medium">Add Availability</span>
+                </a>
+                <a href="{% url 'coaches:my_players' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
+                    <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+                    <span class="text-sm font-medium">My Players</span>
+                </a>
+                <a href="{% url 'coaches:notify_parents' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
+                    <svg class="w-8 h-8 text-purple-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    <span class="text-sm font-medium">Notify Parents</span>
+                </a>
+                <a href="{% url 'coaches:assessments' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
+                    <svg class="w-8 h-8 text-accent mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    <span class="text-sm font-medium">Assessments</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

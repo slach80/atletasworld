@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Sessions - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                </div>
+                <div class="hidden sm:flex items-center space-x-4">
+                    <a href="{% url 'clients:dashboard' %}" class="text-gray-600 hover:text-secondary">Dashboard</a>
+                    <a href="{% url 'clients:bookings' %}" class="text-gray-600 hover:text-secondary">My Bookings</a>
+                    <a href="/accounts/logout/" class="text-gray-600 hover:text-accent">Logout</a>
+                </div>
+                <button id="mobile-nav-btn" class="sm:hidden text-gray-600 p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="mobile-nav" class="hidden sm:hidden bg-gray-50 px-4 py-2 border-t">
+            <a href="{% url 'clients:dashboard' %}" class="block py-2 text-gray-600">Dashboard</a>
+            <a href="{% url 'clients:bookings' %}" class="block py-2 text-gray-600">My Bookings</a>
+            <a href="/accounts/logout/" class="block py-2 text-accent">Logout</a>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 py-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Book Training Sessions</h1>
+
+        <!-- Special Event Packages Section (Always Visible) -->
+        {% if special_packages %}
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl p-4 sm:p-6 mb-6 text-white">
+            <div class="flex items-center mb-4">
+                <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <h2 class="text-xl font-bold">Special Event Packages</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for pkg in special_packages %}
+                <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg">{{ pkg.name }}</h3>
+                            {% if pkg.age_group %}<span class="text-xs bg-white/20 px-2 py-0.5 rounded">{{ pkg.age_group }}</span>{% endif %}
+                        </div>
+                        <span class="text-2xl font-bold">${{ pkg.price }}</span>
+                    </div>
+                    <p class="text-sm opacity-80 mt-2">{{ pkg.description|truncatewords:20 }}</p>
+                    {% if pkg.event_start_date %}
+                    <p class="text-sm mt-2">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        {{ pkg.event_start_date|date:"M d" }} - {{ pkg.event_end_date|date:"M d, Y" }}
+                    </p>
+                    {% endif %}
+                    {% if pkg.event_location %}
+                    <p class="text-sm opacity-80">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        </svg>
+                        {{ pkg.event_location }}
+                    </p>
+                    {% endif %}
+                    <div class="mt-3 flex items-center justify-between">
+                        {% if pkg.spots_remaining is not None %}
+                        <span class="text-xs {% if pkg.spots_remaining < 5 %}text-yellow-300{% else %}text-white/70{% endif %}">
+                            {{ pkg.spots_remaining }} spots left
+                        </span>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+                        {% with client_special_packages|length as purchased_count %}
+                        {% for cp in client_special_packages %}
+                            {% if cp.package.id == pkg.id %}
+                            <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full">Purchased</span>
+                            {% endif %}
+                        {% empty %}
+                        <a href="#" class="bg-white text-purple-700 text-sm px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                            Register Now
+                        </a>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Client's Purchased Special Packages -->
+        {% if client_special_packages %}
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+            <h3 class="font-bold text-green-800 mb-2">Your Special Event Registrations</h3>
+            <div class="space-y-2">
+                {% for cp in client_special_packages %}
+                <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-green-100">
+                    <div>
+                        <p class="font-medium text-gray-800">{{ cp.package.name }}</p>
+                        <p class="text-sm text-gray-500">
+                            {{ cp.package.event_start_date|date:"M d" }} - {{ cp.package.event_end_date|date:"M d, Y" }}
+                        </p>
+                    </div>
+                    <span class="text-green-600 text-sm font-medium">Registered</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Team Packages Section -->
+        {% if is_team_coach %}
+            {% if team_packages %}
+            <div class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl p-4 sm:p-6 mb-6 text-white">
+                <div class="flex items-center mb-4">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                    </svg>
+                    <h2 class="text-xl font-bold">Team Training Packages</h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% for pkg in team_packages %}
+                    <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">{{ pkg.name }}</h3>
+                            <span class="text-2xl font-bold">${{ pkg.price }}</span>
+                        </div>
+                        <p class="text-sm opacity-80 mt-2">{{ pkg.description|truncatewords:20 }}</p>
+                        <p class="text-sm mt-2">{{ pkg.sessions_included }} sessions / {{ pkg.validity_weeks }} weeks</p>
+                        <div class="mt-3">
+                            <a href="#" class="bg-white text-orange-600 text-sm px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition inline-block">
+                                Purchase Package
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-orange-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                    </svg>
+                    <p class="text-orange-800">
+                        <strong>Team Coach Access Enabled</strong> - No team packages are currently available. Check back soon!
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-gray-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                </svg>
+                <div>
+                    <p class="text-gray-700 font-medium">Looking for Team Training Packages?</p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Team packages are available for team coaches and managers.
+                        <a href="{% url 'clients:profile' %}" class="text-secondary hover:underline font-medium">Update your profile</a>
+                        and select "Team Coach" to access team booking options.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not has_package %}
+        <!-- No Package Warning -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-bold text-yellow-800 mb-2">No Active Training Package</h2>
+            <p class="text-yellow-700 mb-4">Purchase a training package to book regular sessions.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {% for pkg in regular_packages %}
+                <a href="#" class="bg-white border rounded-lg p-4 hover:border-secondary transition text-center">
+                    <p class="font-bold text-gray-800">{{ pkg.name }}</p>
+                    <p class="text-2xl font-bold text-primary">${{ pkg.price }}</p>
+                    <p class="text-xs text-gray-500">{{ pkg.sessions_included }} sessions</p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <!-- Package Info Card -->
+        <div class="bg-gradient-to-r from-secondary to-primary rounded-xl p-4 sm:p-6 mb-6 text-white">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <p class="text-sm opacity-80">Your Package</p>
+                    <h2 class="text-xl font-bold">{{ active_package.package.name }}</h2>
+                    <p class="text-sm opacity-80">Expires: {{ active_package.expiry_date|date:"M d, Y" }}</p>
+                </div>
+                <div class="text-center sm:text-right">
+                    <p class="text-4xl font-bold">{{ sessions_remaining }}</p>
+                    <p class="text-sm opacity-80">sessions left</p>
+                </div>
+            </div>
+            {% if upgrade_options %}
+            <div class="mt-4 pt-4 border-t border-white/20">
+                <p class="text-sm font-semibold mb-2">Upgrade Options:</p>
+                <div class="flex flex-wrap gap-2">
+                    {% for upgrade in upgrade_options %}
+                    <button onclick="showUpgradeModal('{{ upgrade.package.name }}', {{ upgrade.upgrade_cost }})"
+                            class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-sm">
+                        {{ upgrade.package.name }} (+${{ upgrade.upgrade_cost|floatformat:2 }})
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Player Selection -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Player</label>
+            <select id="player-select" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary">
+                {% for player in players %}
+                <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }} ({{ player.age_group }})</option>
+                {% empty %}
+                <option value="">No players - add one first</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+            <div class="flex flex-wrap gap-3 items-center">
+                <div class="flex-1 min-w-[120px]">
+                    <label class="block text-xs text-gray-500 mb-1">Coach</label>
+                    <select id="filter-coach" onchange="applyFilters()" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <option value="">All Coaches</option>
+                        <option value="favorites">⭐ My Favorites</option>
+                        {% for coach in coaches %}
+                        <option value="{{ coach.id }}" {% if coach.id in favorite_coach_ids %}class="font-medium"{% endif %}>
+                            {{ coach.user.first_name }}{% if coach.id in favorite_coach_ids %} ⭐{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[120px]">
+                    <label class="block text-xs text-gray-500 mb-1">Type</label>
+                    <select id="filter-type" onchange="applyFilters()" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <option value="">All Types</option>
+                        <option value="private">Private</option>
+                        <option value="group">Group</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[120px]">
+                    <label class="block text-xs text-gray-500 mb-1">From</label>
+                    <input type="date" id="filter-from" onchange="applyFilters()" class="w-full px-3 py-2 border rounded-lg text-sm">
+                </div>
+                <div class="flex-1 min-w-[120px]">
+                    <label class="block text-xs text-gray-500 mb-1">To</label>
+                    <input type="date" id="filter-to" onchange="applyFilters()" class="w-full px-3 py-2 border rounded-lg text-sm">
+                </div>
+            </div>
+            {% if booking_prefs.auto_filter %}
+            <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <span class="text-xs text-blue-600">
+                    <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    Auto-filtering by your preferences
+                </span>
+                <a href="{% url 'clients:profile' %}" class="text-xs text-secondary hover:underline">Edit preferences</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Calendar View -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+            <div class="flex justify-between items-center mb-4">
+                <button onclick="prevWeek()" class="p-2 hover:bg-gray-100 rounded">&lt;</button>
+                <h3 class="font-bold text-gray-800" id="calendar-title">Loading...</h3>
+                <button onclick="nextWeek()" class="p-2 hover:bg-gray-100 rounded">&gt;</button>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
+                <div class="text-gray-500 py-1">Sun</div>
+                <div class="text-gray-500 py-1">Mon</div>
+                <div class="text-gray-500 py-1">Tue</div>
+                <div class="text-gray-500 py-1">Wed</div>
+                <div class="text-gray-500 py-1">Thu</div>
+                <div class="text-gray-500 py-1">Fri</div>
+                <div class="text-gray-500 py-1">Sat</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1" id="calendar-days">
+                <!-- Days populated by JS -->
+            </div>
+        </div>
+
+        <!-- Available Sessions for Selected Date -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+            <h3 class="font-bold text-gray-800 mb-2">Sessions for <span id="selected-date-title">Select a date</span></h3>
+            <div id="sessions-list" class="space-y-2">
+                <p class="text-gray-500 text-sm">Select a date from the calendar above.</p>
+            </div>
+        </div>
+
+        <!-- Recurring Booking Option -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="font-semibold text-blue-800">Recurring Booking</h4>
+                    <p class="text-sm text-blue-600">Book same time slot weekly</p>
+                </div>
+                <label class="flex items-center">
+                    <input type="checkbox" id="recurring-toggle" class="mr-2 w-5 h-5 text-secondary rounded">
+                    <span class="text-sm text-blue-700">Enable</span>
+                </label>
+            </div>
+            <div id="recurring-options" class="hidden mt-3 pt-3 border-t border-blue-200">
+                <label class="block text-sm text-blue-700 mb-1">Repeat for:</label>
+                <select id="recurring-weeks" class="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm">
+                    <option value="2">2 weeks</option>
+                    <option value="4" selected>4 weeks</option>
+                    <option value="8">8 weeks</option>
+                    <option value="12">12 weeks</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Selected Sessions Cart -->
+        <div class="bg-gray-900 text-white rounded-xl p-4 sm:p-6 mb-6" id="cart-section">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold">Selected Sessions (<span id="cart-count">0</span>)</h3>
+                <div id="timer-display" class="text-sm text-yellow-400 hidden">
+                    Expires in: <span id="timer-countdown">10:00</span>
+                </div>
+            </div>
+            <div id="cart-items" class="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                <p class="text-gray-400 text-sm" id="empty-cart-msg">No sessions selected yet.</p>
+            </div>
+
+            <!-- Conflict Warnings -->
+            <div id="conflict-warnings" class="hidden bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 mb-4">
+                <p class="text-yellow-300 text-sm font-semibold">Warning: Scheduling Conflicts</p>
+                <ul id="conflict-list" class="text-yellow-200 text-xs mt-1"></ul>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-gray-700 pt-4">
+                <div>
+                    <span class="text-gray-400">Sessions to use:</span>
+                    <span class="font-bold text-xl" id="sessions-to-use">0</span>
+                </div>
+                <button onclick="confirmBookings()"
+                        id="confirm-btn"
+                        class="bg-accent text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                    Confirm Booking
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div id="upgrade-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Upgrade Package</h3>
+            <p class="text-gray-600 mb-4">Upgrade to <span id="upgrade-pkg-name" class="font-bold"></span></p>
+            <p class="text-3xl font-bold text-primary mb-4">$<span id="upgrade-cost"></span></p>
+            <p class="text-sm text-gray-500 mb-6">Based on your remaining sessions value.</p>
+            <div class="flex space-x-3">
+                <button onclick="closeUpgradeModal()" class="flex-1 border rounded-lg py-2 hover:bg-gray-50">Cancel</button>
+                <button class="flex-1 bg-secondary text-white rounded-lg py-2 hover:bg-green-600">Upgrade Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile nav toggle
+        document.getElementById('mobile-nav-btn').addEventListener('click', function() {
+            document.getElementById('mobile-nav').classList.toggle('hidden');
+        });
+
+        // Cart state
+        let cart = [];
+        const sessionsRemaining = {{ sessions_remaining }};
+        let currentWeekStart = new Date();
+        currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+        let selectedDate = null;
+        let timerInterval = null;
+        let cartExpiry = null;
+
+        // Client preferences
+        const favoriteCoachIds = {{ favorite_coach_ids|safe }};
+        const preferredDays = {{ booking_prefs.preferred_days|safe }};
+        const preferredTimeSlots = {{ booking_prefs.preferred_time_slots|safe }};
+        const autoFilter = {{ booking_prefs.auto_filter|yesno:"true,false" }};
+
+        // Blocked dates for special events
+        const blockedDates = {{ blocked_dates|safe }};
+
+        // All available blocks data
+        const allBlocks = [
+            {% for block in available_blocks %}
+            {
+                id: {{ block.id }},
+                date: '{{ block.date|date:"Y-m-d" }}',
+                startTime: '{{ block.start_time|time:"g:iA" }}',
+                startHour: {{ block.start_time.hour }},
+                coachId: {{ block.coach.id }},
+                coachName: '{{ block.coach.user.first_name }}',
+                sessionType: '{{ block.session_type }}',
+                spotsRemaining: {{ block.spots_remaining }},
+                isAvailable: {{ block.is_available|yesno:"true,false" }},
+                isFavoriteCoach: favoriteCoachIds.includes({{ block.coach.id }})
+            },
+            {% endfor %}
+        ];
+
+        // Existing bookings for conflict detection
+        const existingBookings = [
+            {% for booking in existing_bookings %}
+            { date: '{{ booking.scheduled_date|date:"Y-m-d" }}', playerId: {{ booking.player.id }} },
+            {% endfor %}
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCalendar();
+
+            // Recurring toggle
+            document.getElementById('recurring-toggle').addEventListener('change', function() {
+                document.getElementById('recurring-options').classList.toggle('hidden', !this.checked);
+            });
+        });
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-days');
+            const title = document.getElementById('calendar-title');
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+
+            title.textContent = `${monthNames[currentWeekStart.getMonth()]} ${currentWeekStart.getFullYear()}`;
+
+            let html = '';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let i = 0; i < 14; i++) { // Show 2 weeks
+                const day = new Date(currentWeekStart);
+                day.setDate(day.getDate() + i);
+                const dateStr = day.toISOString().split('T')[0];
+                const hasBlocks = allBlocks.some(b => b.date === dateStr && b.isAvailable);
+                const isPast = day < today;
+                const isSelected = selectedDate === dateStr;
+                const isBlocked = blockedDates.includes(dateStr);
+
+                html += `
+                    <div onclick="${!isPast && !isBlocked ? `selectDate('${dateStr}')` : ''}"
+                         class="p-2 text-center rounded cursor-pointer transition relative
+                                ${isPast ? 'text-gray-300 cursor-not-allowed' : ''}
+                                ${isBlocked ? 'bg-purple-100 text-purple-600 cursor-not-allowed' : 'hover:bg-gray-100'}
+                                ${isSelected && !isBlocked ? 'bg-secondary text-white' : ''}
+                                ${hasBlocks && !isPast && !isBlocked ? 'font-bold' : ''}">
+                        <div class="text-lg">${day.getDate()}</div>
+                        ${isBlocked ? '<div class="text-xs">Event</div>' : ''}
+                        ${hasBlocks && !isPast && !isBlocked ? '<div class="w-1.5 h-1.5 bg-secondary rounded-full mx-auto mt-1"></div>' : ''}
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function prevWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            renderCalendar();
+        }
+
+        function nextWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            renderCalendar();
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            renderCalendar();
+            renderSessionsForDate(dateStr);
+            document.getElementById('selected-date-title').textContent = formatDate(dateStr);
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        }
+
+        function getTimeSlot(hour) {
+            if (hour < 12) return 'morning';
+            if (hour < 17) return 'afternoon';
+            return 'evening';
+        }
+
+        function matchesPreferences(block, dateStr) {
+            // Check if block matches user preferences
+            if (favoriteCoachIds.length > 0 && !favoriteCoachIds.includes(block.coachId)) {
+                return false;
+            }
+            if (preferredDays.length > 0) {
+                const dayName = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {weekday: 'long'}).toLowerCase();
+                if (!preferredDays.includes(dayName)) return false;
+            }
+            if (preferredTimeSlots.length > 0) {
+                const slot = getTimeSlot(block.startHour);
+                if (!preferredTimeSlots.includes(slot)) return false;
+            }
+            return true;
+        }
+
+        function renderSessionsForDate(dateStr) {
+            const container = document.getElementById('sessions-list');
+            const filterCoach = document.getElementById('filter-coach').value;
+            const filterType = document.getElementById('filter-type').value;
+
+            let blocks = allBlocks.filter(b => {
+                if (b.date !== dateStr) return false;
+                if (!b.isAvailable) return false;
+                // Handle favorites filter
+                if (filterCoach === 'favorites') {
+                    if (!favoriteCoachIds.includes(b.coachId)) return false;
+                } else if (filterCoach && b.coachId != filterCoach) {
+                    return false;
+                }
+                if (filterType && b.sessionType !== filterType) return false;
+                // Apply auto-filter if enabled
+                if (autoFilter && !matchesPreferences(b, dateStr)) return false;
+                return true;
+            });
+
+            if (blocks.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No available sessions for this date.</p>';
+                return;
+            }
+
+            // Sort: favorite coaches first, then by time
+            blocks.sort((a, b) => {
+                if (a.isFavoriteCoach && !b.isFavoriteCoach) return -1;
+                if (!a.isFavoriteCoach && b.isFavoriteCoach) return 1;
+                return a.startHour - b.startHour;
+            });
+
+            let html = '<div class="flex flex-wrap gap-2">';
+            blocks.forEach(block => {
+                const inCart = cart.some(c => c.blockId === block.id);
+                const isFavorite = block.isFavoriteCoach;
+                html += `
+                    <button onclick="reserveSession(${block.id}, '${block.date}', '${block.startTime}')"
+                            id="block-${block.id}"
+                            ${inCart ? 'disabled' : ''}
+                            class="session-btn px-3 py-2 text-sm border rounded-lg transition relative
+                                   ${inCart ? 'bg-secondary text-white border-secondary' : 'hover:border-secondary hover:bg-secondary/5'}
+                                   ${isFavorite && !inCart ? 'border-yellow-400 bg-yellow-50' : ''}
+                                   ${block.sessionType === 'private' && !isFavorite ? 'border-blue-200' : ''}
+                                   ${block.sessionType === 'group' && !isFavorite ? 'border-purple-200' : ''}">
+                        ${isFavorite ? '<span class="absolute -top-1 -right-1 text-yellow-500">⭐</span>' : ''}
+                        <span class="font-medium">${block.startTime}</span>
+                        <span class="text-xs text-gray-500 ml-1">${block.coachName}</span>
+                        <span class="text-xs ${block.sessionType === 'private' ? 'text-blue-600' : 'text-purple-600'}">
+                            ${block.sessionType === 'private' ? 'Pvt' : 'Grp'}
+                        </span>
+                        <span class="text-xs text-gray-400">(${block.spotsRemaining} left)</span>
+                    </button>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function applyFilters() {
+            if (selectedDate) {
+                renderSessionsForDate(selectedDate);
+            }
+        }
+
+        function reserveSession(blockId, date, time) {
+            const playerId = document.getElementById('player-select').value;
+            if (!playerId) {
+                alert('Please select a player first');
+                return;
+            }
+
+            // Check if recurring is enabled
+            const isRecurring = document.getElementById('recurring-toggle').checked;
+            const recurringWeeks = isRecurring ? parseInt(document.getElementById('recurring-weeks').value) : 1;
+
+            // Check session limit
+            if (cart.length + recurringWeeks > sessionsRemaining) {
+                alert(`Not enough sessions. You have ${sessionsRemaining} remaining, trying to book ${cart.length + recurringWeeks}.`);
+                return;
+            }
+
+            // Check for conflicts
+            const conflicts = checkConflicts(date, playerId);
+            if (conflicts.length > 0) {
+                showConflictWarning(conflicts);
+            }
+
+            // Make reservation API call
+            fetch('{% url "clients:reserve_session" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `block_id=${blockId}&player_id=${playerId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cart.push({
+                        blockId: blockId,
+                        reservationId: data.reservation_id,
+                        expiresAt: new Date(data.expires_at),
+                        date: date,
+                        time: time
+                    });
+
+                    // Start timer on first reservation
+                    if (cart.length === 1) {
+                        cartExpiry = new Date(data.expires_at);
+                        startTimer();
+                    }
+
+                    updateCartUI();
+                    renderSessionsForDate(selectedDate);
+                } else {
+                    alert(data.error || 'Could not reserve session');
+                }
+            });
+        }
+
+        function checkConflicts(date, playerId) {
+            const conflicts = [];
+            // Check existing bookings
+            existingBookings.forEach(b => {
+                if (b.date === date && b.playerId == playerId) {
+                    conflicts.push(`Player already has a session on ${formatDate(date)}`);
+                }
+            });
+            // Check cart
+            cart.forEach(c => {
+                if (c.date === date) {
+                    conflicts.push(`You're already booking a session on ${formatDate(date)}`);
+                }
+            });
+            return conflicts;
+        }
+
+        function showConflictWarning(conflicts) {
+            const container = document.getElementById('conflict-warnings');
+            const list = document.getElementById('conflict-list');
+            list.innerHTML = conflicts.map(c => `<li>- ${c}</li>`).join('');
+            container.classList.remove('hidden');
+        }
+
+        function startTimer() {
+            document.getElementById('timer-display').classList.remove('hidden');
+
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = cartExpiry - now;
+
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Your reservations have expired. Please try again.');
+                    location.reload();
+                    return;
+                }
+
+                const mins = Math.floor(diff / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                document.getElementById('timer-countdown').textContent =
+                    `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                // Warning when under 2 minutes
+                if (diff < 120000) {
+                    document.getElementById('timer-countdown').classList.add('text-red-400');
+                }
+            }, 1000);
+        }
+
+        function cancelReservation(reservationId, blockId) {
+            fetch('{% url "clients:cancel_reservation" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `reservation_id=${reservationId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cart = cart.filter(item => item.reservationId !== reservationId);
+                    updateCartUI();
+                    if (selectedDate) renderSessionsForDate(selectedDate);
+
+                    // Stop timer if cart empty
+                    if (cart.length === 0) {
+                        clearInterval(timerInterval);
+                        document.getElementById('timer-display').classList.add('hidden');
+                        document.getElementById('conflict-warnings').classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        function updateCartUI() {
+            const cartItems = document.getElementById('cart-items');
+            const cartCount = document.getElementById('cart-count');
+            const sessionsToUse = document.getElementById('sessions-to-use');
+            const confirmBtn = document.getElementById('confirm-btn');
+
+            cartCount.textContent = cart.length;
+            sessionsToUse.textContent = cart.length;
+            confirmBtn.disabled = cart.length === 0;
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-gray-400 text-sm" id="empty-cart-msg">No sessions selected yet.</p>';
+            } else {
+                let html = '';
+                cart.forEach(item => {
+                    html += `
+                        <div class="flex justify-between items-center bg-gray-800 rounded px-3 py-2">
+                            <span class="text-sm">${formatDate(item.date)} @ ${item.time}</span>
+                            <button onclick="cancelReservation(${item.reservationId}, ${item.blockId})"
+                                    class="text-red-400 hover:text-red-300 text-sm">Remove</button>
+                        </div>
+                    `;
+                });
+                cartItems.innerHTML = html;
+            }
+        }
+
+        function confirmBookings() {
+            if (cart.length === 0) return;
+
+            fetch('{% url "clients:confirm_booking" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    clearInterval(timerInterval);
+                    alert(`Successfully booked ${data.bookings_created} session(s)! Sessions remaining: ${data.sessions_remaining}`);
+                    window.location.href = '{% url "clients:bookings" %}';
+                } else {
+                    alert(data.error || 'Could not confirm bookings');
+                }
+            });
+        }
+
+        function showUpgradeModal(pkgName, cost) {
+            document.getElementById('upgrade-pkg-name').textContent = pkgName;
+            document.getElementById('upgrade-cost').textContent = cost.toFixed(2);
+            document.getElementById('upgrade-modal').classList.remove('hidden');
+            document.getElementById('upgrade-modal').classList.add('flex');
+        }
+
+        function closeUpgradeModal() {
+            document.getElementById('upgrade-modal').classList.add('hidden');
+            document.getElementById('upgrade-modal').classList.remove('flex');
+        }
+    </script>
+</body>
+</html>

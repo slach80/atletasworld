@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold text-primary">ATLETAS WORLD</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-secondary">Home</a>
+                    <a href="/about" class="text-secondary font-semibold">About</a>
+                    <a href="/contact" class="text-gray-600 hover:text-secondary">Contact</a>
+                    <a href="/book" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600">Book Now</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="bg-gradient-to-r from-primary to-gray-800 text-white py-16">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">About Atletas World</h1>
+            <p class="text-xl text-gray-300">Developing Champions On and Off the Field</p>
+        </div>
+    </section>
+
+    <main class="max-w-5xl mx-auto px-4 py-12">
+        <!-- Mission -->
+        <section class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
+            <p class="text-lg text-gray-600 leading-relaxed">
+                At Atletas World, we believe every player has the potential to reach their highest level. Our mission is to provide world-class soccer training that develops not just athletic skills, but character, discipline, and a lifelong love for the game. Through personalized coaching and proven methodologies, we help athletes of all ages unlock their full potential.
+            </p>
+        </section>
+
+        <!-- Story -->
+        <section class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <p class="text-gray-600 mb-4">
+                        Founded by Coach Mirko Trapletti, Atletas World was born from a passion for developing young soccer talent. With over 10 years of international coaching experience across youth academies, college programs, and professional clubs, Mirko saw an opportunity to bring elite-level training to players of all skill levels.
+                    </p>
+                    <p class="text-gray-600 mb-4">
+                        What started as individual training sessions focused on tactics and conditioning has grown into a comprehensive training program featuring multiple coaches, diverse programs, and hundreds of satisfied families.
+                    </p>
+                    <p class="text-gray-600">
+                        Today, Atletas World continues to expand, partnering with former professional players like Roger Espinoza to bring unparalleled expertise to our training programs.
+                    </p>
+                </div>
+                <div class="bg-gray-100 rounded-xl p-6">
+                    <div class="text-6xl text-center mb-4">⚽</div>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <p class="text-3xl font-bold text-secondary">10+</p>
+                            <p class="text-gray-500 text-sm">Years Experience</p>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold text-secondary">1800+</p>
+                            <p class="text-gray-500 text-sm">Sessions Completed</p>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold text-secondary">200+</p>
+                            <p class="text-gray-500 text-sm">Athletes Trained</p>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold text-secondary">5.0</p>
+                            <p class="text-gray-500 text-sm">Average Rating</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Values -->
+        <section class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Values</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center p-6">
+                    <div class="text-4xl mb-4">🎯</div>
+                    <h3 class="font-bold text-xl text-gray-900 mb-2">Excellence</h3>
+                    <p class="text-gray-600">We strive for excellence in everything we do, from training methodology to player development.</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="text-4xl mb-4">🤝</div>
+                    <h3 class="font-bold text-xl text-gray-900 mb-2">Integrity</h3>
+                    <p class="text-gray-600">We build trust through honest communication and genuine care for each player's growth.</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="text-4xl mb-4">💪</div>
+                    <h3 class="font-bold text-xl text-gray-900 mb-2">Dedication</h3>
+                    <p class="text-gray-600">We are committed to helping every athlete reach their full potential, no matter their starting point.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Coaches -->
+        <section class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Meet Our Coaches</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <a href="/coach/mirko" class="flex items-center p-6 border rounded-xl hover:border-secondary transition">
+                    <div class="w-20 h-20 rounded-full bg-gray-200 bg-cover bg-top mr-4 flex-shrink-0" style="background-image: url('https://scontent.fmkc1-1.fna.fbcdn.net/v/t39.30808-6/531786468_10213182800482631_458699935474470537_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=4VQ-gwNp5swQ7kNvwFsZi3i&_nc_oc=Adlh1NtBPvNR38Sgwtiuy4F1kWiR-Pf-rDqq_X9nGu_5POxrRwGbyShnoEdb_-0z7Q0&_nc_zt=23&_nc_ht=scontent.fmkc1-1.fna&_nc_gid=L6td_L4sm0wA8wP_XFRTmg&oh=00_AfmsC44X0sKkmr6sWvaZ3ZOx4RTzBDJFGzFftT1F9T0-cg&oe=693BD215');"></div>
+                    <div>
+                        <h3 class="font-bold text-xl text-gray-900">Mirko Trapletti</h3>
+                        <p class="text-secondary font-semibold">Founder | Tactics & Conditioning</p>
+                        <p class="text-gray-500 text-sm mt-1">10+ years international experience</p>
+                    </div>
+                </a>
+                <a href="/coach/roger" class="flex items-center p-6 border rounded-xl hover:border-secondary transition">
+                    <div class="w-20 h-20 rounded-full bg-gray-200 bg-cover bg-top mr-4 flex-shrink-0" style="background-image: url('https://scontent.fmkc1-1.fna.fbcdn.net/v/t39.30808-6/530279404_10213182800722637_1861514008881481787_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_ohc=YFC2iw1FYycQ7kNvwG4XTqx&_nc_oc=AdlL8viAs8-cZ1wiMsAHu9KX6dnmsxITj36KBIc-Zz6EuMA6kcgHO1Thj9xXID9psoo&_nc_zt=23&_nc_ht=scontent.fmkc1-1.fna&_nc_gid=t4PCQlNXSD9A6Bdg8QYeSw&oh=00_AfkK70HcS-EpwRUGIDjf9WDQ-CCq1fjSNld6KGHCeZ1ldA&oe=693BC2FA');"></div>
+                    <div>
+                        <h3 class="font-bold text-xl text-gray-900">Roger Espinoza</h3>
+                        <p class="text-blue-600 font-semibold">Former MLS Pro</p>
+                        <p class="text-gray-500 text-sm mt-1">Professional playing experience</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="bg-gradient-to-r from-secondary to-green-600 rounded-2xl shadow-lg p-8 text-center text-white">
+            <h2 class="text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
+            <p class="text-xl mb-6 opacity-90">Join hundreds of athletes who have transformed their game with Atletas World</p>
+            <a href="/book" class="inline-block bg-white text-secondary px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition">
+                Book Your First Session
+            </a>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-gray-400">&copy; 2024 Atletas World. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

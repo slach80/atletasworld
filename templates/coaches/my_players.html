@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Players - Coach Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-primary text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                    <span class="ml-4 text-lg font-semibold">Coach Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'coaches:dashboard' %}" class="hover:text-secondary transition">Dashboard</a>
+                    <a href="{% url 'coaches:schedule' %}" class="hover:text-secondary transition">Schedule</a>
+                    <a href="{% url 'coaches:my_players' %}" class="text-secondary font-semibold">My Players</a>
+                    <a href="{% url 'coaches:assessments' %}" class="hover:text-secondary transition">Assessments</a>
+                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">My Players</h1>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="search" placeholder="Search players..." 
+                       class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary"
+                       onkeyup="filterPlayers()">
+                <select id="filter-age" onchange="filterPlayers()" class="px-4 py-2 border rounded-lg">
+                    <option value="">All Ages</option>
+                    <option value="U10">U10</option>
+                    <option value="U12">U12</option>
+                    <option value="U14">U14</option>
+                    <option value="U16">U16</option>
+                    <option value="U19">U19</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-4 text-center">
+                <p class="text-3xl font-bold text-secondary">{{ players|length }}</p>
+                <p class="text-gray-500 text-sm">Total Players</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 text-center">
+                <p class="text-3xl font-bold text-blue-500">{{ total_sessions }}</p>
+                <p class="text-gray-500 text-sm">Total Sessions</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 text-center">
+                <p class="text-3xl font-bold text-purple-500">{{ assessments_count }}</p>
+                <p class="text-gray-500 text-sm">Assessments Given</p>
+            </div>
+        </div>
+
+        <!-- Players List -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="space-y-4" id="players-list">
+                {% for player_data in players %}
+                <div class="player-card border rounded-lg p-4 hover:border-secondary transition" 
+                     data-name="{{ player_data.player.first_name }} {{ player_data.player.last_name }}"
+                     data-age="{{ player_data.player.age_group }}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            {% if player_data.player.photo %}
+                            <img src="{{ player_data.player.photo.url }}" class="w-14 h-14 rounded-full object-cover mr-4">
+                            {% else %}
+                            <div class="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+                                <span class="text-xl font-bold text-gray-400">{{ player_data.player.first_name|first }}{{ player_data.player.last_name|first }}</span>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h3 class="font-bold text-gray-900">{{ player_data.player.first_name }} {{ player_data.player.last_name }}</h3>
+                                <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                    <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{{ player_data.player.age_group }}</span>
+                                    <span>{{ player_data.player.get_skill_level_display }}</span>
+                                    {% if player_data.player.primary_position %}
+                                    <span>{{ player_data.player.get_primary_position_display }}</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Parent: {{ player_data.player.client.user.get_full_name }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex items-center space-x-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Sessions</p>
+                                    <p class="font-bold text-secondary">{{ player_data.sessions_count }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Avg Rating</p>
+                                    <p class="font-bold {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">
+                                        {{ player_data.avg_rating|floatformat:1 }}/5
+                                    </p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'coaches:player_detail' player_data.player.id %}" 
+                                       class="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-green-600">View</a>
+                                    <button onclick="showNotifyModal({{ player_data.player.id }}, '{{ player_data.player.first_name }}')"
+                                            class="bg-purple-500 text-white px-3 py-1 rounded text-sm hover:bg-purple-600">Notify</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if player_data.last_session %}
+                    <div class="mt-3 pt-3 border-t text-sm text-gray-500">
+                        Last session: {{ player_data.last_session.scheduled_date|date:"M j, Y" }} - {{ player_data.last_session.program.name }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-8">No players have booked sessions with you yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Notify Modal -->
+    <div id="notify-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Notify Parent</h3>
+            <p class="text-gray-600 mb-4">Send a notification about <span id="notify-player-name" class="font-semibold"></span></p>
+            <form method="POST" action="{% url 'coaches:send_notification' %}">
+                {% csrf_token %}
+                <input type="hidden" name="player_id" id="notify-player-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <select name="notification_type" class="w-full px-3 py-2 border rounded-lg">
+                        <option value="schedule_change">Schedule Change</option>
+                        <option value="session_reminder">Session Reminder</option>
+                        <option value="assessment_ready">Assessment Ready</option>
+                        <option value="general">General Message</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                    <textarea name="message" rows="4" required
+                              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-secondary"
+                              placeholder="Enter your message to the parent..."></textarea>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeNotifyModal()" class="flex-1 border rounded-lg py-2 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 bg-secondary text-white rounded-lg py-2 hover:bg-green-600">Send Notification</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function filterPlayers() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const ageFilter = document.getElementById('filter-age').value;
+            const cards = document.querySelectorAll('.player-card');
+            
+            cards.forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                const age = card.dataset.age;
+                const matchesSearch = name.includes(search);
+                const matchesAge = !ageFilter || age === ageFilter;
+                card.style.display = matchesSearch && matchesAge ? 'block' : 'none';
+            });
+        }
+
+        function showNotifyModal(playerId, playerName) {
+            document.getElementById('notify-player-id').value = playerId;
+            document.getElementById('notify-player-name').textContent = playerName;
+            document.getElementById('notify-modal').classList.remove('hidden');
+            document.getElementById('notify-modal').classList.add('flex');
+        }
+
+        function closeNotifyModal() {
+            document.getElementById('notify-modal').classList.add('hidden');
+            document.getElementById('notify-modal').classList.remove('flex');
+        }
+    </script>
+</body>
+</html>

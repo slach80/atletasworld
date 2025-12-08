@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Assess - Coach Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-primary text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                    <span class="ml-4 text-lg font-semibold">Coach Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'coaches:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+                    <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary">Today</a>
+                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 py-6">
+        <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary hover:underline mb-4 inline-block">&larr; Back</a>
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h1 class="text-2xl font-bold mb-2">Quick Assessment</h1>
+            <p class="text-gray-500 mb-6">{{ block.date|date:"M j" }} | {{ block.start_time|time:"g:i A" }} - Rate all players</p>
+
+            {% if bookings %}
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Training Type (for all)</label>
+                    <select name="training_type" class="w-full px-4 py-2 border rounded-lg">
+                        {% for value, label in training_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-6">
+                    {% for booking in bookings %}
+                    <div class="border rounded-lg p-4">
+                        <h3 class="font-bold mb-3">{{ booking.player }}</h3>
+                        <div class="grid grid-cols-5 gap-2 mb-3">
+                            <div>
+                                <label class="text-xs text-gray-500">Effort</label>
+                                <select name="effort_{{ booking.id }}" class="w-full px-2 py-1 border rounded text-sm">
+                                    {% for value, label in rating_choices %}<option value="{{ value }}" {% if value == 3 %}selected{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Technical</label>
+                                <select name="technical_{{ booking.id }}" class="w-full px-2 py-1 border rounded text-sm">
+                                    {% for value, label in rating_choices %}<option value="{{ value }}" {% if value == 3 %}selected{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Tactical</label>
+                                <select name="tactical_{{ booking.id }}" class="w-full px-2 py-1 border rounded text-sm">
+                                    {% for value, label in rating_choices %}<option value="{{ value }}" {% if value == 3 %}selected{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Physical</label>
+                                <select name="physical_{{ booking.id }}" class="w-full px-2 py-1 border rounded text-sm">
+                                    {% for value, label in rating_choices %}<option value="{{ value }}" {% if value == 3 %}selected{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Goals</label>
+                                <select name="goals_{{ booking.id }}" class="w-full px-2 py-1 border rounded text-sm">
+                                    {% for value, label in rating_choices %}<option value="{{ value }}" {% if value == 3 %}selected{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <input type="text" name="notes_{{ booking.id }}" placeholder="Quick note for parent..." class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="w-full mt-6 bg-secondary text-white py-3 rounded-lg hover:bg-green-600">Submit All Assessments</button>
+            </form>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No players to assess for this session.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

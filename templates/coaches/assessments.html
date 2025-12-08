@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessments - Coach Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-primary text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                    <span class="ml-4 text-lg font-semibold">Coach Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'coaches:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+                    <a href="{% url 'coaches:schedule' %}" class="hover:text-secondary">Schedule</a>
+                    <a href="{% url 'coaches:my_players' %}" class="hover:text-secondary">My Players</a>
+                    <a href="{% url 'coaches:assessments' %}" class="text-secondary font-semibold">Assessments</a>
+                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 py-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Player Assessments</h1>
+
+        {% if pending_assessments %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-bold text-yellow-800 mb-4">Pending Assessments ({{ pending_assessments|length }})</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for booking in pending_assessments %}
+                <div class="bg-white rounded-lg p-4 border">
+                    <p class="font-semibold">{{ booking.player }}</p>
+                    <p class="text-sm text-gray-500">{{ booking.scheduled_date|date:"M j" }} - {{ booking.program.name }}</p>
+                    <a href="{% url 'coaches:create_assessment' booking.id %}" class="mt-2 inline-block bg-accent text-white px-3 py-1 rounded text-sm hover:bg-red-600">Add Assessment</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Assessments</h2>
+            {% if recent_assessments %}
+            <div class="space-y-4">
+                {% for assessment in recent_assessments %}
+                <div class="border rounded-lg p-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-semibold">{{ assessment.player }}</p>
+                            <p class="text-sm text-gray-500">{{ assessment.assessment_date|date:"M j, Y" }} - {{ assessment.get_training_type_display }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold {% if assessment.overall_rating >= 4 %}text-green-500{% elif assessment.overall_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">{{ assessment.overall_rating }}/5</p>
+                            <p class="text-xs text-gray-500">Overall</p>
+                        </div>
+                    </div>
+                    {% if assessment.parent_visible_notes %}
+                    <p class="text-gray-600 text-sm mt-2 border-t pt-2">{{ assessment.parent_visible_notes|truncatewords:30 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No assessments submitted yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

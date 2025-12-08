@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Packages - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto"></a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'clients:dashboard' %}" class="text-gray-600 hover:text-secondary">Dashboard</a>
+                    <a href="/accounts/logout/" class="text-gray-600 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <div class="flex items-center text-sm text-gray-500 mb-6">
+            <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="text-gray-800">My Packages</span>
+        </div>
+
+        <!-- Active Packages -->
+        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Active Packages</h1>
+
+            {% if active_packages %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for pkg in active_packages %}
+                <div class="border-2 border-green-400 bg-green-50 rounded-xl p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="inline-block px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full mb-2">Active</span>
+                            <h3 class="font-bold text-xl text-gray-800">{{ pkg.package.name }}</h3>
+                            <p class="text-sm text-gray-600">{{ pkg.package.get_package_type_display }}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold text-secondary">
+                                {% if pkg.package.sessions_included > 0 %}
+                                {{ pkg.sessions_remaining }}
+                                {% else %}
+                                &infin;
+                                {% endif %}
+                            </div>
+                            <p class="text-xs text-gray-500">Sessions Left</p>
+                        </div>
+                    </div>
+
+                    {% if pkg.player %}
+                    <p class="text-sm text-gray-600 mb-3">
+                        <span class="font-medium">Assigned to:</span> {{ pkg.player }}
+                    </p>
+                    {% endif %}
+
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Start Date:</span>
+                            <span>{{ pkg.start_date|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Expiry Date:</span>
+                            <span>{{ pkg.expiry_date|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Sessions Used:</span>
+                            <span>{{ pkg.sessions_used }}</span>
+                        </div>
+                    </div>
+
+                    {% if pkg.package.sessions_included > 0 %}
+                    <div class="mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>Progress</span>
+                            <span>{{ pkg.sessions_used }}/{{ pkg.package.sessions_included }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-secondary rounded-full h-2" style="width: {% widthratio pkg.sessions_used pkg.package.sessions_included 100 %}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <p class="text-gray-500">No active packages</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Available Packages -->
+        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Available Packages</h2>
+            <p class="text-gray-600 mb-6">Purchase a package to save on training sessions!</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for package in available_packages %}
+                <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition hover:border-secondary">
+                    <h3 class="font-bold text-lg text-gray-800 mb-2">{{ package.name }}</h3>
+                    <p class="text-sm text-gray-500 mb-4">{{ package.get_package_type_display }}</p>
+
+                    <div class="text-3xl font-bold text-primary mb-2">${{ package.price }}</div>
+
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-secondary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited sessions{% endif %}
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-secondary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Valid for {{ package.validity_weeks }} weeks
+                        </li>
+                    </ul>
+
+                    <a href="/book?package={{ package.id }}" class="block w-full text-center py-3 bg-accent text-white rounded-lg hover:bg-red-600 transition">
+                        Purchase
+                    </a>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 col-span-4 text-center py-8">No packages available at this time.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Package History -->
+        {% if expired_packages %}
+        <div class="bg-white rounded-xl shadow-md p-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Package History</h2>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3 px-4">Package</th>
+                            <th class="text-left py-3 px-4">Status</th>
+                            <th class="text-left py-3 px-4">Sessions Used</th>
+                            <th class="text-left py-3 px-4">Dates</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pkg in expired_packages %}
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <div class="font-medium">{{ pkg.package.name }}</div>
+                                {% if pkg.player %}<div class="text-xs text-gray-500">{{ pkg.player }}</div>{% endif %}
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 text-xs rounded-full
+                                    {% if pkg.status == 'expired' %}bg-gray-100 text-gray-600
+                                    {% elif pkg.status == 'exhausted' %}bg-blue-100 text-blue-600
+                                    {% elif pkg.status == 'cancelled' %}bg-red-100 text-red-600
+                                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {{ pkg.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">{{ pkg.sessions_used }} / {{ pkg.package.sessions_included|default:"Unlimited" }}</td>
+                            <td class="py-3 px-4 text-gray-500">{{ pkg.start_date|date:"M d" }} - {{ pkg.expiry_date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

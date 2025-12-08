@@ -4,12 +4,33 @@ Custom Django platform for Atletas World soccer training business.
 
 ## Features
 
-- **Client Portal**: Personal accounts, booking history, progress tracking
-- **Coach Dashboard**: Schedule management, client info, performance stats
-- **Booking System**: Integrated scheduling with Google Calendar sync
-- **Payment Processing**: Stripe integration with full revenue tracking
-- **Analytics Dashboard**: Business intelligence and reporting
-- **Review System**: Automated reviews and testimonials
+### Client Portal
+- Personal dashboard with upcoming sessions
+- Manage player profiles (multiple children)
+- Book training sessions with preferred coaches
+- View packages, history, and assessments
+- Receive coach notifications and progress reports
+
+### Coach Portal (NEW)
+- Dashboard with today's sessions and stats
+- View all players trained with session history
+- Set availability and manage schedule
+- **Player Assessments**: Rate effort, technical, tactical, physical, and goals (1-5 scale)
+- Quick assess multiple players per session
+- Notify parents directly with custom messages
+- Track attendance for each session
+
+### User Management
+- **Role-based access**: Coach, Client, and Admin groups
+- Coaches created by admin (no self-signup)
+- Clients register through signup process
+- Automatic group assignment on registration
+
+### Admin Features
+- Full Django admin for all models
+- Create and manage coach accounts
+- Business analytics and reporting
+- Payment and booking oversight
 
 ## Project Structure
 
@@ -81,6 +102,22 @@ python manage.py runserver
 ```
 
 Visit http://localhost:8000/admin to access the admin panel.
+
+## Demo Credentials
+
+### Coach Accounts (Coach Portal)
+| Email | Password | Name |
+|-------|----------|------|
+| `mirko@atletasworld.com` | `coach123` | Mirko Trapletti |
+| `roger@atletasworld.com` | `coach123` | Roger Espinoza |
+
+### Client Accounts (Client Portal)
+| Email | Password | Name |
+|-------|----------|------|
+| `testparent@example.com` | `demo123` | Test Parent |
+| `john@example.com` | `demo123` | John Smith |
+
+**Login URL:** http://localhost:8000/accounts/login/
 
 ## Environment Variables
 

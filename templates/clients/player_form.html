@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if player %}Edit{% else %}Add{% endif %} Player - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto"></a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'clients:dashboard' %}" class="text-gray-600 hover:text-secondary">Dashboard</a>
+                    <a href="/accounts/logout/" class="text-gray-600 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <div class="flex items-center text-sm text-gray-500 mb-6">
+            <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <a href="{% url 'clients:players' %}" class="hover:text-secondary">My Players</a>
+            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="text-gray-800">{% if player %}Edit{% else %}Add{% endif %} Player</span>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-8">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">{% if player %}Edit Player{% else %}Add New Player{% endif %}</h1>
+
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Photo Upload -->
+                <div class="flex items-center space-x-6">
+                    <div class="shrink-0">
+                        {% if player.photo %}
+                        <img class="h-24 w-24 object-cover rounded-full" src="{{ player.photo.url }}" alt="Player photo">
+                        {% else %}
+                        <div class="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
+                            <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <label class="block">
+                        <span class="sr-only">Choose player photo</span>
+                        <input type="file" name="photo" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary file:text-white hover:file:bg-green-600"/>
+                    </label>
+                </div>
+
+                <!-- Basic Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                        <input type="text" name="first_name" value="{{ player.first_name|default:'' }}" required
+                               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                        <input type="text" name="last_name" value="{{ player.last_name|default:'' }}" required
+                               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Birth Year *</label>
+                        <input type="number" name="birth_year" value="{{ player.birth_year|default:'' }}" required
+                               min="2000" max="2024"
+                               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                               placeholder="2015">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                        <select name="gender" required
+                                class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                            {% for value, label in genders %}
+                            <option value="{{ value }}" {% if player.gender == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Soccer Info -->
+                <div class="border-t pt-6">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Soccer Information</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Skill Level *</label>
+                            <select name="skill_level" required
+                                    class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                {% for value, label in skill_levels %}
+                                <option value="{{ value }}" {% if player.skill_level == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Primary Position</label>
+                            <select name="primary_position"
+                                    class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                <option value="">-- Select Position --</option>
+                                {% for value, label in positions %}
+                                <option value="{{ value }}" {% if player.primary_position == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Soccer Club</label>
+                            <input type="text" name="soccer_club" value="{{ player.soccer_club|default:'' }}"
+                                   class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                                   placeholder="e.g., FC United">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Team Name</label>
+                            <input type="text" name="team_name" value="{{ player.team_name|default:'' }}"
+                                   class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                                   placeholder="e.g., U12 Boys Select">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea name="notes" rows="3"
+                              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                              placeholder="Any special needs, medical conditions, or notes for coaches...">{{ player.notes|default:'' }}</textarea>
+                </div>
+
+                <div class="flex justify-end space-x-4 pt-4">
+                    <a href="{% url 'clients:players' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-green-600 transition">
+                        {% if player %}Save Changes{% else %}Add Player{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance - Coach Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-primary text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                    <span class="ml-4 text-lg font-semibold">Coach Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'coaches:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+                    <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary">Today</a>
+                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-3xl mx-auto px-4 py-6">
+        <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary hover:underline mb-4 inline-block">&larr; Back</a>
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h1 class="text-2xl font-bold mb-2">Session Attendance</h1>
+            <p class="text-gray-500 mb-6">{{ block.date|date:"l, M j" }} | {{ block.start_time|time:"g:i A" }} - {{ block.end_time|time:"g:i A" }}</p>
+
+            {% if attendances %}
+            <div class="space-y-4">
+                {% for item in attendances %}
+                <div class="border rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold">{{ item.booking.player }}</p>
+                            <p class="text-sm text-gray-500">{{ item.booking.client.user.get_full_name }}</p>
+                        </div>
+                        <form method="POST" action="{% url 'coaches:update_attendance' item.attendance.id %}" class="flex items-center space-x-2">
+                            {% csrf_token %}
+                            <select name="status" class="px-3 py-2 border rounded-lg text-sm">
+                                {% for value, label in attendance_statuses %}
+                                <option value="{{ value }}" {% if item.attendance.status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="bg-secondary text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600">Update</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No players booked for this session.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Players - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto"></a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'clients:dashboard' %}" class="text-gray-600 hover:text-secondary">Dashboard</a>
+                    <a href="/accounts/logout/" class="text-gray-600 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <div class="flex items-center text-sm text-gray-500 mb-6">
+            <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="text-gray-800">My Players</span>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-xl shadow-md p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">My Players</h1>
+                <a href="{% url 'clients:player_add' %}" class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Add Player
+                </a>
+            </div>
+
+            {% if players %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for player in players %}
+                <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition {% if not player.is_active %}opacity-50{% endif %}">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-gradient-to-br from-primary to-secondary text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold">
+                            {{ player.first_name.0 }}{{ player.last_name.0 }}
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-bold text-lg text-gray-800">{{ player.first_name }} {{ player.last_name }}</h3>
+                            <span class="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">{{ player.age_group }}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <div class="flex justify-between">
+                            <span>Birth Year:</span>
+                            <span class="font-medium">{{ player.birth_year }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Skill Level:</span>
+                            <span class="font-medium">{{ player.get_skill_level_display }}</span>
+                        </div>
+                        {% if player.primary_position %}
+                        <div class="flex justify-between">
+                            <span>Position:</span>
+                            <span class="font-medium">{{ player.get_primary_position_display }}</span>
+                        </div>
+                        {% endif %}
+                        {% if player.soccer_club %}
+                        <div class="flex justify-between">
+                            <span>Club:</span>
+                            <span class="font-medium">{{ player.soccer_club }}</span>
+                        </div>
+                        {% endif %}
+                        {% if player.team_name %}
+                        <div class="flex justify-between">
+                            <span>Team:</span>
+                            <span class="font-medium">{{ player.team_name }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex space-x-2 pt-4 border-t">
+                        <a href="{% url 'clients:player_edit' player.id %}" class="flex-1 text-center py-2 border border-secondary text-secondary rounded-lg hover:bg-secondary hover:text-white transition">
+                            Edit
+                        </a>
+                        <form method="POST" action="{% url 'clients:player_delete' player.id %}" class="flex-1" onsubmit="return confirm('Are you sure you want to remove {{ player.first_name }}?');">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full py-2 border border-accent text-accent rounded-lg hover:bg-accent hover:text-white transition">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-16">
+                <svg class="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <h2 class="text-xl font-semibold text-gray-700 mb-2">No Players Yet</h2>
+                <p class="text-gray-500 mb-6">Add your children or athletes to start booking training sessions.</p>
+                <a href="{% url 'clients:player_add' %}" class="bg-secondary text-white px-8 py-3 rounded-lg hover:bg-green-600 transition inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Add Your First Player
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

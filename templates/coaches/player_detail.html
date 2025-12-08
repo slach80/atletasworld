@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ player.first_name }} - Coach Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-primary text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                    <span class="ml-4 text-lg font-semibold">Coach Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'coaches:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+                    <a href="{% url 'coaches:my_players' %}" class="text-secondary">My Players</a>
+                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto px-4 py-6">
+        <a href="{% url 'coaches:my_players' %}" class="text-secondary hover:underline mb-4 inline-block">&larr; Back to My Players</a>
+
+        <!-- Player Profile -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+            <div class="flex items-center">
+                {% if player.photo %}
+                <img src="{{ player.photo.url }}" class="w-20 h-20 rounded-full object-cover mr-6">
+                {% else %}
+                <div class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mr-6">
+                    <span class="text-3xl font-bold text-gray-400">{{ player.first_name|first }}</span>
+                </div>
+                {% endif %}
+                <div>
+                    <h1 class="text-2xl font-bold">{{ player.first_name }} {{ player.last_name }}</h1>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded">{{ player.age_group }}</span>
+                        <span class="text-gray-500">{{ player.get_skill_level_display }}</span>
+                        {% if player.primary_position %}<span class="text-gray-500">{{ player.get_primary_position_display }}</span>{% endif %}
+                    </div>
+                    <p class="text-gray-500 mt-2">Parent: {{ player.client.user.get_full_name }} | {{ player.client.user.email }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Session History -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">Session History ({{ bookings|length }})</h2>
+                <div class="space-y-3 max-h-96 overflow-y-auto">
+                    {% for booking in bookings %}
+                    <div class="p-3 border rounded-lg">
+                        <div class="flex justify-between">
+                            <span class="font-semibold">{{ booking.scheduled_date|date:"M j, Y" }}</span>
+                            <span class="text-sm text-gray-500">{{ booking.scheduled_time|time:"g:i A" }}</span>
+                        </div>
+                        <p class="text-sm text-gray-500">{{ booking.program.name }} - {{ booking.get_status_display }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No sessions yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Assessments -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">Assessments ({{ assessments|length }})</h2>
+                <div class="space-y-3 max-h-96 overflow-y-auto">
+                    {% for assessment in assessments %}
+                    <div class="p-3 border rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-semibold">{{ assessment.assessment_date|date:"M j, Y" }}</span>
+                                <p class="text-sm text-gray-500">{{ assessment.get_training_type_display }}</p>
+                            </div>
+                            <span class="text-xl font-bold {% if assessment.overall_rating >= 4 %}text-green-500{% elif assessment.overall_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">{{ assessment.overall_rating }}/5</span>
+                        </div>
+                        {% if assessment.parent_visible_notes %}<p class="text-sm text-gray-600 mt-2">{{ assessment.parent_visible_notes|truncatewords:20 }}</p>{% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No assessments yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
