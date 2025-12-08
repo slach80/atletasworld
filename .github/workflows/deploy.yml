@@ -29,8 +29,7 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
-        with:
-          submodules: true
+        # Submodules disabled - share-resources is private
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -68,8 +67,7 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
-        with:
-          submodules: true
+        # Submodules disabled - share-resources is private
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -89,10 +87,14 @@ jobs:
           cd src
           python manage.py collectstatic --noinput
 
-      - name: Build the site
-        run: ./resources/scripts/build.sh
+      # Deploy steps disabled until share-resources submodule is available
+      # - name: Build the site
+      #   run: ./resources/scripts/build.sh
+      #
+      # - name: Deploy the site
+      #   run: ./resources/scripts/deploy.sh
+      #   env:
+      #     DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
 
-      - name: Deploy the site
-        run: ./resources/scripts/deploy.sh
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      - name: Build complete
+        run: echo "Build and static collection complete. Deploy scripts pending."
