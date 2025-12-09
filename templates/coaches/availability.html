@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}Manage Availability - Coach Portal{% endblock %}
+
+{% block extra_css %}
+<!-- Toast UI Calendar CSS -->
+<link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+<style>
+    #calendar {
+        height: 700px;
+    }
+    .calendar-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .calendar-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        min-width: 200px;
+        text-align: center;
+    }
+    .session-type-legend {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+    }
+    .slot-modal .modal-body {
+        padding: 1.5rem;
+    }
+    .time-input-group {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted small mb-3">Coach Portal</h6>
+                    <nav class="nav flex-column">
+                        <a class="nav-link px-0" href="{% url 'coaches:dashboard' %}">
+                            <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                        </a>
+                        <a class="nav-link px-0 active fw-bold" href="{% url 'coaches:availability' %}">
+                            <i class="bi bi-calendar-check me-2"></i> Availability
+                        </a>
+                        <a class="nav-link px-0" href="{% url 'coaches:schedule' %}">
+                            <i class="bi bi-calendar3 me-2"></i> Schedule
+                        </a>
+                        <a class="nav-link px-0" href="{% url 'coaches:players' %}">
+                            <i class="bi bi-people me-2"></i> Players
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Session Types Legend -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">Session Types</h6>
+                </div>
+                <div class="card-body">
+                    <div id="session-types-legend" class="d-flex flex-column gap-2">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-success w-100 mb-2" onclick="openCreateSlotModal()">
+                        <i class="bi bi-plus-circle me-2"></i> Add Availability
+                    </button>
+                    <button class="btn btn-outline-secondary w-100" onclick="calendar.today()">
+                        <i class="bi bi-calendar-event me-2"></i> Go to Today
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <div class="calendar-controls">
+                        <div class="calendar-nav">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.prev()">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="calendar.today()">Today</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.next()">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <span class="calendar-title" id="calendar-title"></span>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="changeView('day')">Day</button>
+                            <button class="btn btn-outline-secondary btn-sm active" onclick="changeView('week')">Week</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="changeView('month')">Month</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Slot Modal -->
+<div class="modal fade" id="slotModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="slotModalTitle">Add Availability</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="slotForm">
+                    <input type="hidden" id="slotId" name="slot_id">
+
+                    <div class="mb-3">
+                        <label class="form-label">Session Type</label>
+                        <select class="form-select" id="sessionTypeSelect" name="session_type_id" required>
+                            <!-- Populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="slotDate" name="date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Time</label>
+                        <div class="time-input-group">
+                            <input type="time" class="form-control" id="slotStartTime" name="start_time" required>
+                            <span>to</span>
+                            <input type="time" class="form-control" id="slotEndTime" name="end_time" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Max Bookings</label>
+                        <input type="number" class="form-control" id="maxBookings" name="max_bookings" value="1" min="1" max="20">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Recurrence</label>
+                        <select class="form-select" id="recurrence" name="recurrence">
+                            <option value="none">One-time</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Bi-weekly</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="recurrenceEndContainer" style="display: none;">
+                        <label class="form-label">Recurrence End Date</label>
+                        <input type="date" class="form-control" id="recurrenceEndDate" name="recurrence_end_date">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes (optional)</label>
+                        <textarea class="form-control" id="slotNotes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger me-auto" id="deleteSlotBtn" style="display: none;" onclick="deleteSlot()">
+                    <i class="bi bi-trash me-1"></i> Delete
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="saveSlot()">
+                    <i class="bi bi-check-circle me-1"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Toast UI Calendar JS -->
+<script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+<script>
+    const Calendar = tui.Calendar;
+    let calendar;
+    let sessionTypes = [];
+    let slotModal;
+
+    // Initialize calendar
+    document.addEventListener('DOMContentLoaded', function() {
+        slotModal = new bootstrap.Modal(document.getElementById('slotModal'));
+
+        // Load session types first, then initialize calendar
+        loadSessionTypes().then(() => {
+            initCalendar();
+            loadAvailability();
+        });
+
+        // Recurrence toggle
+        document.getElementById('recurrence').addEventListener('change', function() {
+            document.getElementById('recurrenceEndContainer').style.display =
+                this.value !== 'none' ? 'block' : 'none';
+        });
+    });
+
+    async function loadSessionTypes() {
+        try {
+            const response = await fetch('/api/bookings/session-types/');
+            sessionTypes = await response.json();
+
+            // Populate legend
+            const legend = document.getElementById('session-types-legend');
+            legend.innerHTML = sessionTypes.map(st => `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${st.color}"></div>
+                    <span>${st.name}</span>
+                </div>
+            `).join('');
+
+            // Populate select
+            const select = document.getElementById('sessionTypeSelect');
+            select.innerHTML = sessionTypes.map(st =>
+                `<option value="${st.id}">${st.name} (${st.duration_minutes}min - $${st.price})</option>`
+            ).join('');
+        } catch (error) {
+            console.error('Error loading session types:', error);
+        }
+    }
+
+    function initCalendar() {
+        const calendars = sessionTypes.map(st => ({
+            id: String(st.id),
+            name: st.name,
+            backgroundColor: st.color,
+            borderColor: st.color,
+        }));
+
+        calendar = new Calendar('#calendar', {
+            defaultView: 'week',
+            usageStatistics: false,
+            isReadOnly: false,
+            useDetailPopup: false,
+            useFormPopup: false,
+            calendars: calendars,
+            week: {
+                startDayOfWeek: 1,
+                hourStart: 6,
+                hourEnd: 22,
+                taskView: false,
+                eventView: ['time'],
+            },
+            month: {
+                startDayOfWeek: 1,
+            },
+            template: {
+                time: function(event) {
+                    return `<span style="color: white;">${event.title}</span>`;
+                },
+            },
+        });
+
+        // Update title
+        updateCalendarTitle();
+
+        // Event handlers
+        calendar.on('selectDateTime', (info) => {
+            openCreateSlotModal(info.start, info.end);
+            calendar.clearGridSelections();
+        });
+
+        calendar.on('clickEvent', (info) => {
+            openEditSlotModal(info.event);
+        });
+
+        calendar.on('beforeUpdateEvent', async (info) => {
+            const { event, changes } = info;
+            await updateSlot(event.id, changes);
+        });
+    }
+
+    function updateCalendarTitle() {
+        const date = calendar.getDate();
+        const options = { year: 'numeric', month: 'long' };
+        document.getElementById('calendar-title').textContent =
+            date.toDate().toLocaleDateString('en-US', options);
+    }
+
+    function changeView(view) {
+        calendar.changeView(view);
+        updateCalendarTitle();
+        document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    async function loadAvailability() {
+        const date = calendar.getDate();
+        const start = new Date(date);
+        start.setDate(start.getDate() - 30);
+        const end = new Date(date);
+        end.setDate(end.getDate() + 60);
+
+        try {
+            const response = await fetch(
+                `/api/bookings/availability/?start=${start.toISOString().split('T')[0]}&end=${end.toISOString().split('T')[0]}`
+            );
+            const events = await response.json();
+
+            calendar.clear();
+            events.forEach(event => {
+                calendar.createEvents([event]);
+            });
+        } catch (error) {
+            console.error('Error loading availability:', error);
+        }
+    }
+
+    function openCreateSlotModal(start, end) {
+        document.getElementById('slotModalTitle').textContent = 'Add Availability';
+        document.getElementById('slotId').value = '';
+        document.getElementById('deleteSlotBtn').style.display = 'none';
+
+        if (start) {
+            document.getElementById('slotDate').value = start.toISOString().split('T')[0];
+            document.getElementById('slotStartTime').value = start.toTimeString().slice(0, 5);
+        } else {
+            document.getElementById('slotDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('slotStartTime').value = '09:00';
+        }
+
+        if (end) {
+            document.getElementById('slotEndTime').value = end.toTimeString().slice(0, 5);
+        } else {
+            document.getElementById('slotEndTime').value = '10:00';
+        }
+
+        document.getElementById('maxBookings').value = 1;
+        document.getElementById('recurrence').value = 'none';
+        document.getElementById('recurrenceEndContainer').style.display = 'none';
+        document.getElementById('slotNotes').value = '';
+
+        slotModal.show();
+    }
+
+    function openEditSlotModal(event) {
+        document.getElementById('slotModalTitle').textContent = 'Edit Availability';
+        document.getElementById('slotId').value = event.id;
+        document.getElementById('deleteSlotBtn').style.display = 'block';
+
+        const startDate = new Date(event.start.d.d);
+        const endDate = new Date(event.end.d.d);
+
+        document.getElementById('slotDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('slotStartTime').value = startDate.toTimeString().slice(0, 5);
+        document.getElementById('slotEndTime').value = endDate.toTimeString().slice(0, 5);
+        document.getElementById('sessionTypeSelect').value = event.calendarId;
+        document.getElementById('maxBookings').value = event.raw?.max_bookings || 1;
+        document.getElementById('slotNotes').value = event.raw?.notes || '';
+
+        slotModal.show();
+    }
+
+    async function saveSlot() {
+        const slotId = document.getElementById('slotId').value;
+        const date = document.getElementById('slotDate').value;
+        const startTime = document.getElementById('slotStartTime').value;
+        const endTime = document.getElementById('slotEndTime').value;
+
+        const data = {
+            calendarId: document.getElementById('sessionTypeSelect').value,
+            start: `${date}T${startTime}:00`,
+            end: `${date}T${endTime}:00`,
+            max_bookings: parseInt(document.getElementById('maxBookings').value),
+            recurrence: document.getElementById('recurrence').value,
+            recurrence_end_date: document.getElementById('recurrenceEndDate').value || null,
+            notes: document.getElementById('slotNotes').value,
+        };
+
+        try {
+            const url = slotId ? `/api/bookings/availability/${slotId}/` : '/api/bookings/availability/';
+            const method = slotId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                slotModal.hide();
+                loadAvailability();
+            } else {
+                alert(result.error || 'Error saving slot');
+            }
+        } catch (error) {
+            console.error('Error saving slot:', error);
+            alert('Error saving slot');
+        }
+    }
+
+    async function updateSlot(slotId, changes) {
+        try {
+            const response = await fetch(`/api/bookings/availability/${slotId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(changes),
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                alert(result.error || 'Error updating slot');
+                loadAvailability();
+            }
+        } catch (error) {
+            console.error('Error updating slot:', error);
+            loadAvailability();
+        }
+    }
+
+    async function deleteSlot() {
+        const slotId = document.getElementById('slotId').value;
+        if (!slotId) return;
+
+        if (!confirm('Are you sure you want to delete this availability slot?')) return;
+
+        try {
+            const response = await fetch(`/api/bookings/availability/${slotId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+            });
+
+            if (response.ok) {
+                slotModal.hide();
+                loadAvailability();
+            } else {
+                const result = await response.json();
+                alert(result.error || 'Error deleting slot');
+            }
+        } catch (error) {
+            console.error('Error deleting slot:', error);
+            alert('Error deleting slot');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Navigation event
+    calendar?.on('clickDayName', () => updateCalendarTitle());
+</script>
+{% endblock %}

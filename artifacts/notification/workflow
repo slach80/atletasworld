@@ -1,0 +1,62 @@
+Based on your needs, here’s the best solution:
+
+## Best Tool: **Celery + Celery Beat + Django-Anymail + Twilio**
+
+This combination gives you:
+
+- Scheduled recurring tasks (weekly reminders)
+- Reliable email delivery with templates
+- SMS capability
+- Profile-based targeting
+- Custom messaging workflows​​​​​​​​​​​​​​​​
+
+I’ve created a comprehensive notification system architecture. Here’s the **workflow**:
+
+## Workflow Overview
+
+### 1. **Automated Weekly Reminders**
+
+- Every Monday at 9 AM → Celery Beat triggers task
+- Identifies clients who haven’t booked in past week
+- Sends personalized email/SMS with booking link
+- Logs all notifications
+
+### 2. **Inactive Client Re-engagement**
+
+- Daily check at 10 AM
+- Targets clients inactive for 3+ weeks
+- Sends special offers or “we miss you” messages
+- Tracks inactive weeks in profile
+
+### 3. **Upcoming Events**
+
+- Daily at 8 AM
+- Promotes workshops/events to targeted profiles (Premium/VIP)
+- Sends event details with registration link
+
+### 4. **Custom Campaigns**
+
+- Admin triggers on-demand
+- Filter by: membership tier, session count, inactivity, etc.
+- Send immediately or schedule
+
+## Setup Steps
+
+1. **Install dependencies** (see code comments)
+1. **Run Redis** (or RabbitMQ): `redis-server`
+1. **Start Celery worker**: `celery -A myproject worker -l info`
+1. **Start Celery Beat**: `celery -A myproject beat -l info`
+1. **Configure environment variables** (SendGrid, Twilio keys)
+1. **Create notification templates** in Django admin
+
+## Key Features
+
+✅ Profile-based targeting (membership tier, activity level)  
+✅ Multi-channel (email + SMS)  
+✅ Scheduled recurring notifications  
+✅ Custom campaign builder  
+✅ Full notification logging  
+✅ Template management in admin  
+✅ Client preference controls
+
+This system is production-ready and scales well. Would you like me to add any specific features or help with the email template HTML design?​​​​​​​​​​​​​​​​

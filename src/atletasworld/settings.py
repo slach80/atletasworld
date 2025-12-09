@@ -21,6 +21,9 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # Application definition
 INSTALLED_APPS = [
+    # Grappelli must come before django.contrib.admin
+    'grappelli',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,6 +43,15 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.instagram',
     'django.contrib.sites',
+
+    # UI packages
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'django_bootstrap5',
+
+    # Celery
+    'django_celery_beat',
+    'django_celery_results',
 
     # Local apps
     'clients.apps.ClientsConfig',
@@ -197,3 +209,66 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     },
 }
+
+# Crispy Forms settings
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
+
+# Django Bootstrap5 settings
+BOOTSTRAP5 = {
+    'css_url': {
+        'url': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+        'integrity': 'sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN',
+        'crossorigin': 'anonymous',
+    },
+    'javascript_url': {
+        'url': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
+        'integrity': 'sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL',
+        'crossorigin': 'anonymous',
+    },
+    'theme_url': None,
+    'color_mode': None,
+}
+
+# Grappelli settings
+GRAPPELLI_ADMIN_TITLE = 'Atletas World Admin'
+GRAPPELLI_AUTOCOMPLETE_LIMIT = 10
+
+# =============================================================================
+# NOTIFICATION SERVICES - Feature Flags (all paid services disabled by default)
+# =============================================================================
+# Set to True in .env to enable paid services
+
+# SMS via Twilio (PAID - ~$0.0075/SMS)
+SMS_ENABLED = env.bool('SMS_ENABLED', default=False)
+TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = env('TWILIO_PHONE_NUMBER', default='')
+
+# Web Push Notifications (FREE - uses VAPID)
+PUSH_NOTIFICATIONS_ENABLED = env.bool('PUSH_NOTIFICATIONS_ENABLED', default=False)
+VAPID_PUBLIC_KEY = env('VAPID_PUBLIC_KEY', default='')
+VAPID_PRIVATE_KEY = env('VAPID_PRIVATE_KEY', default='')
+
+# Production Email via SendGrid/Mailgun (PAID)
+# Default uses Django console backend (FREE for development)
+PRODUCTION_EMAIL_ENABLED = env.bool('PRODUCTION_EMAIL_ENABLED', default=False)
+
+# Celery for background tasks (requires Redis - FREE locally, paid in cloud)
+CELERY_ENABLED = env.bool('CELERY_ENABLED', default=False)
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='django-db')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# =============================================================================
+# General Settings
+# =============================================================================
+SITE_URL = env('SITE_URL', default='http://localhost:8000')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@atletasworld.com')
+SERVER_EMAIL = env('SERVER_EMAIL', default='noreply@atletasworld.com')

@@ -31,7 +31,15 @@ urlpatterns = [
 
     # Notifications
     path('notifications/', views.notification_settings, name='notification_settings'),
+    path('notifications/history/', views.notification_history, name='notification_history'),
+    path('notifications/unread-count/', views.get_unread_count, name='unread_count'),
+
+    # Push notifications API
+    path('api/push/subscribe/', views.register_push_subscription, name='push_subscribe'),
+    path('api/push/unsubscribe/', views.unregister_push_subscription, name='push_unsubscribe'),
 
     # Assessments
     path('assessments/', views.assessments_view, name='assessments'),
+    path('players/<int:player_id>/assessments/', views.player_assessments, name='player_assessments'),
+    path('api/players/<int:player_id>/assessment-data/', views.player_assessment_chart_data, name='player_assessment_data'),
 ]

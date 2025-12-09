@@ -29,7 +29,7 @@
 
         <div class="bg-white rounded-xl shadow-md p-6">
             <h1 class="text-2xl font-bold mb-2">Assessment for {{ booking.player }}</h1>
-            <p class="text-gray-500 mb-6">Session: {{ booking.scheduled_date|date:"M j, Y" }} - {{ booking.program.name }}</p>
+            <p class="text-gray-500 mb-6">Session: {{ booking.scheduled_date|date:"M j, Y" }} - {{ booking.session_type.name }}</p>
 
             <form method="POST">
                 {% csrf_token %}

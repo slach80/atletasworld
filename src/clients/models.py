@@ -426,3 +426,130 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class NotificationTemplate(models.Model):
+    """Reusable notification templates for automated messaging."""
+    TEMPLATE_TYPE_CHOICES = [
+        ('booking_confirmed', 'Booking Confirmed'),
+        ('booking_reminder', 'Booking Reminder'),
+        ('booking_cancelled', 'Booking Cancelled'),
+        ('weekly_reminder', 'Weekly Session Reminder'),
+        ('inactive_client', 'Inactive Client Re-engagement'),
+        ('package_expiring', 'Package Expiring Soon'),
+        ('package_exhausted', 'Package Sessions Exhausted'),
+        ('assessment_ready', 'Assessment Ready'),
+        ('upcoming_event', 'Upcoming Event'),
+        ('custom_campaign', 'Custom Campaign'),
+        ('promotional', 'Promotional'),
+    ]
+
+    name = models.CharField(max_length=100)
+    template_type = models.CharField(max_length=30, choices=TEMPLATE_TYPE_CHOICES)
+    description = models.TextField(blank=True, help_text="Internal description of this template")
+
+    # Email content
+    email_subject = models.CharField(max_length=200)
+    email_body_html = models.TextField(help_text="HTML email body. Use {{variable}} for dynamic content.")
+    email_body_text = models.TextField(help_text="Plain text email body for non-HTML clients.")
+
+    # SMS content
+    sms_body = models.CharField(max_length=160, blank=True, help_text="SMS message (160 char limit)")
+
+    # Targeting (JSON filter criteria)
+    target_filters = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Filter criteria: {'inactive_weeks': 3, 'has_package': true}"
+    )
+
+    # Status
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.get_template_type_display()})"
+
+    def render_email_subject(self, context):
+        """Render email subject with context variables."""
+        from django.template import Template, Context
+        template = Template(self.email_subject)
+        return template.render(Context(context))
+
+    def render_email_body_html(self, context):
+        """Render HTML email body with context variables."""
+        from django.template import Template, Context
+        template = Template(self.email_body_html)
+        return template.render(Context(context))
+
+    def render_email_body_text(self, context):
+        """Render plain text email body with context variables."""
+        from django.template import Template, Context
+        template = Template(self.email_body_text)
+        return template.render(Context(context))
+
+    def render_sms_body(self, context):
+        """Render SMS body with context variables."""
+        from django.template import Template, Context
+        template = Template(self.sms_body)
+        return template.render(Context(context))
+
+    class Meta:
+        ordering = ['template_type', 'name']
+        verbose_name = 'Notification Template'
+        verbose_name_plural = 'Notification Templates'
+
+
+class PushSubscription(models.Model):
+    """Web Push notification subscription for a client."""
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='push_subscriptions')
+    endpoint = models.TextField(unique=True)
+    p256dh_key = models.CharField(max_length=255)
+    auth_key = models.CharField(max_length=255)
+    user_agent = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Push subscription for {self.client}"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Push Subscription'
+        verbose_name_plural = 'Push Subscriptions'
+
+
+class NotificationSchedule(models.Model):
+    """Schedule for custom notification campaigns."""
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('scheduled', 'Scheduled'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    name = models.CharField(max_length=100)
+    template = models.ForeignKey(NotificationTemplate, on_delete=models.CASCADE)
+    scheduled_datetime = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    target_filters = models.JSONField(default=dict, blank=True)
+
+    # Stats
+    recipients_count = models.IntegerField(default=0)
+    sent_count = models.IntegerField(default=0)
+    failed_count = models.IntegerField(default=0)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    executed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.get_status_display()}"
+
+    class Meta:
+        ordering = ['-scheduled_datetime']
+        verbose_name = 'Notification Schedule'
+        verbose_name_plural = 'Notification Schedules'

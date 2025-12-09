@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}Book a Session - Client Portal{% endblock %}
+
+{% block extra_css %}
+<!-- Toast UI Calendar CSS -->
+<link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+<style>
+    #calendar {
+        height: 600px;
+    }
+    .calendar-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .calendar-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        min-width: 200px;
+        text-align: center;
+    }
+    .package-card {
+        border-left: 4px solid #2ecc71;
+        transition: all 0.2s ease;
+    }
+    .package-card.low-sessions {
+        border-left-color: #f39c12;
+    }
+    .package-card.no-sessions {
+        border-left-color: #e74c3c;
+    }
+    .session-info-badge {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .slot-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .slot-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted small mb-3">Client Portal</h6>
+                    <nav class="nav flex-column">
+                        <a class="nav-link px-0" href="{% url 'clients:dashboard' %}">
+                            <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                        </a>
+                        <a class="nav-link px-0 active fw-bold" href="{% url 'clients:book' %}">
+                            <i class="bi bi-calendar-plus me-2"></i> Book Session
+                        </a>
+                        <a class="nav-link px-0" href="{% url 'clients:bookings' %}">
+                            <i class="bi bi-calendar-check me-2"></i> My Bookings
+                        </a>
+                        <a class="nav-link px-0" href="{% url 'clients:players' %}">
+                            <i class="bi bi-people me-2"></i> My Players
+                        </a>
+                        <a class="nav-link px-0" href="{% url 'clients:packages' %}">
+                            <i class="bi bi-box me-2"></i> My Packages
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Package Status -->
+            <div class="card border-0 shadow-sm mt-3" id="package-status">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0"><i class="bi bi-box me-2"></i>Your Package</h6>
+                </div>
+                <div class="card-body" id="package-info">
+                    <!-- Populated by JavaScript -->
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0"><i class="bi bi-person me-2"></i>Select Player</h6>
+                </div>
+                <div class="card-body">
+                    <select class="form-select" id="playerSelect">
+                        {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
+                        {% empty %}
+                        <option value="">No players added</option>
+                        {% endfor %}
+                    </select>
+                    {% if not players %}
+                    <a href="{% url 'clients:player_add' %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                        <i class="bi bi-plus me-1"></i> Add Player
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small">Coach</label>
+                        <select class="form-select form-select-sm" id="coachFilter">
+                            <option value="">All Coaches</option>
+                            {% for coach in coaches %}
+                            <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Session Type</label>
+                        <select class="form-select form-select-sm" id="sessionTypeFilter">
+                            <option value="">All Types</option>
+                            <!-- Populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <div class="calendar-controls">
+                        <div class="calendar-nav">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.prev(); loadAvailability();">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="calendar.today(); loadAvailability();">Today</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.next(); loadAvailability();">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <span class="calendar-title" id="calendar-title"></span>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="changeView('day')">Day</button>
+                            <button class="btn btn-outline-secondary btn-sm active" onclick="changeView('week')">Week</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="changeView('month')">Month</button>
+                        </div>
+                    </div>
+                    <!-- Legend -->
+                    <div class="d-flex align-items-center gap-3 small text-muted">
+                        <span><span class="badge" style="background-color: #6c757d;">&nbsp;&nbsp;</span> My Booked</span>
+                        <span><span class="badge" style="background-color: #2ecc71;">&nbsp;&nbsp;</span> Available</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Confirmation Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="bookingDetails">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <hr>
+
+                <div id="packageSection">
+                    <h6>Payment Method</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="usePackage" value="package" checked>
+                        <label class="form-check-label" for="usePackage">
+                            Use Package Session <span id="packageRemaining" class="text-muted small"></span>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="payNow" value="pay">
+                        <label class="form-check-label" for="payNow">
+                            Pay Now <span id="sessionPrice" class="fw-bold"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="noPackageWarning" class="alert alert-warning mt-3" style="display: none;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>No sessions remaining!</strong>
+                    <p class="mb-2 small">You need to purchase or upgrade a package to book this session.</p>
+                    <a href="{% url 'clients:packages' %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-arrow-up-circle me-1"></i> Upgrade Package
+                    </a>
+                </div>
+
+                <div id="sameDayWarning" class="alert alert-info mt-3" style="display: none;">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Multiple sessions on the same day</strong>
+                    <p class="mb-0 small">You already have <span id="sameDayCount">1</span> session(s) booked on this day. Are you sure you want to book another?</p>
+                </div>
+
+                <div class="mb-3 mt-3">
+                    <label class="form-label">Notes (optional)</label>
+                    <textarea class="form-control" id="bookingNotes" rows="2" placeholder="Any special requests or notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmBookingBtn" onclick="confirmBooking()">
+                    <i class="bi bi-check-circle me-1"></i> Confirm Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-body py-5">
+                <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">Booking Confirmed!</h4>
+                <p class="text-muted" id="successMessage"></p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+                        <i class="bi bi-plus-circle me-1"></i> Book Another
+                    </button>
+                    <a href="{% url 'clients:bookings' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar-check me-1"></i> View My Bookings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Toast UI Calendar JS -->
+<script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+<script>
+    const Calendar = tui.Calendar;
+    let calendar;
+    let sessionTypes = [];
+    let packages = [];
+    let selectedSlot = null;
+    let bookingModal, successModal;
+
+    // Existing bookings for same-day conflict detection
+    const existingBookings = [
+        {% for booking in existing_bookings %}
+        {
+            id: {{ booking.id }},
+            date: "{{ booking.scheduled_date|date:'Y-m-d' }}",
+            time: "{{ booking.scheduled_time|time:'H:i' }}",
+            player_id: {{ booking.player.id|default:'null' }},
+            player_name: "{{ booking.player.first_name|default:'' }} {{ booking.player.last_name|default:'' }}".trim(),
+            session_type: "{{ booking.session_type.name|default:'' }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
+        successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+        // Load data then initialize
+        Promise.all([loadSessionTypes(), loadPackages()]).then(() => {
+            initCalendar();
+            loadAvailability();
+        });
+
+        // Filter change handlers
+        document.getElementById('coachFilter').addEventListener('change', loadAvailability);
+        document.getElementById('sessionTypeFilter').addEventListener('change', loadAvailability);
+    });
+
+    async function loadSessionTypes() {
+        try {
+            const response = await fetch('/api/bookings/session-types/');
+            sessionTypes = await response.json();
+
+            // Populate filter
+            const select = document.getElementById('sessionTypeFilter');
+            select.innerHTML = '<option value="">All Types</option>' +
+                sessionTypes.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+        } catch (error) {
+            console.error('Error loading session types:', error);
+        }
+    }
+
+    async function loadPackages() {
+        try {
+            const response = await fetch('/api/bookings/packages/');
+            const data = await response.json();
+            packages = data.packages || [];
+
+            updatePackageDisplay();
+        } catch (error) {
+            console.error('Error loading packages:', error);
+        }
+    }
+
+    function updatePackageDisplay() {
+        const container = document.getElementById('package-info');
+
+        if (packages.length === 0) {
+            container.innerHTML = `
+                <div class="text-center">
+                    <p class="text-muted mb-2">No active package</p>
+                    <a href="{% url 'clients:packages' %}" class="btn btn-success btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i> Get Package
+                    </a>
+                </div>
+            `;
+            return;
+        }
+
+        const pkg = packages[0]; // Use first active package
+        const statusClass = pkg.sessions_remaining <= 0 ? 'no-sessions' :
+                           pkg.sessions_remaining <= 2 ? 'low-sessions' : '';
+
+        container.innerHTML = `
+            <div class="package-card ${statusClass} p-2 rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">${pkg.package_name}</div>
+                        <small class="text-muted">Expires: ${pkg.expiry_date}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="session-info-badge ${pkg.sessions_remaining <= 0 ? 'text-danger' : 'text-success'}">
+                            ${pkg.sessions_remaining}
+                        </div>
+                        <small class="text-muted">sessions</small>
+                    </div>
+                </div>
+            </div>
+            ${pkg.sessions_remaining <= 2 ? `
+            <a href="{% url 'clients:packages' %}" class="btn btn-outline-warning btn-sm w-100 mt-2">
+                <i class="bi bi-arrow-up-circle me-1"></i> Upgrade Package
+            </a>
+            ` : ''}
+        `;
+    }
+
+    function initCalendar() {
+        const calendars = sessionTypes.map(st => ({
+            id: String(st.id),
+            name: st.name,
+            backgroundColor: st.color,
+            borderColor: st.color,
+        }));
+
+        // Add a special calendar for client's booked sessions
+        calendars.push({
+            id: 'booked',
+            name: 'My Booked Sessions',
+            backgroundColor: '#6c757d',
+            borderColor: '#495057',
+        });
+
+        calendar = new Calendar('#calendar', {
+            defaultView: 'week',
+            usageStatistics: false,
+            isReadOnly: true,
+            useDetailPopup: false,
+            useFormPopup: false,
+            calendars: calendars,
+            week: {
+                startDayOfWeek: 1,
+                hourStart: 6,
+                hourEnd: 22,
+                taskView: false,
+                eventView: ['time'],
+            },
+            month: {
+                startDayOfWeek: 1,
+            },
+            template: {
+                time: function(event) {
+                    // Check if this is a booked session
+                    if (event.raw?.is_booked) {
+                        return `
+                            <div style="color: white; font-size: 11px; opacity: 0.9;">
+                                <div><strong>${event.title}</strong></div>
+                                <div>${event.raw?.player_name || ''}</div>
+                                <div style="font-size: 10px;">Already Booked</div>
+                            </div>
+                        `;
+                    }
+                    const spots = event.raw?.spots_remaining || 0;
+                    return `
+                        <div style="color: white; font-size: 11px;">
+                            <div>${event.title}</div>
+                            <div>${event.raw?.coach_name || ''}</div>
+                            <div>${spots} spot${spots !== 1 ? 's' : ''} left</div>
+                        </div>
+                    `;
+                },
+            },
+        });
+
+        updateCalendarTitle();
+
+        // Click to book
+        calendar.on('clickEvent', (info) => {
+            openBookingModal(info.event);
+        });
+    }
+
+    function updateCalendarTitle() {
+        const date = calendar.getDate();
+        const options = { year: 'numeric', month: 'long' };
+        document.getElementById('calendar-title').textContent =
+            date.toDate().toLocaleDateString('en-US', options);
+    }
+
+    function changeView(view) {
+        calendar.changeView(view);
+        updateCalendarTitle();
+        document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    async function loadAvailability() {
+        const date = calendar.getDate();
+        const start = new Date(date);
+        start.setDate(start.getDate() - 7);
+        const end = new Date(date);
+        end.setDate(end.getDate() + 30);
+
+        const coachId = document.getElementById('coachFilter').value;
+        const sessionTypeId = document.getElementById('sessionTypeFilter').value;
+
+        let url = `/api/bookings/availability/?start=${start.toISOString().split('T')[0]}&end=${end.toISOString().split('T')[0]}`;
+        if (coachId) url += `&coach_id=${coachId}`;
+
+        try {
+            const response = await fetch(url);
+            let events = await response.json();
+
+            // Filter by session type on client side
+            if (sessionTypeId) {
+                events = events.filter(e => e.calendarId === sessionTypeId);
+            }
+
+            // Filter out fully booked
+            events = events.filter(e => e.raw?.spots_remaining > 0);
+
+            calendar.clear();
+            events.forEach(event => {
+                calendar.createEvents([event]);
+            });
+
+            // Add client's already booked sessions to the calendar
+            addBookedSessionsToCalendar();
+
+            updateCalendarTitle();
+        } catch (error) {
+            console.error('Error loading availability:', error);
+        }
+    }
+
+    function addBookedSessionsToCalendar() {
+        // Add client's booked sessions as grey/disabled events
+        existingBookings.forEach(booking => {
+            // Parse the date and time
+            const [year, month, day] = booking.date.split('-').map(Number);
+            const [hour, minute] = booking.time.split(':').map(Number);
+
+            const startDate = new Date(year, month - 1, day, hour, minute);
+            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Assume 1 hour duration
+
+            calendar.createEvents([{
+                id: `booked-${booking.id}`,
+                calendarId: 'booked',
+                title: `✓ ${booking.session_type || 'Booked'}`,
+                start: startDate,
+                end: endDate,
+                isReadOnly: true,
+                raw: {
+                    is_booked: true,
+                    player_name: booking.player_name,
+                    booking_id: booking.id
+                }
+            }]);
+        });
+    }
+
+    function openBookingModal(event) {
+        selectedSlot = event;
+        const raw = event.raw || {};
+
+        // Check if this is an already booked session
+        if (raw.is_booked) {
+            alert(`You already have this session booked for ${raw.player_name || 'your player'}.`);
+            return;
+        }
+
+        // Check if slot is available
+        if (raw.spots_remaining <= 0) {
+            alert('This slot is fully booked.');
+            return;
+        }
+
+        // Get selected player
+        const playerId = document.getElementById('playerSelect').value;
+        if (!playerId) {
+            alert('Please select a player first.');
+            return;
+        }
+
+        // Populate booking details
+        const startDate = new Date(event.start.d.d);
+        document.getElementById('bookingDetails').innerHTML = `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Session Type:</span>
+                    <span class="fw-bold">${raw.session_type_name}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Coach:</span>
+                    <span class="fw-bold">${raw.coach_name}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Date:</span>
+                    <span class="fw-bold">${startDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Time:</span>
+                    <span class="fw-bold">${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Duration:</span>
+                    <span class="fw-bold">${raw.duration} minutes</span>
+                </div>
+            </div>
+        `;
+
+        // Update package section
+        document.getElementById('sessionPrice').textContent = `$${raw.price}`;
+
+        const activePackage = packages.find(p => p.can_book);
+        if (activePackage) {
+            document.getElementById('packageRemaining').textContent = `(${activePackage.sessions_remaining} remaining)`;
+            document.getElementById('packageSection').style.display = 'block';
+            document.getElementById('noPackageWarning').style.display = 'none';
+            document.getElementById('confirmBookingBtn').disabled = false;
+            document.getElementById('usePackage').checked = true;
+        } else {
+            document.getElementById('packageSection').style.display = 'none';
+            document.getElementById('noPackageWarning').style.display = 'block';
+            document.getElementById('confirmBookingBtn').disabled = true;
+        }
+
+        // Check for same-day bookings
+        checkSameDayBookings(startDate, playerId);
+
+        bookingModal.show();
+    }
+
+    function checkSameDayBookings(selectedDate, selectedPlayerId) {
+        // Format selected date to match stored format (YYYY-MM-DD)
+        const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+        // Find bookings on the same day
+        const sameDayBookings = existingBookings.filter(booking => {
+            return booking.date === selectedDateStr;
+        });
+
+        // Find bookings for the same player on the same day
+        const samePlayerSameDayBookings = sameDayBookings.filter(booking => {
+            return booking.player_id === parseInt(selectedPlayerId);
+        });
+
+        const warningDiv = document.getElementById('sameDayWarning');
+        const countSpan = document.getElementById('sameDayCount');
+
+        if (samePlayerSameDayBookings.length > 0) {
+            // Show warning for same player
+            countSpan.textContent = samePlayerSameDayBookings.length;
+            warningDiv.style.display = 'block';
+            warningDiv.className = 'alert alert-warning mt-3';
+            warningDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Multiple sessions on the same day</strong>
+                <p class="mb-0 small">This player already has <strong>${samePlayerSameDayBookings.length}</strong> session(s) booked on this day:
+                <ul class="mb-0 small">
+                    ${samePlayerSameDayBookings.map(b => `<li>${b.session_type} at ${b.time}</li>`).join('')}
+                </ul>
+                Are you sure you want to book another session?</p>
+            `;
+        } else if (sameDayBookings.length > 0) {
+            // Show info for other players on same day
+            countSpan.textContent = sameDayBookings.length;
+            warningDiv.style.display = 'block';
+            warningDiv.className = 'alert alert-info mt-3';
+            warningDiv.innerHTML = `
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Other sessions on this day</strong>
+                <p class="mb-0 small">You have <strong>${sameDayBookings.length}</strong> other session(s) booked on this day for different players.</p>
+            `;
+        } else {
+            warningDiv.style.display = 'none';
+        }
+    }
+
+    async function confirmBooking() {
+        if (!selectedSlot) return;
+
+        const playerId = document.getElementById('playerSelect').value;
+        const notes = document.getElementById('bookingNotes').value;
+        const usePackage = document.querySelector('input[name="paymentMethod"]:checked')?.value === 'package';
+
+        const activePackage = packages.find(p => p.can_book);
+
+        const data = {
+            slot_id: selectedSlot.raw.slot_id,
+            player_id: playerId,
+            package_id: usePackage && activePackage ? activePackage.id : null,
+            notes: notes,
+        };
+
+        try {
+            document.getElementById('confirmBookingBtn').disabled = true;
+            document.getElementById('confirmBookingBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Booking...';
+
+            const response = await fetch('/api/bookings/bookings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                bookingModal.hide();
+
+                // Add the new booking to existingBookings array for same-day detection
+                // Use the selectedSlot date in YYYY-MM-DD format for consistency
+                const bookedDate = new Date(selectedSlot.start.d.d);
+                const bookedDateStr = bookedDate.toISOString().split('T')[0];
+                const bookedTimeStr = bookedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                existingBookings.push({
+                    id: result.booking?.id || Date.now(),
+                    date: bookedDateStr,
+                    time: bookedTimeStr,
+                    player_id: parseInt(playerId),
+                    player_name: document.getElementById('playerSelect').selectedOptions[0]?.text || '',
+                    session_type: selectedSlot.raw?.session_type_name || result.booking?.session_type || ''
+                });
+
+                // Show success
+                document.getElementById('successMessage').textContent =
+                    `Your ${result.booking.session_type} session with ${result.booking.coach} on ${result.booking.date} at ${result.booking.time} has been confirmed.`;
+                successModal.show();
+
+                // Refresh data
+                loadAvailability();
+                loadPackages();
+            } else {
+                if (result.upgrade_available) {
+                    document.getElementById('noPackageWarning').style.display = 'block';
+                }
+                alert(result.error || 'Error creating booking');
+            }
+        } catch (error) {
+            console.error('Error creating booking:', error);
+            alert('Error creating booking');
+        } finally {
+            document.getElementById('confirmBookingBtn').disabled = false;
+            document.getElementById('confirmBookingBtn').innerHTML = '<i class="bi bi-check-circle me-1"></i> Confirm Booking';
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+</script>
+{% endblock %}

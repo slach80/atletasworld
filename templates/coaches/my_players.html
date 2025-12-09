@@ -116,7 +116,7 @@
                     </div>
                     {% if player_data.last_session %}
                     <div class="mt-3 pt-3 border-t text-sm text-gray-500">
-                        Last session: {{ player_data.last_session.scheduled_date|date:"M j, Y" }} - {{ player_data.last_session.program.name }}
+                        Last session: {{ player_data.last_session.scheduled_date|date:"M j, Y" }} - {{ player_data.last_session.session_type.name }}
                     </div>
                     {% endif %}
                 </div>

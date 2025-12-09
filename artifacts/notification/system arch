@@ -1,0 +1,445 @@
+# ==================================
+
+# NOTIFICATION SYSTEM ARCHITECTURE
+
+# ==================================
+
+# 1. INSTALLATION
+
+“””
+pip install celery
+pip install redis  # or use RabbitMQ
+pip install django-celery-beat
+pip install django-anymail
+pip install twilio
+“””
+
+# 2. MODELS (notifications/models.py)
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class ClientProfile(models.Model):
+“”“Extended client profile for targeting”””
+user = models.OneToOneField(User, on_delete=models.CASCADE)
+phone_number = models.CharField(max_length=15, blank=True)
+email_notifications = models.BooleanField(default=True)
+sms_notifications = models.BooleanField(default=False)
+
+```
+# Profile attributes for targeting
+membership_tier = models.CharField(max_length=50, choices=[
+    ('basic', 'Basic'),
+    ('premium', 'Premium'),
+    ('vip', 'VIP')
+])
+last_booking_date = models.DateTimeField(null=True, blank=True)
+total_sessions = models.IntegerField(default=0)
+inactive_weeks = models.IntegerField(default=0)
+
+# Preferences
+preferred_notification_time = models.TimeField(default='09:00:00')
+timezone = models.CharField(max_length=50, default='America/New_York')
+```
+
+class NotificationTemplate(models.Model):
+“”“Reusable notification templates”””
+name = models.CharField(max_length=100)
+notification_type = models.CharField(max_length=50, choices=[
+(‘weekly_reminder’, ‘Weekly Reminder’),
+(‘inactive_client’, ‘Inactive Client’),
+(‘upcoming_event’, ‘Upcoming Event’),
+(‘custom_campaign’, ‘Custom Campaign’),
+(‘promotional’, ‘Promotional’)
+])
+
+```
+# Email content
+email_subject = models.CharField(max_length=200)
+email_body_html = models.TextField()
+email_body_text = models.TextField()
+
+# SMS content
+sms_body = models.CharField(max_length=160)
+
+# Targeting
+target_profiles = models.JSONField(default=dict, help_text="Filter criteria")
+
+is_active = models.BooleanField(default=True)
+created_at = models.DateTimeField(auto_now_add=True)
+```
+
+class NotificationLog(models.Model):
+“”“Track sent notifications”””
+client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE)
+template = models.ForeignKey(NotificationTemplate, on_delete=models.SET_NULL, null=True)
+notification_type = models.CharField(max_length=50)
+channel = models.CharField(max_length=20, choices=[
+(‘email’, ‘Email’),
+(‘sms’, ‘SMS’),
+(‘both’, ‘Both’)
+])
+
+```
+sent_at = models.DateTimeField(auto_now_add=True)
+status = models.CharField(max_length=20, choices=[
+    ('sent', 'Sent'),
+    ('failed', 'Failed'),
+    ('pending', 'Pending')
+])
+error_message = models.TextField(blank=True)
+```
+
+# 3. CELERY CONFIGURATION (myproject/celery.py)
+
+import os
+from celery import Celery
+from celery.schedules import crontab
+
+os.environ.setdefault(‘DJANGO_SETTINGS_MODULE’, ‘myproject.settings’)
+
+app = Celery(‘myproject’)
+app.config_from_object(‘django.conf:settings’, namespace=‘CELERY’)
+app.autodiscover_tasks()
+
+# Celery Beat Schedule
+
+app.conf.beat_schedule = {
+# Weekly reminder - Every Monday at 9 AM
+‘weekly-session-reminder’: {
+‘task’: ‘notifications.tasks.send_weekly_reminders’,
+‘schedule’: crontab(hour=9, minute=0, day_of_week=1),
+},
+
+```
+# Check inactive clients - Every day at 10 AM
+'inactive-client-check': {
+    'task': 'notifications.tasks.check_inactive_clients',
+    'schedule': crontab(hour=10, minute=0),
+},
+
+# Upcoming events reminder - Every day at 8 AM
+'upcoming-events-reminder': {
+    'task': 'notifications.tasks.send_upcoming_event_reminders',
+    'schedule': crontab(hour=8, minute=0),
+},
+```
+
+}
+
+# 4. NOTIFICATION SERVICES (notifications/services.py)
+
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from twilio.rest import Client
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(**name**)
+
+class NotificationService:
+
+```
+@staticmethod
+def send_email(to_email, subject, html_content, text_content, context=None):
+    """Send email using Django-Anymail"""
+    try:
+        if context:
+            html_content = render_to_string('emails/base.html', {
+                'content': html_content,
+                **context
+            })
+        
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[to_email]
+        )
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+        
+        logger.info(f"Email sent to {to_email}")
+        return True, "Sent"
+        
+    except Exception as e:
+        logger.error(f"Email failed to {to_email}: {str(e)}")
+        return False, str(e)
+
+@staticmethod
+def send_sms(to_phone, message):
+    """Send SMS using Twilio"""
+    try:
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        
+        message = client.messages.create(
+            body=message,
+            from_=settings.TWILIO_PHONE_NUMBER,
+            to=to_phone
+        )
+        
+        logger.info(f"SMS sent to {to_phone}")
+        return True, "Sent"
+        
+    except Exception as e:
+        logger.error(f"SMS failed to {to_phone}: {str(e)}")
+        return False, str(e)
+
+@staticmethod
+def send_notification(client_profile, template, context=None):
+    """Send notification based on client preferences"""
+    results = []
+    
+    if client_profile.email_notifications and template.email_subject:
+        success, message = NotificationService.send_email(
+            to_email=client_profile.user.email,
+            subject=template.email_subject,
+            html_content=template.email_body_html,
+            text_content=template.email_body_text,
+            context=context
+        )
+        results.append(('email', success, message))
+    
+    if client_profile.sms_notifications and client_profile.phone_number and template.sms_body:
+        success, message = NotificationService.send_sms(
+            to_phone=client_profile.phone_number,
+            message=template.sms_body
+        )
+        results.append(('sms', success, message))
+    
+    return results
+```
+
+# 5. CELERY TASKS (notifications/tasks.py)
+
+from celery import shared_task
+from django.utils import timezone
+from datetime import timedelta
+from .models import ClientProfile, NotificationTemplate, NotificationLog
+from .services import NotificationService
+
+@shared_task
+def send_weekly_reminders():
+“”“Send weekly reminders to schedule sessions”””
+template = NotificationTemplate.objects.get(
+notification_type=‘weekly_reminder’,
+is_active=True
+)
+
+```
+# Get clients who haven't booked this week
+week_ago = timezone.now() - timedelta(days=7)
+clients = ClientProfile.objects.filter(
+    email_notifications=True,
+    last_booking_date__lt=week_ago
+)
+
+for client in clients:
+    context = {
+        'client_name': client.user.first_name,
+        'booking_link': f"{settings.SITE_URL}/bookings/",
+    }
+    
+    results = NotificationService.send_notification(client, template, context)
+    
+    # Log the notification
+    for channel, success, message in results:
+        NotificationLog.objects.create(
+            client=client,
+            template=template,
+            notification_type='weekly_reminder',
+            channel=channel,
+            status='sent' if success else 'failed',
+            error_message=message if not success else ''
+        )
+
+return f"Sent weekly reminders to {clients.count()} clients"
+```
+
+@shared_task
+def check_inactive_clients():
+“”“Target clients who haven’t booked in 3+ weeks”””
+three_weeks_ago = timezone.now() - timedelta(weeks=3)
+
+```
+inactive_clients = ClientProfile.objects.filter(
+    last_booking_date__lt=three_weeks_ago,
+    email_notifications=True
+)
+
+template = NotificationTemplate.objects.get(
+    notification_type='inactive_client',
+    is_active=True
+)
+
+for client in inactive_clients:
+    weeks_inactive = (timezone.now() - client.last_booking_date).days // 7
+    client.inactive_weeks = weeks_inactive
+    client.save()
+    
+    context = {
+        'client_name': client.user.first_name,
+        'weeks_inactive': weeks_inactive,
+        'special_offer_link': f"{settings.SITE_URL}/special-offers/",
+    }
+    
+    results = NotificationService.send_notification(client, template, context)
+    
+    for channel, success, message in results:
+        NotificationLog.objects.create(
+            client=client,
+            template=template,
+            notification_type='inactive_client',
+            channel=channel,
+            status='sent' if success else 'failed',
+            error_message=message if not success else ''
+        )
+
+return f"Checked {inactive_clients.count()} inactive clients"
+```
+
+@shared_task
+def send_upcoming_event_reminders():
+“”“Send reminders about upcoming events/workshops”””
+from bookings.models import Event  # Your event model
+
+```
+tomorrow = timezone.now() + timedelta(days=1)
+upcoming_events = Event.objects.filter(
+    event_date__date=tomorrow.date(),
+    is_active=True
+)
+
+template = NotificationTemplate.objects.get(
+    notification_type='upcoming_event',
+    is_active=True
+)
+
+for event in upcoming_events:
+    # Get all clients who might be interested
+    clients = ClientProfile.objects.filter(
+        email_notifications=True,
+        membership_tier__in=['premium', 'vip']  # Example targeting
+    )
+    
+    for client in clients:
+        context = {
+            'client_name': client.user.first_name,
+            'event_name': event.name,
+            'event_date': event.event_date,
+            'event_link': f"{settings.SITE_URL}/events/{event.id}/",
+        }
+        
+        results = NotificationService.send_notification(client, template, context)
+        
+        for channel, success, message in results:
+            NotificationLog.objects.create(
+                client=client,
+                template=template,
+                notification_type='upcoming_event',
+                channel=channel,
+                status='sent' if success else 'failed',
+                error_message=message if not success else ''
+            )
+
+return f"Sent event reminders for {upcoming_events.count()} events"
+```
+
+@shared_task
+def send_custom_campaign(template_id, profile_filters):
+“”“Send custom campaigns to targeted clients”””
+template = NotificationTemplate.objects.get(id=template_id)
+
+```
+# Build dynamic query based on filters
+clients = ClientProfile.objects.filter(email_notifications=True)
+
+if 'membership_tier' in profile_filters:
+    clients = clients.filter(membership_tier=profile_filters['membership_tier'])
+
+if 'min_sessions' in profile_filters:
+    clients = clients.filter(total_sessions__gte=profile_filters['min_sessions'])
+
+if 'inactive_weeks' in profile_filters:
+    clients = clients.filter(inactive_weeks__gte=profile_filters['inactive_weeks'])
+
+for client in clients:
+    context = {
+        'client_name': client.user.first_name,
+        'membership_tier': client.get_membership_tier_display(),
+    }
+    
+    results = NotificationService.send_notification(client, template, context)
+    
+    for channel, success, message in results:
+        NotificationLog.objects.create(
+            client=client,
+            template=template,
+            notification_type='custom_campaign',
+            channel=channel,
+            status='sent' if success else 'failed',
+            error_message=message if not success else ''
+        )
+
+return f"Custom campaign sent to {clients.count()} clients"
+```
+
+# 6. DJANGO ADMIN INTERFACE (notifications/admin.py)
+
+from django.contrib import admin
+from .models import NotificationTemplate, NotificationLog, ClientProfile
+from .tasks import send_custom_campaign
+
+@admin.register(NotificationTemplate)
+class NotificationTemplateAdmin(admin.ModelAdmin):
+list_display = [‘name’, ‘notification_type’, ‘is_active’, ‘created_at’]
+list_filter = [‘notification_type’, ‘is_active’]
+
+```
+actions = ['send_campaign_now']
+
+def send_campaign_now(self, request, queryset):
+    """Admin action to send campaign immediately"""
+    for template in queryset:
+        send_custom_campaign.delay(template.id, template.target_profiles)
+    self.message_user(request, f"Sending {queryset.count()} campaigns")
+send_campaign_now.short_description = "Send selected campaigns now"
+```
+
+@admin.register(NotificationLog)
+class NotificationLogAdmin(admin.ModelAdmin):
+list_display = [‘client’, ‘notification_type’, ‘channel’, ‘status’, ‘sent_at’]
+list_filter = [‘notification_type’, ‘channel’, ‘status’, ‘sent_at’]
+readonly_fields = [‘sent_at’]
+
+# 7. SETTINGS.PY CONFIGURATION
+
+“””
+
+# Email configuration (Django-Anymail + SendGrid example)
+
+ANYMAIL = {
+“SENDGRID_API_KEY”: os.environ.get(‘SENDGRID_API_KEY’),
+}
+EMAIL_BACKEND = “anymail.backends.sendgrid.EmailBackend”
+DEFAULT_FROM_EMAIL = “noreply@yourcoaching.com”
+
+# Twilio configuration
+
+TWILIO_ACCOUNT_SID = os.environ.get(‘TWILIO_ACCOUNT_SID’)
+TWILIO_AUTH_TOKEN = os.environ.get(‘TWILIO_AUTH_TOKEN’)
+TWILIO_PHONE_NUMBER = os.environ.get(‘TWILIO_PHONE_NUMBER’)
+
+# Celery configuration
+
+CELERY_BROKER_URL = ‘redis://localhost:6379/0’
+CELERY_RESULT_BACKEND = ‘redis://localhost:6379/0’
+CELERY_ACCEPT_CONTENT = [‘json’]
+CELERY_TASK_SERIALIZER = ‘json’
+CELERY_RESULT_SERIALIZER = ‘json’
+CELERY_TIMEZONE = ‘America/New_York’
+
+# Site URL
+
+SITE_URL = ‘https://yourcoaching.com’
+“””

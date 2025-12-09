@@ -2,13 +2,31 @@
 URL configuration for Atletas World project.
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
+from coaches.views import coach_public_profile
+
+
+def gymlife_preview(request):
+    """Preview the gymlife theme with current data."""
+    from coaches.models import Coach
+    from bookings.models import SessionType
+    from reviews.models import Review
+
+    coaches = Coach.objects.filter(is_active=True, profile_enabled=True)
+    session_types = SessionType.objects.filter(is_active=True)[:5]
+    reviews = Review.objects.filter(is_approved=True, is_featured=True)[:5]
+
+    return render(request, 'gymlife_preview.html', {
+        'coaches': coaches,
+        'session_types': session_types,
+        'reviews': reviews,
+    })
 
 
 class LoginRequiredTemplateView(LoginRequiredMixin, TemplateView):
@@ -44,6 +62,9 @@ urlpatterns = [
     # Login redirect
     path('login-redirect/', login_redirect_view, name='login_redirect'),
 
+    # Theme preview (temporary)
+    path('preview-gymlife/', gymlife_preview, name='gymlife_preview'),
+
     # Public pages
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
     path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
@@ -51,9 +72,11 @@ urlpatterns = [
     path('book/', book_redirect_view, name='book'),  # Redirects to portal booking
     path('comparison/', TemplateView.as_view(template_name='comparison.html'), name='comparison'),
 
-    # Coach profiles
-    path('coach/mirko/', TemplateView.as_view(template_name='coach_mirko.html'), name='coach_mirko'),
-    path('coach/roger/', TemplateView.as_view(template_name='coach_roger.html'), name='coach_roger'),
+    # Coach public profiles (dynamic based on slug)
+    path('coach/<slug:slug>/', coach_public_profile, name='coach_public_profile'),
+
+    # Grappelli admin (must be before admin)
+    path('grappelli/', include('grappelli.urls')),
 
     # Admin and auth
     path('admin/', admin.site.urls),

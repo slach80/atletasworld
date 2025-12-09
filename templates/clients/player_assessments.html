@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ player.first_name }}'s Assessments - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto"></a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'clients:dashboard' %}" class="text-gray-600 hover:text-secondary">Dashboard</a>
+                    <a href="/accounts/logout/" class="text-gray-600 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <div class="flex items-center text-sm text-gray-500 mb-6">
+            <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <a href="{% url 'clients:players' %}" class="hover:text-secondary">Players</a>
+            <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="text-gray-800">{{ player.first_name }}'s Assessments</span>
+        </div>
+
+        <!-- Player Header -->
+        <div class="bg-gradient-to-r from-secondary to-primary rounded-2xl p-6 mb-8 text-white">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    {% if player.photo %}
+                    <img src="{{ player.photo.url }}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg">
+                    {% else %}
+                    <div class="w-20 h-20 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-3xl font-bold">
+                        {{ player.first_name.0 }}{{ player.last_name.0 }}
+                    </div>
+                    {% endif %}
+                    <div class="ml-5">
+                        <h1 class="text-2xl font-bold">{{ player.first_name }} {{ player.last_name }}</h1>
+                        <p class="text-gray-200">{{ player.age_group }} | {{ player.get_skill_level_display }}</p>
+                        {% if player.soccer_club %}
+                        <p class="text-sm text-gray-300">{{ player.soccer_club }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-4xl font-bold">{{ total_assessments }}</p>
+                    <p class="text-sm text-gray-200">Total Assessments</p>
+                    <a href="{% url 'clients:player_edit' player.id %}" class="mt-2 inline-block bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm transition">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Edit Player
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if assessments %}
+        <!-- Performance Summary with Radar Chart -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Average Stats Summary -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Performance Averages</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="text-center p-4 bg-secondary bg-opacity-10 rounded-lg">
+                        <p class="text-3xl font-bold text-secondary">{{ averages.avg_overall|floatformat:1 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Overall</p>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <p class="text-2xl font-bold text-green-600">{{ averages.avg_effort|floatformat:1 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Effort</p>
+                    </div>
+                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                        <p class="text-2xl font-bold text-blue-600">{{ averages.avg_technical|floatformat:1 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Technical</p>
+                    </div>
+                    <div class="text-center p-4 bg-purple-50 rounded-lg">
+                        <p class="text-2xl font-bold text-purple-600">{{ averages.avg_tactical|floatformat:1 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Tactical</p>
+                    </div>
+                    <div class="text-center p-4 bg-orange-50 rounded-lg">
+                        <p class="text-2xl font-bold text-orange-600">{{ averages.avg_physical|floatformat:1 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Physical</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-100 rounded-lg">
+                        <p class="text-2xl font-bold text-gray-700">{{ averages.avg_goals|floatformat:1 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Goals</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar Chart -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                    <h2 class="text-lg font-bold text-gray-800">Performance Profile</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="radarViewSelect" class="px-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-secondary focus:outline-none" onchange="updateRadarChart()">
+                            <option value="latest">Latest Assessment</option>
+                            <option value="overall">Overall Average</option>
+                            <option value="last3">Last 3 Sessions</option>
+                            <option value="last5">Last 5 Sessions</option>
+                            <option value="compare">Compare Latest vs Avg</option>
+                            {% for a in assessments %}
+                            <option value="session-{{ forloop.counter0 }}">{{ a.assessment_date|date:"M d, Y" }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="relative" style="height: 280px;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div id="radarLegend" class="text-center text-xs text-gray-500 mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Progress Chart -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                <h2 class="text-lg font-bold text-gray-800">Progress Over Time</h2>
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Time Range Selector -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-500">From:</label>
+                        <input type="date" id="dateFrom" class="px-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-secondary focus:outline-none">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-500">To:</label>
+                        <input type="date" id="dateTo" class="px-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-secondary focus:outline-none">
+                    </div>
+                    <button onclick="loadChartData()" class="px-4 py-1.5 bg-secondary text-white rounded-lg text-sm hover:bg-green-600 transition">
+                        Apply
+                    </button>
+                    <button onclick="resetDateRange()" class="px-4 py-1.5 border rounded-lg text-sm hover:bg-gray-50 transition">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Metric Selector -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button class="metric-btn active px-3 py-1.5 rounded-full text-sm font-medium transition" data-metric="overall" style="background-color: rgba(46, 204, 113, 0.2); color: #2ecc71;">
+                    Overall
+                </button>
+                <button class="metric-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-green-100 transition" data-metric="effort">
+                    Effort
+                </button>
+                <button class="metric-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-blue-100 transition" data-metric="technical">
+                    Technical
+                </button>
+                <button class="metric-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-purple-100 transition" data-metric="tactical">
+                    Tactical
+                </button>
+                <button class="metric-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-orange-100 transition" data-metric="physical">
+                    Physical
+                </button>
+                <button class="metric-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition" data-metric="goals">
+                    Goals
+                </button>
+                <button class="metric-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition" data-metric="all">
+                    All Metrics
+                </button>
+            </div>
+
+            <!-- Chart Container -->
+            <div class="relative" style="height: 350px;">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Assessment History -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4">Assessment History</h2>
+            <div class="space-y-4">
+                {% for assessment in assessments %}
+                <div class="border rounded-lg p-4 hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="font-semibold text-gray-800">{{ assessment.assessment_date|date:"M d, Y" }}</span>
+                                <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">{{ assessment.get_training_type_display }}</span>
+                            </div>
+                            <p class="text-sm text-gray-500">Coach: {{ assessment.coach.user.first_name }} {{ assessment.coach.user.last_name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold {% if assessment.calc_overall >= 4 %}text-green-500{% elif assessment.calc_overall >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">
+                                {{ assessment.calc_overall|floatformat:1 }}<span class="text-sm text-gray-400">/5</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Mini Rating Breakdown -->
+                    <div class="mt-3 grid grid-cols-5 gap-2 text-center text-xs">
+                        <div class="p-2 bg-green-50 rounded">
+                            <div class="font-semibold text-green-600">{{ assessment.effort_engagement }}</div>
+                            <div class="text-gray-400">Effort</div>
+                        </div>
+                        <div class="p-2 bg-blue-50 rounded">
+                            <div class="font-semibold text-blue-600">{{ assessment.technical_proficiency }}</div>
+                            <div class="text-gray-400">Technical</div>
+                        </div>
+                        <div class="p-2 bg-purple-50 rounded">
+                            <div class="font-semibold text-purple-600">{{ assessment.tactical_awareness }}</div>
+                            <div class="text-gray-400">Tactical</div>
+                        </div>
+                        <div class="p-2 bg-orange-50 rounded">
+                            <div class="font-semibold text-orange-600">{{ assessment.physical_performance }}</div>
+                            <div class="text-gray-400">Physical</div>
+                        </div>
+                        <div class="p-2 bg-gray-100 rounded">
+                            <div class="font-semibold text-gray-700">{{ assessment.goals_achievement }}</div>
+                            <div class="text-gray-400">Goals</div>
+                        </div>
+                    </div>
+
+                    {% if assessment.highlights or assessment.focus_areas or assessment.parent_visible_notes %}
+                    <div class="mt-3 pt-3 border-t space-y-2">
+                        {% if assessment.highlights %}
+                        <p class="text-sm"><span class="text-green-600 font-medium">Highlights:</span> {{ assessment.highlights|truncatewords:30 }}</p>
+                        {% endif %}
+                        {% if assessment.focus_areas %}
+                        <p class="text-sm"><span class="text-orange-600 font-medium">Focus Areas:</span> {{ assessment.focus_areas|truncatewords:30 }}</p>
+                        {% endif %}
+                        {% if assessment.parent_visible_notes %}
+                        <p class="text-sm text-gray-600">{{ assessment.parent_visible_notes|truncatewords:40 }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow-md p-12 text-center">
+            <svg class="w-20 h-20 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">No Assessments Yet</h2>
+            <p class="text-gray-500">{{ player.first_name }}'s assessments will appear here after training sessions.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const playerId = {{ player.id }};
+        let progressChart = null;
+        let radarChart = null;
+        let chartData = null;
+        let activeMetrics = ['overall'];
+
+        // Assessment data for radar chart
+        const assessmentData = [
+            {% for a in assessments %}
+            {
+                date: "{{ a.assessment_date|date:'M d, Y' }}",
+                effort: {{ a.effort_engagement }},
+                technical: {{ a.technical_proficiency }},
+                tactical: {{ a.tactical_awareness }},
+                physical: {{ a.physical_performance }},
+                goals: {{ a.goals_achievement }},
+                type: "{{ a.get_training_type_display }}"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        // Overall averages
+        const overallAverages = {
+            effort: {{ averages.avg_effort|default:0 }},
+            technical: {{ averages.avg_technical|default:0 }},
+            tactical: {{ averages.avg_tactical|default:0 }},
+            physical: {{ averages.avg_physical|default:0 }},
+            goals: {{ averages.avg_goals|default:0 }}
+        };
+
+        const metricColors = {
+            overall: { bg: 'rgba(46, 204, 113, 0.2)', border: '#2ecc71' },
+            effort: { bg: 'rgba(34, 197, 94, 0.2)', border: '#22c55e' },
+            technical: { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6' },
+            tactical: { bg: 'rgba(147, 51, 234, 0.2)', border: '#9333ea' },
+            physical: { bg: 'rgba(249, 115, 22, 0.2)', border: '#f97316' },
+            goals: { bg: 'rgba(107, 114, 128, 0.2)', border: '#6b7280' },
+        };
+
+        const metricLabels = {
+            overall: 'Overall Rating',
+            effort: 'Effort & Engagement',
+            technical: 'Technical Proficiency',
+            tactical: 'Tactical Awareness',
+            physical: 'Physical Performance',
+            goals: 'Goals Achievement',
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChartData();
+            initRadarChart();
+
+            // Metric button click handlers
+            document.querySelectorAll('.metric-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const metric = this.dataset.metric;
+
+                    if (metric === 'all') {
+                        // Toggle all metrics
+                        if (activeMetrics.length === 6) {
+                            activeMetrics = ['overall'];
+                        } else {
+                            activeMetrics = ['overall', 'effort', 'technical', 'tactical', 'physical', 'goals'];
+                        }
+                    } else {
+                        // Toggle individual metric
+                        const idx = activeMetrics.indexOf(metric);
+                        if (idx > -1) {
+                            if (activeMetrics.length > 1) {
+                                activeMetrics.splice(idx, 1);
+                            }
+                        } else {
+                            activeMetrics.push(metric);
+                        }
+                    }
+
+                    updateMetricButtons();
+                    updateChart();
+                });
+            });
+        });
+
+        async function loadChartData() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            let url = `/portal/api/players/${playerId}/assessment-data/`;
+            const params = new URLSearchParams();
+            if (dateFrom) params.append('date_from', dateFrom);
+            if (dateTo) params.append('date_to', dateTo);
+            if (params.toString()) url += '?' + params.toString();
+
+            try {
+                const response = await fetch(url);
+                chartData = await response.json();
+                updateChart();
+            } catch (error) {
+                console.error('Error loading chart data:', error);
+            }
+        }
+
+        function updateChart() {
+            if (!chartData || chartData.labels.length === 0) {
+                if (progressChart) {
+                    progressChart.destroy();
+                    progressChart = null;
+                }
+                return;
+            }
+
+            const datasets = activeMetrics.map(metric => ({
+                label: metricLabels[metric],
+                data: chartData.datasets[metric],
+                borderColor: metricColors[metric].border,
+                backgroundColor: metricColors[metric].bg,
+                fill: activeMetrics.length === 1,
+                tension: 0.3,
+                pointRadius: 5,
+                pointHoverRadius: 8,
+            }));
+
+            const ctx = document.getElementById('progressChart').getContext('2d');
+
+            if (progressChart) {
+                progressChart.data.labels = chartData.labels;
+                progressChart.data.datasets = datasets;
+                progressChart.update();
+            } else {
+                progressChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                        plugins: {
+                            legend: {
+                                display: activeMetrics.length > 1,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y}/5`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 5,
+                                ticks: {
+                                    stepSize: 1
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Rating'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Assessment Date'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateMetricButtons() {
+            document.querySelectorAll('.metric-btn').forEach(btn => {
+                const metric = btn.dataset.metric;
+                if (metric === 'all') {
+                    if (activeMetrics.length === 6) {
+                        btn.classList.add('active');
+                        btn.style.backgroundColor = 'rgba(107, 114, 128, 0.2)';
+                        btn.style.color = '#374151';
+                    } else {
+                        btn.classList.remove('active');
+                        btn.style.backgroundColor = '';
+                        btn.style.color = '';
+                    }
+                } else if (activeMetrics.includes(metric)) {
+                    btn.classList.add('active');
+                    btn.style.backgroundColor = metricColors[metric].bg;
+                    btn.style.color = metricColors[metric].border;
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                }
+            });
+        }
+
+        function resetDateRange() {
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            loadChartData();
+        }
+
+        // Radar Chart Functions
+        function initRadarChart() {
+            if (assessmentData.length === 0) return;
+
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Effort', 'Technical', 'Tactical', 'Physical', 'Goals'],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            min: 0,
+                            ticks: {
+                                stepSize: 1,
+                                font: { size: 10 }
+                            },
+                            pointLabels: {
+                                font: { size: 11, weight: '500' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            updateRadarChart();
+        }
+
+        function updateRadarChart() {
+            if (!radarChart || assessmentData.length === 0) return;
+
+            const viewType = document.getElementById('radarViewSelect').value;
+            let datasets = [];
+            let legendText = '';
+
+            if (viewType === 'latest') {
+                const latest = assessmentData[0];
+                datasets.push({
+                    label: `Latest (${latest.date})`,
+                    data: [latest.effort, latest.technical, latest.tactical, latest.physical, latest.goals],
+                    backgroundColor: 'rgba(46, 204, 113, 0.3)',
+                    borderColor: '#2ecc71',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#2ecc71'
+                });
+                legendText = `${latest.type} - ${latest.date}`;
+
+            } else if (viewType === 'overall') {
+                datasets.push({
+                    label: 'Overall Average',
+                    data: [overallAverages.effort, overallAverages.technical, overallAverages.tactical, overallAverages.physical, overallAverages.goals],
+                    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3b82f6'
+                });
+                legendText = `Average of ${assessmentData.length} assessments`;
+
+            } else if (viewType === 'last3' || viewType === 'last5') {
+                const count = viewType === 'last3' ? 3 : 5;
+                const recent = assessmentData.slice(0, Math.min(count, assessmentData.length));
+                const avg = calculateAverage(recent);
+                datasets.push({
+                    label: `Last ${recent.length} Sessions Avg`,
+                    data: [avg.effort, avg.technical, avg.tactical, avg.physical, avg.goals],
+                    backgroundColor: 'rgba(147, 51, 234, 0.3)',
+                    borderColor: '#9333ea',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#9333ea'
+                });
+                legendText = `Average of last ${recent.length} sessions`;
+
+            } else if (viewType === 'compare') {
+                const latest = assessmentData[0];
+                datasets.push({
+                    label: `Latest (${latest.date})`,
+                    data: [latest.effort, latest.technical, latest.tactical, latest.physical, latest.goals],
+                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                    borderColor: '#2ecc71',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#2ecc71'
+                });
+                datasets.push({
+                    label: 'Overall Average',
+                    data: [overallAverages.effort, overallAverages.technical, overallAverages.tactical, overallAverages.physical, overallAverages.goals],
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3b82f6'
+                });
+                legendText = 'Comparing latest assessment vs overall average';
+
+            } else if (viewType.startsWith('session-')) {
+                const idx = parseInt(viewType.split('-')[1]);
+                const session = assessmentData[idx];
+                if (session) {
+                    datasets.push({
+                        label: session.date,
+                        data: [session.effort, session.technical, session.tactical, session.physical, session.goals],
+                        backgroundColor: 'rgba(249, 115, 22, 0.3)',
+                        borderColor: '#f97316',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#f97316'
+                    });
+                    legendText = `${session.type} - ${session.date}`;
+                }
+            }
+
+            radarChart.data.datasets = datasets;
+            radarChart.update();
+            document.getElementById('radarLegend').textContent = legendText;
+        }
+
+        function calculateAverage(assessments) {
+            if (assessments.length === 0) return { effort: 0, technical: 0, tactical: 0, physical: 0, goals: 0 };
+
+            const sum = assessments.reduce((acc, a) => ({
+                effort: acc.effort + a.effort,
+                technical: acc.technical + a.technical,
+                tactical: acc.tactical + a.tactical,
+                physical: acc.physical + a.physical,
+                goals: acc.goals + a.goals
+            }), { effort: 0, technical: 0, tactical: 0, physical: 0, goals: 0 });
+
+            return {
+                effort: sum.effort / assessments.length,
+                technical: sum.technical / assessments.length,
+                tactical: sum.tactical / assessments.length,
+                physical: sum.physical / assessments.length,
+                goals: sum.goals / assessments.length
+            };
+        }
+    </script>
+</body>
+</html>

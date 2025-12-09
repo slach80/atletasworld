@@ -25,6 +25,9 @@
                     <a href="{% url 'coaches:schedule' %}" class="hover:text-secondary transition">Schedule</a>
                     <a href="{% url 'coaches:my_players' %}" class="hover:text-secondary transition">My Players</a>
                     <a href="{% url 'coaches:assessments' %}" class="hover:text-secondary transition">Assessments</a>
+                    {% if coach.profile_enabled %}
+                    <a href="{% url 'coaches:edit_profile' %}" class="hover:text-secondary transition">My Profile</a>
+                    {% endif %}
                     <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
                 </div>
             </div>
@@ -38,24 +41,45 @@
             <p class="text-white/80">{{ today|date:"l, F j, Y" }}</p>
         </div>
 
-        <!-- Quick Stats -->
+        <!-- Quick Actions (compact) -->
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+            <a href="{% url 'coaches:add_bulk_schedule' %}" class="inline-flex items-center px-3 py-1.5 bg-white border rounded-lg text-sm hover:border-secondary hover:bg-secondary/5 transition">
+                <svg class="w-4 h-4 text-secondary mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Add Availability
+            </a>
+            <a href="{% url 'coaches:my_players' %}" class="inline-flex items-center px-3 py-1.5 bg-white border rounded-lg text-sm hover:border-blue-500 hover:bg-blue-50 transition">
+                <svg class="w-4 h-4 text-blue-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                My Players
+            </a>
+            <a href="{% url 'coaches:assessments' %}" class="inline-flex items-center px-3 py-1.5 bg-white border rounded-lg text-sm hover:border-accent hover:bg-red-50 transition">
+                <svg class="w-4 h-4 text-accent mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Assessments
+            </a>
+            <div class="flex-grow"></div>
+            <a href="{% url 'coaches:notify_parents' %}" class="inline-flex items-center px-4 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 shadow-sm hover:shadow transition">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Notify Parents
+            </a>
+        </div>
+
+        <!-- Quick Stats (clickable) -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-3xl font-bold text-secondary">{{ stats.todays_sessions }}</p>
+            <a href="{% url 'coaches:todays_sessions' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-secondary border border-transparent transition group">
+                <p class="text-3xl font-bold text-secondary group-hover:scale-110 transition">{{ stats.todays_sessions }}</p>
                 <p class="text-gray-500 text-sm">Today's Sessions</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-3xl font-bold text-blue-500">{{ stats.weeks_sessions }}</p>
+            </a>
+            <a href="{% url 'coaches:schedule' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-blue-500 border border-transparent transition group">
+                <p class="text-3xl font-bold text-blue-500 group-hover:scale-110 transition">{{ stats.weeks_sessions }}</p>
                 <p class="text-gray-500 text-sm">This Week</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-3xl font-bold text-accent">{{ stats.pending_assessments }}</p>
+            </a>
+            <a href="{% url 'coaches:assessments' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-accent border border-transparent transition group">
+                <p class="text-3xl font-bold text-accent group-hover:scale-110 transition">{{ stats.pending_assessments }}</p>
                 <p class="text-gray-500 text-sm">Pending Assessments</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-3xl font-bold text-purple-500">{{ stats.total_students_this_month }}</p>
+            </a>
+            <a href="{% url 'coaches:my_players' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-purple-500 border border-transparent transition group">
+                <p class="text-3xl font-bold text-purple-500 group-hover:scale-110 transition">{{ stats.total_students_this_month }}</p>
                 <p class="text-gray-500 text-sm">Students This Month</p>
-            </div>
+            </a>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">
@@ -117,36 +141,13 @@
                 {% for booking in pending_assessments %}
                 <div class="border rounded-lg p-4">
                     <p class="font-semibold">{{ booking.player }}</p>
-                    <p class="text-sm text-gray-500">{{ booking.scheduled_date|date:"M j" }} - {{ booking.program.name }}</p>
+                    <p class="text-sm text-gray-500">{{ booking.scheduled_date|date:"M j" }} - {{ booking.session_type.name }}</p>
                     <a href="{% url 'coaches:create_assessment' booking.id %}" class="mt-2 inline-block bg-accent text-white px-3 py-1 rounded text-sm hover:bg-red-600">Add Assessment</a>
                 </div>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
-
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="{% url 'coaches:add_bulk_schedule' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
-                    <svg class="w-8 h-8 text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <span class="text-sm font-medium">Add Availability</span>
-                </a>
-                <a href="{% url 'coaches:my_players' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
-                    <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
-                    <span class="text-sm font-medium">My Players</span>
-                </a>
-                <a href="{% url 'coaches:notify_parents' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
-                    <svg class="w-8 h-8 text-purple-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                    <span class="text-sm font-medium">Notify Parents</span>
-                </a>
-                <a href="{% url 'coaches:assessments' %}" class="flex flex-col items-center p-4 border rounded-lg hover:border-secondary hover:bg-secondary/5 transition">
-                    <svg class="w-8 h-8 text-accent mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                    <span class="text-sm font-medium">Assessments</span>
-                </a>
-            </div>
-        </div>
     </div>
 </body>
 </html>

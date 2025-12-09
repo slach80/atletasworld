@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference
+from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription
 from bookings.models import Booking, Program
 from coaches.models import PlayerAssessment, Coach, ScheduleBlock
 
@@ -30,13 +30,13 @@ def dashboard(request):
         client=client,
         scheduled_date__gte=timezone.now().date(),
         status__in=['pending', 'confirmed']
-    ).select_related('player', 'program', 'coach').order_by('scheduled_date', 'scheduled_time')[:5]
+    ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')[:5]
 
     # Get recent bookings (past)
     past_bookings = Booking.objects.filter(
         client=client,
         scheduled_date__lt=timezone.now().date()
-    ).select_related('player', 'program', 'coach').order_by('-scheduled_date', '-scheduled_time')[:5]
+    ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')[:5]
 
     context = {
         'client': client,
@@ -218,12 +218,12 @@ def bookings_list(request):
         client=client,
         scheduled_date__gte=timezone.now().date(),
         status__in=['pending', 'confirmed']
-    ).select_related('player', 'program', 'coach').order_by('scheduled_date', 'scheduled_time')
+    ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')
 
     past_bookings = Booking.objects.filter(
         client=client,
         scheduled_date__lt=timezone.now().date()
-    ).select_related('player', 'program', 'coach').order_by('-scheduled_date', '-scheduled_time')
+    ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')
 
     context = {
         'client': client,
@@ -287,6 +287,102 @@ def notification_settings(request):
 
 
 @login_required
+def notification_history(request):
+    """View notification history."""
+    client, created = Client.objects.get_or_create(user=request.user)
+
+    notifications = Notification.objects.filter(
+        client=client
+    ).order_by('-created_at')[:50]
+
+    # Mark unread notifications as read
+    unread = notifications.filter(status='sent', read_at__isnull=True)
+    unread.update(status='read', read_at=timezone.now())
+
+    context = {
+        'client': client,
+        'notifications': notifications,
+    }
+    return render(request, 'clients/notification_history.html', context)
+
+
+@login_required
+@require_POST
+def register_push_subscription(request):
+    """Register a web push notification subscription."""
+    import json
+    client, created = Client.objects.get_or_create(user=request.user)
+
+    try:
+        data = json.loads(request.body)
+        endpoint = data.get('endpoint')
+        keys = data.get('keys', {})
+
+        if not endpoint or not keys.get('p256dh') or not keys.get('auth'):
+            return JsonResponse({'error': 'Invalid subscription data'}, status=400)
+
+        # Create or update subscription
+        subscription, created = PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                'client': client,
+                'p256dh_key': keys['p256dh'],
+                'auth_key': keys['auth'],
+                'user_agent': request.META.get('HTTP_USER_AGENT', '')[:255],
+                'is_active': True,
+            }
+        )
+
+        return JsonResponse({
+            'success': True,
+            'created': created,
+            'message': 'Push notifications enabled!'
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def unregister_push_subscription(request):
+    """Unregister a web push notification subscription."""
+    import json
+    client, created = Client.objects.get_or_create(user=request.user)
+
+    try:
+        data = json.loads(request.body)
+        endpoint = data.get('endpoint')
+
+        if endpoint:
+            PushSubscription.objects.filter(
+                client=client,
+                endpoint=endpoint
+            ).update(is_active=False)
+
+        return JsonResponse({'success': True, 'message': 'Push notifications disabled'})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def get_unread_count(request):
+    """Get count of unread notifications for badge display."""
+    client, created = Client.objects.get_or_create(user=request.user)
+
+    count = Notification.objects.filter(
+        client=client,
+        status='sent',
+        read_at__isnull=True
+    ).count()
+
+    return JsonResponse({'unread_count': count})
+
+
+@login_required
 def assessments_view(request):
     """View player assessments received from coaches."""
     client, created = Client.objects.get_or_create(user=request.user)
@@ -295,13 +391,109 @@ def assessments_view(request):
     # Get all assessments for client's players
     assessments = PlayerAssessment.objects.filter(
         player__client=client
-    ).select_related('player', 'coach', 'booking__program').order_by('-assessment_date')
+    ).select_related('player', 'coach', 'booking__session_type').order_by('-assessment_date')
 
     context = {
         'client': client,
         'assessments': assessments,
     }
     return render(request, 'clients/assessments.html', context)
+
+
+@login_required
+def player_assessments(request, player_id):
+    """View assessments for a specific player with time series chart."""
+    from django.db.models import Avg
+    client, created = Client.objects.get_or_create(user=request.user)
+    player = get_object_or_404(Player, id=player_id, client=client)
+
+    # Get all assessments for this player
+    assessments_qs = PlayerAssessment.objects.filter(
+        player=player
+    ).select_related('coach', 'booking__session_type').order_by('-assessment_date')
+
+    # Convert to list and add calculated overall rating
+    assessments = []
+    for a in assessments_qs:
+        a.calc_overall = (a.effort_engagement + a.technical_proficiency +
+                         a.tactical_awareness + a.physical_performance +
+                         a.goals_achievement) / 5.0
+        assessments.append(a)
+
+    # Calculate averages for summary
+    if assessments:
+        averages = assessments_qs.aggregate(
+            avg_effort=Avg('effort_engagement'),
+            avg_technical=Avg('technical_proficiency'),
+            avg_tactical=Avg('tactical_awareness'),
+            avg_physical=Avg('physical_performance'),
+            avg_goals=Avg('goals_achievement'),
+        )
+        # Calculate overall as average of all metrics
+        if all(v is not None for v in averages.values()):
+            averages['avg_overall'] = sum(averages.values()) / 5
+        else:
+            averages['avg_overall'] = None
+    else:
+        averages = {}
+
+    context = {
+        'client': client,
+        'player': player,
+        'assessments': assessments,
+        'averages': averages,
+        'total_assessments': len(assessments),
+    }
+    return render(request, 'clients/player_assessments.html', context)
+
+
+@login_required
+def player_assessment_chart_data(request, player_id):
+    """API endpoint for player assessment chart data."""
+    import json
+    client, created = Client.objects.get_or_create(user=request.user)
+    player = get_object_or_404(Player, id=player_id, client=client)
+
+    # Get date range from query params
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+
+    assessments = PlayerAssessment.objects.filter(player=player)
+
+    if date_from:
+        assessments = assessments.filter(assessment_date__gte=date_from)
+    if date_to:
+        assessments = assessments.filter(assessment_date__lte=date_to)
+
+    assessments = assessments.order_by('assessment_date')
+
+    # Build chart data
+    data = {
+        'labels': [],
+        'datasets': {
+            'overall': [],
+            'effort': [],
+            'technical': [],
+            'tactical': [],
+            'physical': [],
+            'goals': [],
+        }
+    }
+
+    for assessment in assessments:
+        data['labels'].append(assessment.assessment_date.strftime('%b %d, %Y'))
+        # Calculate overall as average of all 5 metrics
+        overall = (assessment.effort_engagement + assessment.technical_proficiency +
+                   assessment.tactical_awareness + assessment.physical_performance +
+                   assessment.goals_achievement) / 5
+        data['datasets']['overall'].append(round(overall, 2))
+        data['datasets']['effort'].append(assessment.effort_engagement)
+        data['datasets']['technical'].append(assessment.technical_proficiency)
+        data['datasets']['tactical'].append(assessment.tactical_awareness)
+        data['datasets']['physical'].append(assessment.physical_performance)
+        data['datasets']['goals'].append(assessment.goals_achievement)
+
+    return JsonResponse(data)
 
 
 @login_required
@@ -415,7 +607,8 @@ def booking_page(request):
         'booking_prefs': booking_prefs,
         'favorite_coach_ids': favorite_coach_ids,
     }
-    return render(request, 'clients/booking.html', context)
+    # Use new calendar-based booking template
+    return render(request, 'clients/book_calendar.html', context)
 
 
 @login_required

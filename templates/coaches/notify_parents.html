@@ -32,22 +32,57 @@
 
     <div class="max-w-4xl mx-auto px-4 py-6">
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Notify Parents</h1>
-        
+
         <div class="bg-white rounded-xl shadow-md p-6">
-            <form method="POST" action="{% url 'coaches:send_notification' %}">
+            <form method="POST" action="{% url 'coaches:send_notification' %}" id="notifyForm">
                 {% csrf_token %}
-                <div class="mb-4">
+
+                <!-- Recipients Selection -->
+                <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Select Recipients</label>
-                    <select name="player_id" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary">
-                        <option value="">-- Select a player/family --</option>
+
+                    <!-- Select All / Deselect All -->
+                    <div class="flex items-center gap-4 mb-3 pb-3 border-b">
+                        <button type="button" onclick="selectAll()" class="text-sm text-secondary hover:underline">Select All</button>
+                        <button type="button" onclick="deselectAll()" class="text-sm text-gray-500 hover:underline">Deselect All</button>
+                        <span id="selectedCount" class="text-sm text-gray-400 ml-auto">0 selected</span>
+                    </div>
+
+                    <!-- Player/Client List with Checkboxes -->
+                    <div class="max-h-64 overflow-y-auto border rounded-lg p-3 space-y-2">
                         {% for client in clients %}
-                        <optgroup label="{{ client.user.get_full_name }}">
-                            {% for player in client.players.all %}
-                            <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }} ({{ player.age_group }})</option>
-                            {% endfor %}
-                        </optgroup>
+                        <div class="border-b pb-2 last:border-0">
+                            <div class="flex items-center mb-1">
+                                <input type="checkbox"
+                                       id="client_{{ client.id }}"
+                                       class="client-checkbox w-4 h-4 text-secondary rounded"
+                                       onchange="toggleClientPlayers({{ client.id }})">
+                                <label for="client_{{ client.id }}" class="ml-2 font-medium text-gray-700">
+                                    {{ client.user.get_full_name|default:client.user.email }}
+                                </label>
+                            </div>
+                            <div class="ml-6 space-y-1">
+                                {% for player in client.players.all %}
+                                <div class="flex items-center">
+                                    <input type="checkbox"
+                                           name="player_ids"
+                                           value="{{ player.id }}"
+                                           id="player_{{ player.id }}"
+                                           data-client="{{ client.id }}"
+                                           class="player-checkbox w-4 h-4 text-secondary rounded"
+                                           onchange="updateCount()">
+                                    <label for="player_{{ player.id }}" class="ml-2 text-sm text-gray-600">
+                                        {{ player.first_name }} {{ player.last_name }}
+                                        <span class="text-gray-400">({{ player.age_group }})</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 text-center py-4">No players found.</p>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
 
                 <div class="mb-4">
@@ -69,7 +104,9 @@
 
                 <div class="flex space-x-4">
                     <a href="{% url 'coaches:dashboard' %}" class="flex-1 text-center py-3 border rounded-lg hover:bg-gray-50">Cancel</a>
-                    <button type="submit" class="flex-1 bg-secondary text-white py-3 rounded-lg hover:bg-green-600">Send Notification</button>
+                    <button type="submit" id="sendBtn" class="flex-1 bg-secondary text-white py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                        Send Notification
+                    </button>
                 </div>
             </form>
         </div>
@@ -78,19 +115,19 @@
         <div class="bg-white rounded-xl shadow-md p-6 mt-6">
             <h3 class="font-bold text-gray-800 mb-4">Quick Message Templates</h3>
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="setTemplate('schedule')" class="p-3 border rounded-lg hover:border-secondary text-left">
+                <button type="button" onclick="setTemplate('schedule')" class="p-3 border rounded-lg hover:border-secondary text-left">
                     <p class="font-semibold">Schedule Change</p>
                     <p class="text-xs text-gray-500">Notify about time/date change</p>
                 </button>
-                <button onclick="setTemplate('reminder')" class="p-3 border rounded-lg hover:border-secondary text-left">
+                <button type="button" onclick="setTemplate('reminder')" class="p-3 border rounded-lg hover:border-secondary text-left">
                     <p class="font-semibold">Session Reminder</p>
                     <p class="text-xs text-gray-500">Upcoming session reminder</p>
                 </button>
-                <button onclick="setTemplate('cancel')" class="p-3 border rounded-lg hover:border-secondary text-left">
+                <button type="button" onclick="setTemplate('cancel')" class="p-3 border rounded-lg hover:border-secondary text-left">
                     <p class="font-semibold">Cancellation</p>
                     <p class="text-xs text-gray-500">Session cancellation notice</p>
                 </button>
-                <button onclick="setTemplate('progress')" class="p-3 border rounded-lg hover:border-secondary text-left">
+                <button type="button" onclick="setTemplate('progress')" class="p-3 border rounded-lg hover:border-secondary text-left">
                     <p class="font-semibold">Progress Update</p>
                     <p class="text-xs text-gray-500">General progress note</p>
                 </button>
@@ -103,9 +140,9 @@
             schedule: "Hi! I wanted to let you know about a change to our scheduled session. [Enter details here]. Please let me know if this works for you.",
             reminder: "This is a friendly reminder about our upcoming training session. Please arrive 10 minutes early and bring water and appropriate gear. See you soon!",
             cancel: "Unfortunately, I need to cancel our upcoming session due to [reason]. I apologize for any inconvenience. Let's reschedule at your earliest convenience.",
-            progress: "I wanted to share some positive feedback about the recent training sessions. [Player name] has been showing great improvement in [area]. Keep up the great work!"
+            progress: "I wanted to share some positive feedback about the recent training sessions. Your player has been showing great improvement in [area]. Keep up the great work!"
         };
-        
+
         function setTemplate(type) {
             document.querySelector('textarea[name="message"]').value = templates[type];
             if (type === 'schedule') {
@@ -114,6 +151,48 @@
                 document.querySelector('select[name="notification_type"]').value = 'session_reminder';
             }
         }
+
+        function selectAll() {
+            document.querySelectorAll('.player-checkbox').forEach(cb => cb.checked = true);
+            document.querySelectorAll('.client-checkbox').forEach(cb => cb.checked = true);
+            updateCount();
+        }
+
+        function deselectAll() {
+            document.querySelectorAll('.player-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.client-checkbox').forEach(cb => cb.checked = false);
+            updateCount();
+        }
+
+        function toggleClientPlayers(clientId) {
+            const clientCheckbox = document.getElementById('client_' + clientId);
+            const playerCheckboxes = document.querySelectorAll('.player-checkbox[data-client="' + clientId + '"]');
+            playerCheckboxes.forEach(cb => cb.checked = clientCheckbox.checked);
+            updateCount();
+        }
+
+        function updateCount() {
+            const checked = document.querySelectorAll('.player-checkbox:checked').length;
+            document.getElementById('selectedCount').textContent = checked + ' selected';
+            document.getElementById('sendBtn').disabled = checked === 0;
+
+            // Update client checkboxes based on their players
+            document.querySelectorAll('.client-checkbox').forEach(clientCb => {
+                const clientId = clientCb.id.replace('client_', '');
+                const playerCbs = document.querySelectorAll('.player-checkbox[data-client="' + clientId + '"]');
+                const checkedPlayers = document.querySelectorAll('.player-checkbox[data-client="' + clientId + '"]:checked');
+                clientCb.checked = playerCbs.length === checkedPlayers.length && playerCbs.length > 0;
+            });
+        }
+
+        // Validate form before submit
+        document.getElementById('notifyForm').addEventListener('submit', function(e) {
+            const checked = document.querySelectorAll('.player-checkbox:checked').length;
+            if (checked === 0) {
+                e.preventDefault();
+                alert('Please select at least one recipient.');
+            }
+        });
     </script>
 </body>
 </html>

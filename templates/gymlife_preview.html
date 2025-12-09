@@ -1,0 +1,601 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Atletas World - Elite Soccer Training">
+    <meta name="keywords" content="Soccer, Football, Training, Coaching, Atletas">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Atletas World | Preview (Gymlife Theme)</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css?family=Muli:300,400,500,600,700,800,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Oswald:300,400,500,600,700&display=swap" rel="stylesheet">
+
+    <!-- Css Styles -->
+    <link rel="stylesheet" href="{% static 'gymlife/css/bootstrap.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'gymlife/css/font-awesome.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'gymlife/css/flaticon.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'gymlife/css/owl.carousel.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'gymlife/css/barfiller.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'gymlife/css/magnific-popup.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'gymlife/css/slicknav.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'gymlife/css/style.css' %}" type="text/css">
+
+    <style>
+        /* Custom overrides for Atletas World branding */
+        .primary-btn {
+            background: #2ecc71;
+        }
+        .primary-btn:hover {
+            background: #27ae60;
+        }
+        .section-title span {
+            color: #2ecc71;
+        }
+        .cs-item span {
+            color: #2ecc71;
+        }
+        .ci-text span {
+            color: #2ecc71;
+        }
+        .preview-banner {
+            background: #f39c12;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            font-weight: bold;
+        }
+        .preview-banner a {
+            color: white;
+            text-decoration: underline;
+            margin-left: 15px;
+        }
+        body {
+            padding-top: 45px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Preview Banner -->
+    <div class="preview-banner">
+        PREVIEW MODE - Gymlife Theme with Atletas World Data
+        <a href="/">Back to Current Site</a>
+    </div>
+
+    <!-- Page Preloder -->
+    <div id="preloder">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Offcanvas Menu Section Begin -->
+    <div class="offcanvas-menu-overlay"></div>
+    <div class="offcanvas-menu-wrapper">
+        <div class="canvas-close">
+            <i class="fa fa-close"></i>
+        </div>
+        <nav class="canvas-menu mobile-menu">
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#about">About Us</a></li>
+                <li><a href="#services">Programs</a></li>
+                <li><a href="#team">Our Coaches</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="/accounts/login/">Login</a></li>
+            </ul>
+        </nav>
+        <div id="mobile-menu-wrap"></div>
+        <div class="canvas-social">
+            <a href="#"><i class="fa fa-facebook"></i></a>
+            <a href="#"><i class="fa fa-instagram"></i></a>
+            <a href="#"><i class="fa fa-youtube-play"></i></a>
+        </div>
+    </div>
+    <!-- Offcanvas Menu Section End -->
+
+    <!-- Header Section Begin -->
+    <header class="header-section">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-3">
+                    <div class="logo">
+                        <a href="#">
+                            <img src="/media/APC-logo.jpg" alt="Atletas World" style="height: 50px; border-radius: 8px;">
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <nav class="nav-menu">
+                        <ul>
+                            <li class="active"><a href="#">Home</a></li>
+                            <li><a href="#about">About Us</a></li>
+                            <li><a href="#services">Programs</a></li>
+                            <li><a href="#team">Our Coaches</a></li>
+                            <li><a href="#pricing">Pricing</a></li>
+                            <li><a href="/contact/">Contact</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="col-lg-3">
+                    <div class="top-option">
+                        <div class="to-social">
+                            <a href="#"><i class="fa fa-facebook"></i></a>
+                            <a href="#"><i class="fa fa-instagram"></i></a>
+                            <a href="#"><i class="fa fa-youtube-play"></i></a>
+                        </div>
+                        <a href="/accounts/login/" class="primary-btn" style="padding: 10px 20px; margin-left: 15px;">Login</a>
+                    </div>
+                </div>
+            </div>
+            <div class="canvas-open">
+                <i class="fa fa-bars"></i>
+            </div>
+        </div>
+    </header>
+    <!-- Header End -->
+
+    <!-- Hero Section Begin -->
+    <section class="hero-section">
+        <div class="hs-slider owl-carousel">
+            <div class="hs-item set-bg" data-setbg="{% static 'gymlife/img/hero/hero-1.jpg' %}">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-6">
+                            <div class="hi-text">
+                                <span>Elevate Your Game</span>
+                                <h1>Elite <strong>Soccer</strong> Training</h1>
+                                <a href="/accounts/signup/" class="primary-btn">Join Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="hs-item set-bg" data-setbg="{% static 'gymlife/img/hero/hero-2.jpg' %}">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-6">
+                            <div class="hi-text">
+                                <span>Professional Coaching</span>
+                                <h1>Train with <strong>Experts</strong></h1>
+                                <a href="#team" class="primary-btn">Meet Our Coaches</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Hero Section End -->
+
+    <!-- ChoseUs Section Begin -->
+    <section class="choseus-section spad" id="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Why Atletas World?</span>
+                        <h2>ELEVATE YOUR SOCCER GAME</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3 col-sm-6">
+                    <div class="cs-item">
+                        <span class="flaticon-002-dumbell"></span>
+                        <h4>Expert Coaches</h4>
+                        <p>Train with professional coaches who have years of experience developing players at all levels.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6">
+                    <div class="cs-item">
+                        <span class="flaticon-014-heart-beat"></span>
+                        <h4>Personalized Training</h4>
+                        <p>Customized programs tailored to your skill level and goals, from beginner to advanced.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6">
+                    <div class="cs-item">
+                        <span class="flaticon-034-stationary-bike"></span>
+                        <h4>Flexible Scheduling</h4>
+                        <p>Book sessions that fit your schedule with our easy online booking system.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6">
+                    <div class="cs-item">
+                        <span class="flaticon-033-juice"></span>
+                        <h4>Track Progress</h4>
+                        <p>Monitor your improvement with detailed assessments and progress reports after each session.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- ChoseUs Section End -->
+
+    <!-- Classes Section Begin -->
+    <section class="classes-section spad" id="services">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Our Programs</span>
+                        <h2>TRAINING OPTIONS</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                {% for session_type in session_types %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="class-item">
+                        <div class="ci-pic">
+                            <img src="{% static 'gymlife/img/classes/class-'|add:forloop.counter|add:'.jpg' %}" alt="{{ session_type.name }}">
+                        </div>
+                        <div class="ci-text">
+                            <span>{{ session_type.get_session_format_display }}</span>
+                            <h5>{{ session_type.name }}</h5>
+                            <a href="/accounts/signup/"><i class="fa fa-angle-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <!-- Default programs if none in database -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="class-item">
+                        <div class="ci-pic">
+                            <img src="{% static 'gymlife/img/classes/class-1.jpg' %}" alt="Private Training">
+                        </div>
+                        <div class="ci-text">
+                            <span>1-on-1</span>
+                            <h5>Private Training</h5>
+                            <a href="/accounts/signup/"><i class="fa fa-angle-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="class-item">
+                        <div class="ci-pic">
+                            <img src="{% static 'gymlife/img/classes/class-2.jpg' %}" alt="Group Sessions">
+                        </div>
+                        <div class="ci-text">
+                            <span>Group</span>
+                            <h5>Group Training</h5>
+                            <a href="/accounts/signup/"><i class="fa fa-angle-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="class-item">
+                        <div class="ci-pic">
+                            <img src="{% static 'gymlife/img/classes/class-3.jpg' %}" alt="Skills Clinic">
+                        </div>
+                        <div class="ci-text">
+                            <span>Clinic</span>
+                            <h5>Skills Development</h5>
+                            <a href="/accounts/signup/"><i class="fa fa-angle-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    <!-- Classes Section End -->
+
+    <!-- Banner Section Begin -->
+    <section class="banner-section set-bg" data-setbg="{% static 'gymlife/img/banner-bg.jpg' %}">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <div class="bs-text">
+                        <h2>Start Your Training Journey Today</h2>
+                        <div class="bt-tips">Professional coaching for players of all ages and skill levels.</div>
+                        <a href="/accounts/signup/" class="primary-btn btn-normal">Sign Up Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Banner Section End -->
+
+    <!-- Pricing Section Begin -->
+    <section class="pricing-section spad" id="pricing">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Our Packages</span>
+                        <h2>Choose Your Training Plan</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-8">
+                    <div class="ps-item">
+                        <h3>Single Session</h3>
+                        <div class="pi-price">
+                            <h2>$ 75</h2>
+                            <span>PER SESSION</span>
+                        </div>
+                        <ul>
+                            <li>60-minute training</li>
+                            <li>Professional coaching</li>
+                            <li>Skills assessment</li>
+                            <li>Flexible scheduling</li>
+                            <li>Progress tracking</li>
+                            <li>No commitment</li>
+                        </ul>
+                        <a href="/accounts/signup/" class="primary-btn pricing-btn">Book Now</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-8">
+                    <div class="ps-item">
+                        <h3>5 Session Pack</h3>
+                        <div class="pi-price">
+                            <h2>$ 325</h2>
+                            <span>SAVE $50</span>
+                        </div>
+                        <ul>
+                            <li>5 x 60-minute sessions</li>
+                            <li>Professional coaching</li>
+                            <li>Skills assessment</li>
+                            <li>Priority scheduling</li>
+                            <li>Progress tracking</li>
+                            <li>Valid 3 months</li>
+                        </ul>
+                        <a href="/accounts/signup/" class="primary-btn pricing-btn">Get Started</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-8">
+                    <div class="ps-item">
+                        <h3>10 Session Pack</h3>
+                        <div class="pi-price">
+                            <h2>$ 600</h2>
+                            <span>BEST VALUE</span>
+                        </div>
+                        <ul>
+                            <li>10 x 60-minute sessions</li>
+                            <li>Professional coaching</li>
+                            <li>Detailed assessments</li>
+                            <li>Priority scheduling</li>
+                            <li>Video analysis</li>
+                            <li>Valid 6 months</li>
+                        </ul>
+                        <a href="/accounts/signup/" class="primary-btn pricing-btn">Get Started</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Pricing Section End -->
+
+    <!-- Team Section Begin -->
+    <section class="team-section spad" id="team">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="team-title">
+                        <div class="section-title">
+                            <span>Our Coaches</span>
+                            <h2>TRAIN WITH THE BEST</h2>
+                        </div>
+                        <a href="/accounts/signup/" class="primary-btn btn-normal appoinment-btn">Book a Session</a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                {% for coach in coaches %}
+                <div class="col-lg-4 col-sm-6">
+                    <div class="ts-item set-bg" data-setbg="{% if coach.photo %}{{ coach.photo.url }}{% else %}{% static 'gymlife/img/team/team-'|add:forloop.counter|add:'.jpg' %}{% endif %}">
+                        <div class="ts_text">
+                            <h4>{{ coach.user.get_full_name|default:coach.user.username }}</h4>
+                            <span>{{ coach.tagline|default:"Professional Coach" }}</span>
+                            <div class="tt_social">
+                                {% if coach.facebook_url %}<a href="{{ coach.facebook_url }}"><i class="fa fa-facebook"></i></a>{% endif %}
+                                {% if coach.twitter_url %}<a href="{{ coach.twitter_url }}"><i class="fa fa-twitter"></i></a>{% endif %}
+                                {% if coach.youtube_url %}<a href="{{ coach.youtube_url }}"><i class="fa fa-youtube-play"></i></a>{% endif %}
+                                {% if coach.instagram_url %}<a href="{{ coach.instagram_url }}"><i class="fa fa-instagram"></i></a>{% endif %}
+                                {% if coach.slug %}<a href="/coach/{{ coach.slug }}/"><i class="fa fa-user"></i></a>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <!-- Default team members if none in database -->
+                <div class="col-lg-4 col-sm-6">
+                    <div class="ts-item set-bg" data-setbg="{% static 'gymlife/img/team/team-1.jpg' %}">
+                        <div class="ts_text">
+                            <h4>Coach Mirko</h4>
+                            <span>Founder | Tactics Specialist</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-sm-6">
+                    <div class="ts-item set-bg" data-setbg="{% static 'gymlife/img/team/team-2.jpg' %}">
+                        <div class="ts_text">
+                            <h4>Coach Roger</h4>
+                            <span>Technical Training</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    <!-- Team Section End -->
+
+    <!-- Testimonial Section Begin -->
+    {% if reviews %}
+    <section class="testimonial-section spad">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Testimonials</span>
+                        <h2>What Our Clients Say</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="ts_slider owl-carousel">
+                {% for review in reviews %}
+                <div class="ts_item">
+                    <div class="row">
+                        <div class="col-lg-12 text-center">
+                            <div class="ti_pic">
+                                <img src="{% static 'gymlife/img/testimonial/testimonial-1.jpg' %}" alt="{{ review.client }}">
+                            </div>
+                            <div class="ti_text">
+                                <p>{{ review.comment }}</p>
+                                <h5>{{ review.client.user.get_full_name|default:review.client.user.username }}</h5>
+                                <div class="tt-rating">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                        <i class="fa fa-star"></i>
+                                        {% else %}
+                                        <i class="fa fa-star-o"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+    <!-- Testimonial Section End -->
+
+    <!-- Get In Touch Section Begin -->
+    <div class="gettouch-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="gt-text">
+                        <i class="fa fa-map-marker"></i>
+                        <p>Miami, Florida<br/>United States</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="gt-text">
+                        <i class="fa fa-mobile"></i>
+                        <ul>
+                            <li>Contact via Portal</li>
+                            <li>24/7 Online Booking</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="gt-text email">
+                        <i class="fa fa-envelope"></i>
+                        <p>info@atletasworld.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Get In Touch Section End -->
+
+    <!-- Footer Section Begin -->
+    <section class="footer-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="fs-about">
+                        <div class="fa-logo">
+                            <a href="#"><img src="/media/APC-logo.jpg" alt="Atletas World" style="height: 60px; border-radius: 8px;"></a>
+                        </div>
+                        <p>Atletas World provides elite soccer training for players of all ages and skill levels. Our professional coaches are dedicated to helping you reach your full potential.</p>
+                        <div class="fa-social">
+                            <a href="#"><i class="fa fa-facebook"></i></a>
+                            <a href="#"><i class="fa fa-instagram"></i></a>
+                            <a href="#"><i class="fa fa-youtube-play"></i></a>
+                            <a href="#"><i class="fa fa-envelope-o"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-6">
+                    <div class="fs-widget">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#services">Programs</a></li>
+                            <li><a href="#team">Coaches</a></li>
+                            <li><a href="/contact/">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-6">
+                    <div class="fs-widget">
+                        <h4>Portal</h4>
+                        <ul>
+                            <li><a href="/accounts/login/">Login</a></li>
+                            <li><a href="/accounts/signup/">Sign Up</a></li>
+                            <li><a href="/portal/">My Account</a></li>
+                            <li><a href="/book/">Book Session</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="fs-widget">
+                        <h4>Training Programs</h4>
+                        <div class="fw-recent">
+                            <h6><a href="#">Private 1-on-1 Training</a></h6>
+                            <ul>
+                                <li>Personalized coaching</li>
+                                <li>All skill levels</li>
+                            </ul>
+                        </div>
+                        <div class="fw-recent">
+                            <h6><a href="#">Group Training Sessions</a></h6>
+                            <ul>
+                                <li>Team dynamics</li>
+                                <li>Competitive environment</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <div class="copyright-text">
+                        <p>Copyright &copy; {% now "Y" %} Atletas World. All rights reserved. | Theme by <a href="https://colorlib.com" target="_blank">Colorlib</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Footer Section End -->
+
+    <!-- Search model Begin -->
+    <div class="search-model">
+        <div class="h-100 d-flex align-items-center justify-content-center">
+            <div class="search-close-switch">+</div>
+            <form class="search-model-form">
+                <input type="text" id="search-input" placeholder="Search here.....">
+            </form>
+        </div>
+    </div>
+    <!-- Search model end -->
+
+    <!-- Js Plugins -->
+    <script src="{% static 'gymlife/js/jquery-3.3.1.min.js' %}"></script>
+    <script src="{% static 'gymlife/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'gymlife/js/jquery.magnific-popup.min.js' %}"></script>
+    <script src="{% static 'gymlife/js/masonry.pkgd.min.js' %}"></script>
+    <script src="{% static 'gymlife/js/jquery.barfiller.js' %}"></script>
+    <script src="{% static 'gymlife/js/jquery.slicknav.js' %}"></script>
+    <script src="{% static 'gymlife/js/owl.carousel.min.js' %}"></script>
+    <script src="{% static 'gymlife/js/main.js' %}"></script>
+
+</body>
+
+</html>

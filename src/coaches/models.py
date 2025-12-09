@@ -6,6 +6,10 @@ from django.utils import timezone
 class Coach(models.Model):
     """Coach profile with availability and specializations."""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    # Basic info (admin/owner created)
+    slug = models.SlugField(max_length=100, unique=True, blank=True, null=True,
+                            help_text="URL-friendly name (e.g., 'mirko' for /coach/mirko/)")
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to='coaches/', blank=True, null=True)
     specializations = models.TextField(blank=True, help_text="Comma-separated list")
@@ -13,6 +17,30 @@ class Coach(models.Model):
     hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
     google_calendar_id = models.CharField(max_length=255, blank=True)
+
+    # Public profile fields (coach editable after admin creates profile)
+    profile_enabled = models.BooleanField(default=False,
+                                          help_text="Enable public profile page (admin must set this)")
+    tagline = models.CharField(max_length=200, blank=True,
+                               help_text="Short tagline shown on profile")
+    full_bio = models.TextField(blank=True, help_text="Extended biography for public profile")
+    experience_years = models.IntegerField(default=0, help_text="Years of coaching experience")
+    coaching_philosophy = models.TextField(blank=True, help_text="Your coaching philosophy")
+    achievements = models.TextField(blank=True, help_text="Notable achievements and awards")
+
+    # Social/Contact (coach editable)
+    instagram_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True)
+    twitter_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    youtube_url = models.URLField(blank=True)
+    personal_website = models.URLField(blank=True)
+
+    # Gallery images
+    gallery_image_1 = models.ImageField(upload_to='coaches/gallery/', blank=True, null=True)
+    gallery_image_2 = models.ImageField(upload_to='coaches/gallery/', blank=True, null=True)
+    gallery_image_3 = models.ImageField(upload_to='coaches/gallery/', blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -60,7 +60,7 @@
                             <span class="font-semibold">{{ booking.scheduled_date|date:"M j, Y" }}</span>
                             <span class="text-sm text-gray-500">{{ booking.scheduled_time|time:"g:i A" }}</span>
                         </div>
-                        <p class="text-sm text-gray-500">{{ booking.program.name }} - {{ booking.get_status_display }}</p>
+                        <p class="text-sm text-gray-500">{{ booking.session_type.name }} - {{ booking.get_status_display }}</p>
                     </div>
                     {% empty %}
                     <p class="text-gray-500">No sessions yet.</p>

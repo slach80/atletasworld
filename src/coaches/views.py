@@ -4,7 +4,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Avg
+from django.db import models
 from datetime import datetime, timedelta, time
 from .models import Coach, ScheduleBlock, SessionAttendance, PlayerAssessment
 from bookings.models import Booking
@@ -61,7 +62,7 @@ def dashboard(request):
         scheduled_date__gte=today - timedelta(days=7)
     ).exclude(
         assessments__isnull=False
-    ).select_related('player', 'program')[:10]
+    ).select_related('player', 'session_type')[:10]
 
     # Stats
     stats = {
@@ -383,7 +384,7 @@ def todays_sessions(request):
 
 @coach_required
 def assessments_list(request):
-    """List sessions needing assessment."""
+    """List sessions needing assessment with search and filter."""
     coach = request.coach
     today = timezone.now().date()
 
@@ -395,17 +396,99 @@ def assessments_list(request):
         scheduled_date__lte=today
     ).exclude(
         assessments__isnull=False
-    ).select_related('player', 'program').order_by('-scheduled_date')
+    ).select_related('player', 'session_type').order_by('-scheduled_date')
 
-    # Recent assessments
-    recent = PlayerAssessment.objects.filter(
+    # Base queryset for assessments
+    assessments = PlayerAssessment.objects.filter(
         coach=coach
-    ).select_related('player', 'booking__program').order_by('-assessment_date')[:20]
+    ).select_related('player', 'booking__session_type')
+
+    # Search by player name
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        assessments = assessments.filter(
+            Q(player__first_name__icontains=search_query) |
+            Q(player__last_name__icontains=search_query)
+        )
+
+    # Filter by training type
+    training_type = request.GET.get('training_type', '')
+    if training_type:
+        assessments = assessments.filter(training_type=training_type)
+
+    # Filter by rating
+    min_rating = request.GET.get('min_rating', '')
+    if min_rating:
+        # Filter by calculated overall rating (approximate with average)
+        from django.db.models import Avg
+        assessments = assessments.annotate(
+            avg_rating=Avg('effort_engagement') + Avg('technical_proficiency') +
+                      Avg('tactical_awareness') + Avg('physical_performance') +
+                      Avg('goals_achievement')
+        )
+        # Since overall is sum/5, multiply min_rating by 5
+        assessments = assessments.filter(
+            effort_engagement__gte=int(min_rating)
+        )
+
+    # Filter by date range
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    if date_from:
+        assessments = assessments.filter(assessment_date__date__gte=date_from)
+    if date_to:
+        assessments = assessments.filter(assessment_date__date__lte=date_to)
+
+    # Order and limit
+    assessments = assessments.order_by('-assessment_date')[:50]
+
+    # Get unique players for filter dropdown
+    player_ids = PlayerAssessment.objects.filter(coach=coach).values_list('player_id', flat=True).distinct()
+    from clients.models import Player
+    from django.db.models import Avg
+    players = Player.objects.filter(id__in=player_ids).order_by('first_name')
+
+    # Calculate player averages for training decision support
+    player_averages = PlayerAssessment.objects.filter(
+        coach=coach
+    ).values(
+        'player__id', 'player__first_name', 'player__last_name'
+    ).annotate(
+        avg_effort=Avg('effort_engagement'),
+        avg_technical=Avg('technical_proficiency'),
+        avg_tactical=Avg('tactical_awareness'),
+        avg_physical=Avg('physical_performance'),
+        avg_goals=Avg('goals_achievement'),
+        total_assessments=Count('id')
+    ).order_by('player__first_name')
+
+    # Calculate overall and identify weak/strong areas for each player
+    for player in player_averages:
+        scores = {
+            'Effort': player['avg_effort'] or 0,
+            'Technical': player['avg_technical'] or 0,
+            'Tactical': player['avg_tactical'] or 0,
+            'Physical': player['avg_physical'] or 0,
+            'Goals': player['avg_goals'] or 0,
+        }
+        player['avg_overall'] = sum(scores.values()) / 5 if scores else 0
+        player['weakest'] = min(scores, key=scores.get) if scores else None
+        player['strongest'] = max(scores, key=scores.get) if scores else None
+        player['weak_score'] = scores.get(player['weakest'], 0)
+        player['strong_score'] = scores.get(player['strongest'], 0)
 
     context = {
         'coach': coach,
         'pending_assessments': pending,
-        'recent_assessments': recent,
+        'recent_assessments': assessments,
+        'players': players,
+        'player_averages': player_averages,
+        'training_types': PlayerAssessment.TRAINING_TYPE_CHOICES,
+        'search_query': search_query,
+        'selected_training_type': training_type,
+        'selected_min_rating': min_rating,
+        'date_from': date_from,
+        'date_to': date_to,
     }
     return render(request, 'coaches/assessments.html', context)
 
@@ -600,7 +683,7 @@ def player_detail(request, player_id):
     bookings = Booking.objects.filter(
         coach=coach,
         player=player
-    ).select_related('program').order_by('-scheduled_date')
+    ).select_related('session_type').order_by('-scheduled_date')
 
     if not bookings.exists():
         messages.error(request, 'You have not trained this player.')
@@ -645,35 +728,144 @@ def notify_parents(request):
 @coach_required
 @require_POST
 def send_notification(request):
-    """Send a notification to a player's parent."""
+    """Send notifications to multiple players' parents."""
     coach = request.coach
     from clients.models import Player
 
-    player_id = request.POST.get('player_id')
+    player_ids = request.POST.getlist('player_ids')
     notification_type = request.POST.get('notification_type', 'general')
     message = request.POST.get('message', '')
 
-    if player_id and message:
-        player = get_object_or_404(Player, id=player_id)
-        client = player.client
+    if player_ids and message:
+        # Get unique clients from selected players
+        players = Player.objects.filter(id__in=player_ids).select_related('client')
+        notified_clients = set()
+        sent_count = 0
 
-        # Create notification
-        try:
-            prefs = client.notification_preferences
-            method = prefs.booking_confirmations  # Use their preferred method
-        except Exception:
-            method = 'email'
+        for player in players:
+            client = player.client
+            # Avoid sending duplicate notifications to the same client
+            if client.id in notified_clients:
+                continue
+            notified_clients.add(client.id)
 
-        Notification.objects.create(
-            client=client,
-            notification_type='promotional' if notification_type == 'general' else notification_type.replace('_', '_'),
-            title=f'Message from Coach {coach.user.first_name}',
-            message=message,
-            method=method,
-        )
+            # Get notification preference
+            try:
+                prefs = client.notification_preferences
+                method = prefs.booking_confirmations
+            except Exception:
+                method = 'email'
 
-        messages.success(request, f'Notification sent to {client.user.get_full_name()}!')
+            # Create notification
+            Notification.objects.create(
+                client=client,
+                notification_type='promotional' if notification_type == 'general' else notification_type,
+                title=f'Message from Coach {coach.user.first_name}',
+                message=message,
+                method=method,
+            )
+            sent_count += 1
+
+        if sent_count == 1:
+            messages.success(request, f'Notification sent to 1 parent!')
+        else:
+            messages.success(request, f'Notification sent to {sent_count} parents!')
     else:
-        messages.error(request, 'Please provide a message.')
+        messages.error(request, 'Please select recipients and provide a message.')
 
-    return redirect('coaches:my_players')
+    return redirect('coaches:notify_parents')
+
+
+@coach_required
+def availability(request):
+    """Coach availability calendar using Toast UI Calendar."""
+    coach = request.coach
+    context = {
+        'coach': coach,
+    }
+    return render(request, 'coaches/availability.html', context)
+
+
+@coach_required
+def edit_profile(request):
+    """Coach profile edit page - only accessible if profile_enabled."""
+    coach = request.coach
+
+    if not coach.profile_enabled:
+        messages.error(request, 'Your public profile has not been enabled yet. Please contact the administrator.')
+        return redirect('coaches:dashboard')
+
+    if request.method == 'POST':
+        # Update coach profile fields (only the coach-editable fields)
+        coach.tagline = request.POST.get('tagline', '')[:200]
+        coach.full_bio = request.POST.get('full_bio', '')
+        coach.experience_years = int(request.POST.get('experience_years', 0) or 0)
+        coach.coaching_philosophy = request.POST.get('coaching_philosophy', '')
+        coach.achievements = request.POST.get('achievements', '')
+
+        # Social links
+        coach.instagram_url = request.POST.get('instagram_url', '')
+        coach.facebook_url = request.POST.get('facebook_url', '')
+        coach.twitter_url = request.POST.get('twitter_url', '')
+        coach.linkedin_url = request.POST.get('linkedin_url', '')
+        coach.youtube_url = request.POST.get('youtube_url', '')
+        coach.personal_website = request.POST.get('personal_website', '')
+
+        # Handle photo upload
+        if 'photo' in request.FILES:
+            coach.photo = request.FILES['photo']
+
+        # Handle gallery images
+        if 'gallery_image_1' in request.FILES:
+            coach.gallery_image_1 = request.FILES['gallery_image_1']
+        if 'gallery_image_2' in request.FILES:
+            coach.gallery_image_2 = request.FILES['gallery_image_2']
+        if 'gallery_image_3' in request.FILES:
+            coach.gallery_image_3 = request.FILES['gallery_image_3']
+
+        # Clear gallery images if requested
+        if request.POST.get('clear_gallery_1'):
+            coach.gallery_image_1 = None
+        if request.POST.get('clear_gallery_2'):
+            coach.gallery_image_2 = None
+        if request.POST.get('clear_gallery_3'):
+            coach.gallery_image_3 = None
+
+        coach.save()
+        messages.success(request, 'Your profile has been updated!')
+        return redirect('coaches:edit_profile')
+
+    context = {
+        'coach': coach,
+    }
+    return render(request, 'coaches/edit_profile.html', context)
+
+
+def coach_public_profile(request, slug):
+    """Public coach profile page."""
+    coach = get_object_or_404(Coach, slug=slug, is_active=True, profile_enabled=True)
+
+    # Get review stats if available
+    from reviews.models import Review
+    reviews = Review.objects.filter(coach=coach, is_approved=True).order_by('-created_at')[:5]
+    review_stats = Review.objects.filter(coach=coach, is_approved=True).aggregate(
+        avg_rating=models.Avg('rating'),
+        total_reviews=models.Count('id')
+    )
+
+    # Get session count
+    total_sessions = Booking.objects.filter(coach=coach, status='completed').count()
+
+    # Parse specializations
+    specializations = []
+    if coach.specializations:
+        specializations = [s.strip() for s in coach.specializations.split(',') if s.strip()]
+
+    context = {
+        'coach': coach,
+        'reviews': reviews,
+        'review_stats': review_stats,
+        'total_sessions': total_sessions,
+        'specializations': specializations,
+    }
+    return render(request, 'coaches/public_profile.html', context)

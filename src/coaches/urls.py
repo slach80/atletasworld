@@ -7,6 +7,9 @@ urlpatterns = [
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
 
+    # Availability Calendar (Toast UI)
+    path('availability/', views.availability, name='availability'),
+
     # Schedule management
     path('schedule/', views.schedule, name='schedule'),
     path('schedule/add/', views.add_schedule_block, name='add_schedule_block'),
@@ -32,4 +35,7 @@ urlpatterns = [
     # Notifications
     path('notify/', views.notify_parents, name='notify_parents'),
     path('notify/send/', views.send_notification, name='send_notification'),
+
+    # Profile management
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
 ]

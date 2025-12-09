@@ -188,17 +188,20 @@
                         {% for player in players %}
                         <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                             <div class="flex items-center">
-                                <div class="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold">
-                                    {{ player.first_name.0 }}{{ player.last_name.0 }}
-                                </div>
-                                <div class="ml-4 flex-1">
-                                    <h3 class="font-semibold text-gray-800">{{ player.first_name }} {{ player.last_name }}</h3>
-                                    <p class="text-sm text-gray-500">{{ player.age_group }} | {{ player.get_skill_level_display }}</p>
-                                    {% if player.soccer_club %}
-                                    <p class="text-xs text-gray-400">{{ player.soccer_club }}</p>
-                                    {% endif %}
-                                </div>
-                                <a href="{% url 'clients:player_edit' player.id %}" class="text-secondary hover:text-green-700">
+                                <a href="{% url 'clients:player_assessments' player.id %}" class="flex items-center flex-1 group">
+                                    <div class="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold group-hover:bg-secondary transition">
+                                        {{ player.first_name.0 }}{{ player.last_name.0 }}
+                                    </div>
+                                    <div class="ml-4 flex-1">
+                                        <h3 class="font-semibold text-gray-800 group-hover:text-secondary transition">{{ player.first_name }} {{ player.last_name }}</h3>
+                                        <p class="text-sm text-gray-500">{{ player.age_group }} | {{ player.get_skill_level_display }}</p>
+                                        {% if player.soccer_club %}
+                                        <p class="text-xs text-gray-400">{{ player.soccer_club }}</p>
+                                        {% endif %}
+                                        <p class="text-xs text-secondary mt-1">View Assessments &rarr;</p>
+                                    </div>
+                                </a>
+                                <a href="{% url 'clients:player_edit' player.id %}" class="text-secondary hover:text-green-700 ml-2 p-2 hover:bg-gray-100 rounded-lg transition" title="Edit Player">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
@@ -293,7 +296,7 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-gray-800">{{ booking.program.name }}</h3>
+                                        <h3 class="font-semibold text-gray-800">{{ booking.session_type.name }}</h3>
                                         <p class="text-sm text-gray-600">{{ booking.scheduled_date|date:"l, M d" }} at {{ booking.scheduled_time|time:"g:i A" }}</p>
                                         <p class="text-xs text-gray-500">
                                             Coach: {{ booking.coach }}
@@ -340,7 +343,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-800">{{ booking.program.name }}</p>
+                                    <p class="text-sm font-medium text-gray-800">{{ booking.session_type.name }}</p>
                                     <p class="text-xs text-gray-500">{{ booking.scheduled_date|date:"M d, Y" }} with {{ booking.coach }}</p>
                                 </div>
                             </div>

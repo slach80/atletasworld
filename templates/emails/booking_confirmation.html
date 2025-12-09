@@ -1,0 +1,41 @@
+<h2>🎉 Booking Confirmed!</h2>
+
+<p>Your training session has been successfully booked. Here are the details:</p>
+
+<div class="highlight-box">
+    <div class="label">Session</div>
+    <div class="value">{{ session_type }}</div>
+</div>
+
+<div class="highlight-box">
+    <div class="label">Coach</div>
+    <div class="value">{{ coach_name }}</div>
+</div>
+
+<div class="highlight-box">
+    <div class="label">Date & Time</div>
+    <div class="value">{{ date }} at {{ time }}</div>
+</div>
+
+{% if player_name %}
+<div class="highlight-box">
+    <div class="label">Player</div>
+    <div class="value">{{ player_name }}</div>
+</div>
+{% endif %}
+
+<p style="margin-top: 25px;">
+    <strong>What to bring:</strong>
+</p>
+<ul>
+    <li>Soccer cleats</li>
+    <li>Shin guards</li>
+    <li>Water bottle</li>
+    <li>Comfortable athletic wear</li>
+</ul>
+
+<p style="text-align: center;">
+    <a href="{{ booking_link }}" class="btn">View My Bookings</a>
+</p>
+
+<p>We look forward to seeing you on the field!</p>
