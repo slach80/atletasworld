@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atletas World - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .hero {
+            text-align: center;
+            padding: 80px 20px;
+            background: url('https://images.unsplash.com/photo-1461896836934- voices-people?w=1920') center/cover;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+        .tagline {
+            font-size: 1.4rem;
+            color: #ccc;
+            margin-bottom: 40px;
+        }
+        .btn-primary {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+        }
+        .features {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            color: #e94560;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s, background 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255,255,255,0.1);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #ff6b6b;
+        }
+        .feature-card p {
+            color: #aaa;
+            line-height: 1.6;
+        }
+        .tech-stack {
+            background: rgba(0,0,0,0.3);
+            padding: 60px 20px;
+            text-align: center;
+        }
+        .tech-stack h2 {
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: #e94560;
+        }
+        .tech-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .tech-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .cta {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .cta p {
+            color: #aaa;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #666;
+        }
+        footer a {
+            color: #e94560;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="logo">Atletas World</h1>
+            <p class="tagline">The Premier Platform for Athletes and Sports Enthusiasts</p>
+            <a href="https://github.com/slach80/atletasworld" class="btn-primary">View on GitHub</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <h2>Platform Features</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">&#127941;</div>
+                <h3>Athlete Profiles</h3>
+                <p>Create comprehensive profiles showcasing your athletic achievements, stats, and career highlights.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128197;</div>
+                <h3>Event Management</h3>
+                <p>Organize and discover sports events, competitions, and training sessions in your area.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128202;</div>
+                <h3>Performance Tracking</h3>
+                <p>Monitor your progress with detailed analytics and performance metrics over time.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#129309;</div>
+                <h3>Community Network</h3>
+                <p>Connect with fellow athletes, coaches, and sports enthusiasts from around the world.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#127942;</div>
+                <h3>Achievement System</h3>
+                <p>Earn badges and recognition for your accomplishments and milestones.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128241;</div>
+                <h3>Mobile Ready</h3>
+                <p>Access your profile and features on any device with our responsive design.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="tech-stack">
+        <h2>Built With Modern Technology</h2>
+        <div class="tech-badges">
+            <span class="tech-badge">Django 5.0</span>
+            <span class="tech-badge">Python 3.12</span>
+            <span class="tech-badge">Bootstrap 5</span>
+            <span class="tech-badge">PostgreSQL</span>
+            <span class="tech-badge">REST API</span>
+            <span class="tech-badge">JWT Auth</span>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>Ready to Join?</h2>
+        <p>Be part of the growing community of athletes worldwide</p>
+        <a href="https://github.com/slach80/atletasworld" class="btn-primary">Get Started</a>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Atletas World. Open Source Project on <a href="https://github.com/slach80/atletasworld">GitHub</a></p>
+    </footer>
+</body>
+</html>
