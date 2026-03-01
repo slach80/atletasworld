@@ -1,0 +1,73 @@
+{% extends 'owner/base.html' %}
+{% block title %}Players{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">All Players</h1>
+        <p class="text-gray-500">View all registered players</p>
+    </div>
+    <a href="{% url 'owner_clients' %}" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">View Clients</a>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Player</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Age Group</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Skill Level</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Position</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Club/Team</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Parent/Guardian</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Bookings</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Assessments</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for player in players %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-4 px-6">
+                    <div class="font-semibold text-gray-800">{{ player.first_name }} {{ player.last_name }}</div>
+                    <div class="text-xs text-gray-500">Born {{ player.birth_year }}</div>
+                </td>
+                <td class="py-4 px-6">
+                    <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">{{ player.age_group }}</span>
+                </td>
+                <td class="py-4 px-6 text-sm">
+                    <span class="px-2 py-1 rounded-full text-xs
+                        {% if player.skill_level == 'elite' %}bg-yellow-100 text-yellow-700
+                        {% elif player.skill_level == 'advanced' %}bg-blue-100 text-blue-700
+                        {% elif player.skill_level == 'intermediate' %}bg-green-100 text-green-700
+                        {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ player.get_skill_level_display }}
+                    </span>
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ player.get_primary_position_display|default:"-" }}</td>
+                <td class="py-4 px-6 text-sm">
+                    {% if player.soccer_club %}
+                    <div class="text-gray-800">{{ player.soccer_club }}</div>
+                    {% if player.team_name %}<div class="text-xs text-gray-500">{{ player.team_name }}</div>{% endif %}
+                    {% else %}
+                    <span class="text-gray-400">-</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">
+                    <a href="{% url 'owner_client_detail' player.client.pk %}" class="text-owner hover:underline">
+                        {{ player.client.user.first_name }} {{ player.client.user.last_name }}
+                    </a>
+                </td>
+                <td class="py-4 px-6 font-semibold">{{ player.total_bookings }}</td>
+                <td class="py-4 px-6">
+                    <span class="{% if player.total_assessments > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ player.total_assessments }}</span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="py-8 text-center text-gray-500">No players found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

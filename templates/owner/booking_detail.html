@@ -1,0 +1,177 @@
+{% extends 'owner/base.html' %}
+{% block title %}Booking #{{ booking.pk }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'owner_bookings' %}" class="text-owner hover:underline">&larr; Back to Bookings</a>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+    <!-- Main Details -->
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
+        <div class="flex justify-between items-start mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Booking #{{ booking.pk }}</h1>
+            <span class="px-3 py-1 text-sm rounded-full
+                {% if booking.status == 'completed' %}bg-green-100 text-green-700
+                {% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-700
+                {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-700
+                {% elif booking.status == 'cancelled' %}bg-red-100 text-red-700
+                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                {{ booking.get_status_display }}
+            </span>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Session Details</h3>
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-gray-500">Date:</span>
+                        <span class="font-semibold ml-2">{{ booking.scheduled_date|date:"l, F j, Y" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Time:</span>
+                        <span class="font-semibold ml-2">{{ booking.scheduled_time|time:"g:i A" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Duration:</span>
+                        <span class="font-semibold ml-2">{{ booking.duration_minutes }} minutes</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Session Type:</span>
+                        <span class="font-semibold ml-2">{% if booking.session_type %}{{ booking.session_type.name }}{% else %}-{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">People</h3>
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-gray-500">Player:</span>
+                        <span class="font-semibold ml-2">{% if booking.player %}{{ booking.player.first_name }} {{ booking.player.last_name }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Client:</span>
+                        <span class="font-semibold ml-2">{{ booking.client.user.first_name }} {{ booking.client.user.last_name }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Coach:</span>
+                        <span class="font-semibold ml-2">{{ booking.coach.user.first_name }} {{ booking.coach.user.last_name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-6">
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Payment</h3>
+                <div class="space-y-2">
+                    <div>
+                        <span class="text-gray-500">Status:</span>
+                        <span class="ml-2 px-2 py-1 text-xs rounded-full {% if booking.payment_status == 'paid' %}bg-green-100 text-green-700{% elif booking.payment_status == 'package' %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                            {{ booking.get_payment_status_display }}
+                        </span>
+                    </div>
+                    {% if booking.amount_paid %}
+                    <div>
+                        <span class="text-gray-500">Amount:</span>
+                        <span class="font-semibold ml-2">${{ booking.amount_paid }}</span>
+                    </div>
+                    {% endif %}
+                    {% if booking.client_package %}
+                    <div>
+                        <span class="text-gray-500">Package:</span>
+                        <span class="font-semibold ml-2">{{ booking.client_package.package.name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Timestamps</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="text-gray-500">Created:</span> {{ booking.created_at|date:"M j, Y g:i A" }}</div>
+                    {% if booking.confirmed_at %}<div><span class="text-gray-500">Confirmed:</span> {{ booking.confirmed_at|date:"M j, Y g:i A" }}</div>{% endif %}
+                    {% if booking.completed_at %}<div><span class="text-gray-500">Completed:</span> {{ booking.completed_at|date:"M j, Y g:i A" }}</div>{% endif %}
+                    {% if booking.cancelled_at %}<div><span class="text-gray-500">Cancelled:</span> {{ booking.cancelled_at|date:"M j, Y g:i A" }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if booking.client_notes %}
+        <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h3 class="text-sm font-semibold text-blue-800 mb-2">Client Notes</h3>
+            <p class="text-blue-700">{{ booking.client_notes }}</p>
+        </div>
+        {% endif %}
+
+        {% if booking.cancellation_reason %}
+        <div class="mt-6 p-4 bg-red-50 rounded-lg">
+            <h3 class="text-sm font-semibold text-red-800 mb-2">Cancellation</h3>
+            <p class="text-red-700">Reason: {{ booking.get_cancellation_reason_display }}</p>
+            {% if booking.cancellation_notes %}<p class="text-red-600 text-sm mt-1">{{ booking.cancellation_notes }}</p>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4">Actions</h2>
+
+        <div class="space-y-3">
+            {% if booking.status == 'pending' %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="confirm">
+                <button type="submit" class="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition">Confirm Booking</button>
+            </form>
+            {% endif %}
+
+            {% if booking.status == 'confirmed' %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="complete">
+                <button type="submit" class="w-full py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-green-600 transition">Mark Completed</button>
+            </form>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="no_show">
+                <button type="submit" class="w-full py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition" onclick="return confirm('Mark as no-show?');">Mark No-Show</button>
+            </form>
+            {% endif %}
+
+            {% if booking.status in 'pending,confirmed' %}
+            <hr class="my-4">
+            <form method="post" class="space-y-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="cancel">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cancellation Reason</label>
+                    <select name="reason" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        {% for value, label in cancellation_reasons %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                    <textarea name="notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition" onclick="return confirm('Cancel this booking?');">Cancel Booking</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% if booking.status == 'completed' or booking.status == 'cancelled' or booking.status == 'no_show' %}
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg text-center text-gray-500">
+            <p>This booking is {{ booking.status }}.</p>
+            <p class="text-sm">No further actions available.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

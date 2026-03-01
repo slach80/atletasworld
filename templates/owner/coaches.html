@@ -1,0 +1,79 @@
+{% extends 'owner/base.html' %}
+{% block title %}Coaches{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Coach Management</h1>
+        <p class="text-gray-500">Add, edit, and manage coaches and their schedules</p>
+    </div>
+    <a href="{% url 'owner_coach_add' %}" class="px-6 py-3 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add Coach
+    </a>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coach</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Email</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Upcoming Sessions</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Total Bookings</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for coach in coaches %}
+            <tr class="hover:bg-gray-50 {% if not coach.is_active %}opacity-50{% endif %}">
+                <td class="py-4 px-6">
+                    <div class="flex items-center space-x-3">
+                        {% if coach.photo %}
+                        <img src="{{ coach.photo.url }}" class="w-10 h-10 rounded-full object-cover">
+                        {% else %}
+                        <div class="w-10 h-10 rounded-full bg-owner flex items-center justify-center text-white font-bold">{{ coach.user.first_name|slice:":1" }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="font-semibold text-gray-800">{{ coach.user.first_name }} {{ coach.user.last_name }}</div>
+                            {% if coach.specializations %}<div class="text-sm text-gray-500">{{ coach.specializations|truncatechars:30 }}</div>{% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ coach.user.email }}</td>
+                <td class="py-4 px-6">
+                    <span class="font-bold {% if coach.upcoming_sessions > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ coach.upcoming_sessions }}</span>
+                </td>
+                <td class="py-4 px-6 font-semibold">{{ coach.total_bookings }}</td>
+                <td class="py-4 px-6">{{ coach.total_players }}</td>
+                <td class="py-4 px-6">
+                    {% if coach.is_active %}
+                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 px-6">
+                    <div class="flex space-x-2">
+                        <a href="{% url 'owner_coach_edit' coach.pk %}" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">Edit</a>
+                        <a href="{% url 'owner_coach_schedule' coach.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-600 transition">Schedule</a>
+                        {% if coach.is_active %}
+                        <form method="post" action="{% url 'owner_coach_delete' coach.pk %}" onsubmit="return confirm('Deactivate this coach?');">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Deactivate</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="py-8 text-center text-gray-500">No coaches found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

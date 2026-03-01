@@ -1,0 +1,85 @@
+{% extends 'owner/base.html' %}
+{% block title %}Packages{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Package Management</h1>
+        <p class="text-gray-500">Manage training packages available for purchase</p>
+    </div>
+    <a href="{% url 'owner_package_add' %}" class="px-6 py-3 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add Package
+    </a>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Package</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Type</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Price</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Sessions</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Validity</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Active Purchases</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for package in packages %}
+            <tr class="hover:bg-gray-50 {% if not package.is_active %}opacity-50{% endif %}">
+                <td class="py-4 px-6">
+                    <div class="font-semibold text-gray-800">{{ package.name }}</div>
+                    {% if package.description %}<div class="text-sm text-gray-500 truncate max-w-xs">{{ package.description|truncatechars:50 }}</div>{% endif %}
+                    {% if package.is_special and package.event_start_date %}
+                    <div class="text-xs text-purple-600 mt-1">
+                        {{ package.event_start_date|date:"M j" }} - {{ package.event_end_date|date:"M j, Y" }}
+                        {% if package.event_location %}| {{ package.event_location }}{% endif %}
+                    </div>
+                    {% endif %}
+                    {% if package.age_group %}
+                    <div class="text-xs text-gray-400">Ages: {{ package.age_group }}</div>
+                    {% endif %}
+                </td>
+                <td class="py-4 px-6">
+                    <span class="px-2 py-1 text-xs rounded-full {% if package.is_special %}bg-purple-100 text-purple-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ package.get_package_type_display }}
+                    </span>
+                </td>
+                <td class="py-4 px-6 font-semibold">${{ package.price }}</td>
+                <td class="py-4 px-6">{% if package.sessions_included > 0 %}{{ package.sessions_included }}{% else %}Unlimited{% endif %}</td>
+                <td class="py-4 px-6">{{ package.validity_weeks }} weeks</td>
+                <td class="py-4 px-6">
+                    <span class="font-bold text-owner">{{ package.active_purchases }}</span>
+                    <span class="text-gray-400">/ {{ package.total_purchases }}</span>
+                </td>
+                <td class="py-4 px-6">
+                    {% if package.is_active %}
+                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 px-6">
+                    <div class="flex space-x-2">
+                        <a href="{% url 'owner_package_edit' package.pk %}" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">Edit</a>
+                        {% if package.is_active %}
+                        <form method="post" action="{% url 'owner_package_delete' package.pk %}" onsubmit="return confirm('Deactivate this package?');">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Deactivate</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="py-8 text-center text-gray-500">No packages found. Create your first package!</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends 'owner/base.html' %}
+{% block title %}{% if editing %}Edit{% else %}Add{% endif %} Package{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'owner_packages' %}" class="text-owner hover:underline">&larr; Back to Packages</a>
+</div>
+
+<div class="bg-white rounded-xl shadow-md p-8 max-w-2xl">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">{% if editing %}Edit Package{% else %}Add New Package{% endif %}</h1>
+
+    <!-- Mismatch Warning Banner -->
+    <div id="mismatch-warning" class="hidden bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-6">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-yellow-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+                <h3 class="font-semibold text-yellow-800">Package Configuration Mismatch</h3>
+                <p id="mismatch-message" class="text-sm text-yellow-700 mt-1"></p>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-2 gap-6">
+            <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Package Name *</label>
+                <input type="text" name="name" value="{{ package.name|default:'' }}" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                       placeholder="e.g., Basic 4">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Package Type *</label>
+                <select name="package_type" id="package_type" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner" onchange="validatePackageConfig(); toggleSpecialFields();">
+                    {% for value, label in package_types %}
+                    <option value="{{ value }}" {% if package.package_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
+                <input type="number" name="price" value="{{ package.price|default:'' }}" required step="0.01" min="0"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                       placeholder="99.00">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sessions Included *</label>
+                <input type="number" name="sessions_included" id="sessions_included" value="{{ package.sessions_included|default:'4' }}" min="0"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                       placeholder="0 for unlimited" onchange="validatePackageConfig()">
+                <p class="text-xs text-gray-500 mt-1">Set to 0 for unlimited sessions</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Validity (weeks) *</label>
+                <input type="number" name="validity_weeks" id="validity_weeks" value="{{ package.validity_weeks|default:'4' }}" required min="1"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                       onchange="validatePackageConfig()">
+            </div>
+
+            <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea name="description" rows="3"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                          placeholder="Optional description...">{{ package.description|default:'' }}</textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Max Participants</label>
+                <input type="number" name="max_participants" value="{{ package.max_participants|default:'0' }}" min="0"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                       placeholder="0 for unlimited">
+                <p class="text-xs text-gray-500 mt-1">For special event packages</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Age Group</label>
+                <input type="text" name="age_group" value="{{ package.age_group|default:'' }}"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                       placeholder="e.g., U13, U15">
+            </div>
+
+            <div class="col-span-2 flex space-x-6">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="is_active" {% if package.is_active or not editing %}checked{% endif %}
+                           class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
+                    <span class="text-sm text-gray-700">Active (available for purchase)</span>
+                </label>
+
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="is_special" id="is_special" {% if package.is_special %}checked{% endif %}
+                           class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner"
+                           onchange="toggleSpecialFields()">
+                    <span class="text-sm text-gray-700">Special Event Package</span>
+                </label>
+            </div>
+
+            <!-- Special Event / Date-Limited Package Fields -->
+            <div id="special_fields" class="col-span-2 space-y-4 border-t pt-4 mt-2 {% if not package.is_special %}hidden{% endif %}">
+                <h3 class="text-sm font-semibold text-purple-700">Event / Date Restrictions</h3>
+                <p class="text-xs text-gray-500">Set date range for special events, clinics, or camps. Leave blank for no date restrictions.</p>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                        <input type="date" name="event_start_date" id="event_start_date" value="{{ package.event_start_date|date:'Y-m-d' }}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                        <input type="date" name="event_end_date" id="event_end_date" value="{{ package.event_end_date|date:'Y-m-d' }}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Event Location</label>
+                    <input type="text" name="event_location" value="{{ package.event_location|default:'' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner"
+                           placeholder="e.g., Main Field, Sports Complex">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex space-x-4 pt-4">
+            <button type="submit" class="px-6 py-3 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition">
+                {% if editing %}Update Package{% else %}Create Package{% endif %}
+            </button>
+            <a href="{% url 'owner_packages' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Expected configurations for each package type
+const packageExpectations = {
+    'basic4': { sessions: 4, weeks: 4, label: 'Basic 4 - 4 classes / 4 weeks' },
+    'basic8': { sessions: 8, weeks: 4, label: 'Basic 8 - 8 classes / 4 weeks' },
+    'elite24': { sessions: 24, weeks: 12, label: 'Elite 24 - 24 classes / 12 weeks' },
+    'unlimited': { sessions: 0, weeks: 12, label: 'Unlimited - 12 weeks' },
+    'special': { sessions: null, weeks: null, label: 'Special Event Package' },
+    'team': { sessions: null, weeks: null, label: 'Team Training Package' }
+};
+
+function validatePackageConfig() {
+    const packageType = document.getElementById('package_type').value;
+    const sessions = parseInt(document.getElementById('sessions_included').value) || 0;
+    const weeks = parseInt(document.getElementById('validity_weeks').value) || 0;
+    const warningDiv = document.getElementById('mismatch-warning');
+    const messageEl = document.getElementById('mismatch-message');
+
+    const expected = packageExpectations[packageType];
+
+    if (!expected || expected.sessions === null) {
+        // No validation for special/team packages
+        warningDiv.classList.add('hidden');
+        return;
+    }
+
+    let warnings = [];
+
+    if (expected.sessions !== sessions) {
+        warnings.push(`"${expected.label}" expects ${expected.sessions} sessions, but you entered ${sessions}`);
+    }
+
+    if (expected.weeks !== weeks) {
+        warnings.push(`"${expected.label}" expects ${expected.weeks} weeks validity, but you entered ${weeks}`);
+    }
+
+    if (warnings.length > 0) {
+        messageEl.innerHTML = warnings.join('<br>') + '<br><span class="text-xs">This may confuse clients. Consider updating the values or changing the package type.</span>';
+        warningDiv.classList.remove('hidden');
+    } else {
+        warningDiv.classList.add('hidden');
+    }
+}
+
+function toggleSpecialFields() {
+    const isSpecial = document.getElementById('is_special').checked;
+    const packageType = document.getElementById('package_type').value;
+    const specialFields = document.getElementById('special_fields');
+
+    // Show special fields if checkbox is checked OR if package type is special/team
+    if (isSpecial || packageType === 'special' || packageType === 'team') {
+        specialFields.classList.remove('hidden');
+        // Auto-check the special checkbox if special package type selected
+        if (packageType === 'special' || packageType === 'team') {
+            document.getElementById('is_special').checked = true;
+        }
+    } else {
+        specialFields.classList.add('hidden');
+    }
+}
+
+// Run validation on page load
+document.addEventListener('DOMContentLoaded', function() {
+    validatePackageConfig();
+    toggleSpecialFields();
+});
+</script>
+{% endblock %}

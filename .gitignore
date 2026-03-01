@@ -51,3 +51,6 @@ celerybeat.pid
 # Logs
 *.log
 npm-debug.log*
+
+# Demo credentials (local only)
+demo_credentials.json

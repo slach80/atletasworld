@@ -1,0 +1,100 @@
+{% extends 'owner/base.html' %}
+{% block title %}Bookings{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Booking Management</h1>
+    <p class="text-gray-500">View and manage all session bookings</p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-xl shadow-md p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner">
+                <option value="">All Statuses</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Coach</label>
+            <select name="coach" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner">
+                <option value="">All Coaches</option>
+                {% for coach in coaches %}
+                <option value="{{ coach.pk }}" {% if coach_filter == coach.pk|stringformat:"d" %}selected{% endif %}>{{ coach.user.first_name }} {{ coach.user.last_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <input type="date" name="date" value="{{ date_filter }}" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner">
+        </div>
+        <button type="submit" class="px-4 py-2 bg-owner text-white rounded-lg hover:bg-indigo-600 transition">Filter</button>
+        <a href="{% url 'owner_bookings' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Clear</a>
+    </form>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Player</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Client</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coach</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Session</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date/Time</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Payment</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for booking in bookings %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-4 px-6">
+                    {% if booking.player %}
+                    <div class="font-semibold text-gray-800">{{ booking.player.first_name }} {{ booking.player.last_name }}</div>
+                    <div class="text-xs text-gray-500">{{ booking.player.age_group }}</div>
+                    {% else %}
+                    <span class="text-gray-400">No player</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ booking.client.user.first_name }} {{ booking.client.user.last_name }}</td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ booking.coach.user.first_name }}</td>
+                <td class="py-4 px-6 text-sm">{% if booking.session_type %}{{ booking.session_type.name }}{% else %}-{% endif %}</td>
+                <td class="py-4 px-6">
+                    <div class="text-sm font-semibold">{{ booking.scheduled_date|date:"M j, Y" }}</div>
+                    <div class="text-xs text-gray-500">{{ booking.scheduled_time|time:"g:i A" }}</div>
+                </td>
+                <td class="py-4 px-6">
+                    <span class="px-2 py-1 text-xs rounded-full
+                        {% if booking.status == 'completed' %}bg-green-100 text-green-700
+                        {% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-700
+                        {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-700
+                        {% elif booking.status == 'cancelled' %}bg-red-100 text-red-700
+                        {% elif booking.status == 'no_show' %}bg-gray-100 text-gray-700
+                        {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ booking.get_status_display }}
+                    </span>
+                </td>
+                <td class="py-4 px-6">
+                    <span class="text-xs {% if booking.payment_status == 'paid' %}text-green-600{% elif booking.payment_status == 'package' %}text-blue-600{% else %}text-yellow-600{% endif %}">
+                        {{ booking.get_payment_status_display }}
+                    </span>
+                </td>
+                <td class="py-4 px-6">
+                    <a href="{% url 'owner_booking_detail' booking.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-600 transition">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="py-8 text-center text-gray-500">No bookings found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

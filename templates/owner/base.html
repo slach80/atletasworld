@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Owner Portal{% endblock %} - Atletas World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c', owner: '#6366f1' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-primary text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/"><img src="/media/APC-logo.jpg" alt="Atletas World" class="h-10 w-auto rounded"></a>
+                    <span class="ml-4 text-lg font-semibold">Owner Portal</span>
+                    <span class="ml-2 px-2 py-0.5 bg-owner text-white text-xs rounded-full">Owner</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'owner_dashboard' %}" class="{% if request.resolver_match.url_name == 'owner_dashboard' %}text-owner{% else %}hover:text-secondary{% endif %} transition">Dashboard</a>
+                    <a href="{% url 'owner_packages' %}" class="{% if 'package' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Packages</a>
+                    <a href="{% url 'owner_coaches' %}" class="{% if 'coach' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Coaches</a>
+                    <a href="{% url 'owner_bookings' %}" class="{% if 'booking' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Bookings</a>
+                    <a href="{% url 'owner_clients' %}" class="{% if 'client' in request.resolver_match.url_name or 'player' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Clients</a>
+                    <a href="{% url 'owner_session_types' %}" class="{% if 'session_type' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Sessions</a>
+                    <a href="{% url 'owner_notifications' %}" class="{% if 'notification' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Notify</a>
+                    <a href="/admin/" class="hover:text-secondary transition">Backend</a>
+                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="{% if message.tags == 'success' %}bg-green-100 text-green-800 border-green-300{% elif message.tags == 'error' %}bg-red-100 text-red-800 border-red-300{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800 border-yellow-300{% else %}bg-blue-100 text-blue-800 border-blue-300{% endif %} border rounded-lg p-4 mb-4">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

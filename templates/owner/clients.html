@@ -1,0 +1,56 @@
+{% extends 'owner/base.html' %}
+{% block title %}Clients{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Client Management</h1>
+        <p class="text-gray-500">View all clients and their players</p>
+    </div>
+    <a href="{% url 'owner_players' %}" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition">View All Players</a>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Client</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Email</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Phone</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Active Packages</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Bookings</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Joined</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for client in clients %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-4 px-6">
+                    <div class="font-semibold text-gray-800">{{ client.user.first_name }} {{ client.user.last_name }}</div>
+                    <div class="text-xs text-gray-500">{{ client.get_client_type_display }}</div>
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ client.user.email }}</td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ client.phone|default:"-" }}</td>
+                <td class="py-4 px-6">
+                    <span class="font-bold {% if client.player_count > 0 %}text-purple-600{% else %}text-gray-400{% endif %}">{{ client.player_count }}</span>
+                </td>
+                <td class="py-4 px-6">
+                    <span class="{% if client.active_packages > 0 %}text-secondary font-bold{% else %}text-gray-400{% endif %}">{{ client.active_packages }}</span>
+                </td>
+                <td class="py-4 px-6 font-semibold">{{ client.total_bookings }}</td>
+                <td class="py-4 px-6 text-sm text-gray-500">{{ client.user.date_joined|date:"M j, Y" }}</td>
+                <td class="py-4 px-6">
+                    <a href="{% url 'owner_client_detail' client.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-600 transition">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="py-8 text-center text-gray-500">No clients found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

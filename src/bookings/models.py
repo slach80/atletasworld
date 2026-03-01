@@ -24,6 +24,14 @@ class SessionType(models.Model):
     color = models.CharField(max_length=7, default='#2ecc71', help_text="Hex color for calendar display")
     is_active = models.BooleanField(default=True)
     requires_package = models.BooleanField(default=False, help_text="Requires active package to book")
+
+    # Clinic/Camp specific fields
+    start_date = models.DateField(null=True, blank=True, help_text="Start date for clinics/camps")
+    end_date = models.DateField(null=True, blank=True, help_text="End date for clinics/camps")
+    min_age = models.IntegerField(null=True, blank=True, help_text="Minimum age restriction")
+    max_age = models.IntegerField(null=True, blank=True, help_text="Maximum age restriction")
+    location = models.CharField(max_length=200, blank=True, help_text="Location for clinics/camps")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

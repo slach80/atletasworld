@@ -49,7 +49,7 @@
                         <div>
                             <span class="inline-block px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full mb-2">Active</span>
                             <h3 class="font-bold text-xl text-gray-800">{{ pkg.package.name }}</h3>
-                            <p class="text-sm text-gray-600">{{ pkg.package.get_package_type_display }}</p>
+                            <p class="text-sm text-gray-600">{% if pkg.package.sessions_included > 0 %}{{ pkg.package.sessions_included }} classes{% else %}Unlimited{% endif %} / {{ pkg.package.validity_weeks }} weeks</p>
                         </div>
                         <div class="text-right">
                             <div class="text-3xl font-bold text-secondary">
@@ -117,7 +117,7 @@
                 {% for package in available_packages %}
                 <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition hover:border-secondary">
                     <h3 class="font-bold text-lg text-gray-800 mb-2">{{ package.name }}</h3>
-                    <p class="text-sm text-gray-500 mb-4">{{ package.get_package_type_display }}</p>
+                    <p class="text-sm text-gray-500 mb-4">{% if package.sessions_included > 0 %}{{ package.sessions_included }} classes{% else %}Unlimited{% endif %} / {{ package.validity_weeks }} weeks</p>
 
                     <div class="text-3xl font-bold text-primary mb-2">${{ package.price }}</div>
 
