@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atletas World - Elite Soccer Training & Development</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        volt: '#CDDC39',
+                        electric: '#00E5FF',
+                        hotOrange: '#FF6B35',
+                        dark: '#0D0D0D',
+                        darkGray: '#1A1A1A',
+                    },
+                    fontFamily: {
+                        'display': ['Bebas Neue', 'sans-serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Split Hero */
+        .split-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+        }
+        @media (max-width: 768px) {
+            .split-hero { grid-template-columns: 1fr; }
+        }
+
+        /* Diagonal Cut */
+        .diagonal-cut {
+            clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+        }
+        @media (max-width: 768px) {
+            .diagonal-cut { clip-path: none; }
+        }
+
+        /* Kinetic Text */
+        .kinetic-text {
+            animation: glitch 3s infinite;
+        }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-2px, 2px); }
+            94% { transform: translate(2px, -2px); }
+            96% { transform: translate(-2px, -2px); }
+            98% { transform: translate(2px, 2px); }
+        }
+
+        /* Neon Glow */
+        .neon-volt {
+            text-shadow: 0 0 10px #CDDC39, 0 0 20px #CDDC39, 0 0 40px #CDDC39;
+        }
+        .neon-orange {
+            box-shadow: 0 0 20px #FF6B35, 0 0 40px #FF6B35;
+        }
+
+        /* Card Tilt */
+        .tilt-card {
+            transition: transform 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .tilt-card:hover {
+            transform: perspective(1000px) rotateY(-5deg) rotateX(5deg) translateZ(20px);
+        }
+
+        /* Stripe Pattern */
+        .stripe-bg {
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 10px,
+                rgba(205, 220, 57, 0.03) 10px,
+                rgba(205, 220, 57, 0.03) 20px
+            );
+        }
+
+        /* Scroll Animation */
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.6s ease;
+        }
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.6s ease;
+        }
+        .slide-in-left.active, .slide-in-right.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Pulse Border */
+        .pulse-border {
+            position: relative;
+        }
+        .pulse-border::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border: 2px solid #CDDC39;
+            border-radius: inherit;
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.02); }
+        }
+
+        /* Counter */
+        .counter { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="bg-dark text-white font-sans">
+
+<!-- Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-dark/90 backdrop-blur-md border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <a href="/" class="flex items-center space-x-2">
+                <div class="w-12 h-12 bg-volt rounded-lg flex items-center justify-center transform -skew-x-6">
+                    <span class="font-display text-dark text-2xl skew-x-6">AW</span>
+                </div>
+                <span class="font-display text-3xl tracking-wider">ATLETAS WORLD</span>
+            </a>
+
+            <div class="hidden lg:flex items-center space-x-8">
+                <a href="#programs" class="text-white/70 hover:text-volt font-semibold uppercase text-sm tracking-wider transition-colors">Programs</a>
+                <a href="#coaches" class="text-white/70 hover:text-volt font-semibold uppercase text-sm tracking-wider transition-colors">Coaches</a>
+                <a href="#about" class="text-white/70 hover:text-volt font-semibold uppercase text-sm tracking-wider transition-colors">About</a>
+                <a href="#results" class="text-white/70 hover:text-volt font-semibold uppercase text-sm tracking-wider transition-colors">Results</a>
+                <a href="/book" class="bg-volt text-dark px-6 py-3 font-bold uppercase text-sm tracking-wider transform -skew-x-6 hover:bg-hotOrange hover:text-white transition-all">
+                    <span class="skew-x-6 inline-block">Book Now</span>
+                </a>
+            </div>
+
+            <button id="mobile-menu-btn" class="lg:hidden text-white p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="hidden lg:hidden bg-darkGray border-t border-white/10">
+        <div class="px-4 py-6 space-y-4">
+            <a href="#programs" class="block py-2 text-white/70 hover:text-volt uppercase font-semibold">Programs</a>
+            <a href="#coaches" class="block py-2 text-white/70 hover:text-volt uppercase font-semibold">Coaches</a>
+            <a href="#about" class="block py-2 text-white/70 hover:text-volt uppercase font-semibold">About</a>
+            <a href="#results" class="block py-2 text-white/70 hover:text-volt uppercase font-semibold">Results</a>
+            <a href="/book" class="block py-3 bg-volt text-dark text-center font-bold uppercase">Book Now</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Split Hero -->
+<section class="split-hero pt-20">
+    <!-- Left Side - Content -->
+    <div class="bg-dark flex items-center p-8 lg:p-16 diagonal-cut relative overflow-hidden">
+        <div class="stripe-bg absolute inset-0"></div>
+        <div class="relative z-10 max-w-xl">
+            <div class="inline-flex items-center bg-volt/10 border border-volt/30 rounded-full px-4 py-2 mb-8">
+                <span class="w-2 h-2 bg-volt rounded-full animate-pulse mr-2"></span>
+                <span class="text-volt text-sm font-semibold uppercase tracking-wider">Now Enrolling</span>
+            </div>
+
+            <h1 class="font-display text-6xl md:text-8xl lg:text-9xl leading-none mb-6 kinetic-text">
+                TRAIN
+                <span class="text-volt neon-volt block">HARDER</span>
+                WIN MORE
+            </h1>
+
+            <p class="text-xl text-white/60 mb-10 max-w-md">
+                Elite soccer training that pushes your limits. No shortcuts. No excuses. Just results.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="/book" class="group inline-flex items-center justify-center bg-volt text-dark px-8 py-4 font-bold uppercase tracking-wider transform -skew-x-6 hover:bg-hotOrange hover:text-white transition-all neon-orange">
+                    <span class="skew-x-6 inline-flex items-center">
+                        Start Training
+                        <svg class="w-5 h-5 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </span>
+                </a>
+                <a href="#programs" class="inline-flex items-center justify-center border-2 border-white/30 text-white px-8 py-4 font-bold uppercase tracking-wider transform -skew-x-6 hover:border-volt hover:text-volt transition-all">
+                    <span class="skew-x-6">View Programs</span>
+                </a>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="flex gap-8 mt-16">
+                <div>
+                    <div class="font-display text-5xl text-volt counter" data-target="500">0</div>
+                    <div class="text-white/50 text-sm uppercase tracking-wider">Athletes</div>
+                </div>
+                <div>
+                    <div class="font-display text-5xl text-volt counter" data-target="15">0</div>
+                    <div class="text-white/50 text-sm uppercase tracking-wider">Years</div>
+                </div>
+                <div>
+                    <div class="font-display text-5xl text-volt">98%</div>
+                    <div class="text-white/50 text-sm uppercase tracking-wider">Success</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Image -->
+    <div class="relative min-h-[50vh] md:min-h-full">
+        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/ad365857-512c-49ea-a74d-fadedb744770/nz9_0059_53907201547_o.jpg');"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-dark via-dark/50 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
+
+        <!-- Floating Badge -->
+        <div class="absolute bottom-8 right-8 bg-hotOrange text-white p-6 transform rotate-3 hidden md:block">
+            <div class="font-display text-4xl">4.9</div>
+            <div class="text-sm uppercase">Rating</div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Strip -->
+<section class="bg-volt py-4 overflow-hidden">
+    <div class="flex animate-scroll whitespace-nowrap">
+        <div class="flex items-center space-x-12 mx-6 text-dark font-bold uppercase tracking-wider">
+            <span>Technical Training</span>
+            <span class="text-2xl">*</span>
+            <span>Tactical Development</span>
+            <span class="text-2xl">*</span>
+            <span>Performance Analytics</span>
+            <span class="text-2xl">*</span>
+            <span>Video Analysis</span>
+            <span class="text-2xl">*</span>
+            <span>Mental Coaching</span>
+            <span class="text-2xl">*</span>
+        </div>
+        <div class="flex items-center space-x-12 mx-6 text-dark font-bold uppercase tracking-wider">
+            <span>Technical Training</span>
+            <span class="text-2xl">*</span>
+            <span>Tactical Development</span>
+            <span class="text-2xl">*</span>
+            <span>Performance Analytics</span>
+            <span class="text-2xl">*</span>
+            <span>Video Analysis</span>
+            <span class="text-2xl">*</span>
+            <span>Mental Coaching</span>
+            <span class="text-2xl">*</span>
+        </div>
+    </div>
+    <style>
+        @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .animate-scroll { animation: scroll 20s linear infinite; }
+    </style>
+</section>
+
+<!-- Programs Section -->
+<section id="programs" class="py-24 bg-dark stripe-bg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-16 slide-in-left">
+            <span class="text-volt font-bold uppercase tracking-widest text-sm">Programs</span>
+            <h2 class="font-display text-5xl md:text-7xl mt-2">
+                CHOOSE YOUR <span class="text-volt">PATH</span>
+            </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Program 1 -->
+            <div class="tilt-card bg-darkGray border border-white/10 p-8 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 bg-hotOrange text-white px-4 py-2 font-bold uppercase text-xs transform translate-x-2 -translate-y-0">
+                    Popular
+                </div>
+                <div class="w-16 h-16 bg-volt/10 border border-volt/30 flex items-center justify-center mb-6 transform -skew-x-6">
+                    <span class="text-volt text-3xl skew-x-6">01</span>
+                </div>
+                <h3 class="font-display text-3xl mb-4">INDIVIDUAL</h3>
+                <p class="text-white/50 mb-6">One-on-one personalized training. Maximum focus, maximum results.</p>
+                <ul class="space-y-3 text-white/70 mb-8">
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>60-min sessions</li>
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>Custom plan</li>
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>Video analysis</li>
+                </ul>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="font-display text-4xl text-volt">$75</span>
+                        <span class="text-white/50">/session</span>
+                    </div>
+                    <a href="/book?program=individual" class="bg-volt text-dark px-6 py-3 font-bold uppercase text-sm transform -skew-x-6 hover:bg-hotOrange hover:text-white transition-all">
+                        <span class="skew-x-6 inline-block">Book</span>
+                    </a>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-volt transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+            </div>
+
+            <!-- Program 2 -->
+            <div class="tilt-card bg-darkGray border border-volt p-8 relative overflow-hidden group pulse-border">
+                <div class="absolute top-0 right-0 bg-volt text-dark px-4 py-2 font-bold uppercase text-xs transform translate-x-2 -translate-y-0">
+                    Best Value
+                </div>
+                <div class="w-16 h-16 bg-volt/10 border border-volt/30 flex items-center justify-center mb-6 transform -skew-x-6">
+                    <span class="text-volt text-3xl skew-x-6">02</span>
+                </div>
+                <h3 class="font-display text-3xl mb-4">SMALL GROUP</h3>
+                <p class="text-white/50 mb-6">Train with 3-5 athletes. Competition breeds excellence.</p>
+                <ul class="space-y-3 text-white/70 mb-8">
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>90-min sessions</li>
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>3-5 players</li>
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>Game scenarios</li>
+                </ul>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="font-display text-4xl text-volt">$45</span>
+                        <span class="text-white/50">/session</span>
+                    </div>
+                    <a href="/book?program=group" class="bg-volt text-dark px-6 py-3 font-bold uppercase text-sm transform -skew-x-6 hover:bg-hotOrange hover:text-white transition-all">
+                        <span class="skew-x-6 inline-block">Book</span>
+                    </a>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-volt transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+            </div>
+
+            <!-- Program 3 -->
+            <div class="tilt-card bg-darkGray border border-white/10 p-8 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 bg-electric text-dark px-4 py-2 font-bold uppercase text-xs transform translate-x-2 -translate-y-0">
+                    Specialist
+                </div>
+                <div class="w-16 h-16 bg-volt/10 border border-volt/30 flex items-center justify-center mb-6 transform -skew-x-6">
+                    <span class="text-volt text-3xl skew-x-6">03</span>
+                </div>
+                <h3 class="font-display text-3xl mb-4">GOALKEEPER</h3>
+                <p class="text-white/50 mb-6">Specialized GK training. Shot-stopping, positioning, distribution.</p>
+                <ul class="space-y-3 text-white/70 mb-8">
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>60-min GK sessions</li>
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>Reaction drills</li>
+                    <li class="flex items-center"><span class="w-2 h-2 bg-volt mr-3"></span>1v1 scenarios</li>
+                </ul>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="font-display text-4xl text-volt">$80</span>
+                        <span class="text-white/50">/session</span>
+                    </div>
+                    <a href="/book?program=goalkeeper" class="bg-volt text-dark px-6 py-3 font-bold uppercase text-sm transform -skew-x-6 hover:bg-hotOrange hover:text-white transition-all">
+                        <span class="skew-x-6 inline-block">Book</span>
+                    </a>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-volt transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section - Asymmetric -->
+<section id="about" class="py-24 bg-darkGray">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-12 gap-12 items-center">
+            <div class="lg:col-span-5 slide-in-left">
+                <span class="text-volt font-bold uppercase tracking-widest text-sm">About Us</span>
+                <h2 class="font-display text-5xl md:text-6xl mt-2 mb-8">
+                    NO <span class="text-hotOrange">LIMITS</span><br>
+                    JUST <span class="text-volt">GOALS</span>
+                </h2>
+                <div class="space-y-6 text-white/60 text-lg">
+                    <p>At Atletas World, we don't just train athletes—we forge champions. Our philosophy is simple: push harder, train smarter, win more.</p>
+                    <p>Every session is designed to break barriers and build the complete athlete. Technical skills, tactical intelligence, mental toughness—we develop it all.</p>
+                </div>
+                <a href="#programs" class="inline-flex items-center text-volt font-bold uppercase tracking-wider mt-8 group">
+                    See Our Programs
+                    <svg class="w-5 h-5 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </a>
+            </div>
+            <div class="lg:col-span-7 relative slide-in-right">
+                <img src="https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/d69c34be-9afc-48bf-ba06-08cacabe6eca/nz9_0181_53908342723_o.jpg"
+                     alt="Training"
+                     class="w-full transform -skew-x-3 hover:skew-x-0 transition-transform duration-500">
+                <div class="absolute -bottom-6 -left-6 bg-volt text-dark p-6 transform -skew-x-6">
+                    <div class="skew-x-6">
+                        <div class="font-display text-4xl">15+</div>
+                        <div class="text-sm uppercase font-bold">Years Experience</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Coaches Section -->
+<section id="coaches" class="py-24 bg-dark stripe-bg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <span class="text-volt font-bold uppercase tracking-widest text-sm">The Team</span>
+            <h2 class="font-display text-5xl md:text-7xl mt-2">
+                MEET YOUR <span class="text-volt">COACHES</span>
+            </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="group relative overflow-hidden">
+                <div class="h-[500px] bg-cover bg-center transition-transform duration-500 group-hover:scale-110" style="background-image: url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/28540d3f-5f81-4366-b674-7369ca64b8c6/nz9_0823_53907200737_o.jpg');"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-dark via-dark/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <div class="bg-volt text-dark px-3 py-1 inline-block font-bold uppercase text-xs mb-3 transform -skew-x-6">
+                        <span class="skew-x-6 inline-block">Technical Director</span>
+                    </div>
+                    <h3 class="font-display text-3xl">COACH MARTINEZ</h3>
+                    <p class="text-white/60 mt-2">15 years experience. Former pro player.</p>
+                    <div class="flex items-center mt-3">
+                        <span class="text-volt font-bold">4.9</span>
+                        <span class="text-white/50 ml-2">rating</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden">
+                <div class="h-[500px] bg-cover bg-center transition-transform duration-500 group-hover:scale-110" style="background-image: url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/f26dda8f-46ff-4bfc-810e-91f5b8a91297/nz9_0635_53907200902_o.jpg');"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-dark via-dark/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <div class="bg-hotOrange text-white px-3 py-1 inline-block font-bold uppercase text-xs mb-3 transform -skew-x-6">
+                        <span class="skew-x-6 inline-block">Tactical Specialist</span>
+                    </div>
+                    <h3 class="font-display text-3xl">COACH SILVA</h3>
+                    <p class="text-white/60 mt-2">UEFA A License. Game analysis expert.</p>
+                    <div class="flex items-center mt-3">
+                        <span class="text-volt font-bold">5.0</span>
+                        <span class="text-white/50 ml-2">rating</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative overflow-hidden">
+                <div class="h-[500px] bg-cover bg-center transition-transform duration-500 group-hover:scale-110" style="background-image: url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/37e87278-1f89-4fc8-954d-d19c38f1380a/nz9_0111_53908440529_o.jpg');"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-dark via-dark/50 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <div class="bg-electric text-dark px-3 py-1 inline-block font-bold uppercase text-xs mb-3 transform -skew-x-6">
+                        <span class="skew-x-6 inline-block">GK Coach</span>
+                    </div>
+                    <h3 class="font-display text-3xl">COACH JOHNSON</h3>
+                    <p class="text-white/60 mt-2">Former college GK. Shot-stopping specialist.</p>
+                    <div class="flex items-center mt-3">
+                        <span class="text-volt font-bold">4.8</span>
+                        <span class="text-white/50 ml-2">rating</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Results/Testimonials -->
+<section id="results" class="py-24 bg-volt">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <span class="text-dark/70 font-bold uppercase tracking-widest text-sm">Results</span>
+            <h2 class="font-display text-5xl md:text-7xl text-dark mt-2">
+                WHAT ATHLETES SAY
+            </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-dark p-8 transform -skew-x-3 hover:skew-x-0 transition-transform">
+                <div class="skew-x-3">
+                    <div class="flex mb-4">
+                        <span class="text-volt text-2xl">★★★★★</span>
+                    </div>
+                    <p class="text-white/80 text-lg mb-6 italic">
+                        "The intensity is unmatched. I've improved more in 3 months here than 2 years elsewhere. This is where serious athletes train."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-volt text-dark font-bold flex items-center justify-center transform -skew-x-6">
+                            <span class="skew-x-6">MR</span>
+                        </div>
+                        <div class="ml-4">
+                            <div class="font-bold">Marcus Rodriguez</div>
+                            <div class="text-white/50 text-sm">U17 Midfielder</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-dark p-8 transform skew-x-3 hover:skew-x-0 transition-transform">
+                <div class="-skew-x-3">
+                    <div class="flex mb-4">
+                        <span class="text-volt text-2xl">★★★★★</span>
+                    </div>
+                    <p class="text-white/80 text-lg mb-6 italic">
+                        "As a parent, I see the difference. My daughter is more confident, more skilled, and absolutely loves training here."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-hotOrange text-white font-bold flex items-center justify-center transform -skew-x-6">
+                            <span class="skew-x-6">SK</span>
+                        </div>
+                        <div class="ml-4">
+                            <div class="font-bold">Sarah Kim</div>
+                            <div class="text-white/50 text-sm">Parent</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-dark p-8 transform -skew-x-3 hover:skew-x-0 transition-transform">
+                <div class="skew-x-3">
+                    <div class="flex mb-4">
+                        <span class="text-volt text-2xl">★★★★★</span>
+                    </div>
+                    <p class="text-white/80 text-lg mb-6 italic">
+                        "Coach Johnson completely transformed my game. The video analysis opened my eyes to things I never noticed."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-electric text-dark font-bold flex items-center justify-center transform -skew-x-6">
+                            <span class="skew-x-6">DL</span>
+                        </div>
+                        <div class="ml-4">
+                            <div class="font-bold">David Lopez</div>
+                            <div class="text-white/50 text-sm">U19 Goalkeeper</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-24 bg-dark relative overflow-hidden">
+    <div class="absolute inset-0 stripe-bg"></div>
+    <div class="max-w-4xl mx-auto px-4 text-center relative">
+        <h2 class="font-display text-6xl md:text-8xl mb-6">
+            READY TO <span class="text-volt neon-volt">LEVEL UP?</span>
+        </h2>
+        <p class="text-xl text-white/60 mb-10 max-w-2xl mx-auto">
+            Stop waiting. Start training. Join the athletes who refuse to settle for average.
+        </p>
+        <a href="/book" class="inline-flex items-center justify-center bg-volt text-dark px-12 py-5 font-bold uppercase text-lg tracking-wider transform -skew-x-6 hover:bg-hotOrange hover:text-white transition-all neon-orange">
+            <span class="skew-x-6 inline-flex items-center">
+                Book Your First Session
+                <svg class="w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </span>
+        </a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-darkGray border-t border-white/10 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <div class="w-10 h-10 bg-volt flex items-center justify-center transform -skew-x-6">
+                        <span class="font-display text-dark text-xl skew-x-6">AW</span>
+                    </div>
+                    <span class="font-display text-2xl">ATLETAS WORLD</span>
+                </div>
+                <p class="text-white/50">Train harder. Win more.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-volt uppercase tracking-wider mb-4">Links</h4>
+                <ul class="space-y-2 text-white/60">
+                    <li><a href="#programs" class="hover:text-volt transition-colors">Programs</a></li>
+                    <li><a href="#coaches" class="hover:text-volt transition-colors">Coaches</a></li>
+                    <li><a href="/book" class="hover:text-volt transition-colors">Book</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-volt uppercase tracking-wider mb-4">Contact</h4>
+                <ul class="space-y-2 text-white/60">
+                    <li>info@atletasworld.com</li>
+                    <li>(555) 123-4567</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-volt uppercase tracking-wider mb-4">Hours</h4>
+                <ul class="space-y-2 text-white/60">
+                    <li>Mon-Fri: 3pm - 9pm</li>
+                    <li>Sat: 9am - 6pm</li>
+                    <li>Sun: 10am - 4pm</li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-white/10 pt-8 text-center text-white/40 text-sm">
+            &copy; 2024 Atletas World. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Mobile menu
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+        document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('mobile-menu').classList.add('hidden');
+            }
+        });
+    });
+
+    // Counter animation
+    const counters = document.querySelectorAll('.counter');
+    const animateCounter = (counter) => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+        const update = () => {
+            current += step;
+            if (current < target) {
+                counter.textContent = Math.floor(current);
+                requestAnimationFrame(update);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        update();
+    };
+
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCounter(entry.target);
+                counterObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    counters.forEach(counter => counterObserver.observe(counter));
+
+    // Slide in animations
+    const slideElements = document.querySelectorAll('.slide-in-left, .slide-in-right');
+    const slideObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    slideElements.forEach(el => slideObserver.observe(el));
+</script>
+
+</body>
+</html>
