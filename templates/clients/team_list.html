@@ -1,0 +1,89 @@
+{% extends "clients/dashboard.html" %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-md p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">My Teams</h2>
+        <a href="{% url 'clients:team_create' %}" class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition text-sm flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Create New Team
+        </a>
+    </div>
+
+    {% if teams %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for team in teams %}
+        <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">{{ team.name }}</h3>
+                    <p class="text-sm text-gray-500">{{ team.age_group }} | {{ team.get_skill_level_display }}</p>
+                    {% if team.club_name %}
+                    <p class="text-xs text-gray-400">{{ team.club_name }}</p>
+                    {% endif %}
+                </div>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                    {{ team.player_count }} Players
+                </span>
+            </div>
+            
+            {% if team.description %}
+            <p class="text-gray-600 text-sm mb-4">{{ team.description|truncatewords:20 }}</p>
+            {% endif %}
+            
+            <div class="flex items-center mb-4">
+                <span class="text-sm text-gray-500 mr-2">Coaches:</span>
+                {% for coach in team.coaches.all %}
+                <span class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full mr-1">
+                    {{ coach.user.first_name }} {{ coach.user.last_name }}
+                </span>
+                {% empty %}
+                <span class="text-gray-400 text-xs">No coaches assigned</span>
+                {% endfor %}
+            </div>
+            
+            <div class="flex space-x-2">
+                <a href="{% url 'clients:team_detail' team.id %}" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition text-center text-sm">
+                    Manage Team
+                </a>
+                <a href="{% url 'clients:team_book' team.id %}" class="flex-1 bg-secondary text-white py-2 rounded-lg hover:bg-green-600 transition text-center text-sm">
+                    Book Session
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <svg class="w-20 h-20 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">No Teams Yet</h3>
+        <p class="text-gray-500 mb-6 max-w-md mx-auto">Create your first team to manage your roster and book team training sessions.</p>
+        <a href="{% url 'clients:team_create' %}" class="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-green-600 transition inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Create First Team
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Team Booking CTA -->
+{% if teams %}
+<div class="mt-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-xl font-bold mb-1">Book Team Training Sessions</h3>
+            <p class="text-blue-100">Schedule training for your entire team with your preferred coaches.</p>
+        </div>
+        <a href="{% url 'clients:team_bookings' %}" class="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition font-semibold">
+            View Team Bookings
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

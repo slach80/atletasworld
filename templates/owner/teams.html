@@ -1,0 +1,90 @@
+{% extends 'owner/base.html' %}
+{% block title %}Teams{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Team Management</h1>
+        <p class="text-gray-500">All registered soccer teams</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-owner">
+        <div class="text-2xl font-bold text-owner">{{ total_teams }}</div>
+        <div class="text-sm text-gray-500">Active Teams</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-secondary">
+        <div class="text-2xl font-bold text-secondary">{{ total_players }}</div>
+        <div class="text-sm text-gray-500">Team Players</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+        <div class="text-2xl font-bold text-blue-600">{{ total_coaches }}</div>
+        <div class="text-sm text-gray-500">Assigned Coaches</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-yellow-500">
+        <div class="text-2xl font-bold text-yellow-600">{{ active_packages }}</div>
+        <div class="text-sm text-gray-500">Active Packages</div>
+    </div>
+</div>
+
+<!-- Teams Table -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Team</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Age Group</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Skill Level</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Manager</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coaches</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for team in teams %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-4 px-6">
+                    <div class="font-semibold text-gray-800">{{ team.name }}</div>
+                    {% if team.club_name %}<div class="text-xs text-gray-500">{{ team.club_name }}</div>{% endif %}
+                </td>
+                <td class="py-4 px-6">
+                    <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">{{ team.age_group }}</span>
+                </td>
+                <td class="py-4 px-6">
+                    <span class="px-2 py-1 text-xs rounded-full font-medium
+                        {% if team.skill_level == 'elite' %}bg-red-100 text-red-700
+                        {% elif team.skill_level == 'advanced' %}bg-orange-100 text-orange-700
+                        {% elif team.skill_level == 'intermediate' %}bg-yellow-100 text-yellow-700
+                        {% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ team.get_skill_level_display }}
+                    </span>
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">
+                    {{ team.manager.user.get_full_name|default:team.manager.user.email }}
+                </td>
+                <td class="py-4 px-6">
+                    <span class="font-bold {% if team.player_count > 0 %}text-secondary{% else %}text-gray-400{% endif %}">
+                        {{ team.player_count }} / {{ team.max_players }}
+                    </span>
+                </td>
+                <td class="py-4 px-6">
+                    <span class="{% if team.coach_count > 0 %}text-blue-600 font-bold{% else %}text-gray-400{% endif %}">
+                        {{ team.coach_count }}
+                    </span>
+                </td>
+                <td class="py-4 px-6">
+                    <a href="{% url 'owner_team_detail' team.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-600 transition">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="py-8 text-center text-gray-500">No teams found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

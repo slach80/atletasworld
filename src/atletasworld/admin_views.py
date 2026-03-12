@@ -960,3 +960,379 @@ def owner_session_type_edit(request, pk):
         'format_choices': SessionType.SESSION_FORMAT_CHOICES,
     }
     return render(request, 'owner/session_type_form.html', context)
+
+
+# ============================================================================
+# TEAM MANAGEMENT
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_teams(request):
+    """List all teams with stats."""
+    from clients.models import Team, ClientPackage
+    from django.db.models import Count, Q
+
+    teams = Team.objects.filter(is_active=True).annotate(
+        player_count=Count('players', filter=Q(players__is_active=True)),
+        coach_count=Count('coaches')
+    ).order_by('age_group', 'name')
+
+    # Calculate stats
+    total_teams = teams.count()
+    total_players = Player.objects.filter(is_active=True, team__is_active=True).count()
+    total_coaches = Coach.objects.filter(teams__is_active=True).distinct().count()
+    
+    # Count active team packages
+    active_packages = ClientPackage.objects.filter(
+        status='active',
+        package__package_type='team'
+    ).count()
+
+    context = {
+        'teams': teams,
+        'total_teams': total_teams,
+        'total_players': total_players,
+        'total_coaches': total_coaches,
+        'active_packages': active_packages,
+    }
+    return render(request, 'owner/teams.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_team_detail(request, pk):
+    """Show detailed team info with roster, coaches, and bookings."""
+    from clients.models import Team
+    from django.shortcuts import get_object_or_404
+    from datetime import timedelta
+
+    team = get_object_or_404(Team.objects.select_related('manager__user'), pk=pk)
+    today = timezone.now().date()
+
+    # Get team players with details
+    players = Player.objects.filter(team=team, is_active=True).select_related('client__user')
+
+    # Get assigned coaches
+    coaches = team.coaches.all().select_related('user')
+
+    # Get recent and upcoming bookings for team players
+    recent_bookings = Booking.objects.filter(
+        player__team=team
+    ).select_related('player', 'coach__user', 'session_type').order_by('-scheduled_date')[:10]
+
+    upcoming_bookings = Booking.objects.filter(
+        player__team=team,
+        scheduled_date__gte=today,
+        status__in=['pending', 'confirmed']
+    ).select_related('player', 'coach__user', 'session_type').order_by('scheduled_date')[:10]
+
+    # Get package usage for team players
+    from clients.models import ClientPackage
+    team_packages = ClientPackage.objects.filter(
+        player__team=team
+    ).select_related('package', 'player').order_by('-purchase_date')[:10]
+
+    context = {
+        'team': team,
+        'players': players,
+        'coaches': coaches,
+        'recent_bookings': recent_bookings,
+        'upcoming_bookings': upcoming_bookings,
+        'team_packages': team_packages,
+        'player_count': players.count(),
+        'coach_count': coaches.count(),
+    }
+    return render(request, 'owner/team_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_team_players(request, team_id):
+    """View all players on a specific team."""
+    from clients.models import Team
+    from django.shortcuts import get_object_or_404
+
+    team = get_object_or_404(Team.objects.select_related('manager__user'), pk=team_id)
+    
+    players = Player.objects.filter(team=team, is_active=True).select_related('client__user').annotate(
+        total_bookings=Count('bookings'),
+        total_assessments=Count('assessments')
+    ).order_by('first_name', 'last_name')
+
+    context = {
+        'team': team,
+        'players': players,
+    }
+    return render(request, 'owner/team_players.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_team_bookings(request, team_id):
+    """View all bookings for a specific team."""
+    from clients.models import Team
+    from django.shortcuts import get_object_or_404
+
+    team = get_object_or_404(Team.objects.select_related('manager__user'), pk=team_id)
+    today = timezone.now().date()
+
+    # Get date filters from request
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+
+    bookings = Booking.objects.filter(player__team=team).select_related(
+        'player', 'coach__user', 'session_type'
+    ).order_by('-scheduled_date', '-scheduled_time')
+
+    if date_from:
+        bookings = bookings.filter(scheduled_date__gte=date_from)
+    if date_to:
+        bookings = bookings.filter(scheduled_date__lte=date_to)
+
+    # Calculate summary stats
+    total_bookings = bookings.count()
+    completed_bookings = bookings.filter(status='completed').count()
+    upcoming_bookings = bookings.filter(scheduled_date__gte=today, status__in=['pending', 'confirmed']).count()
+    cancelled_bookings = bookings.filter(status='cancelled').count()
+
+    context = {
+        'team': team,
+        'bookings': bookings[:100],
+        'total_bookings': total_bookings,
+        'completed_bookings': completed_bookings,
+        'upcoming_bookings': upcoming_bookings,
+        'cancelled_bookings': cancelled_bookings,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    return render(request, 'owner/team_bookings.html', context)
+
+
+# ============================================================================
+# FIELD RENTAL MANAGEMENT
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_field_slots(request):
+    """List and create field rental slots."""
+    from clients.models import FieldRentalSlot, Notification, Client
+    from datetime import datetime as dt
+
+    today = timezone.now().date()
+
+    if request.method == 'POST' and request.POST.get('action') == 'add':
+        try:
+            start_str = request.POST.get('start_time', '')
+            end_str   = request.POST.get('end_time', '')
+            start_t   = dt.strptime(start_str, '%H:%M').time()
+            end_t     = dt.strptime(end_str,   '%H:%M').time()
+            duration  = int((dt.combine(today, end_t) - dt.combine(today, start_t)).seconds / 60)
+
+            slot = FieldRentalSlot.objects.create(
+                date=request.POST.get('date'),
+                start_time=start_t,
+                end_time=end_t,
+                duration_minutes=duration,
+                price=request.POST.get('price', 0),
+                title=request.POST.get('title', ''),
+                notes=request.POST.get('notes', ''),
+            )
+            if slot.has_conflicting_schedule_blocks:
+                messages.warning(request,
+                    f'Slot created, but existing coach schedule blocks overlap this time. '
+                    f'Those blocks will be blocked from new bookings once a field rental is active.')
+            else:
+                messages.success(request, f'Field rental slot created for {slot.date}.')
+        except Exception as e:
+            messages.error(request, f'Error creating slot: {e}')
+        return redirect('owner_field_slots')
+
+    status_filter = request.GET.get('status', 'all')
+    slots = FieldRentalSlot.objects.select_related('booked_by_client__user', 'booked_by_team')
+    if status_filter != 'all':
+        slots = slots.filter(status=status_filter)
+    slots = slots.order_by('date', 'start_time')
+
+    pending_slots = FieldRentalSlot.objects.filter(status='pending_approval').order_by('requested_at')
+    revenue = FieldRentalSlot.objects.filter(
+        status='booked', booked_at__month=today.month, booked_at__year=today.year, payment_status='paid'
+    ).aggregate(total=Sum('amount_paid'))['total'] or 0
+
+    context = {
+        'slots': slots,
+        'pending_slots': pending_slots,
+        'status_filter': status_filter,
+        'today': today,
+        'statuses': [('available', 'Available'), ('pending_approval', 'Pending'), ('booked', 'Booked'), ('cancelled', 'Cancelled')],
+        'available_count': FieldRentalSlot.objects.filter(status='available', date__gte=today).count(),
+        'pending_count':   FieldRentalSlot.objects.filter(status='pending_approval').count(),
+        'booked_month':    FieldRentalSlot.objects.filter(
+            status='booked', booked_at__month=today.month, booked_at__year=today.year).count(),
+        'revenue_month':   revenue,
+    }
+    return render(request, 'owner/field_slots.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_field_slot_edit(request, pk):
+    """Edit an available field rental slot."""
+    from clients.models import FieldRentalSlot
+    from datetime import datetime as dt
+
+    slot = get_object_or_404(FieldRentalSlot, pk=pk)
+    if slot.status != 'available':
+        messages.error(request, 'Only available (unbooked) slots can be edited.')
+        return redirect('owner_field_slots')
+
+    if request.method == 'POST':
+        try:
+            today = timezone.now().date()
+            start_t = dt.strptime(request.POST['start_time'], '%H:%M').time()
+            end_t   = dt.strptime(request.POST['end_time'],   '%H:%M').time()
+            slot.date             = request.POST['date']
+            slot.start_time       = start_t
+            slot.end_time         = end_t
+            slot.duration_minutes = int((dt.combine(today, end_t) - dt.combine(today, start_t)).seconds / 60)
+            slot.price            = request.POST['price']
+            slot.title            = request.POST.get('title', '')
+            slot.notes            = request.POST.get('notes', '')
+            slot.save()
+            messages.success(request, 'Slot updated.')
+        except Exception as e:
+            messages.error(request, f'Error updating slot: {e}')
+    return redirect('owner_field_slots')
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_field_slot_approve(request, pk):
+    """Approve a pending field rental request."""
+    from clients.models import FieldRentalSlot, Notification
+
+    slot = get_object_or_404(FieldRentalSlot, pk=pk, status='pending_approval')
+    slot.status      = 'booked'
+    slot.approved_at = timezone.now()
+    slot.booked_at   = timezone.now()
+    slot.save()
+
+    # Notify requester
+    if slot.booked_by_client:
+        Notification.objects.create(
+            client=slot.booked_by_client,
+            notification_type='field_rental_approved',
+            title='Field Rental Approved!',
+            message=f'Your field rental request for {slot.date:%b %d, %Y} '
+                    f'({slot.start_time:%I:%M %p}–{slot.end_time:%I:%M %p}) has been approved.',
+            method='email',
+        )
+
+    messages.success(request, f'Field rental approved for {slot.requester_name}.')
+    return redirect('owner_field_slots')
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_field_slot_reject(request, pk):
+    """Reject a pending field rental request."""
+    from clients.models import FieldRentalSlot, Notification
+
+    slot = get_object_or_404(FieldRentalSlot, pk=pk, status='pending_approval')
+    reason = request.POST.get('rejection_reason', 'No reason provided.')
+
+    requesting_client = slot.booked_by_client
+
+    slot.status           = 'available'
+    slot.rejection_reason = reason
+    slot.rejected_at      = timezone.now()
+    slot.booked_by_client = None
+    slot.booked_by_team   = None
+    slot.booker_type      = None
+    slot.requested_at     = None
+    slot.client_notes     = ''
+    slot.save()
+
+    if requesting_client:
+        Notification.objects.create(
+            client=requesting_client,
+            notification_type='field_rental_rejected',
+            title='Field Rental Not Approved',
+            message=f'Your field rental request for {slot.date:%b %d, %Y} was not approved. Reason: {reason}',
+            method='email',
+        )
+
+    messages.warning(request, 'Field rental request rejected and slot returned to available.')
+    return redirect('owner_field_slots')
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_field_slot_cancel(request, pk):
+    """Owner cancels a confirmed field rental booking."""
+    from clients.models import FieldRentalSlot, Notification
+
+    slot = get_object_or_404(FieldRentalSlot, pk=pk, status='booked')
+    note = request.POST.get('cancellation_notes', '')
+    requesting_client = slot.booked_by_client
+
+    slot.status             = 'available'
+    slot.cancellation_notes = note
+    slot.cancelled_at       = timezone.now()
+    slot.booked_by_client   = None
+    slot.booked_by_team     = None
+    slot.booker_type        = None
+    slot.approved_at        = None
+    slot.booked_at          = None
+    slot.save()
+
+    if requesting_client:
+        Notification.objects.create(
+            client=requesting_client,
+            notification_type='field_rental_cancelled',
+            title='Field Rental Cancelled',
+            message=f'Your field rental on {slot.date:%b %d, %Y} '
+                    f'({slot.start_time:%I:%M %p}–{slot.end_time:%I:%M %p}) has been cancelled by the owner.'
+                    + (f' Note: {note}' if note else ''),
+            method='email',
+        )
+
+    messages.warning(request, 'Field rental booking cancelled and slot returned to available.')
+    return redirect('owner_field_slots')
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_field_slot_conflict_check(request):
+    """AJAX: check for ScheduleBlock conflicts at a given date/time range."""
+    from django.http import JsonResponse
+
+    date       = request.GET.get('date')
+    start_time = request.GET.get('start_time')
+    end_time   = request.GET.get('end_time')
+
+    if not all([date, start_time, end_time]):
+        return JsonResponse({'conflict': False, 'count': 0, 'blocks': []})
+
+    conflicts = ScheduleBlock.objects.filter(
+        date=date, status__in=['available', 'booked']
+    ).exclude(
+        end_time__lte=start_time
+    ).exclude(
+        start_time__gte=end_time
+    ).select_related('coach__user')
+
+    blocks = [
+        {
+            'coach': f"{b.coach.user.first_name} {b.coach.user.last_name}".strip(),
+            'start': str(b.start_time),
+            'end':   str(b.end_time),
+            'type':  b.get_session_type_display(),
+        }
+        for b in conflicts
+    ]
+    return JsonResponse({'conflict': conflicts.exists(), 'count': conflicts.count(), 'blocks': blocks})

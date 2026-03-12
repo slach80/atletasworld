@@ -39,6 +39,10 @@ class SessionType(models.Model):
 
     class Meta:
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['is_active', 'session_format']),
+            models.Index(fields=['requires_package']),
+        ]
 
 
 class AvailabilitySlot(models.Model):
@@ -183,6 +187,12 @@ class AvailabilitySlot(models.Model):
     class Meta:
         ordering = ['date', 'start_time']
         unique_together = ['coach', 'date', 'start_time']
+        indexes = [
+            models.Index(fields=['coach', 'date']),
+            models.Index(fields=['coach', 'status']),
+            models.Index(fields=['date', 'status']),
+            models.Index(fields=['status', 'recurrence']),
+        ]
 
 
 class Booking(models.Model):
@@ -227,6 +237,13 @@ class Booking(models.Model):
     # Package tracking
     client_package = models.ForeignKey(ClientPackage, on_delete=models.SET_NULL, null=True, blank=True,
                                        related_name='bookings', help_text="Package used for this booking")
+
+    # Field rental tracking
+    field_rental_slot = models.ForeignKey(
+        'clients.FieldRentalSlot', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='booking_record',
+        help_text="Set if this booking is for a full field rental"
+    )
 
     # Schedule
     scheduled_date = models.DateField()
@@ -405,6 +422,16 @@ class Booking(models.Model):
 
     class Meta:
         ordering = ['-scheduled_date', '-scheduled_time']
+        indexes = [
+            models.Index(fields=['client', 'scheduled_date']),
+            models.Index(fields=['client', 'status']),
+            models.Index(fields=['coach', 'scheduled_date']),
+            models.Index(fields=['coach', 'status']),
+            models.Index(fields=['scheduled_date', 'status']),
+            models.Index(fields=['player', 'status']),
+            models.Index(fields=['client_package']),
+            models.Index(fields=['status', 'payment_status']),
+        ]
 
 
 # Keep Program model for backward compatibility but mark as deprecated

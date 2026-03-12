@@ -149,6 +149,18 @@
 
         <!-- Main Content -->
         <div class="col-md-9 col-lg-10">
+            {% if available_field_rentals %}
+            <div class="alert border-0 shadow-sm mb-3 d-flex align-items-center justify-content-between"
+                 style="background:#f0fdf4; border-left:4px solid #2ecc71 !important; border-radius:0.5rem;">
+                <div>
+                    <strong style="color:#166534;">Entire Field Available for Rental</strong>
+                    <span class="text-muted small ms-2">
+                        {{ available_field_rentals|length }} exclusive slot{{ available_field_rentals|length|pluralize }} available — reserve the full field for your session.
+                    </span>
+                </div>
+                <a href="{% url 'clients:field_rental_list' %}" class="btn btn-sm btn-outline-success ms-3 flex-shrink-0">View Field Slots</a>
+            </div>
+            {% endif %}
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent">
                     <div class="calendar-controls">

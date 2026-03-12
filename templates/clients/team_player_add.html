@@ -1,0 +1,176 @@
+{% extends "clients/dashboard.html" %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="flex items-center text-sm text-gray-500 mb-6">
+    <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <a href="{% url 'clients:team_list' %}" class="hover:text-secondary">My Teams</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <a href="{% url 'clients:team_detail' team.id %}" class="hover:text-secondary">{{ team.name }}</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <span class="text-gray-800">Add Player</span>
+</div>
+
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="border-b border-gray-200">
+            <nav class="flex">
+                <button onclick="switchTab('existing')" id="tab-existing" class="flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-secondary">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Add Existing Player
+                </button>
+                <button onclick="switchTab('new')" id="tab-new" class="flex-1 py-4 px-6 text-center font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                    </svg>
+                    Create New Player
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-8">
+            <!-- Add Existing Player Tab -->
+            <div id="content-existing" class="tab-content">
+                <form method="POST" action="{% url 'clients:team_player_add' team.id %}" class="space-y-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_existing">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Player *</label>
+                        <select name="player_id" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                            <option value="">-- Choose a player --</option>
+                            {% for player in available_players %}
+                            <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }} ({{ player.age_group }})</option>
+                            {% empty %}
+                            <option value="" disabled>No available players found</option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Only players not already on this team are shown</p>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 pt-4">
+                        <a href="{% url 'clients:team_detail' team.id %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-green-600 transition flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Add to Team
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Create New Player Tab -->
+            <div id="content-new" class="tab-content hidden">
+                <form method="POST" action="{% url 'clients:team_player_add' team.id %}" class="space-y-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_new">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                            <input type="text" name="first_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                                   placeholder="Enter first name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                            <input type="text" name="last_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                                   placeholder="Enter last name">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Birth Year *</label>
+                            <input type="number" name="birth_year" required min="2000" max="2024"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                                   placeholder="e.g., 2015">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                            <select name="gender" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                {% for value, label in genders %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Skill Level *</label>
+                            <select name="skill_level" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                {% for value, label in skill_levels %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Primary Position</label>
+                            <select name="primary_position"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                <option value="">-- Select Position --</option>
+                                {% for value, label in positions %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                        <textarea name="notes" rows="3"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                                  placeholder="Any special needs, medical conditions, or notes for coaches..."></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 pt-4">
+                        <a href="{% url 'clients:team_detail' team.id %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-green-600 transition flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                            </svg>
+                            Create and Add to Team
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tab) {
+    // Update button styles
+    document.getElementById('tab-existing').className = tab === 'existing' 
+        ? 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-secondary'
+        : 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+    
+    document.getElementById('tab-new').className = tab === 'new'
+        ? 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-secondary'
+        : 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+    
+    // Show/hide content
+    document.getElementById('content-existing').classList.toggle('hidden', tab !== 'existing');
+    document.getElementById('content-new').classList.toggle('hidden', tab !== 'new');
+}
+</script>
+{% endblock %}

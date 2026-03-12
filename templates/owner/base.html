@@ -28,6 +28,11 @@
                     <a href="{% url 'owner_bookings' %}" class="{% if 'booking' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Bookings</a>
                     <a href="{% url 'owner_clients' %}" class="{% if 'client' in request.resolver_match.url_name or 'player' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Clients</a>
                     <a href="{% url 'owner_session_types' %}" class="{% if 'session_type' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Sessions</a>
+                    <a href="{% url 'owner_field_slots' %}" class="{% if 'field' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition relative">
+                        Field
+                        {% with pending=pending_field_count %}{% if pending > 0 %}<span class="ml-1 bg-accent text-white text-xs px-1.5 py-0.5 rounded-full align-top">{{ pending }}</span>{% endif %}{% endwith %}
+                    </a>
+                    <a href="{% url 'owner_teams' %}" class="{% if 'team' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Teams</a>
                     <a href="{% url 'owner_notifications' %}" class="{% if 'notification' in request.resolver_match.url_name %}text-owner{% else %}hover:text-secondary{% endif %} transition">Notify</a>
                     <a href="/admin/" class="hover:text-secondary transition">Backend</a>
                     <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>

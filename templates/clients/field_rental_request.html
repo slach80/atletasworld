@@ -1,0 +1,136 @@
+{% extends "clients/dashboard.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center mb-6">
+            <a href="{% url 'clients:field_rental_list' %}" class="text-gray-400 hover:text-gray-600 mr-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h2 class="text-xl font-bold text-gray-800">Request Field Rental</h2>
+        </div>
+
+        <!-- Slot Summary -->
+        <div class="bg-gradient-to-r from-secondary to-green-600 text-white rounded-xl p-5 mb-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="text-lg font-bold">{{ slot.date|date:"l, F j, Y" }}</div>
+                    <div class="text-white/90 mt-1">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}</div>
+                    <div class="text-white/80 text-sm mt-0.5">{{ slot.duration_minutes }} minutes &bull; Entire Field</div>
+                    {% if slot.title %}<div class="text-white/80 text-sm mt-1">{{ slot.title }}</div>{% endif %}
+                </div>
+                <div class="text-right">
+                    <div class="text-3xl font-bold">${{ slot.price }}</div>
+                    <div class="text-white/70 text-xs mt-0.5">flat rate</div>
+                </div>
+            </div>
+        </div>
+
+        {% if slot.notes %}
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-5 text-sm text-blue-800">
+            <strong>Owner note:</strong> {{ slot.notes }}
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Booker Type (only if team coach with teams) -->
+            {% if is_team_coach and my_teams %}
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Book as</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition
+                        {% if not preselect_team_id %}border-secondary bg-green-50{% else %}border-gray-200{% endif %}">
+                        <input type="radio" name="booker_type" value="individual"
+                            {% if not preselect_team_id %}checked{% endif %}
+                            class="text-secondary" onchange="toggleTeamSelect(this)">
+                        <span>Individual ({{ client.user.get_full_name }})</span>
+                    </label>
+                    {% for team in my_teams %}
+                    <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition
+                        {% if preselect_team_id == team.id %}border-secondary bg-green-50{% else %}border-gray-200{% endif %}">
+                        <input type="radio" name="booker_type" value="team"
+                            {% if preselect_team_id == team.id %}checked{% endif %}
+                            class="text-secondary" onchange="toggleTeamSelect(this)">
+                        <span>{{ team.name }} <span class="text-xs text-gray-500">({{ team.player_count }} players)</span></span>
+                        <input type="hidden" name="team_id_{{ team.id }}" value="{{ team.id }}">
+                    </label>
+                    {% endfor %}
+                </div>
+                <!-- Hidden team_id field populated by JS -->
+                <input type="hidden" id="team_id_field" name="team_id" value="{{ preselect_team_id|default:'' }}">
+            </div>
+            {% else %}
+            <input type="hidden" name="booker_type" value="individual">
+            {% endif %}
+
+            <!-- Notes to owner -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Notes for the owner <span class="text-gray-400 font-normal">(optional)</span></label>
+                <textarea name="client_notes" rows="3"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+                    placeholder="Purpose of the rental, number of participants, any special requirements..."></textarea>
+            </div>
+
+            <!-- Approval notice -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-sm text-yellow-800 flex items-start gap-2">
+                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Your request will be reviewed by the owner before it is officially confirmed. You'll receive a notification once a decision is made.</span>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit"
+                    class="flex-1 bg-secondary text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition">
+                    Submit Request
+                </button>
+                <a href="{% url 'clients:field_rental_list' %}"
+                    class="px-5 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">
+                    Back
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleTeamSelect(radio) {
+    const teamIdField = document.getElementById('team_id_field');
+    if (!teamIdField) return;
+    if (radio.value === 'team') {
+        // Find the hidden team_id input next to this radio
+        const label = radio.closest('label');
+        const hiddenInput = label.querySelector('input[type=hidden]');
+        if (hiddenInput) {
+            teamIdField.value = hiddenInput.value.replace('team_id_', '');
+            // Actually get the value from the name attribute
+            teamIdField.value = hiddenInput.value;
+        }
+    } else {
+        teamIdField.value = '';
+    }
+    // Update visual selection
+    document.querySelectorAll('label').forEach(l => {
+        l.classList.remove('border-secondary', 'bg-green-50');
+        l.classList.add('border-gray-200');
+    });
+    radio.closest('label').classList.add('border-secondary', 'bg-green-50');
+    radio.closest('label').classList.remove('border-gray-200');
+}
+
+// Init team_id from preselect
+document.addEventListener('DOMContentLoaded', () => {
+    const checked = document.querySelector('input[name="booker_type"]:checked');
+    if (checked && checked.value === 'team') {
+        const label = checked.closest('label');
+        const hiddenInput = label.querySelector('input[type=hidden]');
+        const teamIdField = document.getElementById('team_id_field');
+        if (hiddenInput && teamIdField) teamIdField.value = hiddenInput.value;
+    }
+});
+</script>
+{% endblock %}

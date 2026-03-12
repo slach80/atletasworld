@@ -17,6 +17,10 @@ from .admin_views import (
     owner_bookings, owner_booking_detail,
     owner_clients, owner_client_detail, owner_players,
     owner_session_types, owner_session_type_edit,
+    owner_teams, owner_team_detail,
+    owner_field_slots, owner_field_slot_edit,
+    owner_field_slot_approve, owner_field_slot_reject,
+    owner_field_slot_cancel, owner_field_slot_conflict_check,
 )
 
 
@@ -108,6 +112,18 @@ urlpatterns = [
     # Owner - Session Types
     path('owner-portal/session-types/', owner_session_types, name='owner_session_types'),
     path('owner-portal/session-types/<int:pk>/edit/', owner_session_type_edit, name='owner_session_type_edit'),
+
+    # Owner - Team Management
+    path('owner-portal/teams/', owner_teams, name='owner_teams'),
+    path('owner-portal/teams/<int:pk>/', owner_team_detail, name='owner_team_detail'),
+
+    # Owner - Field Rental Management
+    path('owner-portal/field-rental/', owner_field_slots, name='owner_field_slots'),
+    path('owner-portal/field-rental/conflict-check/', owner_field_slot_conflict_check, name='owner_field_slot_conflict_check'),
+    path('owner-portal/field-rental/<int:pk>/edit/', owner_field_slot_edit, name='owner_field_slot_edit'),
+    path('owner-portal/field-rental/<int:pk>/approve/', owner_field_slot_approve, name='owner_field_slot_approve'),
+    path('owner-portal/field-rental/<int:pk>/reject/', owner_field_slot_reject, name='owner_field_slot_reject'),
+    path('owner-portal/field-rental/<int:pk>/cancel/', owner_field_slot_cancel, name='owner_field_slot_cancel'),
 
     # Theme preview (temporary)
     path('preview-gymlife/', gymlife_preview, name='gymlife_preview'),

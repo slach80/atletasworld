@@ -1,0 +1,232 @@
+{% extends "clients/dashboard.html" %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="flex items-center text-sm text-gray-500 mb-6">
+    <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <a href="{% url 'clients:team_list' %}" class="hover:text-secondary">My Teams</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <a href="{% url 'clients:team_detail' team.id %}" class="hover:text-secondary">{{ team.name }}</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <span class="text-gray-800">Book Session</span>
+</div>
+
+{% if available_field_rentals %}
+<div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 mb-6 text-white flex items-center justify-between">
+    <div>
+        <h3 class="font-bold text-lg">Book Entire Field for {{ team.name }}</h3>
+        <p class="text-blue-100 text-sm mt-1">
+            {{ available_field_rentals|length }} exclusive slot{{ available_field_rentals|length|pluralize }} available — reserve the full field for team practice.
+        </p>
+    </div>
+    <a href="{% url 'clients:field_rental_list' %}?team={{ team.id }}"
+       class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-50 transition flex-shrink-0 ml-4">
+        View Field Slots
+    </a>
+</div>
+{% endif %}
+
+<!-- Package Info Banner -->
+<div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 mb-8 text-white">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h2 class="text-xl font-bold mb-1">Team Session Booking</h2>
+            <p class="text-green-100">{{ team.name }} ({{ team.players.count }} players)</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center bg-white bg-opacity-20 rounded-lg px-4 py-2">
+            <div class="text-center mr-6">
+                <p class="text-3xl font-bold">{{ sessions_remaining }}</p>
+                <p class="text-xs text-green-100">Sessions Remaining</p>
+            </div>
+            <div class="border-l border-green-400 pl-6">
+                <p class="text-sm text-green-100">Using Package:</p>
+                <p class="font-semibold">{{ active_package.package.name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <!-- Sidebar -->
+    <div class="lg:col-span-1">
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Filters</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Coach</label>
+                    <select id="coachFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                        <option value="">All Coaches</option>
+                        {% for coach in all_coaches %}
+                        <option value="{{ coach.id }}">{{ coach.user.first_name }} {{ coach.user.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Team Coaches</label>
+                    <div class="space-y-2">
+                        {% for coach in team.coaches.all %}
+                        <label class="flex items-center p-2 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition">
+                            <input type="checkbox" class="team-coach-filter w-4 h-4 text-secondary border-gray-300 rounded focus:ring-secondary" value="{{ coach.id }}" checked>
+                            <span class="ml-2 text-sm text-gray-700">{{ coach.user.first_name }} {{ coach.user.last_name }}</span>
+                            <span class="ml-auto text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full">Team</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Legend</h3>
+            <div class="space-y-2 text-sm">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-secondary rounded mr-2"></div>
+                    <span class="text-gray-600">Available</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-green-400 rounded mr-2"></div>
+                    <span class="text-gray-600">Team Coach</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
+                    <span class="text-gray-600">Fully Booked</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar/Slots Grid -->
+    <div class="lg:col-span-3">
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <!-- Calendar Navigation -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <button onclick="changeWeek(-1)" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <h2 id="currentWeekLabel" class="text-xl font-bold text-gray-800">This Week</h2>
+                    <button onclick="changeWeek(1)" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+                <button onclick="goToToday()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                    Today
+                </button>
+            </div>
+
+            <!-- Week Grid -->
+            <div id="slotsGrid" class="grid grid-cols-7 gap-2">
+                <!-- Days will be populated by JavaScript -->
+            </div>
+
+            {% if not available_slots %}
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <p class="text-gray-500">No available slots for this week</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Selected Slot Info -->
+        <div id="selectedSlotInfo" class="bg-white rounded-xl shadow-md p-6 mt-6 hidden">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Selected Session</h3>
+                    <p id="selectedSlotDetails" class="text-gray-600"></p>
+                    <div class="mt-2 flex items-center space-x-4 text-sm">
+                        <span class="text-gray-500">Coach: <span id="selectedCoach" class="text-gray-800 font-medium"></span></span>
+                        <span class="text-gray-500">Capacity: <span id="slotCapacity" class="text-gray-800 font-medium"></span></span>
+                    </div>
+                </div>
+                <form method="POST" action="{% url 'clients:team_reserve_session' team.id %}" class="mt-4 md:mt-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="slot_id" id="selectedSlotId">
+                    <button type="submit" class="bg-secondary text-white px-8 py-3 rounded-lg hover:bg-green-600 transition font-semibold flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Book for Entire Team
+                    </button>
+                </form>
+            </div>
+            <p class="text-sm text-gray-500 mt-4">
+                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                This will book a session for all {{ team.players.count }} players on the team.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentWeekOffset = 0;
+let availableSlots = {{ available_slots|safe|default:"[]" }};
+let teamCoachIds = [{% for coach in team.coaches.all %}{{ coach.id }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+function changeWeek(offset) {
+    currentWeekOffset += offset;
+    updateWeekLabel();
+    // In a real implementation, this would fetch new slots via AJAX
+    location.href = `?week=${currentWeekOffset}`;
+}
+
+function goToToday() {
+    currentWeekOffset = 0;
+    location.href = '?';
+}
+
+function updateWeekLabel() {
+    const label = document.getElementById('currentWeekLabel');
+    if (currentWeekOffset === 0) {
+        label.textContent = 'This Week';
+    } else if (currentWeekOffset === 1) {
+        label.textContent = 'Next Week';
+    } else if (currentWeekOffset === -1) {
+        label.textContent = 'Last Week';
+    } else {
+        label.textContent = `${currentWeekOffset > 0 ? '+' : ''}${currentWeekOffset} Weeks`;
+    }
+}
+
+function selectSlot(slotId) {
+    const slot = availableSlots.find(s => s.id === slotId);
+    if (!slot) return;
+    
+    document.getElementById('selectedSlotId').value = slotId;
+    document.getElementById('selectedSlotDetails').textContent = 
+        `${slot.day} at ${slot.time} - ${slot.session_type}`;
+    document.getElementById('selectedCoach').textContent = slot.coach_name;
+    document.getElementById('slotCapacity').textContent = 
+        `${slot.spots_remaining} spots remaining (Team: ${slot.team_player_count || '{{ team.players.count }}'} players)`;
+    
+    document.getElementById('selectedSlotInfo').classList.remove('hidden');
+    
+    // Highlight selected slot
+    document.querySelectorAll('.slot-card').forEach(card => {
+        card.classList.remove('ring-2', 'ring-secondary');
+    });
+    document.getElementById(`slot-${slotId}`).classList.add('ring-2', 'ring-secondary');
+}
+
+// Initialize
+updateWeekLabel();
+</script>
+{% endblock %}

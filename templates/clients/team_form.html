@@ -1,0 +1,148 @@
+{% extends "clients/dashboard.html" %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="flex items-center text-sm text-gray-500 mb-6">
+    <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <a href="{% url 'clients:team_list' %}" class="hover:text-secondary">My Teams</a>
+    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <span class="text-gray-800">{% if team %}Edit{% else %}Create{% endif %} Team</span>
+</div>
+
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md p-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">
+            {% if team %}Edit Team{% else %}Create New Team{% endif %}
+        </h1>
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Team Name -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Team Name *</label>
+                <input type="text" name="name" value="{{ team.name|default:'' }}" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                       placeholder="e.g., U12 Select Team">
+            </div>
+
+            <!-- Slug (Auto-generated) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Team URL Slug</label>
+                <div class="flex items-center">
+                    <span class="px-3 py-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-500 text-sm">/teams/</span>
+                    <input type="text" name="slug" value="{{ team.slug|default:'' }}" readonly
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg bg-gray-50 text-gray-600"
+                           placeholder="auto-generated-from-name">
+                </div>
+                <p class="text-xs text-gray-500 mt-1">This is auto-generated from the team name</p>
+            </div>
+
+            <!-- Age Group & Skill Level -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Age Group *</label>
+                    <select name="age_group" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                        <option value="">-- Select Age Group --</option>
+                        {% for value, label in age_groups %}
+                        <option value="{{ value }}" {% if team.age_group == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Skill Level *</label>
+                    <select name="skill_level" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                        <option value="">-- Select Skill Level --</option>
+                        {% for value, label in skill_levels %}
+                        <option value="{{ value }}" {% if team.skill_level == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Club Name -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Club/School Name</label>
+                <input type="text" name="club_name" value="{{ team.club_name|default:'' }}"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                       placeholder="e.g., FC United Academy">
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Team Description</label>
+                <textarea name="description" rows="4"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                          placeholder="Describe your team's goals, playing style, or any other relevant information...">{{ team.description|default:'' }}</textarea>
+            </div>
+
+            <!-- Max Players -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Players</label>
+                <input type="number" name="max_players" value="{{ team.max_players|default:20 }}" min="1" max="50"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                <p class="text-xs text-gray-500 mt-1">Maximum number of players allowed on this team</p>
+            </div>
+
+            <!-- Coaches Multi-select -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Team Coaches</label>
+                <div class="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
+                    {% if available_coaches %}
+                    <div class="space-y-2">
+                        {% for coach in available_coaches %}
+                        <label class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input type="checkbox" name="coaches" value="{{ coach.id }}"
+                                   {% if coach in team.coaches.all %}checked{% endif %}
+                                   class="w-4 h-4 text-secondary border-gray-300 rounded focus:ring-secondary">
+                            <span class="ml-3 text-gray-700">{{ coach.user.first_name }} {{ coach.user.last_name }}</span>
+                            {% if coach.is_certified %}
+                            <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Certified</span>
+                            {% endif %}
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-sm">No coaches available</p>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Select all coaches who will be working with this team</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4 pt-6 border-t">
+                <a href="{% url 'clients:team_list' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-green-600 transition flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {% if team %}Save Changes{% else %}Create Team{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Auto-generate slug from team name
+const nameInput = document.querySelector('input[name="name"]');
+const slugInput = document.querySelector('input[name="slug"]');
+
+nameInput.addEventListener('input', function() {
+    const slug = this.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    slugInput.value = slug;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends 'owner/base.html' %}
+{% block title %}{{ team.name }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="flex justify-between items-start mb-6">
+    <div>
+        <div class="flex items-center gap-3 mb-1">
+            <a href="{% url 'owner_teams' %}" class="text-gray-400 hover:text-gray-600 text-sm">Teams</a>
+            <span class="text-gray-300">/</span>
+            <h1 class="text-2xl font-bold text-gray-800">{{ team.name }}</h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">{{ team.age_group }}</span>
+            <span class="px-2 py-1 text-xs rounded-full
+                {% if team.skill_level == 'elite' %}bg-red-100 text-red-700
+                {% elif team.skill_level == 'advanced' %}bg-orange-100 text-orange-700
+                {% elif team.skill_level == 'intermediate' %}bg-yellow-100 text-yellow-700
+                {% else %}bg-green-100 text-green-700{% endif %}">
+                {{ team.get_skill_level_display }}
+            </span>
+            {% if team.club_name %}
+            <span class="text-sm text-gray-500">{{ team.club_name }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="text-right text-sm text-gray-500">
+        <div>Manager: <span class="font-medium text-gray-700">{{ team.manager.user.get_full_name }}</span></div>
+        <div>{{ team.manager.user.email }}</div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-secondary">{{ player_count }}</div>
+        <div class="text-sm text-gray-500">Players</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-blue-600">{{ coach_count }}</div>
+        <div class="text-sm text-gray-500">Coaches</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-purple-600">{{ upcoming_bookings|length }}</div>
+        <div class="text-sm text-gray-500">Upcoming Sessions</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-gray-700">{{ team.max_players }}</div>
+        <div class="text-sm text-gray-500">Max Roster</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Players Roster -->
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+            <h2 class="font-semibold text-gray-700">Player Roster</h2>
+            <span class="text-sm text-gray-500">{{ player_count }} / {{ team.max_players }}</span>
+        </div>
+        <table class="w-full">
+            <thead>
+                <tr class="border-b">
+                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Player</th>
+                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Age Group</th>
+                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Position</th>
+                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Parent</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for player in players %}
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-6">
+                        <div class="font-medium text-gray-800">{{ player.first_name }} {{ player.last_name }}</div>
+                    </td>
+                    <td class="py-3 px-6 text-sm text-gray-600">{{ player.age_group|default:"-" }}</td>
+                    <td class="py-3 px-6 text-sm text-gray-600">{{ player.position|default:"-" }}</td>
+                    <td class="py-3 px-6 text-sm text-gray-600">
+                        {% if player.client %}{{ player.client.user.get_full_name }}{% else %}-{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="py-6 text-center text-gray-400 text-sm">No players on roster.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Right Column: Coaches + Packages -->
+    <div class="space-y-6">
+        <!-- Coaches -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h2 class="font-semibold text-gray-700">Assigned Coaches</h2>
+            </div>
+            <div class="divide-y divide-gray-100">
+                {% for coach in coaches %}
+                <div class="px-6 py-3 flex items-center gap-3">
+                    <div class="w-8 h-8 bg-secondary/20 text-secondary rounded-full flex items-center justify-center font-bold text-sm">
+                        {{ coach.user.first_name|first }}
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-800 text-sm">{{ coach.user.get_full_name }}</div>
+                        <div class="text-xs text-gray-500">{{ coach.specialty|default:"Coach" }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="px-6 py-4 text-sm text-gray-400 text-center">No coaches assigned.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Team Packages -->
+        {% if team_packages %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h2 class="font-semibold text-gray-700">Team Packages</h2>
+            </div>
+            <div class="divide-y divide-gray-100">
+                {% for cp in team_packages %}
+                <div class="px-6 py-3">
+                    <div class="font-medium text-gray-800 text-sm">{{ cp.package.name }}</div>
+                    <div class="text-xs text-gray-500 flex justify-between">
+                        <span>{{ cp.player.first_name }} {{ cp.player.last_name }}</span>
+                        <span class="px-1.5 py-0.5 rounded text-xs
+                            {% if cp.status == 'active' %}bg-green-100 text-green-700
+                            {% elif cp.status == 'expired' %}bg-gray-100 text-gray-600
+                            {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                            {{ cp.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upcoming Bookings -->
+{% if upcoming_bookings %}
+<div class="mt-6 bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b bg-gray-50">
+        <h2 class="font-semibold text-gray-700">Upcoming Sessions</h2>
+    </div>
+    <table class="w-full">
+        <thead>
+            <tr class="border-b">
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Player</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Coach</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Session Type</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Status</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for booking in upcoming_bookings %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-3 px-6 text-sm text-gray-700">{{ booking.scheduled_date|date:"M j, Y" }}</td>
+                <td class="py-3 px-6 text-sm font-medium text-gray-800">{{ booking.player.first_name }} {{ booking.player.last_name }}</td>
+                <td class="py-3 px-6 text-sm text-gray-600">{{ booking.coach.user.get_full_name }}</td>
+                <td class="py-3 px-6 text-sm text-gray-600">{{ booking.session_type.name|default:"-" }}</td>
+                <td class="py-3 px-6">
+                    <span class="px-2 py-1 rounded text-xs font-medium
+                        {% if booking.status == 'confirmed' %}bg-green-100 text-green-700
+                        {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-700
+                        {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ booking.get_status_display }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Description -->
+{% if team.description %}
+<div class="mt-6 bg-white rounded-xl shadow-md p-6">
+    <h2 class="font-semibold text-gray-700 mb-2">About This Team</h2>
+    <p class="text-gray-600 text-sm">{{ team.description }}</p>
+</div>
+{% endif %}
+{% endblock %}

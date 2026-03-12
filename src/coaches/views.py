@@ -76,6 +76,9 @@ def dashboard(request):
         ).values('player').distinct().count(),
     }
 
+    # Teams this coach is assigned to
+    teams = coach.teams.filter(is_active=True)
+
     context = {
         'coach': coach,
         'todays_blocks': todays_blocks,
@@ -83,6 +86,7 @@ def dashboard(request):
         'pending_assessments': pending_assessments,
         'stats': stats,
         'today': today,
+        'teams': teams,
     }
     return render(request, 'coaches/dashboard.html', context)
 
@@ -623,44 +627,47 @@ def my_players(request):
     """View all players that have trained with this coach."""
     coach = request.coach
     from clients.models import Player
-    from django.db.models import Avg
+    from django.db.models import Avg, Count, OuterRef, Subquery
 
-    # Get all players who have booked with this coach
-    player_ids = Booking.objects.filter(
-        coach=coach
-    ).values_list('player_id', flat=True).distinct()
+    # Get last session date as subquery for efficient annotation
+    last_session_subquery = Booking.objects.filter(
+        coach=coach,
+        player=OuterRef('pk')
+    ).order_by('-scheduled_date').values('scheduled_date')[:1]
 
+    # Get all players who have booked with this coach with aggregated stats
+    players = Player.objects.filter(
+        id__in=Booking.objects.filter(coach=coach).values('player_id').distinct(),
+        is_active=True
+    ).annotate(
+        sessions_count=Count('bookings', filter=Q(bookings__coach=coach)),
+        avg_effort=Avg('assessments__effort_engagement', filter=Q(assessments__coach=coach)),
+        avg_technical=Avg('assessments__technical_proficiency', filter=Q(assessments__coach=coach)),
+        avg_tactical=Avg('assessments__tactical_awareness', filter=Q(assessments__coach=coach)),
+        avg_physical=Avg('assessments__physical_performance', filter=Q(assessments__coach=coach)),
+        avg_goals=Avg('assessments__goals_achievement', filter=Q(assessments__coach=coach)),
+        last_session_date=Subquery(last_session_subquery)
+    ).order_by('-sessions_count')
+
+    # Calculate overall average and prepare player data
     players_data = []
-    for player in Player.objects.filter(id__in=player_ids, is_active=True):
-        bookings = Booking.objects.filter(coach=coach, player=player)
-        assessments = PlayerAssessment.objects.filter(coach=coach, player=player)
-        avg_rating = assessments.aggregate(
-            avg=Avg('effort_engagement') + Avg('technical_proficiency') +
-                Avg('tactical_awareness') + Avg('physical_performance') +
-                Avg('goals_achievement')
-        )
-        # Calculate proper average
-        if assessments.exists():
-            total = sum([
-                assessments.aggregate(Avg('effort_engagement'))['effort_engagement__avg'] or 0,
-                assessments.aggregate(Avg('technical_proficiency'))['technical_proficiency__avg'] or 0,
-                assessments.aggregate(Avg('tactical_awareness'))['tactical_awareness__avg'] or 0,
-                assessments.aggregate(Avg('physical_performance'))['physical_performance__avg'] or 0,
-                assessments.aggregate(Avg('goals_achievement'))['goals_achievement__avg'] or 0,
-            ])
-            avg = total / 5
-        else:
-            avg = 0
+    for player in players:
+        avg = 0
+        if player.avg_effort is not None:
+            avg = (
+                (player.avg_effort or 0) +
+                (player.avg_technical or 0) +
+                (player.avg_tactical or 0) +
+                (player.avg_physical or 0) +
+                (player.avg_goals or 0)
+            ) / 5
 
         players_data.append({
             'player': player,
-            'sessions_count': bookings.count(),
+            'sessions_count': player.sessions_count,
             'avg_rating': avg,
-            'last_session': bookings.order_by('-scheduled_date').first(),
+            'last_session_date': player.last_session_date,
         })
-
-    # Sort by most sessions
-    players_data.sort(key=lambda x: x['sessions_count'], reverse=True)
 
     context = {
         'coach': coach,

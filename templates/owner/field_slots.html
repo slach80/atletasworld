@@ -1,0 +1,306 @@
+{% extends 'owner/base.html' %}
+{% block title %}Field Rental{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Field Rental Management</h1>
+        <p class="text-gray-500">Create slots and manage field rental requests</p>
+    </div>
+    <button onclick="document.getElementById('addSlotPanel').classList.toggle('hidden')"
+        class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition text-sm font-medium flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        Add Slot
+    </button>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-secondary">
+        <div class="text-2xl font-bold text-secondary">{{ available_count }}</div>
+        <div class="text-sm text-gray-500">Available</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-yellow-500">
+        <div class="text-2xl font-bold text-yellow-600">{{ pending_count }}</div>
+        <div class="text-sm text-gray-500">Pending Approval</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-owner">
+        <div class="text-2xl font-bold text-owner">{{ booked_month }}</div>
+        <div class="text-sm text-gray-500">Booked This Month</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+        <div class="text-2xl font-bold text-blue-600">${{ revenue_month }}</div>
+        <div class="text-sm text-gray-500">Revenue This Month</div>
+    </div>
+</div>
+
+<!-- Add Slot Panel -->
+<div id="addSlotPanel" class="hidden bg-white rounded-xl shadow-md p-6 mb-6 border-2 border-secondary/30">
+    <h2 class="font-bold text-gray-800 mb-4">Add New Field Rental Slot</h2>
+    <form method="post" action="{% url 'owner_field_slots' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Date</label>
+                <input type="date" name="date" required
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+                    min="{{ today|date:'Y-m-d' }}" id="slotDate" onchange="checkConflicts()">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
+                <input type="time" name="start_time" required
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+                    id="slotStart" onchange="checkConflicts()">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
+                <input type="time" name="end_time" required
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+                    id="slotEnd" onchange="checkConflicts()">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Price ($)</label>
+                <input type="number" name="price" step="0.01" min="0" required placeholder="150.00"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Title <span class="text-gray-400 font-normal">(optional)</span></label>
+                <input type="text" name="title" placeholder="e.g. Saturday Morning Full Field"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+                <input type="text" name="notes" placeholder="Owner notes for clients"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+        </div>
+        <!-- Conflict warning -->
+        <div id="conflictWarning" class="hidden mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800"></div>
+        <div class="mt-4 flex gap-3">
+            <button type="submit" class="bg-secondary text-white px-5 py-2 rounded-lg hover:bg-green-600 transition text-sm font-medium">
+                Create Slot
+            </button>
+            <button type="button" onclick="document.getElementById('addSlotPanel').classList.add('hidden')"
+                class="px-5 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition text-sm">
+                Cancel
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Pending Requests (prominent) -->
+{% if pending_slots %}
+<div class="bg-yellow-50 border border-yellow-300 rounded-xl p-6 mb-6">
+    <h2 class="font-bold text-yellow-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        Pending Requests ({{ pending_slots|length }})
+    </h2>
+    <div class="space-y-4">
+        {% for slot in pending_slots %}
+        <div class="bg-white rounded-xl p-5 border border-yellow-200 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <div class="font-bold text-gray-800">{{ slot.date|date:"l, F j, Y" }}</div>
+                    <div class="text-sm text-gray-600">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }} &bull; {{ slot.duration_minutes }} min &bull; ${{ slot.price }}</div>
+                    <div class="text-sm mt-1">
+                        <span class="font-medium text-gray-700">Requested by:</span>
+                        <span class="text-gray-600">{{ slot.requester_name }}</span>
+                        {% if slot.booker_type == 'team' %}<span class="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Team</span>{% endif %}
+                    </div>
+                    {% if slot.client_notes %}
+                    <div class="text-xs text-gray-500 mt-1 italic">"{{ slot.client_notes }}"</div>
+                    {% endif %}
+                    <div class="text-xs text-gray-400 mt-1">Requested {{ slot.requested_at|timesince }} ago</div>
+                </div>
+                <div class="flex gap-2 items-start">
+                    <!-- Approve -->
+                    <form method="post" action="{% url 'owner_field_slot_approve' slot.pk %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="px-4 py-2 bg-secondary text-white rounded-lg text-sm font-medium hover:bg-green-600 transition">
+                            Approve
+                        </button>
+                    </form>
+                    <!-- Reject -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button onclick="toggleReject('reject-{{ slot.pk }}')"
+                            class="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition">
+                            Reject
+                        </button>
+                        <div id="reject-{{ slot.pk }}" class="hidden absolute right-0 top-10 bg-white border rounded-xl shadow-xl p-4 w-72 z-10">
+                            <form method="post" action="{% url 'owner_field_slot_reject' slot.pk %}">
+                                {% csrf_token %}
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Rejection reason</label>
+                                <textarea name="rejection_reason" rows="2" required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-1 focus:ring-red-400"
+                                    placeholder="Reason for rejection..."></textarea>
+                                <div class="flex gap-2">
+                                    <button type="submit" class="flex-1 bg-accent text-white py-1.5 rounded-lg text-sm hover:bg-red-600 transition">
+                                        Confirm Reject
+                                    </button>
+                                    <button type="button" onclick="toggleReject('reject-{{ slot.pk }}')"
+                                        class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Filter + All Slots Table -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+        <h2 class="font-semibold text-gray-700">All Slots</h2>
+        <div class="flex gap-2 text-sm">
+            {% for s, label in statuses %}
+            <a href="?status={{ s }}"
+               class="px-3 py-1 rounded-full {% if status_filter == s %}bg-owner text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
+                {{ label }}
+            </a>
+            {% endfor %}
+            <a href="?status=all"
+               class="px-3 py-1 rounded-full {% if status_filter == 'all' %}bg-owner text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
+                All
+            </a>
+        </div>
+    </div>
+    <table class="w-full">
+        <thead>
+            <tr class="border-b bg-gray-50">
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Time</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Price</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Requester</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for slot in slots %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-4 px-6">
+                    <div class="font-medium text-gray-800">{{ slot.date|date:"M j, Y" }}</div>
+                    {% if slot.title %}<div class="text-xs text-gray-500">{{ slot.title }}</div>{% endif %}
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}</td>
+                <td class="py-4 px-6 font-semibold text-gray-800">${{ slot.price }}</td>
+                <td class="py-4 px-6">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                        {% if slot.status == 'available' %}bg-green-100 text-green-700
+                        {% elif slot.status == 'pending_approval' %}bg-yellow-100 text-yellow-700
+                        {% elif slot.status == 'booked' %}bg-blue-100 text-blue-700
+                        {% else %}bg-gray-100 text-gray-500{% endif %}">
+                        {{ slot.get_status_display }}
+                    </span>
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-600">
+                    {% if slot.status != 'available' and slot.status != 'cancelled' %}
+                        {{ slot.requester_name }}
+                        {% if slot.booker_type == 'team' %}<span class="ml-1 text-xs text-blue-600">Team</span>{% endif %}
+                    {% else %}—{% endif %}
+                </td>
+                <td class="py-4 px-6">
+                    <div class="flex gap-2">
+                        {% if slot.status == 'available' %}
+                        <button onclick="toggleEdit('edit-{{ slot.pk }}')"
+                            class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition">Edit</button>
+                        {% endif %}
+                        {% if slot.status == 'booked' %}
+                        <button onclick="toggleCancel('cancel-{{ slot.pk }}')"
+                            class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition">Cancel</button>
+                        {% endif %}
+                    </div>
+                    <!-- Inline edit form -->
+                    {% if slot.status == 'available' %}
+                    <div id="edit-{{ slot.pk }}" class="hidden mt-2">
+                        <form method="post" action="{% url 'owner_field_slot_edit' slot.pk %}" class="space-y-2">
+                            {% csrf_token %}
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" name="date" value="{{ slot.date|date:'Y-m-d' }}" required class="border rounded px-2 py-1 text-xs col-span-2">
+                                <input type="time" name="start_time" value="{{ slot.start_time|time:'H:i' }}" required class="border rounded px-2 py-1 text-xs">
+                                <input type="time" name="end_time" value="{{ slot.end_time|time:'H:i' }}" required class="border rounded px-2 py-1 text-xs">
+                                <input type="number" name="price" value="{{ slot.price }}" step="0.01" required class="border rounded px-2 py-1 text-xs">
+                                <input type="text" name="title" value="{{ slot.title }}" placeholder="Title" class="border rounded px-2 py-1 text-xs">
+                            </div>
+                            <textarea name="notes" rows="1" placeholder="Notes" class="w-full border rounded px-2 py-1 text-xs">{{ slot.notes }}</textarea>
+                            <div class="flex gap-1">
+                                <button type="submit" class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-green-600">Save</button>
+                                <button type="button" onclick="toggleEdit('edit-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                    <!-- Inline cancel form -->
+                    {% if slot.status == 'booked' %}
+                    <div id="cancel-{{ slot.pk }}" class="hidden mt-2">
+                        <form method="post" action="{% url 'owner_field_slot_cancel' slot.pk %}" class="space-y-2">
+                            {% csrf_token %}
+                            <textarea name="cancellation_notes" rows="2" placeholder="Cancellation reason (sent to client)"
+                                class="w-full border rounded px-2 py-1 text-xs"></textarea>
+                            <div class="flex gap-1">
+                                <button type="submit" class="text-xs px-2 py-1 bg-accent text-white rounded hover:bg-red-600">Confirm Cancel</button>
+                                <button type="button" onclick="toggleCancel('cancel-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Back</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="py-8 text-center text-gray-400">No slots found. Create one above.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function toggleReject(id) {
+    document.querySelectorAll('[id^="reject-"]').forEach(el => {
+        if (el.id !== id) el.classList.add('hidden');
+    });
+    document.getElementById(id).classList.toggle('hidden');
+}
+function toggleEdit(id) {
+    document.getElementById(id).classList.toggle('hidden');
+}
+function toggleCancel(id) {
+    document.getElementById(id).classList.toggle('hidden');
+}
+
+async function checkConflicts() {
+    const date  = document.getElementById('slotDate').value;
+    const start = document.getElementById('slotStart').value;
+    const end   = document.getElementById('slotEnd').value;
+    const warn  = document.getElementById('conflictWarning');
+    if (!date || !start || !end) { warn.classList.add('hidden'); return; }
+
+    try {
+        const res  = await fetch(`{% url 'owner_field_slot_conflict_check' %}?date=${date}&start_time=${start}&end_time=${end}`);
+        const data = await res.json();
+        if (data.conflict) {
+            warn.classList.remove('hidden');
+            let msg = `⚠️ ${data.count} coach schedule block(s) overlap this time: `;
+            msg += data.blocks.map(b => `${b.coach} (${b.start}–${b.end})`).join(', ');
+            msg += '. These slots will be blocked from new bookings once a field rental is active.';
+            warn.textContent = msg;
+        } else {
+            warn.classList.add('hidden');
+        }
+    } catch (e) {}
+}
+</script>
+{% endblock %}
