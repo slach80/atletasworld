@@ -632,10 +632,60 @@ class Team(models.Model):
         ]
 
 
+class RentalService(models.Model):
+    """
+    Service catalog entry — defines what can be rented (rooms, gym, partial/full field).
+    Owner manages this catalog. Each FieldRentalSlot references one service.
+    """
+    SERVICE_TYPE_CHOICES = [
+        ('field_full',    'Full Field'),
+        ('field_partial', 'Partial Field'),
+        ('room',          'Multi-Use Room'),
+        ('gym',           'Gym'),
+    ]
+    PRICING_TYPE_CHOICES = [
+        ('flat',   'Flat Rate'),
+        ('hourly', 'Per Hour'),
+    ]
+
+    name          = models.CharField(max_length=200)
+    service_type  = models.CharField(max_length=20, choices=SERVICE_TYPE_CHOICES)
+    description   = models.TextField(blank=True)
+    capacity      = models.IntegerField(null=True, blank=True, help_text='Max people (optional)')
+    price         = models.DecimalField(max_digits=8, decimal_places=2,
+                                        help_text='Default price shown to clients')
+    pricing_type  = models.CharField(max_length=10, choices=PRICING_TYPE_CHOICES, default='flat')
+    requires_approval = models.BooleanField(default=True,
+                                            help_text='Requests need owner approval before confirming')
+    is_active     = models.BooleanField(default=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.get_service_type_display()})"
+
+    class Meta:
+        ordering = ['service_type', 'name']
+
+    @property
+    def type_icon(self):
+        return {
+            'field_full':    '⚽',
+            'field_partial': '🟩',
+            'room':          '🏠',
+            'gym':           '🏋️',
+        }.get(self.service_type, '📋')
+
+    @property
+    def price_display(self):
+        suffix = '/hr' if self.pricing_type == 'hourly' else ''
+        return f"${self.price}{suffix}"
+
+
 class FieldRentalSlot(models.Model):
     """
-    Owner-created field rental slots. When booked (or pending approval),
-    the entire field is exclusively reserved — no other session bookings can overlap.
+    Owner-created rental slots. References a RentalService from the catalog.
+    For field-type services, the field is exclusively reserved during the slot.
     """
     STATUS_CHOICES = [
         ('available',        'Available'),
@@ -647,6 +697,13 @@ class FieldRentalSlot(models.Model):
         ('individual', 'Individual Client'),
         ('team',       'Team'),
     ]
+
+    # Service catalog reference
+    service          = models.ForeignKey(
+        'RentalService', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='slots',
+        help_text="Service from the catalog (room, gym, partial field, etc.)"
+    )
 
     # Slot definition (owner-created)
     date             = models.DateField()
@@ -721,6 +778,24 @@ class FieldRentalSlot(models.Model):
             start_time__gte=self.end_time
         ).exists()
 
+    def get_same_service_conflicts(self):
+        """
+        Return other FieldRentalSlots for the same service that overlap this
+        time window and are pending_approval or booked.
+        Returns empty queryset if this slot has no service assigned.
+        """
+        if not self.service_id:
+            return FieldRentalSlot.objects.none()
+        return FieldRentalSlot.objects.filter(
+            service_id=self.service_id,
+            date=self.date,
+            status__in=['pending_approval', 'booked'],
+        ).exclude(pk=self.pk).exclude(
+            end_time__lte=self.start_time
+        ).exclude(
+            start_time__gte=self.end_time
+        )
+
     @classmethod
     def check_field_blocked(cls, date, start_time, end_time):
         """Returns True if a booked or pending_approval slot blocks this window."""
@@ -732,6 +807,25 @@ class FieldRentalSlot(models.Model):
         ).exclude(
             start_time__gte=end_time
         ).exists()
+
+    @classmethod
+    def check_service_blocked(cls, service_id, date, start_time, end_time, exclude_pk=None):
+        """
+        Return queryset of conflicting slots for the given service at the
+        specified date/time window (pending_approval or booked).
+        """
+        qs = cls.objects.filter(
+            service_id=service_id,
+            date=date,
+            status__in=['pending_approval', 'booked'],
+        ).exclude(
+            end_time__lte=start_time
+        ).exclude(
+            start_time__gte=end_time
+        )
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+        return qs
 
     class Meta:
         ordering = ['date', 'start_time']

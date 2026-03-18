@@ -1136,22 +1136,22 @@ def field_rental_list(request):
         date__gte=today,
         date__lte=today + timedelta(days=60),
         status='available'
-    ).order_by('date', 'start_time')
+    ).select_related('service').order_by('date', 'start_time')
 
     my_pending = FieldRentalSlot.objects.filter(
         booked_by_client=client,
         status='pending_approval'
-    ).order_by('date')
+    ).select_related('service').order_by('date')
 
     my_booked = FieldRentalSlot.objects.filter(
         booked_by_client=client,
         status='booked'
-    ).order_by('date')
+    ).select_related('service').order_by('date')
 
     # Also include slots booked by teams managed by this client
     my_teams = client.managed_teams.filter(is_active=True) if client.client_type == 'coach' else Team.objects.none()
-    team_pending = FieldRentalSlot.objects.filter(booked_by_team__in=my_teams, status='pending_approval').order_by('date')
-    team_booked = FieldRentalSlot.objects.filter(booked_by_team__in=my_teams, status='booked').order_by('date')
+    team_pending = FieldRentalSlot.objects.filter(booked_by_team__in=my_teams, status='pending_approval').select_related('service').order_by('date')
+    team_booked = FieldRentalSlot.objects.filter(booked_by_team__in=my_teams, status='booked').select_related('service').order_by('date')
 
     context = {
         'client': client,
@@ -1191,6 +1191,19 @@ def field_rental_request(request, slot_id):
         slot = get_object_or_404(FieldRentalSlot.objects.select_for_update(), id=slot_id)
         if slot.status != 'available':
             messages.error(request, 'This slot is no longer available.')
+            return redirect('clients:field_rental_list')
+
+        # Same-service conflict: block if another slot for this service already
+        # occupies an overlapping window (pending or confirmed).
+        service_conflicts = slot.get_same_service_conflicts()
+        if service_conflicts.exists():
+            conflict = service_conflicts.first()
+            messages.error(
+                request,
+                f'Sorry — "{slot.service.name}" is already reserved for '
+                f'{conflict.start_time:%I:%M %p}–{conflict.end_time:%I:%M %p} '
+                f'on {conflict.date:%b %d}. Please choose a different time.'
+            )
             return redirect('clients:field_rental_list')
 
         booker_type = request.POST.get('booker_type', 'individual')

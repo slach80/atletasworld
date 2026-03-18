@@ -151,24 +151,47 @@ def owner_dashboard(request):
 @user_passes_test(is_owner)
 def owner_notifications(request):
     """Owner notification center - send emails to different groups."""
+    from clients.models import Package, ClientPackage
     # Get counts for each recipient group
     all_clients = Client.objects.select_related('user').filter(user__email__isnull=False).exclude(user__email='')
     all_coaches = Coach.objects.select_related('user').filter(is_active=True, user__email__isnull=False).exclude(user__email='')
     all_users = User.objects.filter(is_active=True, email__isnull=False).exclude(email='')
 
-    # Get clients with upcoming bookings (active clients)
     today = timezone.now().date()
+
+    # Clients with bookings in last 30 days
     active_client_ids = Booking.objects.filter(
         scheduled_date__gte=today - timedelta(days=30)
     ).values_list('client_id', flat=True).distinct()
     active_clients = Client.objects.filter(id__in=active_client_ids).select_related('user')
 
-    # Get clients with bookings this week
+    # Clients with bookings this week
     weekly_client_ids = Booking.objects.filter(
         scheduled_date__gte=today,
         scheduled_date__lte=today + timedelta(days=7)
     ).values_list('client_id', flat=True).distinct()
     clients_with_bookings_this_week = Client.objects.filter(id__in=weekly_client_ids).select_related('user')
+
+    # Clients with any active package
+    packaged_client_ids = ClientPackage.objects.filter(
+        status='active',
+        expiry_date__gte=today,
+    ).values_list('client_id', flat=True).distinct()
+    packaged_clients_count = Client.objects.filter(
+        id__in=packaged_client_ids,
+        user__email__isnull=False,
+    ).exclude(user__email='').count()
+
+    # Active packages with their active client counts (for per-package targeting)
+    active_packages = Package.objects.filter(is_active=True).order_by('package_type', 'name')
+    packages_with_counts = []
+    for pkg in active_packages:
+        count = ClientPackage.objects.filter(
+            package=pkg,
+            status='active',
+            expiry_date__gte=today,
+        ).values('client_id').distinct().count()
+        packages_with_counts.append((pkg, count))
 
     context = {
         'all_clients_count': all_clients.count(),
@@ -176,6 +199,8 @@ def owner_notifications(request):
         'all_users_count': all_users.count(),
         'active_clients_count': active_clients.count(),
         'clients_with_bookings_this_week_count': clients_with_bookings_this_week.count(),
+        'packaged_clients_count': packaged_clients_count,
+        'packages_with_counts': packages_with_counts,
         'all_clients': all_clients,
         'all_coaches': all_coaches,
     }
@@ -245,6 +270,33 @@ def owner_send_notification(request):
             user__email__isnull=False
         ).exclude(user__email='').values_list('user__email', flat=True)
         recipients.update(emails)
+
+    elif recipient_group == 'packaged_clients':
+        from clients.models import ClientPackage
+        packaged_ids = ClientPackage.objects.filter(
+            status='active',
+            expiry_date__gte=today,
+        ).values_list('client_id', flat=True).distinct()
+        emails = Client.objects.filter(
+            id__in=packaged_ids,
+            user__email__isnull=False,
+        ).exclude(user__email='').values_list('user__email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'package_specific':
+        from clients.models import ClientPackage
+        package_id = request.POST.get('package_id')
+        if package_id:
+            packaged_ids = ClientPackage.objects.filter(
+                package_id=package_id,
+                status='active',
+                expiry_date__gte=today,
+            ).values_list('client_id', flat=True).distinct()
+            emails = Client.objects.filter(
+                id__in=packaged_ids,
+                user__email__isnull=False,
+            ).exclude(user__email='').values_list('user__email', flat=True)
+            recipients.update(emails)
 
     elif recipient_group == 'individual':
         recipients.update(individual_emails)
@@ -1116,19 +1168,21 @@ def owner_team_bookings(request, team_id):
 @login_required
 @user_passes_test(is_owner)
 def owner_field_slots(request):
-    """List and create field rental slots."""
-    from clients.models import FieldRentalSlot, Notification, Client
+    """List and create rental slots."""
+    from clients.models import FieldRentalSlot, RentalService, Notification, Client
     from datetime import datetime as dt
 
     today = timezone.now().date()
 
     if request.method == 'POST' and request.POST.get('action') == 'add':
         try:
-            start_str = request.POST.get('start_time', '')
-            end_str   = request.POST.get('end_time', '')
-            start_t   = dt.strptime(start_str, '%H:%M').time()
-            end_t     = dt.strptime(end_str,   '%H:%M').time()
-            duration  = int((dt.combine(today, end_t) - dt.combine(today, start_t)).seconds / 60)
+            start_str  = request.POST.get('start_time', '')
+            end_str    = request.POST.get('end_time', '')
+            start_t    = dt.strptime(start_str, '%H:%M').time()
+            end_t      = dt.strptime(end_str,   '%H:%M').time()
+            duration   = int((dt.combine(today, end_t) - dt.combine(today, start_t)).seconds / 60)
+            service_id = request.POST.get('service_id') or None
+            service    = RentalService.objects.get(pk=service_id) if service_id else None
 
             slot = FieldRentalSlot.objects.create(
                 date=request.POST.get('date'),
@@ -1138,6 +1192,7 @@ def owner_field_slots(request):
                 price=request.POST.get('price', 0),
                 title=request.POST.get('title', ''),
                 notes=request.POST.get('notes', ''),
+                service=service,
             )
             if slot.has_conflicting_schedule_blocks:
                 messages.warning(request,
@@ -1171,6 +1226,7 @@ def owner_field_slots(request):
         'booked_month':    FieldRentalSlot.objects.filter(
             status='booked', booked_at__month=today.month, booked_at__year=today.year).count(),
         'revenue_month':   revenue,
+        'services':        RentalService.objects.filter(is_active=True).order_by('service_type', 'name'),
     }
     return render(request, 'owner/field_slots.html', context)
 
@@ -1308,16 +1364,20 @@ def owner_field_slot_cancel(request, pk):
 @login_required
 @user_passes_test(is_owner)
 def owner_field_slot_conflict_check(request):
-    """AJAX: check for ScheduleBlock conflicts at a given date/time range."""
+    """AJAX: check for ScheduleBlock conflicts and same-service slot conflicts."""
     from django.http import JsonResponse
+    from clients.models import FieldRentalSlot
 
     date       = request.GET.get('date')
     start_time = request.GET.get('start_time')
     end_time   = request.GET.get('end_time')
+    service_id = request.GET.get('service_id') or None
+    exclude_pk = request.GET.get('exclude_pk') or None
 
     if not all([date, start_time, end_time]):
-        return JsonResponse({'conflict': False, 'count': 0, 'blocks': []})
+        return JsonResponse({'conflict': False, 'count': 0, 'blocks': [], 'service_conflicts': []})
 
+    # Coach schedule block conflicts (relevant for field types)
     conflicts = ScheduleBlock.objects.filter(
         date=date, status__in=['available', 'booked']
     ).exclude(
@@ -1335,4 +1395,302 @@ def owner_field_slot_conflict_check(request):
         }
         for b in conflicts
     ]
-    return JsonResponse({'conflict': conflicts.exists(), 'count': conflicts.count(), 'blocks': blocks})
+
+    # Same-service slot conflicts
+    service_conflict_list = []
+    if service_id:
+        svc_conflicts = FieldRentalSlot.check_service_blocked(
+            service_id=service_id,
+            date=date,
+            start_time=start_time,
+            end_time=end_time,
+            exclude_pk=exclude_pk,
+        ).select_related('booked_by_client__user', 'booked_by_team')
+        service_conflict_list = [
+            {
+                'start':    str(s.start_time),
+                'end':      str(s.end_time),
+                'status':   s.status,
+                'booker':   s.requester_name,
+            }
+            for s in svc_conflicts
+        ]
+
+    return JsonResponse({
+        'conflict':          conflicts.exists(),
+        'count':             conflicts.count(),
+        'blocks':            blocks,
+        'service_conflicts': service_conflict_list,
+    })
+
+
+# ============================================================================
+# SERVICE CATALOG MANAGEMENT
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_services(request):
+    """List and manage the service catalog."""
+    from clients.models import RentalService
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'create':
+            try:
+                RentalService.objects.create(
+                    name=request.POST['name'],
+                    service_type=request.POST['service_type'],
+                    description=request.POST.get('description', ''),
+                    capacity=request.POST.get('capacity') or None,
+                    price=request.POST['price'],
+                    pricing_type=request.POST.get('pricing_type', 'flat'),
+                    requires_approval=request.POST.get('requires_approval') == 'on',
+                    is_active=True,
+                )
+                messages.success(request, 'Service added to catalog.')
+            except Exception as e:
+                messages.error(request, f'Error creating service: {e}')
+            return redirect('owner_services')
+
+    services = RentalService.objects.all().order_by('service_type', 'name')
+    service_type_choices = RentalService.SERVICE_TYPE_CHOICES
+    pricing_type_choices = RentalService.PRICING_TYPE_CHOICES
+
+    context = {
+        'services': services,
+        'service_type_choices': service_type_choices,
+        'pricing_type_choices': pricing_type_choices,
+        'active_counts': {
+            s.id: s.slots.filter(status__in=['available', 'pending_approval', 'booked']).count()
+            for s in services
+        },
+    }
+    return render(request, 'owner/services.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_service_edit(request, pk):
+    """Edit an existing service catalog entry."""
+    from clients.models import RentalService
+    service = get_object_or_404(RentalService, pk=pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'delete':
+            active_slots = service.slots.filter(status__in=['pending_approval', 'booked']).count()
+            if active_slots:
+                messages.error(request, f'Cannot delete: {active_slots} active slot(s) use this service.')
+            else:
+                service.delete()
+                messages.success(request, 'Service deleted.')
+            return redirect('owner_services')
+
+        try:
+            service.name             = request.POST['name']
+            service.service_type     = request.POST['service_type']
+            service.description      = request.POST.get('description', '')
+            service.capacity         = request.POST.get('capacity') or None
+            service.price            = request.POST['price']
+            service.pricing_type     = request.POST.get('pricing_type', 'flat')
+            service.requires_approval = request.POST.get('requires_approval') == 'on'
+            service.is_active        = request.POST.get('is_active') == 'on'
+            service.save()
+            messages.success(request, f'"{service.name}" updated.')
+        except Exception as e:
+            messages.error(request, f'Error updating service: {e}')
+        return redirect('owner_services')
+
+    context = {
+        'service': service,
+        'service_type_choices': RentalService.SERVICE_TYPE_CHOICES,
+        'pricing_type_choices': RentalService.PRICING_TYPE_CHOICES,
+    }
+    return render(request, 'owner/service_edit.html', context)
+
+
+# ============================================================================
+# FINANCE DASHBOARD
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_finances(request):
+    """Revenue reporting, outstanding balances, and transaction history."""
+    from clients.models import ClientPackage, Package
+    from clients.models import FieldRentalSlot
+    from payments.models import Payment
+    from calendar import month_name
+    from decimal import Decimal
+
+    today = timezone.now().date()
+
+    # --- Date range: default to current month, support ?month=M&year=Y ---
+    try:
+        view_month = int(request.GET.get('month', today.month))
+        view_year  = int(request.GET.get('year',  today.year))
+        if not (1 <= view_month <= 12):
+            view_month = today.month
+        if not (2000 <= view_year <= 2100):
+            view_year = today.year
+    except (ValueError, TypeError):
+        view_month, view_year = today.month, today.year
+
+    # Prev / next month navigation
+    if view_month == 1:
+        prev_month, prev_year = 12, view_year - 1
+    else:
+        prev_month, prev_year = view_month - 1, view_year
+    if view_month == 12:
+        next_month, next_year = 1, view_year + 1
+    else:
+        next_month, next_year = view_month + 1, view_year
+
+    # ---- Revenue for selected month ----------------------------------------
+
+    # Sessions paid directly
+    session_revenue = Booking.objects.filter(
+        scheduled_date__month=view_month,
+        scheduled_date__year=view_year,
+        payment_status='paid',
+    ).aggregate(total=Sum('amount_paid'))['total'] or Decimal('0')
+
+    # Package purchases (use Package.price as proxy until Stripe is live)
+    package_revenue = ClientPackage.objects.filter(
+        purchase_date__month=view_month,
+        purchase_date__year=view_year,
+    ).exclude(
+        status='cancelled'
+    ).aggregate(total=Sum('package__price'))['total'] or Decimal('0')
+
+    # Facility rentals paid
+    rental_revenue = FieldRentalSlot.objects.filter(
+        approved_at__month=view_month,
+        approved_at__year=view_year,
+        payment_status='paid',
+    ).aggregate(total=Sum('amount_paid'))['total'] or Decimal('0')
+
+    total_revenue = session_revenue + package_revenue + rental_revenue
+
+    # ---- Tax calculations --------------------------------------------------
+    tax_rate = Decimal(str(getattr(settings, 'TAX_RATE', 0.0)))
+    tax_amount = (total_revenue * tax_rate).quantize(Decimal('0.01'))
+    revenue_after_tax = total_revenue - tax_amount
+    tax_enabled = tax_rate > 0
+
+    # ---- Stripe confirmed payments for this month (pre-wired for go-live) --
+    stripe_confirmed = Payment.objects.filter(
+        status='succeeded',
+        created_at__month=view_month,
+        created_at__year=view_year,
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    stripe_count = Payment.objects.filter(
+        status='succeeded',
+        created_at__month=view_month,
+        created_at__year=view_year,
+    ).count()
+
+    # ---- 6-month trend -----------------------------------------------------
+    monthly_trend = []
+    for i in range(5, -1, -1):
+        # Walk back i months from view_month/view_year
+        m = view_month - i
+        y = view_year
+        while m <= 0:
+            m += 12
+            y -= 1
+
+        s = Booking.objects.filter(
+            scheduled_date__month=m, scheduled_date__year=y, payment_status='paid'
+        ).aggregate(t=Sum('amount_paid'))['t'] or Decimal('0')
+
+        p = ClientPackage.objects.filter(
+            purchase_date__month=m, purchase_date__year=y
+        ).exclude(status='cancelled').aggregate(t=Sum('package__price'))['t'] or Decimal('0')
+
+        r = FieldRentalSlot.objects.filter(
+            approved_at__month=m, approved_at__year=y, payment_status='paid'
+        ).aggregate(t=Sum('amount_paid'))['t'] or Decimal('0')
+
+        monthly_trend.append({
+            'label': f"{month_name[m][:3]} {str(y)[2:]}",
+            'sessions': float(s),
+            'packages': float(p),
+            'rentals':  float(r),
+            'total':    float(s + p + r),
+        })
+
+    max_total = max((m['total'] for m in monthly_trend), default=1) or 1
+
+    # ---- Outstanding balances (unpaid bookings) ----------------------------
+    outstanding = Booking.objects.filter(
+        payment_status='pending',
+        status__in=['pending', 'confirmed'],
+    ).select_related('client__user', 'player', 'session_type').order_by('scheduled_date')
+
+    outstanding_total = outstanding.aggregate(
+        total=Sum('session_type__price')
+    )['total'] or Decimal('0')
+
+    # ---- Recent transactions -----------------------------------------------
+    recent_bookings = Booking.objects.filter(
+        payment_status='paid',
+    ).select_related('client__user', 'player', 'session_type').order_by('-scheduled_date')[:15]
+
+    recent_packages = ClientPackage.objects.exclude(
+        status='cancelled'
+    ).select_related('client__user', 'package').order_by('-purchase_date')[:10]
+
+    recent_rentals = FieldRentalSlot.objects.filter(
+        payment_status='paid',
+    ).select_related('booked_by_client__user', 'service').order_by('-approved_at')[:10]
+
+    # ---- Package sales summary for the month --------------------------------
+    package_breakdown = ClientPackage.objects.filter(
+        purchase_date__month=view_month,
+        purchase_date__year=view_year,
+    ).exclude(status='cancelled').values(
+        'package__name'
+    ).annotate(
+        count=Count('id'),
+        revenue=Sum('package__price'),
+    ).order_by('-revenue')
+
+    context = {
+        'today': today,
+        'view_month': view_month,
+        'view_year': view_year,
+        'view_month_name': month_name[view_month],
+        'prev_month': prev_month, 'prev_year': prev_year,
+        'next_month': next_month, 'next_year': next_year,
+        # Revenue totals
+        'session_revenue':    session_revenue,
+        'package_revenue':    package_revenue,
+        'rental_revenue':     rental_revenue,
+        'total_revenue':      total_revenue,
+        # Tax
+        'tax_rate':           tax_rate,
+        'tax_rate_pct':       float(tax_rate * 100),
+        'tax_amount':         tax_amount,
+        'revenue_after_tax':  revenue_after_tax,
+        'tax_enabled':        tax_enabled,
+        # Stripe
+        'stripe_confirmed':   stripe_confirmed,
+        'stripe_count':       stripe_count,
+        'stripe_live':        bool(settings.STRIPE_SECRET_KEY and settings.STRIPE_SECRET_KEY.startswith('sk_live')),
+        # Trend
+        'monthly_trend':    monthly_trend,
+        'max_total':        max_total,
+        # Outstanding
+        'outstanding':         outstanding[:20],
+        'outstanding_total':   outstanding_total,
+        'outstanding_count':   outstanding.count(),
+        # Transactions
+        'recent_bookings':  recent_bookings,
+        'recent_packages':  recent_packages,
+        'recent_rentals':   recent_rentals,
+        # Package breakdown
+        'package_breakdown': package_breakdown,
+    }
+    return render(request, 'owner/finances.html', context)

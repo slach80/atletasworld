@@ -21,6 +21,8 @@ from .admin_views import (
     owner_field_slots, owner_field_slot_edit,
     owner_field_slot_approve, owner_field_slot_reject,
     owner_field_slot_cancel, owner_field_slot_conflict_check,
+    owner_services, owner_service_edit,
+    owner_finances,
 )
 
 
@@ -117,7 +119,14 @@ urlpatterns = [
     path('owner-portal/teams/', owner_teams, name='owner_teams'),
     path('owner-portal/teams/<int:pk>/', owner_team_detail, name='owner_team_detail'),
 
-    # Owner - Field Rental Management
+    # Owner - Finance Dashboard
+    path('owner-portal/finances/', owner_finances, name='owner_finances'),
+
+    # Owner - Service Catalog
+    path('owner-portal/services/', owner_services, name='owner_services'),
+    path('owner-portal/services/<int:pk>/edit/', owner_service_edit, name='owner_service_edit'),
+
+    # Owner - Rental Slot Management
     path('owner-portal/field-rental/', owner_field_slots, name='owner_field_slots'),
     path('owner-portal/field-rental/conflict-check/', owner_field_slot_conflict_check, name='owner_field_slot_conflict_check'),
     path('owner-portal/field-rental/<int:pk>/edit/', owner_field_slot_edit, name='owner_field_slot_edit'),
