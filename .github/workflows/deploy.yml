@@ -106,24 +106,27 @@ jobs:
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i /tmp/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=30 \
-            -T \
-            ubuntu@$EC2_HOST << 'ENDSSH'
-          cd /var/www/atletasworld
+          cat > /tmp/remote_deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          APP=/var/www/atletasworld
+          cd $APP
           git fetch origin main
           git reset --hard origin/main
-          /var/www/atletasworld/venv/bin/pip install --quiet -r requirements.txt
-          cd /var/www/atletasworld/src
-          /var/www/atletasworld/venv/bin/python manage.py migrate --noinput
-          /var/www/atletasworld/venv/bin/python manage.py collectstatic --noinput
+          $APP/venv/bin/pip install --quiet -r requirements.txt
+          cd $APP/src
+          $APP/venv/bin/python manage.py migrate --noinput
+          $APP/venv/bin/python manage.py collectstatic --noinput
           sudo /usr/bin/supervisorctl restart atletasworld
           sudo /usr/bin/supervisorctl restart atletasworld-celery
           sudo /usr/bin/supervisorctl status
-          echo "Deploy complete"
-          ENDSSH
-          rm -f /tmp/deploy_key
+          echo "Deploy complete: $(date)"
+          EOF
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
+            ubuntu@$EC2_HOST 'bash -s' < /tmp/remote_deploy.sh
+          rm -f /tmp/deploy_key /tmp/remote_deploy.sh
 
       - name: Deploy summary
         run: |
