@@ -13,11 +13,6 @@ MANAGE="$VENV/python $APP_DIR/src/manage.py"
 
 echo "[deploy] $(date '+%Y-%m-%d %H:%M:%S') — starting deploy"
 
-echo "[deploy] Pulling latest code from main..."
-cd "$APP_DIR"
-git fetch origin main
-git reset --hard origin/main
-
 echo "[deploy] Installing/updating Python dependencies..."
 "$VENV/pip" install --quiet -r requirements.txt
 

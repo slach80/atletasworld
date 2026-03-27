@@ -110,7 +110,7 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=30 \
             ubuntu@$EC2_HOST \
-            'bash /var/www/atletasworld/scripts/deploy.sh'
+            'cd /var/www/atletasworld && git fetch origin main && git reset --hard origin/main && bash scripts/deploy.sh'
           rm -f /tmp/deploy_key
 
       - name: Deploy summary
