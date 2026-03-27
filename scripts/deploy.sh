@@ -26,7 +26,7 @@ cd "$APP_DIR/src"
 $MANAGE migrate --noinput
 
 echo "[deploy] Collecting static files..."
-$MANAGE collectstatic --noinput --clear
+$MANAGE collectstatic --noinput
 
 echo "[deploy] Restarting application..."
 sudo /usr/bin/supervisorctl restart atletasworld
