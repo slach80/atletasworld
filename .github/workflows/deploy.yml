@@ -82,13 +82,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+      - name: Write deploy key
         env:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          printf '%s\n' "$EC2_SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          echo "Key lines: $(wc -l < /tmp/deploy_key)"
+          echo "Key header: $(head -1 /tmp/deploy_key)"
+          echo "Key footer: $(tail -1 /tmp/deploy_key)"
+
+      - name: Test SSH connectivity
+        env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          echo "$EC2_SSH_KEY" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
+            -v \
+            ubuntu@$EC2_HOST 'echo SSH_OK && hostname' 2>&1 | tail -20
+
+      - name: Deploy via SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
           ssh -i /tmp/deploy_key \
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=30 \
