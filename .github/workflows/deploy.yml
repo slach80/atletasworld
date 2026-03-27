@@ -1,5 +1,18 @@
 name: Deploy Atletas World
 
+# ============================================================
+# GitHub Secrets required:
+#   SECRET_KEY       — Django secret key (production)
+#   EC2_HOST         — EC2 elastic IP or domain
+#   EC2_SSH_KEY      — Private key PEM content (the .pem file text)
+#   EC2_USER         — SSH user (default: ubuntu)
+#
+# Optional secrets (for collectstatic to S3 during CI):
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#   AWS_STORAGE_BUCKET_NAME
+# ============================================================
+
 on:
   push:
     branches:
@@ -10,6 +23,7 @@ on:
 
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -27,17 +41,16 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout the repo
-        uses: actions/checkout@v3
-        # Submodules disabled - share-resources is private
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
@@ -51,50 +64,36 @@ jobs:
 
       - name: Run tests
         env:
-          SECRET_KEY: test-secret-key
+          SECRET_KEY: test-secret-key-not-for-production
           DEBUG: 'True'
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
         run: |
           cd src
-          python manage.py migrate
-          python manage.py test
+          python manage.py migrate --noinput
+          python manage.py test --verbosity=2
 
   deploy:
+    name: Deploy to EC2
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Checkout the repo
-        uses: actions/checkout@v3
-        # Submodules disabled - share-resources is private
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          python-version: '3.11'
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          script: |
+            bash /var/www/atletasworld/scripts/deploy.sh
 
-      - name: Install dependencies
+      - name: Deploy summary
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Collect static files
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          DEBUG: 'False'
-        run: |
-          cd src
-          python manage.py collectstatic --noinput
-
-      # Deploy steps disabled until share-resources submodule is available
-      # - name: Build the site
-      #   run: ./resources/scripts/build.sh
-      #
-      # - name: Deploy the site
-      #   run: ./resources/scripts/deploy.sh
-      #   env:
-      #     DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-
-      - name: Build complete
-        run: echo "Build and static collection complete. Deploy scripts pending."
+          echo "Deployed commit ${{ github.sha }} to ${{ secrets.EC2_HOST }}"
+          echo "Triggered by: ${{ github.actor }}"
