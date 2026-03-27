@@ -110,7 +110,7 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=30 \
             ubuntu@$EC2_HOST \
-            'cd /var/www/atletasworld && git fetch origin main && git reset --hard origin/main && bash scripts/deploy.sh'
+            'set -euxo pipefail; cd /var/www/atletasworld && git fetch origin main && git reset --hard origin/main && bash -x scripts/deploy.sh 2>&1; echo "EXIT_CODE: $?"' || echo "SSH_EXIT: $?"
           rm -f /tmp/deploy_key
 
       - name: Deploy summary
