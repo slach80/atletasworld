@@ -75,50 +75,38 @@ jobs:
   deploy:
     name: Deploy to EC2
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Write deploy key
-        env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      - name: Pull latest code
         run: |
-          printf '%s\n' "$EC2_SSH_KEY" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          echo "Key lines: $(wc -l < /tmp/deploy_key)"
-          echo "Key header: $(head -1 /tmp/deploy_key)"
-          echo "Key footer: $(tail -1 /tmp/deploy_key)"
-
-      - name: Deploy via SSH
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-        run: |
-          cat > /tmp/remote_deploy.sh << 'EOF'
-          #!/bin/bash
-          set -e
-          APP=/var/www/atletasworld
-          cd $APP
+          cd /var/www/atletasworld
           git fetch origin main
           git reset --hard origin/main
-          $APP/venv/bin/pip install --quiet -r requirements.txt
-          cd $APP/src
-          $APP/venv/bin/python manage.py migrate --noinput
-          $APP/venv/bin/python manage.py collectstatic --noinput
+
+      - name: Install dependencies
+        run: |
+          /var/www/atletasworld/venv/bin/pip install --quiet -r /var/www/atletasworld/requirements.txt
+
+      - name: Run migrations
+        run: |
+          cd /var/www/atletasworld/src
+          /var/www/atletasworld/venv/bin/python manage.py migrate --noinput
+
+      - name: Collect static files
+        run: |
+          cd /var/www/atletasworld/src
+          /var/www/atletasworld/venv/bin/python manage.py collectstatic --noinput
+
+      - name: Restart application
+        run: |
           sudo /usr/bin/supervisorctl restart atletasworld
           sudo /usr/bin/supervisorctl restart atletasworld-celery
           sudo /usr/bin/supervisorctl status
-          echo "Deploy complete: $(date)"
-          EOF
-          ssh -i /tmp/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=30 \
-            ubuntu@$EC2_HOST 'bash -s' < /tmp/remote_deploy.sh
-          rm -f /tmp/deploy_key /tmp/remote_deploy.sh
 
       - name: Deploy summary
         run: |
-          echo "Deployed commit ${{ github.sha }} to ${{ secrets.EC2_HOST }}"
+          echo "Deployed commit ${{ github.sha }}"
           echo "Triggered by: ${{ github.actor }}"
+          echo "Deployed at: $(date)"
