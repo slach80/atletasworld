@@ -74,9 +74,7 @@
                     {% endfor %}
                 </select>
                 {% if not services %}
-                <p class="text-xs text-gray-400 mt-1">
-                    <a href="{% url 'owner_services' %}" class="text-owner hover:underline">Add services to the catalog</a> to link them here.
-                </p>
+                <p class="text-xs text-gray-400 mt-1">Add a service above to link slots to a facility type.</p>
                 {% endif %}
             </div>
             <div>
@@ -176,6 +174,171 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Service Catalog (inline) -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+        <div>
+            <h2 class="font-semibold text-gray-700">Facility Services</h2>
+            <p class="text-xs text-gray-400 mt-0.5">Define what clients can book — fields, rooms, gym</p>
+        </div>
+        <button onclick="document.getElementById('addServicePanel').classList.toggle('hidden')"
+            class="bg-owner text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-600 transition flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add
+        </button>
+    </div>
+
+    <!-- Type legend -->
+    <div class="flex gap-2 px-6 py-3 border-b flex-wrap">
+        <span class="px-2.5 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">⚽ Full Field</span>
+        <span class="px-2.5 py-1 bg-lime-100 text-lime-800 rounded-full text-xs font-medium">🟩 Partial Field</span>
+        <span class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">🏠 Multi-Use Room</span>
+        <span class="px-2.5 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">🏋️ Gym</span>
+    </div>
+
+    <!-- Add Service form (hidden by default) -->
+    <div id="addServicePanel" class="hidden border-b bg-indigo-50 px-6 py-4">
+        <h3 class="font-semibold text-gray-700 mb-3 text-sm">New Service</h3>
+        <form method="post" action="{% url 'owner_field_slots' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="service_create">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                    <input type="text" name="name" required placeholder="e.g. Turf Room A, Half Field South"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Type *</label>
+                    <select name="service_type" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                        {% for val, label in service_type_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Capacity</label>
+                    <input type="number" name="capacity" min="1" placeholder="Max people"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Price *</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-400 text-sm">$</span>
+                        <input type="number" name="price" required step="0.01" min="0" placeholder="0.00"
+                            class="w-full border border-gray-300 rounded-lg pl-6 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Pricing</label>
+                    <select name="pricing_type" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                        {% for val, label in pricing_type_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                    <input type="text" name="description" placeholder="Optional"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                </div>
+            </div>
+            <div class="flex items-center gap-4 mt-3">
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input type="checkbox" name="requires_approval" checked class="w-4 h-4 rounded text-owner">
+                    Requires approval
+                </label>
+                <button type="submit" class="bg-owner text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-600 transition">Add Service</button>
+                <button type="button" onclick="document.getElementById('addServicePanel').classList.add('hidden')" class="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Service list -->
+    {% if all_services %}
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Service</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Type</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Price</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Capacity</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Approval</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for svc in all_services %}
+            <tr class="hover:bg-gray-50 {% if not svc.is_active %}opacity-60{% endif %}">
+                <td class="py-3 px-6 font-medium text-gray-800">
+                    {{ svc.name }}
+                    {% if svc.description %}<div class="text-xs text-gray-400 truncate max-w-xs">{{ svc.description|truncatechars:50 }}</div>{% endif %}
+                </td>
+                <td class="py-3 px-6">
+                    {% if svc.service_type == 'field_full' %}<span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">⚽ Full Field</span>
+                    {% elif svc.service_type == 'field_partial' %}<span class="px-2 py-0.5 text-xs rounded-full bg-lime-100 text-lime-700">🟩 Partial Field</span>
+                    {% elif svc.service_type == 'room' %}<span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">🏠 Room</span>
+                    {% elif svc.service_type == 'gym' %}<span class="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700">🏋️ Gym</span>{% endif %}
+                </td>
+                <td class="py-3 px-6 font-semibold text-gray-800">${{ svc.price }}{% if svc.pricing_type == 'hourly' %}<span class="text-xs text-gray-400">/hr</span>{% endif %}</td>
+                <td class="py-3 px-6 text-gray-600 text-sm">{% if svc.capacity %}{{ svc.capacity }}{% else %}—{% endif %}</td>
+                <td class="py-3 px-6">
+                    {% if svc.requires_approval %}<span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Required</span>
+                    {% else %}<span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Auto</span>{% endif %}
+                </td>
+                <td class="py-3 px-6">
+                    {% if svc.is_active %}<span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                    {% else %}<span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">Inactive</span>{% endif %}
+                </td>
+                <td class="py-3 px-6">
+                    <div class="flex gap-2">
+                        <button onclick="toggleServiceEdit('svc-edit-{{ svc.pk }}')"
+                            class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition">Edit</button>
+                        <form method="post" action="{% url 'owner_field_slots' %}" onsubmit="return confirm('Delete {{ svc.name }}?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="service_delete">
+                            <input type="hidden" name="service_id" value="{{ svc.pk }}">
+                            <button type="submit" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition">Delete</button>
+                        </form>
+                    </div>
+                    <!-- Inline edit -->
+                    <div id="svc-edit-{{ svc.pk }}" class="hidden mt-2 bg-gray-50 border rounded-lg p-3">
+                        <form method="post" action="{% url 'owner_field_slots' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="service_save">
+                            <input type="hidden" name="service_id" value="{{ svc.pk }}">
+                            <div class="grid grid-cols-2 gap-2 mb-2">
+                                <input type="text" name="name" value="{{ svc.name }}" required placeholder="Name" class="border rounded px-2 py-1 text-xs col-span-2">
+                                <select name="service_type" class="border rounded px-2 py-1 text-xs">
+                                    {% for val, label in service_type_choices %}<option value="{{ val }}" {% if svc.service_type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                                </select>
+                                <input type="number" name="price" value="{{ svc.price }}" step="0.01" required placeholder="Price" class="border rounded px-2 py-1 text-xs">
+                                <input type="number" name="capacity" value="{{ svc.capacity|default:'' }}" placeholder="Capacity" class="border rounded px-2 py-1 text-xs">
+                                <select name="pricing_type" class="border rounded px-2 py-1 text-xs">
+                                    {% for val, label in pricing_type_choices %}<option value="{{ val }}" {% if svc.pricing_type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <input type="text" name="description" value="{{ svc.description }}" placeholder="Description" class="w-full border rounded px-2 py-1 text-xs mb-2">
+                            <div class="flex items-center gap-3 mb-2">
+                                <label class="flex items-center gap-1 text-xs"><input type="checkbox" name="requires_approval" {% if svc.requires_approval %}checked{% endif %} class="rounded"> Requires approval</label>
+                                <label class="flex items-center gap-1 text-xs"><input type="checkbox" name="is_active" {% if svc.is_active %}checked{% endif %} class="rounded"> Active</label>
+                            </div>
+                            <div class="flex gap-1">
+                                <button type="submit" class="text-xs px-2 py-1 bg-owner text-white rounded hover:bg-indigo-600">Save</button>
+                                <button type="button" onclick="toggleServiceEdit('svc-edit-{{ svc.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="py-10 text-center text-gray-400">
+        <p class="font-medium">No services yet.</p>
+        <p class="text-sm mt-1">Add a Full Field, Partial Field, Room, or Gym service above.</p>
+    </div>
+    {% endif %}
+</div>
 
 <!-- Filter + All Slots Table -->
 <div class="bg-white rounded-xl shadow-md overflow-hidden">
@@ -309,6 +472,9 @@ function toggleEdit(id) {
     document.getElementById(id).classList.toggle('hidden');
 }
 function toggleCancel(id) {
+    document.getElementById(id).classList.toggle('hidden');
+}
+function toggleServiceEdit(id) {
     document.getElementById(id).classList.toggle('hidden');
 }
 

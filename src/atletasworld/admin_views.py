@@ -1168,15 +1168,61 @@ def owner_team_bookings(request, team_id):
 @login_required
 @user_passes_test(is_owner)
 def owner_field_slots(request):
-    """List and create rental slots."""
+    """List and create rental slots. Also handles service catalog CRUD."""
     from clients.models import FieldRentalSlot, RentalService, Notification, Client
     from datetime import datetime as dt
 
     today = timezone.now().date()
 
-    if request.method == 'POST' and request.POST.get('action') == 'add':
+    # --- Service catalog actions (merged from owner_services) ---
+    action = request.POST.get('action', '')
+    if request.method == 'POST' and action == 'service_create':
         try:
-            start_str  = request.POST.get('start_time', '')
+            RentalService.objects.create(
+                name=request.POST['name'],
+                service_type=request.POST['service_type'],
+                description=request.POST.get('description', ''),
+                capacity=request.POST.get('capacity') or None,
+                price=request.POST['price'],
+                pricing_type=request.POST.get('pricing_type', 'flat'),
+                requires_approval=request.POST.get('requires_approval') == 'on',
+                is_active=True,
+            )
+            messages.success(request, 'Service added.')
+        except Exception as e:
+            messages.error(request, f'Error creating service: {e}')
+        return redirect('owner_field_slots')
+
+    if request.method == 'POST' and action == 'service_save':
+        svc = get_object_or_404(RentalService, pk=request.POST.get('service_id'))
+        try:
+            svc.name = request.POST['name']
+            svc.service_type = request.POST['service_type']
+            svc.description = request.POST.get('description', '')
+            svc.capacity = request.POST.get('capacity') or None
+            svc.price = request.POST['price']
+            svc.pricing_type = request.POST.get('pricing_type', 'flat')
+            svc.requires_approval = request.POST.get('requires_approval') == 'on'
+            svc.is_active = request.POST.get('is_active') == 'on'
+            svc.save()
+            messages.success(request, f'"{svc.name}" updated.')
+        except Exception as e:
+            messages.error(request, f'Error updating service: {e}')
+        return redirect('owner_field_slots')
+
+    if request.method == 'POST' and action == 'service_delete':
+        svc = get_object_or_404(RentalService, pk=request.POST.get('service_id'))
+        active_slots = svc.slots.filter(status__in=['pending_approval', 'booked']).count()
+        if active_slots:
+            messages.error(request, f'Cannot delete: {active_slots} active slot(s) use this service.')
+        else:
+            svc.delete()
+            messages.success(request, 'Service deleted.')
+        return redirect('owner_field_slots')
+
+    if request.method == 'POST' and action == 'add':
+        try:
+            start_str = request.POST.get('start_time', '')
             end_str    = request.POST.get('end_time', '')
             start_t    = dt.strptime(start_str, '%H:%M').time()
             end_t      = dt.strptime(end_str,   '%H:%M').time()
@@ -1226,7 +1272,10 @@ def owner_field_slots(request):
         'booked_month':    FieldRentalSlot.objects.filter(
             status='booked', booked_at__month=today.month, booked_at__year=today.year).count(),
         'revenue_month':   revenue,
-        'services':        RentalService.objects.filter(is_active=True).order_by('service_type', 'name'),
+        'services':             RentalService.objects.filter(is_active=True).order_by('service_type', 'name'),
+        'all_services':         RentalService.objects.all().order_by('service_type', 'name'),
+        'service_type_choices': RentalService.SERVICE_TYPE_CHOICES,
+        'pricing_type_choices': RentalService.PRICING_TYPE_CHOICES,
     }
     return render(request, 'owner/field_slots.html', context)
 
@@ -1431,42 +1480,8 @@ def owner_field_slot_conflict_check(request):
 @login_required
 @user_passes_test(is_owner)
 def owner_services(request):
-    """List and manage the service catalog."""
-    from clients.models import RentalService
-
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'create':
-            try:
-                RentalService.objects.create(
-                    name=request.POST['name'],
-                    service_type=request.POST['service_type'],
-                    description=request.POST.get('description', ''),
-                    capacity=request.POST.get('capacity') or None,
-                    price=request.POST['price'],
-                    pricing_type=request.POST.get('pricing_type', 'flat'),
-                    requires_approval=request.POST.get('requires_approval') == 'on',
-                    is_active=True,
-                )
-                messages.success(request, 'Service added to catalog.')
-            except Exception as e:
-                messages.error(request, f'Error creating service: {e}')
-            return redirect('owner_services')
-
-    services = RentalService.objects.all().order_by('service_type', 'name')
-    service_type_choices = RentalService.SERVICE_TYPE_CHOICES
-    pricing_type_choices = RentalService.PRICING_TYPE_CHOICES
-
-    context = {
-        'services': services,
-        'service_type_choices': service_type_choices,
-        'pricing_type_choices': pricing_type_choices,
-        'active_counts': {
-            s.id: s.slots.filter(status__in=['available', 'pending_approval', 'booked']).count()
-            for s in services
-        },
-    }
-    return render(request, 'owner/services.html', context)
+    """Redirect to rentals page — service catalog is now embedded there."""
+    return redirect('owner_field_slots')
 
 
 @login_required
