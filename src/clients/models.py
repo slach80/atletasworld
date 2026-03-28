@@ -59,7 +59,18 @@ class Player(models.Model):
     team = models.ForeignKey('Team', on_delete=models.SET_NULL, null=True, blank=True, related_name='players')
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
+    GRADE_CHOICES = [
+        ('K', 'Kindergarten'),
+        ('1', '1st Grade'), ('2', '2nd Grade'), ('3', '3rd Grade'),
+        ('4', '4th Grade'), ('5', '5th Grade'), ('6', '6th Grade'),
+        ('7', '7th Grade'), ('8', '8th Grade'), ('9', '9th Grade (Freshman)'),
+        ('10', '10th Grade (Sophomore)'), ('11', '11th Grade (Junior)'),
+        ('12', '12th Grade (Senior)'), ('college', 'College'),
+        ('adult', 'Adult / Post-grad'),
+    ]
+
     birth_year = models.IntegerField()
+    school_grade = models.CharField(max_length=10, choices=GRADE_CHOICES, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     soccer_club = models.CharField(max_length=100, blank=True, help_text="Current soccer club")
     team_name = models.CharField(max_length=100, blank=True, help_text="Team name (e.g., U14 Boys)")

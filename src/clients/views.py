@@ -120,6 +120,7 @@ def player_add(request):
             team_name=request.POST.get('team_name', ''),
             skill_level=request.POST.get('skill_level', 'beginner'),
             primary_position=request.POST.get('primary_position', ''),
+            school_grade=request.POST.get('school_grade', ''),
             notes=request.POST.get('notes', ''),
         )
         if request.FILES.get('photo'):
@@ -132,6 +133,7 @@ def player_add(request):
         'skill_levels': Player.SKILL_LEVEL_CHOICES,
         'positions': Player.POSITION_CHOICES,
         'genders': Player.GENDER_CHOICES,
+        'grades': Player.GRADE_CHOICES,
     }
     return render(request, 'clients/player_form.html', context)
 
@@ -151,6 +153,7 @@ def player_edit(request, player_id):
         player.team_name = request.POST.get('team_name', '')
         player.skill_level = request.POST.get('skill_level', player.skill_level)
         player.primary_position = request.POST.get('primary_position', '')
+        player.school_grade = request.POST.get('school_grade', '')
         player.notes = request.POST.get('notes', '')
         if request.FILES.get('photo'):
             player.photo = request.FILES['photo']
@@ -164,6 +167,7 @@ def player_edit(request, player_id):
         'skill_levels': Player.SKILL_LEVEL_CHOICES,
         'positions': Player.POSITION_CHOICES,
         'genders': Player.GENDER_CHOICES,
+        'grades': Player.GRADE_CHOICES,
     }
     return render(request, 'clients/player_form.html', context)
 
