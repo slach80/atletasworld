@@ -195,7 +195,7 @@
             {% for event in events %}
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
                 <div class="flex items-start justify-between mb-4">
-                    <span class="bg-white text-accent px-3 py-1 rounded-full text-xs font-bold uppercase">{{ event.get_session_format_display }}</span>
+                    <div></div>
                     {% if event.start_date %}
                     <div class="text-right">
                         <div class="text-2xl font-bold">{{ event.start_date|date:"M j" }}</div>
