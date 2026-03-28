@@ -25,9 +25,10 @@ def home_view(request):
     events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('start_date', 'name')
     programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').order_by('name')
 
-    # Annotate formatted start times
+    # Annotate formatted start times and a single date range from linked packages
     for obj in list(events_qs) + list(programs_qs):
         obj.start_times_fmt = _fmt_times(obj.start_times)
+        obj.pkg_date = obj.linked_packages.filter(event_start_date__isnull=False).first()
 
     return render(request, 'home.html', {
         'packages': packages,

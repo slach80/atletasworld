@@ -208,7 +208,7 @@
                 <div class="space-y-1.5 text-sm mb-4">
                     <div class="flex items-center"><span class="mr-2">⏱️</span> {{ event.duration_minutes }} minutes per session</div>
                     {% if event.start_times_fmt %}<div class="flex items-center"><span class="mr-2">🕐</span> {{ event.start_times_fmt }}</div>{% endif %}
-                    {% for pkg in event.linked_packages.all %}{% if pkg.event_start_date %}<div class="flex items-center"><span class="mr-2">📅</span> {{ pkg.event_start_date|date:"M j" }}{% if pkg.event_start_time %} {{ pkg.event_start_time|time:"g:i A" }}{% endif %}{% if pkg.event_end_date %} – {{ pkg.event_end_date|date:"M j, Y" }}{% if pkg.event_end_time %} {{ pkg.event_end_time|time:"g:i A" }}{% endif %}{% endif %}</div>{% endif %}{% endfor %}
+                    {% if event.pkg_date %}<div class="flex items-center"><span class="mr-2">📅</span> {{ event.pkg_date.event_start_date|date:"M j" }}{% if event.pkg_date.event_start_time %} {{ event.pkg_date.event_start_time|time:"g:i A" }}{% endif %}{% if event.pkg_date.event_end_date %} – {{ event.pkg_date.event_end_date|date:"M j, Y" }}{% if event.pkg_date.event_end_time %} {{ event.pkg_date.event_end_time|time:"g:i A" }}{% endif %}{% endif %}</div>{% endif %}
                     {% if event.location %}<div class="flex items-center"><span class="mr-2">📍</span> {{ event.location }}</div>{% endif %}
                     {% if event.min_age or event.max_age %}<div class="flex items-center"><span class="mr-2">🎂</span> Ages {{ event.min_age|default:"any" }}–{{ event.max_age|default:"any" }}</div>{% endif %}
                     {% if event.end_date and event.end_date != event.start_date %}<div class="flex items-center"><span class="mr-2">📅</span> Ends {{ event.end_date|date:"M j, Y" }}</div>{% endif %}
@@ -332,12 +332,12 @@
                             🕐 {{ prog.start_times_fmt }}
                         </div>
                         {% endif %}
-                        {% for pkg in prog.linked_packages.all %}{% if pkg.event_start_date %}
+                        {% if prog.pkg_date %}
                         <div class="flex items-center text-gray-700">
                             <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
-                            📅 {{ pkg.event_start_date|date:"M j" }}{% if pkg.event_start_time %} {{ pkg.event_start_time|time:"g:i A" }}{% endif %}{% if pkg.event_end_date %} – {{ pkg.event_end_date|date:"M j, Y" }}{% if pkg.event_end_time %} {{ pkg.event_end_time|time:"g:i A" }}{% endif %}{% endif %}
+                            📅 {{ prog.pkg_date.event_start_date|date:"M j" }}{% if prog.pkg_date.event_start_time %} {{ prog.pkg_date.event_start_time|time:"g:i A" }}{% endif %}{% if prog.pkg_date.event_end_date %} – {{ prog.pkg_date.event_end_date|date:"M j, Y" }}{% if prog.pkg_date.event_end_time %} {{ prog.pkg_date.event_end_time|time:"g:i A" }}{% endif %}{% endif %}
                         </div>
-                        {% endif %}{% endfor %}
+                        {% endif %}
                         {% if prog.location %}
                         <div class="flex items-center text-gray-700">
                             <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
