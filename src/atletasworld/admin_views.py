@@ -954,12 +954,14 @@ def owner_session_types(request):
                     requires_package=request.POST.get('requires_package') == 'on',
                     show_as_event=request.POST.get('show_as_event') == 'on',
                     show_as_program=request.POST.get('show_as_program') == 'on',
+                    location=request.POST.get('location', ''),
+                    age_group=request.POST.get('age_group', ''),
+                    days_of_week=','.join(request.POST.getlist('days_of_week')),
                     # Clinic/Camp fields
                     start_date=request.POST.get('start_date') or None,
                     end_date=request.POST.get('end_date') or None,
                     min_age=request.POST.get('min_age') or None,
                     max_age=request.POST.get('max_age') or None,
-                    location=request.POST.get('location', ''),
                 )
                 messages.success(request, 'Session type created!')
             except Exception as e:
@@ -977,9 +979,12 @@ def owner_session_types(request):
 
         return redirect('owner_session_types')
 
+    from clients.models import Package
     context = {
         'session_types': session_types,
         'format_choices': SessionType.SESSION_FORMAT_CHOICES,
+        'days_of_week_choices': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        'packages': Package.objects.filter(is_active=True).order_by('name'),
     }
     return render(request, 'owner/session_types.html', context)
 
@@ -1005,12 +1010,14 @@ def owner_session_type_edit(request, pk):
             session_type.requires_package = request.POST.get('requires_package') == 'on'
             session_type.show_as_event = request.POST.get('show_as_event') == 'on'
             session_type.show_as_program = request.POST.get('show_as_program') == 'on'
+            session_type.location = request.POST.get('location', '')
+            session_type.age_group = request.POST.get('age_group', '')
+            session_type.days_of_week = ','.join(request.POST.getlist('days_of_week'))
             # Clinic/Camp fields
             session_type.start_date = request.POST.get('start_date') or None
             session_type.end_date = request.POST.get('end_date') or None
             session_type.min_age = request.POST.get('min_age') or None
             session_type.max_age = request.POST.get('max_age') or None
-            session_type.location = request.POST.get('location', '')
             session_type.save()
             messages.success(request, f'Session type "{session_type.name}" updated!')
             return redirect('owner_session_types')
