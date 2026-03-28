@@ -16,7 +16,7 @@ def _fmt_times(start_times_str):
             results.append(f"{h12}:{m:02d} {period}")
         except Exception:
             results.append(t)
-    return ' · '.join(results)
+    return ', '.join(results)
 
 
 def home_view(request):
