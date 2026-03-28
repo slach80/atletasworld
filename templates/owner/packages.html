@@ -32,15 +32,14 @@
                 <td class="py-4 px-6">
                     <div class="font-semibold text-gray-800">{{ package.name }}</div>
                     {% if package.description %}<div class="text-sm text-gray-500 truncate max-w-xs">{{ package.description|truncatechars:50 }}</div>{% endif %}
-                    {% if package.is_special and package.event_start_date %}
+                    {% if package.event_start_date %}
                     <div class="text-xs text-purple-600 mt-1">
-                        {{ package.event_start_date|date:"M j" }} - {{ package.event_end_date|date:"M j, Y" }}
-                        {% if package.event_location %}| {{ package.event_location }}{% endif %}
+                        📅 {{ package.event_start_date|date:"M j, Y" }}{% if package.event_start_time %} {{ package.event_start_time|time:"g:i A" }}{% endif %}
+                        {% if package.event_end_date %} – {{ package.event_end_date|date:"M j, Y" }}{% if package.event_end_time %} {{ package.event_end_time|time:"g:i A" }}{% endif %}{% endif %}
+                        {% if package.event_location %}<br>📍 {{ package.event_location }}{% endif %}
                     </div>
                     {% endif %}
-                    {% if package.age_group %}
-                    <div class="text-xs text-gray-400">Ages: {{ package.age_group }}</div>
-                    {% endif %}
+                    {% if package.age_group %}<div class="text-xs text-gray-400 mt-0.5">Ages: {{ package.age_group }}</div>{% endif %}
                 </td>
                 <td class="py-4 px-6 font-semibold">${{ package.price }}</td>
                 <td class="py-4 px-6">{% if package.sessions_included > 0 %}{{ package.sessions_included }}{% else %}Unlimited{% endif %}</td>
