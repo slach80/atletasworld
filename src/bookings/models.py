@@ -28,6 +28,10 @@ class SessionType(models.Model):
     color = models.CharField(max_length=7, default='#2ecc71', help_text="Hex color for calendar display")
     is_active = models.BooleanField(default=True)
     requires_package = models.BooleanField(default=False, help_text="Requires active package to book")
+    linked_packages = models.ManyToManyField(
+        'clients.Package', blank=True, related_name='session_types',
+        help_text="Packages that include access to this seasonal session"
+    )
     show_as_event = models.BooleanField(default=False, help_text="Show in Upcoming Events on homepage")
     show_as_program = models.BooleanField(default=False, help_text="Show in Training Programs on homepage")
 

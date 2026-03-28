@@ -963,6 +963,10 @@ def owner_session_types(request):
                     min_age=request.POST.get('min_age') or None,
                     max_age=request.POST.get('max_age') or None,
                 )
+                pkg_ids = request.POST.getlist('linked_packages')
+                if pkg_ids:
+                    from clients.models import Package as Pkg
+                    st.linked_packages.set(Pkg.objects.filter(pk__in=pkg_ids))
                 messages.success(request, 'Session type created!')
             except Exception as e:
                 messages.error(request, f'Error: {str(e)}')
@@ -1019,14 +1023,21 @@ def owner_session_type_edit(request, pk):
             session_type.min_age = request.POST.get('min_age') or None
             session_type.max_age = request.POST.get('max_age') or None
             session_type.save()
+            pkg_ids = request.POST.getlist('linked_packages')
+            from clients.models import Package as Pkg
+            session_type.linked_packages.set(Pkg.objects.filter(pk__in=pkg_ids))
             messages.success(request, f'Session type "{session_type.name}" updated!')
             return redirect('owner_session_types')
         except Exception as e:
             messages.error(request, f'Error: {str(e)}')
 
+    from clients.models import Package as Pkg
     context = {
         'session_type': session_type,
         'format_choices': SessionType.SESSION_FORMAT_CHOICES,
+        'packages': Pkg.objects.filter(is_active=True).order_by('name'),
+        'linked_package_ids': list(session_type.linked_packages.values_list('pk', flat=True)),
+        'days_of_week_choices': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     }
     return render(request, 'owner/session_type_form.html', context)
 

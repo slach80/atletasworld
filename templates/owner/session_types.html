@@ -188,6 +188,11 @@
                                 {% if st.days_of_week %}<span>📅 {{ st.days_of_week }}</span>{% endif %}
                             </div>
                             {% endif %}
+                            {% if st.session_format == 'seasonal' and st.linked_packages.exists %}
+                            <div class="text-xs text-blue-600 mt-1">
+                                📦 {{ st.linked_packages.all|join:", " }}
+                            </div>
+                            {% endif %}
                             {% if st.session_format == 'clinic' or st.session_format == 'camp' %}
                             <div class="text-xs text-purple-600 mt-1">
                                 {% if st.start_date %}{{ st.start_date|date:"M j" }} – {{ st.end_date|date:"M j, Y" }}{% endif %}
