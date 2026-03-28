@@ -33,69 +33,46 @@
                     </a>
 
                     <!-- People dropdown -->
-                    {% with people_active='client' in request.resolver_match.url_name or 'player' in request.resolver_match.url_name or 'team' in request.resolver_match.url_name %}
                     <div class="relative group">
-                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if people_active %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if 'client' in request.resolver_match.url_name or 'player' in request.resolver_match.url_name or 'team' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                             People
                             <svg class="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div class="absolute left-0 top-full mt-1 w-44 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                            <a href="{% url 'owner_clients' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'client' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">
-                                👥 Clients
-                            </a>
-                            <a href="{% url 'owner_players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'player' in request.resolver_match.url_name %}text-owner{% endif %}">
-                                ⚽ Players
-                            </a>
-                            <a href="{% url 'owner_teams' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'team' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">
-                                🏆 Teams
-                            </a>
+                            <a href="{% url 'owner_clients' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'client' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">👥 Clients</a>
+                            <a href="{% url 'owner_players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'player' in request.resolver_match.url_name %}text-owner{% endif %}">⚽ Players</a>
+                            <a href="{% url 'owner_teams' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'team' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">🏆 Teams</a>
                         </div>
                     </div>
-                    {% endwith %}
 
                     <!-- Operations dropdown -->
-                    {% with ops_active='coach' in request.resolver_match.url_name or 'booking' in request.resolver_match.url_name or 'session_type' in request.resolver_match.url_name %}
                     <div class="relative group">
-                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if ops_active %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if 'coach' in request.resolver_match.url_name or 'booking' in request.resolver_match.url_name or 'session_type' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                             Operations
                             <svg class="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div class="absolute left-0 top-full mt-1 w-44 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                            <a href="{% url 'owner_coaches' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'coach' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">
-                                🏋️ Coaches
-                            </a>
-                            <a href="{% url 'owner_bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'booking' in request.resolver_match.url_name %}text-owner{% endif %}">
-                                📅 Bookings
-                            </a>
-                            <a href="{% url 'owner_session_types' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'session_type' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">
-                                📋 Sessions
-                            </a>
+                            <a href="{% url 'owner_coaches' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'coach' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">🏋️ Coaches</a>
+                            <a href="{% url 'owner_bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'booking' in request.resolver_match.url_name %}text-owner{% endif %}">📅 Bookings</a>
+                            <a href="{% url 'owner_session_types' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'session_type' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">📋 Sessions</a>
                         </div>
                     </div>
-                    {% endwith %}
 
                     <!-- Catalog dropdown -->
-                    {% with cat_active='package' in request.resolver_match.url_name or 'service' in request.resolver_match.url_name or 'field' in request.resolver_match.url_name %}
                     <div class="relative group">
-                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if cat_active %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if 'package' in request.resolver_match.url_name or 'service' in request.resolver_match.url_name or 'field' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                             Catalog
-                            {% with pending=pending_field_count %}{% if pending > 0 %}<span class="bg-accent text-white text-xs px-1.5 py-0.5 rounded-full leading-none">{{ pending }}</span>{% endif %}{% endwith %}
+                            {% if pending_field_count > 0 %}<span class="bg-accent text-white text-xs px-1.5 py-0.5 rounded-full leading-none">{{ pending_field_count }}</span>{% endif %}
                             <svg class="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div class="absolute left-0 top-full mt-1 w-44 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                            <a href="{% url 'owner_packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'package' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">
-                                📦 Packages
-                            </a>
-                            <a href="{% url 'owner_services' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'service' in request.resolver_match.url_name %}text-owner{% endif %}">
-                                🏟️ Services
-                            </a>
+                            <a href="{% url 'owner_packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'package' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">📦 Packages</a>
+                            <a href="{% url 'owner_services' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'service' in request.resolver_match.url_name %}text-owner{% endif %}">🏟️ Services</a>
                             <a href="{% url 'owner_field_slots' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'field' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">
-                                🔑 Rentals
-                                {% with pending=pending_field_count %}{% if pending > 0 %}<span class="ml-auto bg-accent text-white text-xs px-1.5 py-0.5 rounded-full">{{ pending }}</span>{% endif %}{% endwith %}
+                                🔑 Rentals{% if pending_field_count > 0 %}<span class="ml-auto bg-accent text-white text-xs px-1.5 py-0.5 rounded-full">{{ pending_field_count }}</span>{% endif %}
                             </a>
                         </div>
                     </div>
-                    {% endwith %}
 
                     <!-- Finances -->
                     <a href="{% url 'owner_finances' %}"
