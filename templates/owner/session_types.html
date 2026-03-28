@@ -74,6 +74,17 @@
                 </div>
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Start Times</label>
+                <div id="start-times-list" class="space-y-2 mb-2">
+                    <div class="flex items-center gap-2">
+                        <input type="time" name="start_times" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner">
+                        <button type="button" onclick="addStartTime()" class="text-xs px-2 py-1 bg-owner text-white rounded hover:bg-indigo-600">+ Add</button>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400">Add multiple start times for this session</p>
+            </div>
+
             <!-- Seasonal hint + package selector -->
             <div id="seasonal_hint" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm space-y-3">
                 <p class="text-blue-700">💡 Seasonal sessions are pre-paid via package. Price can be $0.</p>
@@ -181,6 +192,11 @@
                                 {% if st.show_as_event %}<span class="text-xs bg-red-50 text-accent px-1.5 py-0.5 rounded">🔥 Event</span>{% endif %}
                                 {% if st.show_as_program %}<span class="text-xs bg-green-50 text-secondary px-1.5 py-0.5 rounded">📋 Program</span>{% endif %}
                             </div>
+                            {% if st.start_times %}
+                            <div class="text-xs text-gray-500 mt-1">
+                                🕐 {{ st.start_times }}
+                            </div>
+                            {% endif %}
                             {% if st.location or st.age_group or st.days_of_week %}
                             <div class="text-xs text-gray-500 mt-1 space-x-3">
                                 {% if st.location %}<span>📍 {{ st.location }}</span>{% endif %}
@@ -230,6 +246,15 @@
 </div>
 
 <script>
+function addStartTime() {
+    const list = document.getElementById('start-times-list');
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2';
+    row.innerHTML = '<input type="time" name="start_times" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner">'
+                  + '<button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>';
+    list.appendChild(row);
+}
+
 function toggleClinicFields() {
     const format = document.getElementById('session_format').value;
     const clinicFields = document.getElementById('clinic_fields');

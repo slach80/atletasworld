@@ -954,6 +954,7 @@ def owner_session_types(request):
                     requires_package=request.POST.get('requires_package') == 'on',
                     show_as_event=request.POST.get('show_as_event') == 'on',
                     show_as_program=request.POST.get('show_as_program') == 'on',
+                    start_times=' '.join(t for t in request.POST.getlist('start_times') if t),
                     location=request.POST.get('location', ''),
                     age_group=request.POST.get('age_group', ''),
                     days_of_week=','.join(request.POST.getlist('days_of_week')),
@@ -1014,6 +1015,7 @@ def owner_session_type_edit(request, pk):
             session_type.requires_package = request.POST.get('requires_package') == 'on'
             session_type.show_as_event = request.POST.get('show_as_event') == 'on'
             session_type.show_as_program = request.POST.get('show_as_program') == 'on'
+            session_type.start_times = ' '.join(t for t in request.POST.getlist('start_times') if t)
             session_type.location = request.POST.get('location', '')
             session_type.age_group = request.POST.get('age_group', '')
             session_type.days_of_week = ','.join(request.POST.getlist('days_of_week'))

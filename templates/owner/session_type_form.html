@@ -87,6 +87,27 @@
                 </div>
             </div>
 
+            <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Start Times</label>
+                <div id="start-times-list" class="space-y-2 mb-2">
+                    {% if session_type.start_times %}
+                        {% for t in session_type.start_times.split %}
+                        <div class="flex items-center gap-2">
+                            <input type="time" name="start_times" value="{{ t|slice:':5' }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner focus:border-owner">
+                            <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="flex items-center gap-2">
+                        <input type="time" name="start_times" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner focus:border-owner">
+                        <button type="button" onclick="addStartTime()" class="text-xs px-2 py-1 bg-owner text-white rounded hover:bg-indigo-600">+ Add</button>
+                    </div>
+                    {% endif %}
+                </div>
+                <button type="button" onclick="addStartTime()" class="text-xs px-2 py-1 bg-owner text-white rounded hover:bg-indigo-600">+ Add Time</button>
+                <p class="text-xs text-gray-400 mt-1">Add multiple start times for this session</p>
+            </div>
+
             <!-- Seasonal: linked packages -->
             <div id="seasonal_hint" class="col-span-2 {% if session_type.session_format != 'seasonal' %}hidden{% endif %} p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
                 <p class="text-sm text-blue-700">💡 Seasonal sessions are pre-paid via package. Price can be $0.</p>
