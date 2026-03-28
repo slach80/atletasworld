@@ -442,7 +442,9 @@ def owner_package_add(request):
                 max_participants=request.POST.get('max_participants', 0),
                 age_group=request.POST.get('age_group', ''),
                 event_start_date=request.POST.get('event_start_date') or None,
+                event_start_time=request.POST.get('event_start_time') or None,
                 event_end_date=request.POST.get('event_end_date') or None,
+                event_end_time=request.POST.get('event_end_time') or None,
                 event_location=request.POST.get('event_location', ''),
             )
             messages.success(request, f'Package "{package.name}" created successfully!')
@@ -478,7 +480,9 @@ def owner_package_edit(request, pk):
             package.max_participants = request.POST.get('max_participants', 0)
             package.age_group = request.POST.get('age_group', '')
             package.event_start_date = request.POST.get('event_start_date') or None
+            package.event_start_time = request.POST.get('event_start_time') or None
             package.event_end_date = request.POST.get('event_end_date') or None
+            package.event_end_time = request.POST.get('event_end_time') or None
             package.event_location = request.POST.get('event_location', '')
             package.save()
             messages.success(request, f'Package "{package.name}" updated successfully!')

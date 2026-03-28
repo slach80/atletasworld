@@ -18,7 +18,6 @@
         <thead class="bg-gray-50 border-b">
             <tr>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Package</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Type</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Price</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Sessions</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Validity</th>
@@ -42,11 +41,6 @@
                     {% if package.age_group %}
                     <div class="text-xs text-gray-400">Ages: {{ package.age_group }}</div>
                     {% endif %}
-                </td>
-                <td class="py-4 px-6">
-                    <span class="px-2 py-1 text-xs rounded-full {% if package.is_special %}bg-purple-100 text-purple-700{% else %}bg-blue-100 text-blue-700{% endif %}">
-                        {{ package.get_package_type_display }}
-                    </span>
                 </td>
                 <td class="py-4 px-6 font-semibold">${{ package.price }}</td>
                 <td class="py-4 px-6">{% if package.sessions_included > 0 %}{{ package.sessions_included }}{% else %}Unlimited{% endif %}</td>
@@ -76,7 +70,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="py-8 text-center text-gray-500">No packages found. Create your first package!</td>
+                <td colspan="7" class="py-8 text-center text-gray-500">No packages found. Create your first package!</td>
             </tr>
             {% endfor %}
         </tbody>

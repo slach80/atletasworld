@@ -129,7 +129,9 @@ class Package(models.Model):
     # Special package fields
     is_special = models.BooleanField(default=False, help_text="Mark as special event package")
     event_start_date = models.DateField(null=True, blank=True, help_text="Start date for special event")
+    event_start_time = models.TimeField(null=True, blank=True, help_text="Start time for special event")
     event_end_date = models.DateField(null=True, blank=True, help_text="End date for special event")
+    event_end_time = models.TimeField(null=True, blank=True, help_text="End time for special event")
     event_location = models.CharField(max_length=200, blank=True, help_text="Location for special event")
     max_participants = models.IntegerField(default=0, help_text="Max participants, 0 for unlimited")
     age_group = models.CharField(max_length=50, blank=True, help_text="Target age group (e.g., U13, U15)")
