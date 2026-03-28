@@ -58,22 +58,19 @@
 
                     <!-- Catalog dropdown -->
                     <div class="relative group">
-                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if 'session_type' in request.resolver_match.url_name or 'package' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if 'session_type' in request.resolver_match.url_name or 'package' in request.resolver_match.url_name or 'field' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                             Catalog
+                            {% if pending_field_count > 0 %}<span class="bg-accent text-white text-xs px-1.5 py-0.5 rounded-full leading-none">{{ pending_field_count }}</span>{% endif %}
                             <svg class="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div class="absolute left-0 top-full mt-1 w-44 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                             <a href="{% url 'owner_session_types' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'session_type' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">📋 Sessions</a>
-                            <a href="{% url 'owner_packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'package' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">📦 Packages</a>
+                            <a href="{% url 'owner_packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'package' in request.resolver_match.url_name %}text-owner{% endif %}">📦 Packages</a>
+                            <a href="{% url 'owner_field_slots' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'field' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">
+                                🏟️ Services{% if pending_field_count > 0 %}<span class="ml-auto bg-accent text-white text-xs px-1.5 py-0.5 rounded-full">{{ pending_field_count }}</span>{% endif %}
+                            </a>
                         </div>
                     </div>
-
-                    <!-- Rentals (flat — badge needs to be visible) -->
-                    <a href="{% url 'owner_field_slots' %}"
-                       class="flex items-center gap-1 px-3 py-2 rounded {% if 'field' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
-                        Rentals
-                        {% if pending_field_count > 0 %}<span class="bg-accent text-white text-xs px-1.5 py-0.5 rounded-full leading-none">{{ pending_field_count }}</span>{% endif %}
-                    </a>
 
                     <!-- Finances -->
                     <a href="{% url 'owner_finances' %}"
@@ -118,7 +115,7 @@
                 <p class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wider">Catalog</p>
                 <a href="{% url 'owner_session_types' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📋 Sessions</a>
                 <a href="{% url 'owner_packages' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📦 Packages</a>
-                <a href="{% url 'owner_field_slots' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🔑 Rentals</a>
+                <a href="{% url 'owner_field_slots' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🏟️ Services</a>
                 <div class="border-t border-gray-700 mt-2 pt-2">
                     <a href="{% url 'owner_finances' %}" class="block px-3 py-2 rounded hover:bg-white/10">Finances</a>
                     <a href="{% url 'owner_notifications' %}" class="block px-3 py-2 rounded hover:bg-white/10">Notify</a>

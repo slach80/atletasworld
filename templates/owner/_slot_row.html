@@ -1,0 +1,63 @@
+<tr class="hover:bg-gray-50">
+    <td class="py-3 px-6">
+        <div class="font-medium text-gray-800 text-sm">{{ slot.date|date:"M j, Y" }}</div>
+        {% if slot.title %}<div class="text-xs text-gray-500">{{ slot.title }}</div>{% endif %}
+    </td>
+    <td class="py-3 px-6 text-sm text-gray-600">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}</td>
+    <td class="py-3 px-6 font-semibold text-gray-800 text-sm">${{ slot.price }}</td>
+    <td class="py-3 px-6">
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium
+            {% if slot.status == 'available' %}bg-green-100 text-green-700
+            {% elif slot.status == 'pending_approval' %}bg-yellow-100 text-yellow-700
+            {% elif slot.status == 'booked' %}bg-blue-100 text-blue-700
+            {% else %}bg-gray-100 text-gray-500{% endif %}">
+            {{ slot.get_status_display }}
+        </span>
+    </td>
+    <td class="py-3 px-6 text-sm text-gray-600">
+        {% if slot.status != 'available' and slot.status != 'cancelled' %}
+            {{ slot.requester_name }}{% if slot.booker_type == 'team' %} <span class="text-xs text-blue-600">Team</span>{% endif %}
+        {% else %}—{% endif %}
+    </td>
+    <td class="py-3 px-6">
+        <div class="flex gap-1">
+            {% if slot.status == 'available' %}
+            <button onclick="toggleEdit('edit-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition">Edit</button>
+            {% endif %}
+            {% if slot.status == 'booked' %}
+            <button onclick="toggleCancel('cancel-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition">Cancel</button>
+            {% endif %}
+        </div>
+        {% if slot.status == 'available' %}
+        <div id="edit-{{ slot.pk }}" class="hidden mt-2">
+            <form method="post" action="{% url 'owner_field_slot_edit' slot.pk %}" class="space-y-1">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-1">
+                    <input type="date" name="date" value="{{ slot.date|date:'Y-m-d' }}" required class="border rounded px-2 py-1 text-xs col-span-2">
+                    <input type="time" name="start_time" value="{{ slot.start_time|time:'H:i' }}" required class="border rounded px-2 py-1 text-xs">
+                    <input type="time" name="end_time" value="{{ slot.end_time|time:'H:i' }}" required class="border rounded px-2 py-1 text-xs">
+                    <input type="number" name="price" value="{{ slot.price }}" step="0.01" required class="border rounded px-2 py-1 text-xs">
+                    <input type="text" name="title" value="{{ slot.title }}" placeholder="Title" class="border rounded px-2 py-1 text-xs">
+                </div>
+                <textarea name="notes" rows="1" placeholder="Notes" class="w-full border rounded px-2 py-1 text-xs">{{ slot.notes }}</textarea>
+                <div class="flex gap-1">
+                    <button type="submit" class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-green-600">Save</button>
+                    <button type="button" onclick="toggleEdit('edit-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Cancel</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        {% if slot.status == 'booked' %}
+        <div id="cancel-{{ slot.pk }}" class="hidden mt-2">
+            <form method="post" action="{% url 'owner_field_slot_cancel' slot.pk %}" class="space-y-1">
+                {% csrf_token %}
+                <textarea name="cancellation_notes" rows="2" placeholder="Cancellation reason (sent to client)" class="w-full border rounded px-2 py-1 text-xs"></textarea>
+                <div class="flex gap-1">
+                    <button type="submit" class="text-xs px-2 py-1 bg-accent text-white rounded hover:bg-red-600">Confirm Cancel</button>
+                    <button type="button" onclick="toggleCancel('cancel-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Back</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </td>
+</tr>

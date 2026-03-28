@@ -1261,6 +1261,27 @@ def owner_field_slots(request):
         status='booked', date__month=today.month, date__year=today.year, payment_status='paid'
     ).aggregate(total=Sum('amount_paid'))['total'] or 0
 
+    from django.db.models import Prefetch
+    status_filter_q = slots  # already filtered above
+
+    # Services with their slots prefetched (filtered by status if set)
+    slot_qs = FieldRentalSlot.objects.select_related(
+        'booked_by_client__user', 'booked_by_team'
+    ).order_by('date', 'start_time')
+    if status_filter != 'all':
+        slot_qs = slot_qs.filter(status=status_filter)
+
+    services_with_slots = RentalService.objects.prefetch_related(
+        Prefetch('slots', queryset=slot_qs, to_attr='filtered_slots')
+    ).order_by('service_type', 'name')
+
+    # Slots not linked to any service
+    unlinked_slots = FieldRentalSlot.objects.filter(
+        service__isnull=True
+    ).select_related('booked_by_client__user', 'booked_by_team').order_by('date', 'start_time')
+    if status_filter != 'all':
+        unlinked_slots = unlinked_slots.filter(status=status_filter)
+
     context = {
         'slots': slots,
         'pending_slots': pending_slots,
@@ -1274,6 +1295,8 @@ def owner_field_slots(request):
         'revenue_month':   revenue,
         'services':             RentalService.objects.filter(is_active=True).order_by('service_type', 'name'),
         'all_services':         RentalService.objects.all().order_by('service_type', 'name'),
+        'services_with_slots':  services_with_slots,
+        'unlinked_slots':       unlinked_slots,
         'service_type_choices': RentalService.SERVICE_TYPE_CHOICES,
         'pricing_type_choices': RentalService.PRICING_TYPE_CHOICES,
     }
