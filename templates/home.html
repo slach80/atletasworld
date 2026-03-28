@@ -510,35 +510,31 @@
             </div>
         </div>
 
-        <!-- Training Packages -->
+        <!-- Training Packages (live from database) -->
         <div id="packages" class="mt-16 scroll-mt-24">
             <h3 class="text-3xl font-bold text-gray-900 text-center mb-8">Training Packages</h3>
-            <div class="grid md:grid-cols-4 gap-6">
-                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-secondary">
-                    <h4 class="text-xl font-bold text-gray-900 mb-2">Basic 4</h4>
-                    <p class="text-3xl font-bold text-primary mb-2">$160</p>
-                    <p class="text-gray-600 text-sm mb-4">4 classes within 4 weeks</p>
-                    <a href="/book?package=basic4" class="block text-center bg-secondary text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition">Select</a>
+            {% if packages %}
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for pkg in packages %}
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 {% cycle 'border-secondary' 'border-accent' 'border-primary' 'border-secondary' %}">
+                    <h4 class="text-xl font-bold text-gray-900 mb-1">{{ pkg.name }}</h4>
+                    <p class="text-3xl font-bold text-primary mb-2">${{ pkg.price }}</p>
+                    <p class="text-gray-600 text-sm mb-1">
+                        {% if pkg.sessions_included == 0 %}Unlimited sessions{% else %}{{ pkg.sessions_included }} session{{ pkg.sessions_included|pluralize }}{% endif %}
+                        · {{ pkg.validity_weeks }} week{{ pkg.validity_weeks|pluralize }}
+                    </p>
+                    {% if pkg.description %}
+                    <p class="text-gray-500 text-xs mb-4 italic">{{ pkg.description|truncatechars:70 }}</p>
+                    {% else %}
+                    <div class="mb-4"></div>
+                    {% endif %}
+                    <a href="/book" class="block text-center {% cycle 'bg-secondary hover:bg-green-600' 'bg-accent hover:bg-red-600' 'bg-primary hover:bg-gray-800' 'bg-secondary hover:bg-green-600' %} text-white py-2 rounded-lg font-semibold transition">Book Now</a>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-accent">
-                    <h4 class="text-xl font-bold text-gray-900 mb-2">Basic 8</h4>
-                    <p class="text-3xl font-bold text-primary mb-2">$280</p>
-                    <p class="text-gray-600 text-sm mb-4">8 classes within 4 weeks</p>
-                    <a href="/book?package=basic8" class="block text-center bg-accent text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition">Select</a>
-                </div>
-                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-primary">
-                    <h4 class="text-xl font-bold text-gray-900 mb-2">Elite 24</h4>
-                    <p class="text-3xl font-bold text-primary mb-2">$600</p>
-                    <p class="text-gray-600 text-sm mb-4">24 classes within 12 weeks</p>
-                    <a href="/book?package=elite24" class="block text-center bg-primary text-white py-2 rounded-lg font-semibold hover:bg-gray-800 transition">Select</a>
-                </div>
-                <div class="bg-gradient-to-br from-secondary to-accent rounded-xl shadow-lg p-6 text-white">
-                    <h4 class="text-xl font-bold mb-2">Unlimited</h4>
-                    <p class="text-3xl font-bold mb-2">$1,000</p>
-                    <p class="text-white/80 text-sm mb-4">Unlimited classes for 12 weeks</p>
-                    <a href="/book?package=unlimited" class="block text-center bg-white text-primary py-2 rounded-lg font-semibold hover:bg-gray-100 transition">Select</a>
-                </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <p class="text-center text-gray-500">Packages coming soon. <a href="/contact" class="text-secondary hover:underline">Contact us</a> for pricing.</p>
+            {% endif %}
         </div>
     </section>
 

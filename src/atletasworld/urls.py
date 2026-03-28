@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from coaches.views import coach_public_profile
+from .views import home_view
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
@@ -138,7 +139,7 @@ urlpatterns = [
     path('preview-gymlife/', gymlife_preview, name='gymlife_preview'),
 
     # Public pages
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    path('', home_view, name='home'),
     path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
     path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
     path('book/', book_redirect_view, name='book'),  # Redirects to portal booking
