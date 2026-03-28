@@ -277,3 +277,8 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 SITE_URL = env('SITE_URL', default='http://localhost:8000')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@atletasperformancecenter.com')
 SERVER_EMAIL = env('SERVER_EMAIL', default='noreply@atletasperformancecenter.com')
+
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=['https://atletasperformancecenter.com', 'https://www.atletasperformancecenter.com']
+)
