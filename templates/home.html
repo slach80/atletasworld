@@ -50,7 +50,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <div class="flex items-center space-x-6">
             <span>📧 info@atletasperformancecenter.com</span>
-            <span>📱 (555) 123-4567</span>
         </div>
         <div class="hidden md:flex items-center space-x-4">
             {% if user.is_authenticated %}
@@ -97,7 +96,6 @@
                 <a href="#coaches" class="text-gray-700 hover:text-secondary font-medium transition">Coaches</a>
                 <a href="#about" class="text-gray-700 hover:text-secondary font-medium transition">About</a>
                 <a href="#fundraising" class="text-gray-700 hover:text-secondary font-medium transition">Fundraising</a>
-                <a href="/admin" class="text-gray-700 hover:text-secondary font-medium transition">Admin</a>
                 <a href="/book" class="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-lg">
                     Book Now
                 </a>
@@ -151,9 +149,6 @@
 <section class="hero-gradient text-white py-32 md:py-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <div class="inline-block bg-accent/90 text-white px-6 py-2 rounded-full text-sm font-semibold mb-6 feature-badge">
-                🚀 NEW PLATFORM - Advanced Analytics & Client Management
-            </div>
             <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
                 Welcome to Atletas Performance Center
             </h1>
@@ -164,8 +159,8 @@
                 <a href="#programs" class="bg-accent text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
                     Explore Programs
                 </a>
-                <a href="/admin" class="bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">
-                    View Admin Dashboard
+                <a href="/accounts/login/" class="bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">
+                    Client Login →
                 </a>
             </div>
             
@@ -674,10 +669,10 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Complete Platform Experience</h2>
-                <p class="text-xl text-gray-600">Separate portals for coaches, clients, and administrators</p>
+                <p class="text-xl text-gray-600">Dedicated portals for coaches and clients</p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8 mb-12">
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
                 <!-- Coach Features -->
                 <div class="bg-gradient-to-br from-primary to-gray-800 rounded-2xl p-8 text-white">
                     <div class="text-4xl mb-4">🏋️</div>
@@ -712,23 +707,6 @@
                     </a>
                 </div>
 
-                <!-- Admin Portal -->
-                <div class="bg-gradient-to-br from-accent to-red-600 rounded-2xl p-8 text-white">
-                    <div class="text-4xl mb-4">📊</div>
-                    <h3 class="text-2xl font-bold mb-4">Admin Dashboard</h3>
-                    <ul class="space-y-3 text-gray-100 mb-6">
-                        <li class="flex items-center"><span class="mr-2">✓</span> Full business analytics</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Manage all users & coaches</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Payment & revenue tracking</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Program management</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Booking oversight</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Create coach accounts</li>
-                    </ul>
-                    <a href="/admin" class="block text-center bg-white text-accent py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-                        Explore Admin →
-                    </a>
-                    <p class="text-xs text-gray-200 mt-2 text-center">Full access for owners</p>
-                </div>
             </div>
 
             <!-- Key Features Grid -->
@@ -751,7 +729,7 @@
                 <div class="bg-gray-50 rounded-xl p-6 text-center">
                     <div class="text-3xl mb-3">🔐</div>
                     <h4 class="font-bold text-gray-900 mb-2">Role-Based Access</h4>
-                    <p class="text-sm text-gray-600">Secure user groups: Coaches, Clients, and Admins with appropriate permissions.</p>
+                    <p class="text-sm text-gray-600">Secure role-based access for Coaches and Clients with appropriate permissions.</p>
                 </div>
             </div>
         </div>
@@ -780,7 +758,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-8">
                 <div>
-                    <h3 class="text-2xl font-bold mb-4">⚽ ATLETAS WORLD</h3>
+                    <h3 class="text-2xl font-bold mb-4">⚽ APC</h3>
                     <p class="text-gray-400">Empowering athletes through tailored training programs and holistic development.</p>
                 </div>
                 <div>
@@ -791,7 +769,6 @@
                         <li><a href="#about" class="hover:text-secondary transition">About</a></li>
                         <li><a href="#fundraising" class="hover:text-secondary transition">Fundraising</a></li>
                         <li><a href="/book" class="hover:text-secondary transition">Book Session</a></li>
-                        <li><a href="/admin" class="hover:text-secondary transition">Admin Login</a></li>
                     </ul>
                 </div>
                 <div>
