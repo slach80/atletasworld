@@ -37,10 +37,14 @@ def owner_dashboard(request):
         schedule_blocks__date=today
     ).distinct().count()
 
-    # Client/Player stats
-    total_clients = Client.objects.count()
+    # Client/Player stats — exclude owners, coaches, and staff from client counts
+    _client_qs = Client.objects.filter(
+        user__is_staff=False,
+        user__is_superuser=False,
+    ).exclude(user__groups__name__in=['Owner', 'Coach'])
+    total_clients = _client_qs.count()
     total_players = Player.objects.filter(is_active=True).count()
-    new_clients_this_month = Client.objects.filter(
+    new_clients_this_month = _client_qs.filter(
         user__date_joined__month=today.month,
         user__date_joined__year=today.year
     ).count()
