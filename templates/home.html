@@ -207,7 +207,8 @@
                 {% if event.description %}<p class="text-white/80 mb-3 text-sm">{{ event.description }}</p>{% endif %}
                 <div class="space-y-1.5 text-sm mb-4">
                     <div class="flex items-center"><span class="mr-2">⏱️</span> {{ event.duration_minutes }} minutes per session</div>
-                    {% if event.start_times %}<div class="flex items-center"><span class="mr-2">🕐</span> {{ event.start_times }}</div>{% endif %}
+                    {% if event.start_times_fmt %}<div class="flex items-center"><span class="mr-2">🕐</span> {{ event.start_times_fmt }}</div>{% endif %}
+                    {% for pkg in event.linked_packages.all %}{% if pkg.event_start_date %}<div class="flex items-center"><span class="mr-2">📅</span> {{ pkg.event_start_date|date:"M j" }}{% if pkg.event_start_time %} {{ pkg.event_start_time|time:"g:i A" }}{% endif %}{% if pkg.event_end_date %} – {{ pkg.event_end_date|date:"M j, Y" }}{% if pkg.event_end_time %} {{ pkg.event_end_time|time:"g:i A" }}{% endif %}{% endif %}</div>{% endif %}{% endfor %}
                     {% if event.location %}<div class="flex items-center"><span class="mr-2">📍</span> {{ event.location }}</div>{% endif %}
                     {% if event.min_age or event.max_age %}<div class="flex items-center"><span class="mr-2">🎂</span> Ages {{ event.min_age|default:"any" }}–{{ event.max_age|default:"any" }}</div>{% endif %}
                     {% if event.end_date and event.end_date != event.start_date %}<div class="flex items-center"><span class="mr-2">📅</span> Ends {{ event.end_date|date:"M j, Y" }}</div>{% endif %}
@@ -325,12 +326,18 @@
                             <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
                             {{ prog.duration_minutes }}-minute sessions
                         </div>
-                        {% if prog.start_times %}
+                        {% if prog.start_times_fmt %}
                         <div class="flex items-center text-gray-700">
                             <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
-                            🕐 {{ prog.start_times }}
+                            🕐 {{ prog.start_times_fmt }}
                         </div>
                         {% endif %}
+                        {% for pkg in prog.linked_packages.all %}{% if pkg.event_start_date %}
+                        <div class="flex items-center text-gray-700">
+                            <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            📅 {{ pkg.event_start_date|date:"M j" }}{% if pkg.event_start_time %} {{ pkg.event_start_time|time:"g:i A" }}{% endif %}{% if pkg.event_end_date %} – {{ pkg.event_end_date|date:"M j, Y" }}{% if pkg.event_end_time %} {{ pkg.event_end_time|time:"g:i A" }}{% endif %}{% endif %}
+                        </div>
+                        {% endif %}{% endfor %}
                         {% if prog.location %}
                         <div class="flex items-center text-gray-700">
                             <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
@@ -382,11 +389,17 @@
                         · {{ pkg.validity_weeks }} week{{ pkg.validity_weeks|pluralize }}
                     </p>
                     {% if pkg.description %}
-                    <p class="text-gray-500 text-xs mb-4 italic">{{ pkg.description|truncatechars:70 }}</p>
-                    {% else %}
-                    <div class="mb-4"></div>
+                    <p class="text-gray-500 text-xs italic">{{ pkg.description|truncatechars:70 }}</p>
                     {% endif %}
+                    {% if pkg.event_start_date %}
+                    <p class="text-gray-600 text-xs mt-1">
+                        📅 {{ pkg.event_start_date|date:"M j" }}{% if pkg.event_start_time %} {{ pkg.event_start_time|time:"g:i A" }}{% endif %}
+                        {% if pkg.event_end_date %} – {{ pkg.event_end_date|date:"M j, Y" }}{% if pkg.event_end_time %} {{ pkg.event_end_time|time:"g:i A" }}{% endif %}{% endif %}
+                    </p>
+                    {% endif %}
+                    <div class="mt-4">
                     <a href="/book" class="block text-center {% cycle 'bg-secondary hover:bg-green-600' 'bg-accent hover:bg-red-600' 'bg-primary hover:bg-gray-800' 'bg-secondary hover:bg-green-600' %} text-white py-2 rounded-lg font-semibold transition">Book Now</a>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
