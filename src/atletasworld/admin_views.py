@@ -1258,7 +1258,7 @@ def owner_field_slots(request):
 
     pending_slots = FieldRentalSlot.objects.filter(status='pending_approval').order_by('requested_at')
     revenue = FieldRentalSlot.objects.filter(
-        status='booked', booked_at__month=today.month, booked_at__year=today.year, payment_status='paid'
+        status='booked', date__month=today.month, date__year=today.year, payment_status='paid'
     ).aggregate(total=Sum('amount_paid'))['total'] or 0
 
     context = {
@@ -1270,7 +1270,7 @@ def owner_field_slots(request):
         'available_count': FieldRentalSlot.objects.filter(status='available', date__gte=today).count(),
         'pending_count':   FieldRentalSlot.objects.filter(status='pending_approval').count(),
         'booked_month':    FieldRentalSlot.objects.filter(
-            status='booked', booked_at__month=today.month, booked_at__year=today.year).count(),
+            status='booked', date__month=today.month, date__year=today.year).count(),
         'revenue_month':   revenue,
         'services':             RentalService.objects.filter(is_active=True).order_by('service_type', 'name'),
         'all_services':         RentalService.objects.all().order_by('service_type', 'name'),
