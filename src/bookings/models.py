@@ -12,7 +12,11 @@ class SessionType(models.Model):
         ('private', 'Private (1-on-1)'),
         ('semi_private', 'Semi-Private (2-3 players)'),
         ('group', 'Group Session'),
-        ('clinic', 'Clinic/Camp'),
+        ('team', 'Team Training'),
+        ('clinic', 'Clinic'),
+        ('camp', 'Camp'),
+        ('seasonal', 'Seasonal (Package Pre-paid)'),
+        ('pickup', 'Pick Up Game'),
     ]
 
     name = models.CharField(max_length=100)

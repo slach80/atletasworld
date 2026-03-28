@@ -50,9 +50,14 @@
                 <input type="color" name="color" value="#2ecc71" class="w-full h-10 border border-gray-300 rounded-lg cursor-pointer">
             </div>
 
+            <!-- Seasonal hint -->
+            <div id="seasonal_hint" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                💡 Seasonal sessions are pre-paid via package. Enable <strong>Requires Package</strong> below. Price can be $0.
+            </div>
+
             <!-- Clinic/Camp Fields -->
             <div id="clinic_fields" class="space-y-4 border-t pt-4 mt-4 hidden">
-                <h3 class="text-sm font-semibold text-purple-700">Clinic/Camp Settings</h3>
+                <h3 class="text-sm font-semibold text-purple-700">Clinic / Camp Settings</h3>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -88,6 +93,11 @@
             </div>
 
             <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" name="requires_package" id="requires_package" class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
+                <span class="text-sm text-gray-700">Requires active package to book</span>
+            </label>
+
+            <label class="flex items-center space-x-2 cursor-pointer">
                 <input type="checkbox" name="is_active" checked class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
                 <span class="text-sm text-gray-700">Active</span>
             </label>
@@ -109,15 +119,28 @@
                         <div class="w-4 h-4 rounded" style="background-color: {{ st.color }}"></div>
                         <div>
                             <div class="font-semibold text-gray-800">{{ st.name }}</div>
-                            <div class="text-sm text-gray-500">{{ st.get_session_format_display }} | {{ st.duration_minutes }} min | ${{ st.price }}</div>
-                            <div class="text-xs text-gray-400">
-                                Max {{ st.max_participants }} participant{{ st.max_participants|pluralize }} | {{ st.total_bookings }} bookings
+                            <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                <span class="px-2 py-0.5 text-xs rounded-full font-medium
+                                    {% if st.session_format == 'private' %}bg-blue-100 text-blue-700
+                                    {% elif st.session_format == 'semi_private' %}bg-cyan-100 text-cyan-700
+                                    {% elif st.session_format == 'group' %}bg-green-100 text-green-700
+                                    {% elif st.session_format == 'team' %}bg-indigo-100 text-indigo-700
+                                    {% elif st.session_format == 'clinic' %}bg-purple-100 text-purple-700
+                                    {% elif st.session_format == 'camp' %}bg-pink-100 text-pink-700
+                                    {% elif st.session_format == 'seasonal' %}bg-yellow-100 text-yellow-700
+                                    {% elif st.session_format == 'pickup' %}bg-orange-100 text-orange-700
+                                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {{ st.get_session_format_display }}
+                                </span>
+                                <span class="text-xs text-gray-500">{{ st.duration_minutes }} min · ${{ st.price }}</span>
+                                <span class="text-xs text-gray-400">Max {{ st.max_participants }} · {{ st.total_bookings }} bookings</span>
+                                {% if st.requires_package %}<span class="text-xs bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded">Package required</span>{% endif %}
                             </div>
-                            {% if st.session_format == 'clinic' %}
+                            {% if st.session_format == 'clinic' or st.session_format == 'camp' %}
                             <div class="text-xs text-purple-600 mt-1">
-                                {% if st.start_date %}{{ st.start_date|date:"M j" }} - {{ st.end_date|date:"M j, Y" }}{% endif %}
-                                {% if st.min_age or st.max_age %}| Ages {{ st.min_age|default:"any" }}-{{ st.max_age|default:"any" }}{% endif %}
-                                {% if st.location %}| {{ st.location }}{% endif %}
+                                {% if st.start_date %}{{ st.start_date|date:"M j" }} – {{ st.end_date|date:"M j, Y" }}{% endif %}
+                                {% if st.min_age or st.max_age %} · Ages {{ st.min_age|default:"any" }}–{{ st.max_age|default:"any" }}{% endif %}
+                                {% if st.location %} · {{ st.location }}{% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -153,10 +176,22 @@
 function toggleClinicFields() {
     const format = document.getElementById('session_format').value;
     const clinicFields = document.getElementById('clinic_fields');
-    if (format === 'clinic') {
+    const seasonalHint = document.getElementById('seasonal_hint');
+    const requiresPkg = document.getElementById('requires_package');
+
+    // Clinic/Camp fields for date range, age, location
+    if (format === 'clinic' || format === 'camp') {
         clinicFields.classList.remove('hidden');
     } else {
         clinicFields.classList.add('hidden');
+    }
+
+    // Seasonal hint + auto-check requires_package
+    if (format === 'seasonal') {
+        seasonalHint.classList.remove('hidden');
+        if (requiresPkg) requiresPkg.checked = true;
+    } else {
+        seasonalHint.classList.add('hidden');
     }
 }
 // Run on page load
