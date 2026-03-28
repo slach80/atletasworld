@@ -1,5 +1,5 @@
 """
-Management command to load demo data for the Atletas World application.
+Management command to load demo data for the Atletas Performance Center application.
 Usage: python manage.py load_demo_data
 """
 from django.core.management.base import BaseCommand
@@ -9,7 +9,7 @@ import os
 
 
 class Command(BaseCommand):
-    help = 'Load demo data for Atletas World application'
+    help = 'Load demo data for Atletas Performance Center application'
 
     def add_arguments(self, parser):
         parser.add_argument(

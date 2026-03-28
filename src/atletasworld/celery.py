@@ -1,5 +1,5 @@
 """
-Celery configuration for Atletas World.
+Celery configuration for Atletas Performance Center.
 """
 import os
 from celery import Celery

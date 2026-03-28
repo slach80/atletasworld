@@ -49,6 +49,10 @@ class Coach(models.Model):
 
     class Meta:
         ordering = ['user__first_name']
+        indexes = [
+            models.Index(fields=['is_active']),
+            models.Index(fields=['profile_enabled']),
+        ]
 
 
 class Availability(models.Model):
@@ -135,6 +139,12 @@ class ScheduleBlock(models.Model):
     class Meta:
         ordering = ['date', 'start_time']
         unique_together = ['coach', 'date', 'start_time']
+        indexes = [
+            models.Index(fields=['coach', 'date']),
+            models.Index(fields=['coach', 'status']),
+            models.Index(fields=['date', 'status']),
+            models.Index(fields=['status', 'current_participants']),
+        ]
 
 
 class SessionAttendance(models.Model):
@@ -211,3 +221,9 @@ class PlayerAssessment(models.Model):
 
     class Meta:
         ordering = ['-assessment_date']
+        indexes = [
+            models.Index(fields=['coach', 'player']),
+            models.Index(fields=['coach', 'assessment_date']),
+            models.Index(fields=['player', 'assessment_date']),
+            models.Index(fields=['booking']),
+        ]

@@ -1,5 +1,5 @@
 """
-Management command to load team demo data for Atletas World.
+Management command to load team demo data for Atletas Performance Center.
 Creates team-coach clients, teams, and assigns existing players and coaches.
 Usage: python manage.py load_team_demo_data
 """
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 'name': 'Atletas Elite U12 Girls',
                 'age_group': 'U12',
                 'skill_level': 'intermediate',
-                'club_name': 'Atletas World',
+                'club_name': 'Atletas Performance Center',
                 'description': 'Competitive U12 girls squad training twice weekly with an emphasis on technical development.',
                 'max_players': 16,
                 'manager_key': 'coach_diana',
@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 'name': 'Atletas Advanced U14',
                 'age_group': 'U14',
                 'skill_level': 'advanced',
-                'club_name': 'Atletas World',
+                'club_name': 'Atletas Performance Center',
                 'description': 'Advanced U14 mixed team preparing for regional tournaments.',
                 'max_players': 18,
                 'manager_key': 'coach_carlos',
@@ -131,14 +131,14 @@ class Command(BaseCommand):
                 'username': 'coach_carlos',
                 'first_name': 'Carlos',
                 'last_name': 'Rivera',
-                'email': 'carlos.rivera@atletasworld.com',
+                'email': 'carlos.rivera@atletasperformancecenter.com',
             },
             {
                 'key': 'coach_diana',
                 'username': 'coach_diana',
                 'first_name': 'Diana',
                 'last_name': 'Morales',
-                'email': 'diana.morales@atletasworld.com',
+                'email': 'diana.morales@atletasperformancecenter.com',
             },
         ]
 

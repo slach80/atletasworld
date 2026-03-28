@@ -1,5 +1,5 @@
 """
-Django settings for Atletas World project.
+Django settings for Atletas Performance Center project.
 """
 import os
 from pathlib import Path
@@ -235,7 +235,7 @@ BOOTSTRAP5 = {
 }
 
 # Grappelli settings
-GRAPPELLI_ADMIN_TITLE = 'Atletas World Admin'
+GRAPPELLI_ADMIN_TITLE = 'Atletas Performance Center Admin'
 GRAPPELLI_AUTOCOMPLETE_LIMIT = 10
 
 # =============================================================================
@@ -274,5 +274,5 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # General Settings
 # =============================================================================
 SITE_URL = env('SITE_URL', default='http://localhost:8000')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@atletasworld.com')
-SERVER_EMAIL = env('SERVER_EMAIL', default='noreply@atletasworld.com')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@atletasperformancecenter.com')
+SERVER_EMAIL = env('SERVER_EMAIL', default='noreply@atletasperformancecenter.com')

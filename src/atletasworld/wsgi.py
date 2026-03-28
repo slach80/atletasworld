@@ -1,5 +1,5 @@
 """
-WSGI config for Atletas World project.
+WSGI config for Atletas Performance Center project.
 """
 import os
 from django.core.wsgi import get_wsgi_application

@@ -1,5 +1,5 @@
 """
-Owner dashboard views for Atletas World.
+Owner dashboard views for Atletas Performance Center.
 Provides overview across all coaches, clients, and players.
 """
 from django.shortcuts import render, redirect
@@ -307,7 +307,7 @@ def owner_send_notification(request):
 
     # Send emails
     try:
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@atletasworld.com')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@atletasperformancecenter.com')
         sent_count = 0
         failed_count = 0
 

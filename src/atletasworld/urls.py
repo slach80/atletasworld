@@ -1,5 +1,5 @@
 """
-URL configuration for Atletas World project.
+URL configuration for Atletas Performance Center project.
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
