@@ -212,7 +212,6 @@
                     {% if event.max_participants > 1 %}<div class="flex items-center"><span class="mr-2">👥</span> {{ event.max_participants }} players max</div>{% endif %}
                     {% if event.min_age or event.max_age %}<div class="flex items-center"><span class="mr-2">🎂</span> Ages {{ event.min_age|default:"any" }}–{{ event.max_age|default:"any" }}</div>{% endif %}
                     {% if event.end_date and event.end_date != event.start_date %}<div class="flex items-center"><span class="mr-2">📅</span> Ends {{ event.end_date|date:"M j, Y" }}</div>{% endif %}
-                    <div class="flex items-center"><span class="mr-2">💰</span> ${{ event.price }}</div>
                 </div>
                 <a href="/book" class="block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
                     Reserve Your Spot
