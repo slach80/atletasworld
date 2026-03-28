@@ -97,6 +97,18 @@
                 <span class="text-sm text-gray-700">Requires active package to book</span>
             </label>
 
+            <div class="border rounded-lg p-3 bg-gray-50 space-y-2">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Homepage Display</p>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="show_as_event" class="w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent">
+                    <span class="text-sm text-gray-700">🔥 Show in <strong>Upcoming Events</strong></span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="show_as_program" class="w-4 h-4 text-secondary border-gray-300 rounded focus:ring-secondary">
+                    <span class="text-sm text-gray-700">📋 Show in <strong>Training Programs</strong></span>
+                </label>
+            </div>
+
             <label class="flex items-center space-x-2 cursor-pointer">
                 <input type="checkbox" name="is_active" checked class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
                 <span class="text-sm text-gray-700">Active</span>
@@ -135,6 +147,8 @@
                                 <span class="text-xs text-gray-500">{{ st.duration_minutes }} min · ${{ st.price }}</span>
                                 <span class="text-xs text-gray-400">Max {{ st.max_participants }} · {{ st.total_bookings }} bookings</span>
                                 {% if st.requires_package %}<span class="text-xs bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded">Package required</span>{% endif %}
+                                {% if st.show_as_event %}<span class="text-xs bg-red-50 text-accent px-1.5 py-0.5 rounded">🔥 Event</span>{% endif %}
+                                {% if st.show_as_program %}<span class="text-xs bg-green-50 text-secondary px-1.5 py-0.5 rounded">📋 Program</span>{% endif %}
                             </div>
                             {% if st.session_format == 'clinic' or st.session_format == 'camp' %}
                             <div class="text-xs text-purple-600 mt-1">

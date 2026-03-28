@@ -185,90 +185,47 @@
 </section>
 
 <!-- Upcoming Events Banner -->
+{% if events %}
 <section id="events" class="bg-gradient-to-r from-accent to-red-700 text-white py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-8">
             <span class="inline-block bg-white/20 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">🔥 UPCOMING EVENTS</span>
             <h2 class="text-3xl md:text-4xl font-bold">Don't Miss Out!</h2>
         </div>
-
         <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <!-- Event 1: Serie A Elite Clinic - U13-U15 -->
+            {% for event in events %}
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
                 <div class="flex items-start justify-between mb-4">
-                    <div>
-                        <span class="bg-white text-accent px-3 py-1 rounded-full text-xs font-bold">ELITE CLINIC</span>
-                    </div>
+                    <span class="bg-white text-accent px-3 py-1 rounded-full text-xs font-bold uppercase">{{ event.get_session_format_display }}</span>
+                    {% if event.start_date %}
                     <div class="text-right">
-                        <div class="text-2xl font-bold">DEC 22</div>
-                        <div class="text-sm text-white/80">Sunday</div>
+                        <div class="text-2xl font-bold">{{ event.start_date|date:"M j" }}</div>
+                        <div class="text-sm text-white/80">{{ event.start_date|date:"l" }}</div>
                     </div>
+                    {% endif %}
                 </div>
-                <h3 class="text-xl font-bold mb-2">Serie A Elite Indoor Winter Clinic</h3>
-                <p class="text-white/80 mb-3">U13-U15 Age Group</p>
-                <div class="space-y-2 text-sm">
-                    <div class="flex items-center">
-                        <span class="mr-2">🕐</span> 9:00-10:30 AM or 10:30 AM-12:00 PM
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">⏱️</span> 90 minutes per session
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">📍</span> APC Indoor Facility
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">👥</span> 20 players max per class
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">💰</span> $75
-                    </div>
+                <h3 class="text-xl font-bold mb-2">{{ event.name }}</h3>
+                {% if event.description %}<p class="text-white/80 mb-3 text-sm">{{ event.description }}</p>{% endif %}
+                <div class="space-y-1.5 text-sm mb-4">
+                    <div class="flex items-center"><span class="mr-2">⏱️</span> {{ event.duration_minutes }} minutes per session</div>
+                    {% if event.location %}<div class="flex items-center"><span class="mr-2">📍</span> {{ event.location }}</div>{% endif %}
+                    {% if event.max_participants > 1 %}<div class="flex items-center"><span class="mr-2">👥</span> {{ event.max_participants }} players max</div>{% endif %}
+                    {% if event.min_age or event.max_age %}<div class="flex items-center"><span class="mr-2">🎂</span> Ages {{ event.min_age|default:"any" }}–{{ event.max_age|default:"any" }}</div>{% endif %}
+                    {% if event.end_date and event.end_date != event.start_date %}<div class="flex items-center"><span class="mr-2">📅</span> Ends {{ event.end_date|date:"M j, Y" }}</div>{% endif %}
+                    <div class="flex items-center"><span class="mr-2">💰</span> ${{ event.price }}</div>
                 </div>
-                <a href="/book" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                <a href="/book" class="block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
                     Reserve Your Spot
                 </a>
             </div>
-
-            <!-- Event 2: Serie A Elite Clinic - U16-U19 -->
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                <div class="flex items-start justify-between mb-4">
-                    <div>
-                        <span class="bg-white text-accent px-3 py-1 rounded-full text-xs font-bold">ELITE CLINIC</span>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-2xl font-bold">DEC 23</div>
-                        <div class="text-sm text-white/80">Monday</div>
-                    </div>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Serie A Elite Indoor Winter Clinic</h3>
-                <p class="text-white/80 mb-3">U16-U19 Age Group</p>
-                <div class="space-y-2 text-sm">
-                    <div class="flex items-center">
-                        <span class="mr-2">🕐</span> 9:00-10:30 AM or 10:30 AM-12:00 PM
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">⏱️</span> 90 minutes per session
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">📍</span> APC Indoor Facility
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">👥</span> 20 players max per class
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-2">💰</span> $75
-                    </div>
-                </div>
-                <a href="/book" class="mt-4 block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
-                    Reserve Your Spot
-                </a>
-            </div>
+            {% endfor %}
         </div>
-
         <p class="text-center mt-6 text-white/80">
-            <span class="inline-block animate-pulse">⚡</span> Limited spots available - Book now to secure your place!
+            <span class="inline-block animate-pulse">⚡</span> Limited spots available — Book now to secure your place!
         </p>
     </div>
 </section>
+{% endif %}
 
 <!-- Platform Features Banner -->
 <section class="bg-gradient-to-r from-primary to-gray-800 text-white py-8">
@@ -350,165 +307,68 @@
             <p class="text-xl text-gray-600">Personalized training that aligns with your goals</p>
         </div>
         
+        {% if programs %}
         <div class="grid md:grid-cols-3 gap-8">
-            <!-- Program 1: Captains Soccer Club Training -->
-            <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-secondary">
-                <div class="h-48 bg-gradient-to-br from-secondary to-green-600 flex items-center justify-center">
-                    <span class="text-7xl">⚽</span>
+            {% for prog in programs %}
+            <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 {% cycle 'border-secondary' 'border-accent' 'border-primary' %}">
+                <div class="h-48 bg-gradient-to-br {% cycle 'from-secondary to-green-600' 'from-accent to-orange-500' 'from-primary to-gray-700' %} flex items-center justify-center">
+                    <span class="text-7xl">{% if prog.session_format == 'team' %}👥{% elif prog.session_format == 'clinic' %}🏆{% elif prog.session_format == 'camp' %}⛺{% elif prog.session_format == 'seasonal' %}❄️{% elif prog.session_format == 'pickup' %}⚽{% elif prog.session_format == 'private' %}🎯{% else %}⚽{% endif %}</span>
                 </div>
                 <div class="p-8">
                     <div class="flex justify-between items-start mb-4">
-                        <h3 class="text-2xl font-bold text-gray-900">Captains Soccer Club</h3>
-                        <span class="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold">TEAM</span>
+                        <h3 class="text-2xl font-bold text-gray-900">{{ prog.name }}</h3>
+                        <span class="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">{{ prog.get_session_format_display }}</span>
                     </div>
-                    <p class="text-gray-600 mb-6">
-                        Team-focused training sessions for coaches and teams. Build fundamentals, teamwork, and game intelligence together.
-                    </p>
-                    <div class="space-y-3 mb-6">
+                    {% if prog.description %}
+                    <p class="text-gray-600 mb-6">{{ prog.description }}</p>
+                    {% endif %}
+                    <div class="space-y-2 mb-6">
                         <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            60-minute sessions
+                            <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            {{ prog.duration_minutes }}-minute sessions
                         </div>
+                        {% if prog.max_participants > 1 %}
                         <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            Technical skill development
+                            <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            Up to {{ prog.max_participants }} participants
                         </div>
+                        {% endif %}
+                        {% if prog.location %}
                         <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            Team tactics & positioning
+                            <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            {{ prog.location }}
                         </div>
+                        {% endif %}
+                        {% if prog.min_age or prog.max_age %}
                         <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            Game situation drills
+                            <svg class="w-5 h-5 text-secondary mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            Ages {{ prog.min_age|default:"any" }}–{{ prog.max_age|default:"any" }}
                         </div>
+                        {% endif %}
                     </div>
                     <div class="border-t pt-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-3xl font-bold text-primary">$20</span>
-                            <span class="text-gray-600">per session</span>
-                        </div>
-                        <a href="/book?program=captains" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">
-                            Book Now
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Program 2: APC Winter Program -->
-            <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-accent">
-                <div class="h-48 bg-gradient-to-br from-accent to-orange-500 flex items-center justify-center">
-                    <span class="text-7xl">❄️</span>
-                </div>
-                <div class="p-8">
-                    <div class="flex justify-between items-start mb-4">
-                        <h3 class="text-2xl font-bold text-gray-900">APC Winter Program</h3>
-                        <span class="bg-secondary text-white px-3 py-1 rounded-full text-xs font-semibold">SEASONAL</span>
-                    </div>
-                    <p class="text-gray-600 mb-6">
-                        Keep your skills sharp during the off-season with our intensive winter training program. Use our flexible package options!
-                    </p>
-                    <div class="space-y-3 mb-6">
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            60-minute sessions
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            Indoor training facility
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            Fitness & conditioning
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            Technical refinement
-                        </div>
-                    </div>
-                    <div class="border-t pt-6">
+                        {% if prog.requires_package %}
                         <div class="mb-4">
-                            <p class="text-sm text-gray-500 mb-2">Available with packages:</p>
-                            <div class="flex flex-wrap gap-2">
-                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">Basic 4 - $160</span>
-                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">Basic 8 - $280</span>
-                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">Elite 24 - $600</span>
-                                <span class="bg-accent/10 text-accent px-2 py-1 rounded text-xs font-semibold">Unlimited - $1,000</span>
-                            </div>
+                            <p class="text-sm text-gray-500 mb-2">Pre-paid via training package</p>
+                            <a href="#packages" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">View Packages</a>
                         </div>
-                        <a href="#packages" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">
-                            View Packages
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Program 3: Serie A Elite Indoor Winter Clinic -->
-            <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-primary">
-                <div class="h-48 bg-gradient-to-br from-primary to-gray-700 flex items-center justify-center">
-                    <span class="text-7xl">🏆</span>
-                </div>
-                <div class="p-8">
-                    <div class="flex justify-between items-start mb-4">
-                        <h3 class="text-2xl font-bold text-gray-900">Serie A Elite Clinic</h3>
-                        <span class="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold">ELITE</span>
-                    </div>
-                    <p class="text-gray-600 mb-6">
-                        90-minute intensive indoor clinic. Two time slots: 9-10:30am or 10:30am-12pm. Dec 22 (U13-U15) & Dec 23 (U16-U19).
-                    </p>
-                    <div class="space-y-3 mb-6">
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            90-minute intensive sessions
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            20 players max per class
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            U13-U15 (Dec 22) & U16-U19 (Dec 23)
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-secondary mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                            </svg>
-                            Elite level training
-                        </div>
-                    </div>
-                    <div class="border-t pt-6">
+                        {% else %}
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-3xl font-bold text-primary">$75</span>
+                            <span class="text-3xl font-bold text-primary">${{ prog.price }}</span>
                             <span class="text-gray-600">per session</span>
                         </div>
-                        <a href="/book?program=serie-a-elite" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">
-                            Book Now
-                        </a>
+                        <a href="/book" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">Book Now</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-400">
+            <p class="text-lg">Programs coming soon. <a href="/contact" class="text-secondary hover:underline">Contact us</a> to learn more.</p>
+        </div>
+        {% endif %}
 
         <!-- Training Packages (live from database) -->
         <div id="packages" class="mt-16 scroll-mt-24">

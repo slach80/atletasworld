@@ -947,6 +947,9 @@ def owner_session_types(request):
                     max_participants=request.POST.get('max_participants', 1),
                     color=request.POST.get('color', '#2ecc71'),
                     is_active=request.POST.get('is_active') == 'on',
+                    requires_package=request.POST.get('requires_package') == 'on',
+                    show_as_event=request.POST.get('show_as_event') == 'on',
+                    show_as_program=request.POST.get('show_as_program') == 'on',
                     # Clinic/Camp fields
                     start_date=request.POST.get('start_date') or None,
                     end_date=request.POST.get('end_date') or None,
@@ -995,6 +998,9 @@ def owner_session_type_edit(request, pk):
             session_type.max_participants = request.POST.get('max_participants', 1)
             session_type.color = request.POST.get('color', '#2ecc71')
             session_type.is_active = request.POST.get('is_active') == 'on'
+            session_type.requires_package = request.POST.get('requires_package') == 'on'
+            session_type.show_as_event = request.POST.get('show_as_event') == 'on'
+            session_type.show_as_program = request.POST.get('show_as_program') == 'on'
             # Clinic/Camp fields
             session_type.start_date = request.POST.get('start_date') or None
             session_type.end_date = request.POST.get('end_date') or None
