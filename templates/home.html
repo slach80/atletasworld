@@ -48,9 +48,14 @@
 <!-- Top Bar with Quick Actions -->
 <div class="bg-primary text-white py-2 text-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <div class="flex items-center space-x-6">
-            <span>📧 info@atletasperformancecenter.com</span>
+        <!-- Left: user greeting when logged in, empty when not -->
+        <div class="flex items-center space-x-2">
+            {% if user.is_authenticated %}
+            <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span class="text-gray-300">Welcome, <span class="text-white font-medium">{{ user.get_full_name|default:user.username }}</span></span>
+            {% endif %}
         </div>
+        <!-- Right: portal / auth links -->
         <div class="hidden md:flex items-center space-x-4">
             {% if user.is_authenticated %}
             <a href="/login-redirect/" class="hover:text-secondary transition flex items-center">
