@@ -67,7 +67,7 @@
                             <a href="{% url 'owner_session_types' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'session_type' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">📋 Sessions</a>
                             <a href="{% url 'owner_packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'package' in request.resolver_match.url_name %}text-owner{% endif %}">📦 Packages</a>
                             <a href="{% url 'owner_field_slots' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'field' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">
-                                🏟️ Services{% if pending_field_count > 0 %}<span class="ml-auto bg-accent text-white text-xs px-1.5 py-0.5 rounded-full">{{ pending_field_count }}</span>{% endif %}
+                                🏟️ Rentals{% if pending_field_count > 0 %}<span class="ml-auto bg-accent text-white text-xs px-1.5 py-0.5 rounded-full">{{ pending_field_count }}</span>{% endif %}
                             </a>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                 <p class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wider">Catalog</p>
                 <a href="{% url 'owner_session_types' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📋 Sessions</a>
                 <a href="{% url 'owner_packages' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📦 Packages</a>
-                <a href="{% url 'owner_field_slots' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🏟️ Services</a>
+                <a href="{% url 'owner_field_slots' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🏟️ Rentals</a>
                 <div class="border-t border-gray-700 mt-2 pt-2">
                     <a href="{% url 'owner_finances' %}" class="block px-3 py-2 rounded hover:bg-white/10">Finances</a>
                     <a href="{% url 'owner_notifications' %}" class="block px-3 py-2 rounded hover:bg-white/10">Notify</a>
