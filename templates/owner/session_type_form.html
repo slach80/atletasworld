@@ -192,6 +192,15 @@
 </div>
 
 <script>
+function addStartTime() {
+    const list = document.getElementById('start-times-list');
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2';
+    row.innerHTML = '<input type="time" name="start_times" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner focus:border-owner">'
+                  + '<button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>';
+    list.appendChild(row);
+}
+
 function toggleClinicFields() {
     const format = document.getElementById('session_format').value;
     const clinicFields = document.getElementById('clinic_fields');
