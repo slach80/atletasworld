@@ -79,12 +79,20 @@ def dashboard(request):
         'pending_assessments': pending_assessments.count(),
     }
 
+    # All confirmed/pending future bookings (no date cutoff)
+    confirmed_bookings = Booking.objects.filter(
+        coach=coach,
+        scheduled_date__gte=today,
+        status__in=['pending', 'confirmed'],
+    ).select_related('player', 'client', 'session_type').order_by('scheduled_date', 'scheduled_time')
+
     # Teams this coach is assigned to
     teams = coach.teams.filter(is_active=True)
 
     context = {
         'coach': coach,
         'todays_blocks': todays_blocks,
+        'confirmed_bookings': confirmed_bookings,
         'upcoming_blocks': upcoming_blocks,
         'pending_assessments': pending_assessments,
         'stats': stats,

@@ -196,26 +196,33 @@
                 {% endif %}
             </div>
 
-            <!-- Upcoming Sessions -->
+            <!-- Confirmed Bookings (all future, no cutoff) -->
             <div class="bg-white rounded-xl shadow-md p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Upcoming Sessions (30 days)</h2>
+                    <h2 class="text-xl font-bold text-gray-800">Confirmed Bookings</h2>
                     <a href="{% url 'coaches:schedule' %}" class="text-secondary text-sm hover:underline">Manage Schedule</a>
                 </div>
-                {% if upcoming_blocks %}
-                <div class="space-y-3">
-                    {% for block in upcoming_blocks %}
+                {% if confirmed_bookings %}
+                <div class="space-y-2">
+                    {% for booking in confirmed_bookings %}
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
-                            <p class="font-semibold">{{ block.date|date:"D, M j" }}</p>
-                            <p class="text-sm text-gray-500">{{ block.start_time|time:"g:i A" }} - {{ block.display_session_type }}</p>
+                            <p class="font-semibold text-sm">{{ booking.scheduled_date|date:"D, M j" }} &middot; {{ booking.scheduled_time|time:"g:i A" }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ booking.player.first_name }} {{ booking.player.last_name }}
+                                {% if booking.session_type %}&mdash; {{ booking.session_type.name }}{% endif %}
+                            </p>
                         </div>
-                        <span class="{% if block.current_participants > 0 %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-500{% endif %} px-2 py-1 rounded text-xs">{{ block.current_participants }}/{{ block.max_participants }}</span>
+                        <span class="px-2 py-1 rounded text-xs font-medium
+                            {% if booking.status == 'confirmed' %}bg-secondary/20 text-gray-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ booking.get_status_display }}
+                        </span>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-center py-4">No upcoming sessions.</p>
+                <p class="text-gray-500 text-center py-4">No upcoming bookings.</p>
                 {% endif %}
             </div>
         </div>
