@@ -150,21 +150,25 @@
 
         <!-- Quick Stats (clickable) -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <!-- 1. Now -->
             <a href="{% url 'coaches:todays_sessions' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-secondary border border-transparent transition group">
                 <p class="text-3xl font-bold text-secondary group-hover:scale-110 transition">{{ stats.todays_sessions }}</p>
                 <p class="text-gray-500 text-sm">Today's Sessions</p>
             </a>
+            <!-- 2. Who this week -->
+            <a href="{% url 'coaches:my_players' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-purple-500 border border-transparent transition group">
+                <p class="text-3xl font-bold text-purple-500 group-hover:scale-110 transition">{{ stats.students_this_week }}</p>
+                <p class="text-gray-500 text-sm">Students This Week</p>
+            </a>
+            <!-- 3. Forward schedule -->
             <a href="{% url 'coaches:schedule' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-blue-500 border border-transparent transition group">
                 <p class="text-3xl font-bold text-blue-500 group-hover:scale-110 transition">{{ stats.upcoming_sessions }}</p>
-                <p class="text-gray-500 text-sm">Next 30 Days</p>
+                <p class="text-gray-500 text-sm">Upcoming (30 days)</p>
             </a>
+            <!-- 4. Action needed -->
             <a href="{% url 'coaches:assessments' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-accent border border-transparent transition group">
                 <p class="text-3xl font-bold text-accent group-hover:scale-110 transition">{{ stats.pending_assessments }}</p>
                 <p class="text-gray-500 text-sm">Pending Assessments</p>
-            </a>
-            <a href="{% url 'coaches:my_players' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-purple-500 border border-transparent transition group">
-                <p class="text-3xl font-bold text-purple-500 group-hover:scale-110 transition">{{ stats.total_students_this_month }}</p>
-                <p class="text-gray-500 text-sm">Students This Month</p>
             </a>
         </div>
 

@@ -65,15 +65,18 @@ def dashboard(request):
     ).select_related('player', 'session_type')[:10]
 
     # Stats
+    week_start = today - timedelta(days=today.weekday())  # Monday
+    week_end   = week_start + timedelta(days=6)           # Sunday
     stats = {
         'todays_sessions': todays_blocks.count(),
+        'students_this_week': Booking.objects.filter(
+            coach=coach,
+            scheduled_date__gte=week_start,
+            scheduled_date__lte=week_end,
+            status__in=['pending', 'confirmed'],
+        ).values('player').distinct().count(),
         'upcoming_sessions': upcoming_blocks.count(),
         'pending_assessments': pending_assessments.count(),
-        'total_students_this_month': Booking.objects.filter(
-            coach=coach,
-            scheduled_date__month=today.month,
-            scheduled_date__year=today.year
-        ).values('player').distinct().count(),
     }
 
     # Teams this coach is assigned to
