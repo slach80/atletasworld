@@ -462,7 +462,7 @@
         calendar = new Calendar('#calendar', {
             defaultView: 'week',
             usageStatistics: false,
-            isReadOnly: true,
+            isReadOnly: false,
             useDetailPopup: false,
             useFormPopup: false,
             calendars: calendars,
@@ -605,7 +605,7 @@
             return;
         }
 
-        const startDate = new Date(event.start.d.d);
+        const startDate = new Date(event.start.valueOf());
         document.getElementById('bookingDetails').innerHTML = `
             <div class="mb-3">
                 <div class="d-flex justify-content-between mb-2">
@@ -720,7 +720,7 @@
             if (response.ok) {
                 bookingModal.hide();
 
-                const bookedDate = new Date(selectedSlot.start.d.d);
+                const bookedDate = new Date(selectedSlot.start.valueOf());
                 const bookedDateStr = bookedDate.toISOString().split('T')[0];
                 const bookedTimeStr = bookedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
