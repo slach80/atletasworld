@@ -9,20 +9,91 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-primary text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
-                    <span class="ml-4 text-lg font-semibold">Coach Portal</span>
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+                <span class="ml-3 text-lg font-semibold hidden md:block">Coach Portal</span>
+            </div>
+            <!-- Desktop nav -->
+            <div class="hidden md:flex items-center space-x-1 text-sm">
+                <a href="{% url 'coaches:dashboard' %}"
+                   class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'dashboard' %}bg-white/10 text-secondary font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                    Dashboard
+                </a>
+                <!-- Players dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'my_players' or request.resolver_match.url_name == 'player_detail' or request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'create_assessment' or request.resolver_match.url_name == 'quick_assess_session' %}bg-white/10 text-secondary font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                        Players
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute left-0 top-full mt-1 w-44 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                        <a href="{% url 'coaches:my_players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'my_players' or request.resolver_match.url_name == 'player_detail' %}text-secondary{% endif %} rounded-t-lg">👥 My Players</a>
+                        <a href="{% url 'coaches:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'create_assessment' %}text-secondary{% endif %} rounded-b-lg">📋 Assessments</a>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'coaches:dashboard' %}" class="hover:text-secondary">Dashboard</a>
-                    <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary">Today</a>
-                    <a href="/accounts/logout/" class="text-gray-400 hover:text-accent">Logout</a>
+                <!-- Schedule dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'schedule' or request.resolver_match.url_name == 'todays_sessions' or request.resolver_match.url_name == 'add_bulk_schedule' or request.resolver_match.url_name == 'attendance' %}bg-white/10 text-secondary font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                        Schedule
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute left-0 top-full mt-1 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                        <a href="{% url 'coaches:todays_sessions' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'todays_sessions' %}text-secondary{% endif %} rounded-t-lg">📅 Today's Sessions</a>
+                        <a href="{% url 'coaches:schedule' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'schedule' %}text-secondary{% endif %}">📆 Schedule</a>
+                        <a href="{% url 'coaches:add_bulk_schedule' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'add_bulk_schedule' %}text-secondary{% endif %} rounded-b-lg">⏰ Add Availability</a>
+                    </div>
                 </div>
+                <a href="{% url 'coaches:notify_parents' %}"
+                   class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'notify_parents' or request.resolver_match.url_name == 'send_notification' %}bg-white/10 text-secondary font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                    Notify
+                </a>
+                {% if teams %}
+                <a href="{% url 'clients:team_list' %}" class="px-3 py-2 rounded hover:bg-white/10 transition">Teams</a>
+                {% endif %}
+                {% if coach.profile_enabled %}
+                <a href="{% url 'coaches:edit_profile' %}"
+                   class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'edit_profile' %}bg-white/10 text-secondary font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                    Profile
+                </a>
+                {% endif %}
+                <span class="text-gray-600">|</span>
+                <a href="/accounts/logout/" class="px-3 py-2 rounded hover:bg-accent/20 text-gray-400 hover:text-accent transition text-xs">Logout</a>
+            </div>
+            <!-- Mobile button -->
+            <div class="md:hidden flex items-center">
+                <button id="coach-mobile-btn" class="p-2 rounded hover:bg-white/10">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
             </div>
         </div>
-    </nav>
+    </div>
+    <!-- Mobile menu -->
+    <div id="coach-mobile-menu" class="hidden md:hidden pb-3 border-t border-gray-700 mt-1 pt-2 space-y-1 text-sm">
+        <a href="{% url 'coaches:dashboard' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Dashboard</a>
+        <p class="px-4 pt-2 text-xs text-gray-500 uppercase tracking-wider">Players</p>
+        <a href="{% url 'coaches:my_players' %}" class="block px-6 py-2 hover:bg-white/10 rounded">👥 My Players</a>
+        <a href="{% url 'coaches:assessments' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📋 Assessments</a>
+        <p class="px-4 pt-2 text-xs text-gray-500 uppercase tracking-wider">Schedule</p>
+        <a href="{% url 'coaches:todays_sessions' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📅 Today's Sessions</a>
+        <a href="{% url 'coaches:schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📆 Schedule</a>
+        <a href="{% url 'coaches:add_bulk_schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">⏰ Add Availability</a>
+        <a href="{% url 'coaches:notify_parents' %}" class="block px-4 py-2 hover:bg-white/10 rounded">🔔 Notify</a>
+        {% if teams %}<a href="{% url 'clients:team_list' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
+        {% if coach.profile_enabled %}<a href="{% url 'coaches:edit_profile' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Profile</a>{% endif %}
+        <div class="border-t border-gray-700 mt-2 pt-2">
+            <a href="/accounts/logout/" class="block px-4 py-2 text-gray-400 hover:text-accent rounded">Logout</a>
+        </div>
+    </div>
+</nav>
+<script>
+(function(){
+    var btn = document.getElementById('coach-mobile-btn');
+    if(btn) btn.addEventListener('click', function(){
+        document.getElementById('coach-mobile-menu').classList.toggle('hidden');
+    });
+})();
+</script>
 
     <div class="max-w-4xl mx-auto px-4 py-6">
         <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary hover:underline mb-4 inline-block">&larr; Back</a>

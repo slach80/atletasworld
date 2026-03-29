@@ -14,19 +14,60 @@
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/"><img src="/static/img/apc-logo-black.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'clients:dashboard' %}" class="text-gray-600 hover:text-secondary">Dashboard</a>
-                    <a href="/book" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600">Book Session</a>
-                    <a href="/accounts/logout/" class="text-gray-600 hover:text-accent">Logout</a>
-                </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="/"><img src="/static/img/apc-logo-black.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+            </div>
+            <!-- Desktop nav -->
+            <div class="hidden md:flex items-center space-x-1 text-sm">
+                <a href="{% url 'clients:players' %}"
+                   class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' %}bg-secondary/10 text-secondary font-semibold{% else %}text-gray-700 hover:bg-gray-100{% endif %} transition">
+                    Players
+                </a>
+                <a href="{% url 'clients:bookings' %}"
+                   class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'bookings' or request.resolver_match.url_name == 'book' %}bg-secondary/10 text-secondary font-semibold{% else %}text-gray-700 hover:bg-gray-100{% endif %} transition">
+                    My Bookings
+                </a>
+                <a href="{% url 'clients:packages' %}"
+                   class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'packages' %}bg-secondary/10 text-secondary font-semibold{% else %}text-gray-700 hover:bg-gray-100{% endif %} transition">
+                    Packages
+                </a>
+                <a href="/book"
+                   class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600 transition font-semibold ml-2">
+                    Book Session
+                </a>
+                <span class="text-gray-300 mx-1">|</span>
+                <a href="/accounts/logout/" class="px-3 py-2 text-gray-500 hover:text-accent transition text-xs">Logout</a>
+            </div>
+            <!-- Mobile button -->
+            <div class="md:hidden flex items-center">
+                <button id="client-mobile-btn" class="p-2 rounded text-gray-700 hover:bg-gray-100">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
             </div>
         </div>
-    </nav>
+    </div>
+    <!-- Mobile menu -->
+    <div id="client-mobile-menu" class="hidden md:hidden bg-white border-t">
+        <div class="px-2 pt-2 pb-3 space-y-1 text-sm">
+            <a href="{% url 'clients:players' %}" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100">Players</a>
+            <a href="{% url 'clients:bookings' %}" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100">My Bookings</a>
+            <a href="{% url 'clients:packages' %}" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100">Packages</a>
+            <a href="/book" class="block px-3 py-2 bg-accent text-white rounded hover:bg-red-600 font-semibold">Book Session</a>
+            <hr class="my-1 border-gray-200">
+            <a href="/accounts/logout/" class="block px-3 py-2 text-gray-500 hover:text-accent rounded">Logout</a>
+        </div>
+    </div>
+</nav>
+<script>
+(function(){
+    var btn = document.getElementById('client-mobile-btn');
+    if(btn) btn.addEventListener('click', function(){
+        document.getElementById('client-mobile-menu').classList.toggle('hidden');
+    });
+})();
+</script>
 
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Breadcrumb -->
