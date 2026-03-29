@@ -119,19 +119,24 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
             cal = SCHEDULE_BLOCK_CALENDARS.get(block.session_type, SCHEDULE_BLOCK_CALENDARS['group'])
             catalog_types = list(block.catalog_session_types.all())
             if catalog_types:
-                name  = ' / '.join(st.name for st in catalog_types)
-                color = catalog_types[0].color if catalog_types[0].color else cal['color']
-                price = str(block.price_override or catalog_types[0].price)
-                dur   = catalog_types[0].duration_minutes
+                name       = ' / '.join(st.name for st in catalog_types)
+                color      = catalog_types[0].color if catalog_types[0].color else cal['color']
+                price      = str(block.price_override or catalog_types[0].price)
+                dur        = catalog_types[0].duration_minutes
+                # Use first catalog type's ID as calendarId so session type filter works
+                calendar_id = str(catalog_types[0].id)
+                type_ids    = [str(st.id) for st in catalog_types]
             else:
-                name  = cal['name']
-                color = cal['color']
-                price = str(block.price_override) if block.price_override else '0'
-                dur   = block.duration_minutes
+                name        = cal['name']
+                color       = cal['color']
+                price       = str(block.price_override) if block.price_override else '0'
+                dur         = block.duration_minutes
+                calendar_id = cal['id']
+                type_ids    = []
 
             events.append({
                 'id': f"sb_{block.id}",
-                'calendarId': cal['id'],
+                'calendarId': calendar_id,
                 'title': name,
                 'category': 'time',
                 'start': f"{block.date}T{block.start_time}",
@@ -145,6 +150,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'coach_id': block.coach_id,
                     'coach_name': str(block.coach),
                     'session_type_name': name,
+                    'catalog_type_ids': type_ids,
                     'status': block.status,
                     'spots_remaining': block.spots_remaining,
                     'max_bookings': block.max_participants,

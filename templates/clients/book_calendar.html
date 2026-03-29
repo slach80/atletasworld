@@ -537,9 +537,12 @@
             const response = await fetch(url);
             let events = await response.json();
 
-            // Filter by session type on client side
+            // Filter by session type — check calendarId OR catalog_type_ids for multi-type blocks
             if (sessionTypeId) {
-                events = events.filter(e => e.calendarId === sessionTypeId);
+                events = events.filter(e =>
+                    e.calendarId === sessionTypeId ||
+                    (e.raw?.catalog_type_ids?.includes(sessionTypeId))
+                );
             }
 
             // Filter out fully booked
