@@ -11,8 +11,13 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from .models import SessionType, AvailabilitySlot, Booking
-from coaches.models import Coach
+from coaches.models import Coach, ScheduleBlock
 from clients.models import Client, ClientPackage
+
+SCHEDULE_BLOCK_CALENDARS = {
+    'private': {'id': 'sb_private', 'name': 'Private Training', 'color': '#1a1a1a'},
+    'group':   {'id': 'sb_group',   'name': 'Group Training',   'color': '#D7FF00'},
+}
 
 
 class SessionTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -96,6 +101,43 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'max_bookings': slot.max_bookings,
                     'price': str(slot.effective_price),
                     'duration': slot.session_type.duration_minutes,
+                }
+            })
+
+        # Also include ScheduleBlock records (coach portal schedule)
+        sb_queryset = ScheduleBlock.objects.filter(
+            status='available'
+        ).select_related('coach')
+        if start_date:
+            sb_queryset = sb_queryset.filter(date__gte=start_date)
+        if end_date:
+            sb_queryset = sb_queryset.filter(date__lte=end_date)
+        if coach_id:
+            sb_queryset = sb_queryset.filter(coach_id=coach_id)
+
+        for block in sb_queryset:
+            cal = SCHEDULE_BLOCK_CALENDARS.get(block.session_type, SCHEDULE_BLOCK_CALENDARS['group'])
+            events.append({
+                'id': f"sb_{block.id}",
+                'calendarId': cal['id'],
+                'title': cal['name'],
+                'category': 'time',
+                'start': f"{block.date}T{block.start_time}",
+                'end': f"{block.date}T{block.end_time}",
+                'backgroundColor': cal['color'],
+                'borderColor': cal['color'],
+                'isReadOnly': False,
+                'raw': {
+                    'slot_id': block.id,
+                    'slot_type': 'schedule_block',
+                    'coach_id': block.coach_id,
+                    'coach_name': str(block.coach),
+                    'session_type_name': cal['name'],
+                    'status': block.status,
+                    'spots_remaining': block.spots_remaining,
+                    'max_bookings': block.max_participants,
+                    'price': str(block.price_override) if block.price_override else '0',
+                    'duration': block.duration_minutes,
                 }
             })
 
@@ -286,18 +328,11 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         try:
             slot_id = data.get('slot_id')
+            slot_type = data.get('slot_type', 'availability_slot')
             player_id = data.get('player_id')
             package_id = data.get('package_id')
 
-            # Get the availability slot
-            slot = AvailabilitySlot.objects.get(pk=slot_id)
-
-            # Check availability
-            if not slot.is_available:
-                return Response({'error': 'This slot is no longer available'},
-                              status=status.HTTP_400_BAD_REQUEST)
-
-            # Check package if required
+            # Check package if provided
             package = None
             if package_id:
                 try:
@@ -314,19 +349,59 @@ class BookingViewSet(viewsets.ModelViewSet):
                 except ClientPackage.DoesNotExist:
                     return Response({'error': 'Package not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            # Create the booking
-            booking = Booking.objects.create(
-                client=client,
-                player_id=player_id,
-                coach=slot.coach,
-                availability_slot=slot,
-                session_type=slot.session_type,
-                scheduled_date=slot.date,
-                scheduled_time=slot.start_time,
-                duration_minutes=slot.session_type.duration_minutes,
-                status='pending',
-                client_notes=data.get('notes', ''),
-            )
+            if slot_type == 'schedule_block':
+                # Book against a ScheduleBlock (coach portal schedule)
+                block = ScheduleBlock.objects.get(pk=slot_id)
+                if not block.is_available:
+                    return Response({'error': 'This slot is no longer available'},
+                                  status=status.HTTP_400_BAD_REQUEST)
+
+                # Find matching session type for display
+                session_type = SessionType.objects.filter(
+                    session_format='private' if block.session_type == 'private' else 'clinic',
+                    is_active=True
+                ).first()
+
+                booking = Booking.objects.create(
+                    client=client,
+                    player_id=player_id,
+                    coach=block.coach,
+                    availability_slot=None,
+                    session_type=session_type,
+                    scheduled_date=block.date,
+                    scheduled_time=block.start_time,
+                    duration_minutes=block.duration_minutes,
+                    status='pending',
+                    client_notes=data.get('notes', ''),
+                )
+                # Mark the block as booked
+                block.current_participants += 1
+                if block.current_participants >= block.max_participants:
+                    block.status = 'booked'
+                block.save()
+
+                session_name = session_type.name if session_type else SCHEDULE_BLOCK_CALENDARS.get(block.session_type, {}).get('name', 'Training Session')
+
+            else:
+                # Book against an AvailabilitySlot
+                slot = AvailabilitySlot.objects.get(pk=slot_id)
+                if not slot.is_available:
+                    return Response({'error': 'This slot is no longer available'},
+                                  status=status.HTTP_400_BAD_REQUEST)
+
+                booking = Booking.objects.create(
+                    client=client,
+                    player_id=player_id,
+                    coach=slot.coach,
+                    availability_slot=slot,
+                    session_type=slot.session_type,
+                    scheduled_date=slot.date,
+                    scheduled_time=slot.start_time,
+                    duration_minutes=slot.session_type.duration_minutes,
+                    status='pending',
+                    client_notes=data.get('notes', ''),
+                )
+                session_name = slot.session_type.name
 
             # Use package if provided
             if package:
@@ -341,11 +416,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'booking': {
                     'date': str(booking.scheduled_date),
                     'time': str(booking.scheduled_time),
-                    'session_type': booking.session_type.name,
+                    'session_type': session_name,
                     'coach': str(booking.coach),
                 }
             }, status=status.HTTP_201_CREATED)
 
+        except ScheduleBlock.DoesNotExist:
+            return Response({'error': 'Schedule block not found'}, status=status.HTTP_404_NOT_FOUND)
         except AvailabilitySlot.DoesNotExist:
             return Response({'error': 'Availability slot not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:

@@ -451,13 +451,11 @@
             borderColor: st.color,
         }));
 
-        // Add a special calendar for client's booked sessions
-        calendars.push({
-            id: 'booked',
-            name: 'My Booked Sessions',
-            backgroundColor: '#6c757d',
-            borderColor: '#495057',
-        });
+        // Schedule block calendars (coach portal schedule)
+        calendars.push({ id: 'sb_group',   name: 'Group Training',   backgroundColor: '#D7FF00', borderColor: '#b8e000' });
+        calendars.push({ id: 'sb_private', name: 'Private Training', backgroundColor: '#1a1a1a', borderColor: '#333' });
+        // Booked sessions (greyed out)
+        calendars.push({ id: 'booked', name: 'My Booked Sessions', backgroundColor: '#6c757d', borderColor: '#495057' });
 
         calendar = new Calendar('#calendar', {
             defaultView: 'week',
@@ -697,6 +695,7 @@
 
         const data = {
             slot_id: selectedSlot.raw.slot_id,
+            slot_type: selectedSlot.raw.slot_type || 'availability_slot',
             player_id: playerId,
             package_id: usePackage && activePackage ? activePackage.id : null,
             notes: notes,
