@@ -17,7 +17,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center">
-                <a href="/"><img src="/static/img/apc-logo-black.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+                <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
             </div>
             <!-- Desktop nav -->
             <div class="hidden md:flex items-center space-x-1 text-sm">
@@ -45,7 +45,7 @@
                         <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'notification_settings' or request.resolver_match.url_name == 'notification_history' %}text-secondary font-semibold{% endif %} rounded-b-lg">🔔 Notifications</a>
                     </div>
                 </div>
-                <a href="/book" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600 transition font-semibold ml-2">
+                <a href="{% url 'clients:book' %}" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600 transition font-semibold ml-2">
                     Book Session
                 </a>
                 <span class="text-gray-300 mx-1">|</span>
@@ -70,7 +70,7 @@
             <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">📦 Packages</a>
             <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">👤 My Profile</a>
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">🔔 Notifications</a>
-            <a href="/book" class="block mx-3 my-2 px-4 py-2 bg-accent text-white rounded-full hover:bg-red-600 font-semibold text-center">Book Session</a>
+            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-white rounded-full hover:bg-red-600 font-semibold text-center">Book Session</a>
             <hr class="my-1 border-gray-200">
             <a href="/accounts/logout/" class="block px-3 py-2 text-gray-500 hover:text-accent rounded">Logout</a>
         </div>
@@ -194,7 +194,7 @@
                         </li>
                     </ul>
 
-                    <a href="/book?package={{ package.id }}" class="block w-full text-center py-3 bg-accent text-white rounded-lg hover:bg-red-600 transition">
+                    <a href="{% url 'clients:book' %}" class="block w-full text-center py-3 bg-accent text-white rounded-lg hover:bg-red-600 transition">
                         Purchase
                     </a>
                 </div>

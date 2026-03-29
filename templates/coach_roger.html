@@ -17,11 +17,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="/"><img src="/static/img/apc-logo-black.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+                    <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
                 </div>
                 <div class="flex items-center space-x-4">
                     <a href="/" class="text-gray-600 hover:text-secondary">Home</a>
-                    <a href="/book" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600">Book Now</a>
+                    <a href="{% url 'book' %}" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600">Book Now</a>
                 </div>
             </div>
         </div>
@@ -54,7 +54,7 @@
                             <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                         </a>
                     </div>
-                    <a href="/book?coach=roger" class="inline-block bg-accent text-white px-8 py-3 rounded-full font-semibold hover:bg-red-600 transition">
+                    <a href="{% url 'book' %}" class="inline-block bg-accent text-white px-8 py-3 rounded-full font-semibold hover:bg-red-600 transition">
                         Book with Roger
                     </a>
                 </div>
@@ -130,7 +130,7 @@
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-8 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-gray-400">&copy; 2024 Atletas Performance Center. All rights reserved.</p>
+            <p class="text-gray-400">&copy; 2026 Atletas Performance Center. All rights reserved.</p>
         </div>
     </footer>
 </body>

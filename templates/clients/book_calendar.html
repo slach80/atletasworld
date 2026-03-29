@@ -1,102 +1,197 @@
-{% extends "base.html" %}
-{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Session - Atletas Performance Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a1a1a',
+                        secondary: '#2ecc71',
+                        accent: '#e74c3c',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Bootstrap 5 CSS (for calendar, modals) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Toast UI Calendar CSS -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+    <style>
+        body { background: #f9fafb; }
+        #calendar { height: 600px; }
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .calendar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            min-width: 200px;
+            text-align: center;
+        }
+        .package-card {
+            border-left: 4px solid #2ecc71;
+        }
+        .package-card.low-sessions {
+            border-left-color: #f39c12;
+        }
+        .package-card.no-sessions {
+            border-left-color: #e74c3c;
+        }
+        .session-info-badge {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .slot-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .slot-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
 
-{% block title %}Book a Session - Client Portal{% endblock %}
+<!-- Client Portal Navigation -->
+<nav class="bg-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+            </div>
+            <!-- Desktop nav -->
+            <div class="hidden md:flex items-center space-x-1 text-sm">
+                <!-- Players dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-1 px-3 py-2 rounded text-gray-700 hover:bg-gray-100 transition">
+                        Players
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute left-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                        <a href="{% url 'clients:players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-t-lg">👥 My Players</a>
+                        <a href="{% url 'clients:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">📋 Assessments</a>
+                    </div>
+                </div>
+                <!-- Account dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-1 px-3 py-2 rounded text-gray-700 hover:bg-gray-100 transition">
+                        Account
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                        <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-t-lg">📅 My Bookings</a>
+                        <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700">📦 Packages</a>
+                        <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700">👤 My Profile</a>
+                        <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">🔔 Notifications</a>
+                    </div>
+                </div>
+                <a href="{% url 'clients:book' %}" class="bg-accent text-white px-4 py-2 rounded-full font-semibold ml-2" style="background-color:#e74c3c;">
+                    Book Session
+                </a>
+                <span class="text-gray-300 mx-1">|</span>
+                <a href="/accounts/logout/" class="px-3 py-2 text-gray-500 hover:text-accent transition text-xs">Logout</a>
+            </div>
+            <!-- Mobile button -->
+            <div class="md:hidden flex items-center">
+                <button id="client-mobile-btn" class="p-2 rounded text-gray-700 hover:bg-gray-100">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Mobile menu -->
+    <div id="client-mobile-menu" class="hidden md:hidden bg-white border-t">
+        <div class="px-2 pt-2 pb-3 space-y-1 text-sm">
+            <p class="px-3 pt-1 text-xs text-gray-400 uppercase tracking-wider">Players</p>
+            <a href="{% url 'clients:players' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">👥 My Players</a>
+            <a href="{% url 'clients:assessments' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">📋 Assessments</a>
+            <p class="px-3 pt-2 text-xs text-gray-400 uppercase tracking-wider">Account</p>
+            <a href="{% url 'clients:bookings' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">📅 My Bookings</a>
+            <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">📦 Packages</a>
+            <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">👤 My Profile</a>
+            <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-gray-700 hover:bg-gray-100">🔔 Notifications</a>
+            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 text-white rounded-full font-semibold text-center" style="background-color:#e74c3c;">Book Session</a>
+            <hr class="my-1 border-gray-200">
+            <a href="/accounts/logout/" class="block px-3 py-2 text-gray-500 hover:text-accent rounded">Logout</a>
+        </div>
+    </div>
+</nav>
+<script>
+(function(){
+    var btn = document.getElementById('client-mobile-btn');
+    if(btn) btn.addEventListener('click', function(){
+        document.getElementById('client-mobile-menu').classList.toggle('hidden');
+    });
+})();
+</script>
 
-{% block extra_css %}
-<!-- Toast UI Calendar CSS -->
-<link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
-<style>
-    #calendar {
-        height: 600px;
-    }
-    .calendar-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-    .calendar-nav {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .calendar-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        min-width: 200px;
-        text-align: center;
-    }
-    .package-card {
-        border-left: 4px solid #2ecc71;
-        transition: all 0.2s ease;
-    }
-    .package-card.low-sessions {
-        border-left-color: #f39c12;
-    }
-    .package-card.no-sessions {
-        border-left-color: #e74c3c;
-    }
-    .session-info-badge {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-    .slot-card {
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .slot-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .filter-section {
-        background: #f8f9fa;
-        border-radius: 0.5rem;
-        padding: 1rem;
-    }
-</style>
-{% endblock %}
+<!-- Page Header -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+    <h1 class="text-2xl font-bold text-gray-900">Book a Session</h1>
+    <p class="text-gray-500 text-sm mt-1">Select a slot on the calendar to book with a coach.</p>
+</div>
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
+<!-- Main Content -->
+<div class="container-fluid py-3" style="max-width:1400px;">
+    <div class="row g-3">
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h6 class="text-uppercase text-muted small mb-3">Client Portal</h6>
-                    <nav class="nav flex-column">
-                        <a class="nav-link px-0" href="{% url 'clients:dashboard' %}">
-                            <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                        </a>
-                        <a class="nav-link px-0 active fw-bold" href="{% url 'clients:book' %}">
-                            <i class="bi bi-calendar-plus me-2"></i> Book Session
-                        </a>
-                        <a class="nav-link px-0" href="{% url 'clients:bookings' %}">
-                            <i class="bi bi-calendar-check me-2"></i> My Bookings
-                        </a>
-                        <a class="nav-link px-0" href="{% url 'clients:players' %}">
-                            <i class="bi bi-people me-2"></i> My Players
-                        </a>
-                        <a class="nav-link px-0" href="{% url 'clients:packages' %}">
-                            <i class="bi bi-box me-2"></i> My Packages
-                        </a>
-                    </nav>
-                </div>
-            </div>
 
-            <!-- Package Status -->
-            <div class="card border-0 shadow-sm mt-3" id="package-status">
+            <!-- Package Status (server-rendered — no spinner) -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0"><i class="bi bi-box me-2"></i>Your Package</h6>
                 </div>
-                <div class="card-body" id="package-info">
-                    <!-- Populated by JavaScript -->
-                    <div class="text-center py-3">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                    </div>
+                <div class="card-body">
+                    {% if active_package %}
+                        {% with remaining=active_package.sessions_remaining total=active_package.package.sessions_included %}
+                        <div class="package-card {% if remaining <= 0 %}no-sessions{% elif remaining <= 2 %}low-sessions{% endif %} p-2 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold small">{{ active_package.package.name }}</div>
+                                    <small class="text-muted">Expires: {{ active_package.expiry_date|date:"M d, Y" }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="session-info-badge {% if remaining <= 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {% if total > 0 %}{{ remaining }}{% else %}∞{% endif %}
+                                    </div>
+                                    <small class="text-muted">sessions</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% if remaining <= 2 %}
+                        <a href="{% url 'clients:packages' %}" class="btn btn-outline-warning btn-sm w-100 mt-2">
+                            <i class="bi bi-arrow-up-circle me-1"></i> Upgrade Package
+                        </a>
+                        {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        <div class="text-center">
+                            <p class="text-muted small mb-2">No active package</p>
+                            <a href="{% url 'clients:packages' %}" class="btn btn-success btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i> Get Package
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -275,9 +370,9 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Toast UI Calendar JS -->
 <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
 <script>
@@ -336,53 +431,9 @@
             const response = await fetch('/api/bookings/packages/');
             const data = await response.json();
             packages = data.packages || [];
-
-            updatePackageDisplay();
         } catch (error) {
             console.error('Error loading packages:', error);
         }
-    }
-
-    function updatePackageDisplay() {
-        const container = document.getElementById('package-info');
-
-        if (packages.length === 0) {
-            container.innerHTML = `
-                <div class="text-center">
-                    <p class="text-muted mb-2">No active package</p>
-                    <a href="{% url 'clients:packages' %}" class="btn btn-success btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i> Get Package
-                    </a>
-                </div>
-            `;
-            return;
-        }
-
-        const pkg = packages[0]; // Use first active package
-        const statusClass = pkg.sessions_remaining <= 0 ? 'no-sessions' :
-                           pkg.sessions_remaining <= 2 ? 'low-sessions' : '';
-
-        container.innerHTML = `
-            <div class="package-card ${statusClass} p-2 rounded">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="fw-bold">${pkg.package_name}</div>
-                        <small class="text-muted">Expires: ${pkg.expiry_date}</small>
-                    </div>
-                    <div class="text-end">
-                        <div class="session-info-badge ${pkg.sessions_remaining <= 0 ? 'text-danger' : 'text-success'}">
-                            ${pkg.sessions_remaining}
-                        </div>
-                        <small class="text-muted">sessions</small>
-                    </div>
-                </div>
-            </div>
-            ${pkg.sessions_remaining <= 2 ? `
-            <a href="{% url 'clients:packages' %}" class="btn btn-outline-warning btn-sm w-100 mt-2">
-                <i class="bi bi-arrow-up-circle me-1"></i> Upgrade Package
-            </a>
-            ` : ''}
-        `;
     }
 
     function initCalendar() {
@@ -504,14 +555,12 @@
     }
 
     function addBookedSessionsToCalendar() {
-        // Add client's booked sessions as grey/disabled events
         existingBookings.forEach(booking => {
-            // Parse the date and time
             const [year, month, day] = booking.date.split('-').map(Number);
             const [hour, minute] = booking.time.split(':').map(Number);
 
             const startDate = new Date(year, month - 1, day, hour, minute);
-            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Assume 1 hour duration
+            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
             calendar.createEvents([{
                 id: `booked-${booking.id}`,
@@ -533,26 +582,22 @@
         selectedSlot = event;
         const raw = event.raw || {};
 
-        // Check if this is an already booked session
         if (raw.is_booked) {
             alert(`You already have this session booked for ${raw.player_name || 'your player'}.`);
             return;
         }
 
-        // Check if slot is available
         if (raw.spots_remaining <= 0) {
             alert('This slot is fully booked.');
             return;
         }
 
-        // Get selected player
         const playerId = document.getElementById('playerSelect').value;
         if (!playerId) {
             alert('Please select a player first.');
             return;
         }
 
-        // Populate booking details
         const startDate = new Date(event.start.d.d);
         document.getElementById('bookingDetails').innerHTML = `
             <div class="mb-3">
@@ -579,7 +624,6 @@
             </div>
         `;
 
-        // Update package section
         document.getElementById('sessionPrice').textContent = `$${raw.price}`;
 
         const activePackage = packages.find(p => p.can_book);
@@ -595,31 +639,20 @@
             document.getElementById('confirmBookingBtn').disabled = true;
         }
 
-        // Check for same-day bookings
         checkSameDayBookings(startDate, playerId);
-
         bookingModal.show();
     }
 
     function checkSameDayBookings(selectedDate, selectedPlayerId) {
-        // Format selected date to match stored format (YYYY-MM-DD)
         const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
-        // Find bookings on the same day
-        const sameDayBookings = existingBookings.filter(booking => {
-            return booking.date === selectedDateStr;
-        });
-
-        // Find bookings for the same player on the same day
-        const samePlayerSameDayBookings = sameDayBookings.filter(booking => {
-            return booking.player_id === parseInt(selectedPlayerId);
-        });
+        const sameDayBookings = existingBookings.filter(booking => booking.date === selectedDateStr);
+        const samePlayerSameDayBookings = sameDayBookings.filter(booking => booking.player_id === parseInt(selectedPlayerId));
 
         const warningDiv = document.getElementById('sameDayWarning');
         const countSpan = document.getElementById('sameDayCount');
 
         if (samePlayerSameDayBookings.length > 0) {
-            // Show warning for same player
             countSpan.textContent = samePlayerSameDayBookings.length;
             warningDiv.style.display = 'block';
             warningDiv.className = 'alert alert-warning mt-3';
@@ -633,7 +666,6 @@
                 Are you sure you want to book another session?</p>
             `;
         } else if (sameDayBookings.length > 0) {
-            // Show info for other players on same day
             countSpan.textContent = sameDayBookings.length;
             warningDiv.style.display = 'block';
             warningDiv.className = 'alert alert-info mt-3';
@@ -681,8 +713,6 @@
             if (response.ok) {
                 bookingModal.hide();
 
-                // Add the new booking to existingBookings array for same-day detection
-                // Use the selectedSlot date in YYYY-MM-DD format for consistency
                 const bookedDate = new Date(selectedSlot.start.d.d);
                 const bookedDateStr = bookedDate.toISOString().split('T')[0];
                 const bookedTimeStr = bookedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -696,12 +726,10 @@
                     session_type: selectedSlot.raw?.session_type_name || result.booking?.session_type || ''
                 });
 
-                // Show success
                 document.getElementById('successMessage').textContent =
                     `Your ${result.booking.session_type} session with ${result.booking.coach} on ${result.booking.date} at ${result.booking.time} has been confirmed.`;
                 successModal.show();
 
-                // Refresh data
                 loadAvailability();
                 loadPackages();
             } else {
@@ -733,6 +761,6 @@
         }
         return cookieValue;
     }
-
 </script>
-{% endblock %}
+</body>
+</html>

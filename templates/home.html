@@ -101,7 +101,7 @@
                 <a href="#coaches" class="text-gray-300 hover:text-secondary font-medium transition">Coaches</a>
                 <a href="#about" class="text-gray-300 hover:text-secondary font-medium transition">About</a>
                 <a href="#fundraising" class="text-gray-300 hover:text-secondary font-medium transition">Fundraising</a>
-                <a href="/book" class="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-lg">
+                <a href="{% url 'book' %}" class="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-lg">
                     Book Now
                 </a>
             </div>
@@ -144,7 +144,7 @@
             <a href="#programs" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Programs</a>
             <a href="#coaches" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Coaches</a>
             <a href="#about" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">About</a>
-            <a href="/book" class="block px-3 py-2 bg-accent text-white hover:bg-red-600 rounded">Book Now</a>
+            <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-white hover:bg-red-600 rounded">Book Now</a>
         </div>
     </div>
 </nav>
@@ -213,7 +213,7 @@
                     {% if event.min_age or event.max_age %}<div class="flex items-center"><span class="mr-2">🎂</span> Ages {{ event.min_age|default:"any" }}–{{ event.max_age|default:"any" }}</div>{% endif %}
                     {% if event.end_date and event.end_date != event.start_date %}<div class="flex items-center"><span class="mr-2">📅</span> Ends {{ event.end_date|date:"M j, Y" }}</div>{% endif %}
                 </div>
-                <a href="/book" class="block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                <a href="{% url 'book' %}" class="block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
                     Reserve Your Spot
                 </a>
             </div>
@@ -362,7 +362,7 @@
                             <span class="text-3xl font-bold text-primary">${{ prog.price }}</span>
                             <span class="text-gray-600">per session</span>
                         </div>
-                        <a href="/book" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">Book Now</a>
+                        <a href="{% url 'book' %}" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">Book Now</a>
                         {% endif %}
                     </div>
                 </div>
@@ -398,7 +398,7 @@
                     </p>
                     {% endif %}
                     <div class="mt-4">
-                    <a href="/book" class="block text-center {% cycle 'bg-secondary hover:bg-green-600' 'bg-accent hover:bg-red-600' 'bg-primary hover:bg-gray-800' 'bg-secondary hover:bg-green-600' %} text-white py-2 rounded-lg font-semibold transition">Book Now</a>
+                    <a href="{% url 'book' %}" class="block text-center {% cycle 'bg-secondary hover:bg-green-600' 'bg-accent hover:bg-red-600' 'bg-primary hover:bg-gray-800' 'bg-secondary hover:bg-green-600' %} text-white py-2 rounded-lg font-semibold transition">Book Now</a>
                     </div>
                 </div>
                 {% endfor %}
@@ -615,7 +615,7 @@
                 Join hundreds of athletes who have elevated their game with Atletas Performance Center's personalized approach
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/book" class="bg-accent text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
+                <a href="{% url 'book' %}" class="bg-accent text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
                     Book Your First Session
                 </a>
                 <a href="#contact" class="bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">
@@ -640,7 +640,7 @@
                         <li><a href="#coaches" class="hover:text-secondary transition">Coaches</a></li>
                         <li><a href="#about" class="hover:text-secondary transition">About</a></li>
                         <li><a href="#fundraising" class="hover:text-secondary transition">Fundraising</a></li>
-                        <li><a href="/book" class="hover:text-secondary transition">Book Session</a></li>
+                        <li><a href="{% url 'book' %}" class="hover:text-secondary transition">Book Session</a></li>
                     </ul>
                 </div>
                 <div>
