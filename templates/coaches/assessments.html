@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assessments - Coach Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } } }</script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-primary text-white shadow-lg">
@@ -106,7 +106,7 @@
                 <div class="bg-white rounded-lg p-4 border">
                     <p class="font-semibold">{{ booking.player }}</p>
                     <p class="text-sm text-gray-500">{{ booking.scheduled_date|date:"M j" }} - {{ booking.session_type.name }}</p>
-                    <a href="{% url 'coaches:create_assessment' booking.id %}" class="mt-2 inline-block bg-accent text-white px-3 py-1 rounded text-sm hover:bg-red-600">Add Assessment</a>
+                    <a href="{% url 'coaches:create_assessment' booking.id %}" class="mt-2 inline-block bg-accent text-gray-900 px-3 py-1 rounded text-sm hover:bg-[#b8e000]">Add Assessment</a>
                 </div>
                 {% endfor %}
             </div>
@@ -161,7 +161,7 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-green-600">
+                    <button type="submit" class="px-4 py-2 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000]">
                         Apply Filters
                     </button>
                     <a href="{% url 'coaches:assessments' %}" class="px-4 py-2 border rounded-lg hover:bg-gray-50">

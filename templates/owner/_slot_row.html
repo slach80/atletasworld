@@ -41,7 +41,7 @@
                 </div>
                 <textarea name="notes" rows="1" placeholder="Notes" class="w-full border rounded px-2 py-1 text-xs">{{ slot.notes }}</textarea>
                 <div class="flex gap-1">
-                    <button type="submit" class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-green-600">Save</button>
+                    <button type="submit" class="text-xs px-2 py-1 bg-secondary text-gray-900 rounded hover:bg-[#b8e000]">Save</button>
                     <button type="button" onclick="toggleEdit('edit-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Cancel</button>
                 </div>
             </form>
@@ -53,7 +53,7 @@
                 {% csrf_token %}
                 <textarea name="cancellation_notes" rows="2" placeholder="Cancellation reason (sent to client)" class="w-full border rounded px-2 py-1 text-xs"></textarea>
                 <div class="flex gap-1">
-                    <button type="submit" class="text-xs px-2 py-1 bg-accent text-white rounded hover:bg-red-600">Confirm Cancel</button>
+                    <button type="submit" class="text-xs px-2 py-1 bg-accent text-gray-900 rounded hover:bg-[#b8e000]">Confirm Cancel</button>
                     <button type="button" onclick="toggleCancel('cancel-{{ slot.pk }}')" class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Back</button>
                 </div>
             </form>

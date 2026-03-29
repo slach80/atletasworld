@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } }
         }
     </script>
 </head>
@@ -173,7 +173,7 @@
 
                 <div class="flex space-x-4">
                     <a href="{% url 'coaches:dashboard' %}" class="flex-1 text-center py-3 border rounded-lg hover:bg-gray-50">Cancel</a>
-                    <button type="submit" id="sendBtn" class="flex-1 bg-secondary text-white py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                    <button type="submit" id="sendBtn" class="flex-1 bg-secondary text-gray-900 py-3 rounded-lg hover:bg-[#b8e000] disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
                         Send Notification
                     </button>
                 </div>

@@ -11,8 +11,8 @@
                 extend: {
                     colors: {
                         primary: '#1a1a1a',
-                        secondary: '#2ecc71',
-                        accent: '#e74c3c',
+                        secondary: '#D7FF00',
+                        accent: '#D7FF00',
                     }
                 }
             }
@@ -47,7 +47,7 @@
             text-align: center;
         }
         .package-card {
-            border-left: 4px solid #2ecc71;
+            border-left: 4px solid #D7FF00;
         }
         .package-card.low-sessions {
             border-left-color: #f39c12;
@@ -104,7 +104,7 @@
                         <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">🔔 Notifications</a>
                     </div>
                 </div>
-                <a href="{% url 'clients:book' %}" class="bg-accent text-white px-4 py-2 rounded-full font-semibold ml-2" style="background-color:#e74c3c;">
+                <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full font-semibold ml-2" style="background-color:#D7FF00;">
                     Book Session
                 </a>
                 <span class="text-gray-500 mx-1">|</span>
@@ -129,7 +129,7 @@
             <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📦 Packages</a>
             <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👤 My Profile</a>
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🔔 Notifications</a>
-            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 text-white rounded-full font-semibold text-center" style="background-color:#e74c3c;">Book Session</a>
+            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 text-gray-900 rounded-full font-semibold text-center" style="background-color:#D7FF00;"Book Session</a>
             <hr class="my-1 border-gray-700">
             <a href="/accounts/logout/" class="block px-3 py-2 text-gray-300 hover:text-accent rounded">Logout</a>
         </div>
@@ -246,7 +246,7 @@
         <div class="col-md-9 col-lg-10">
             {% if available_field_rentals %}
             <div class="alert border-0 shadow-sm mb-3 d-flex align-items-center justify-content-between"
-                 style="background:#f0fdf4; border-left:4px solid #2ecc71 !important; border-radius:0.5rem;">
+                 style="background:#f0fdf4; border-left:4px solid #D7FF00 !important; border-radius:0.5rem;">
                 <div>
                     <strong style="color:#166534;">Entire Field Available for Rental</strong>
                     <span class="text-muted small ms-2">
@@ -278,7 +278,7 @@
                     <!-- Legend -->
                     <div class="d-flex align-items-center gap-3 small text-muted">
                         <span><span class="badge" style="background-color: #6c757d;">&nbsp;&nbsp;</span> My Booked</span>
-                        <span><span class="badge" style="background-color: #2ecc71;">&nbsp;&nbsp;</span> Available</span>
+                        <span><span class="badge" style="background-color: #D7FF00;">&nbsp;&nbsp;</span> Available</span>
                     </div>
                 </div>
                 <div class="card-body p-0">

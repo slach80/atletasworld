@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quick Assess - Coach Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } } }</script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-primary text-white shadow-lg">
@@ -153,7 +153,7 @@
                     {% endfor %}
                 </div>
 
-                <button type="submit" class="w-full mt-6 bg-secondary text-white py-3 rounded-lg hover:bg-green-600">Submit All Assessments</button>
+                <button type="submit" class="w-full mt-6 bg-secondary text-gray-900 py-3 rounded-lg hover:bg-[#b8e000]">Submit All Assessments</button>
             </form>
             {% else %}
             <p class="text-gray-500 text-center py-8">No players to assess for this session.</p>

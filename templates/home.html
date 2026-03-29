@@ -12,8 +12,8 @@
                 extend: {
                     colors: {
                         primary: '#1a1a1a',     // Deep black (professional)
-                        secondary: '#2ecc71',    // Vibrant green (energy)
-                        accent: '#e74c3c',       // Bold red (passion)
+                        secondary: '#D7FF00',    // Vibrant green (energy)
+                        accent: '#D7FF00',       // Bold red (passion)
                     }
                 }
             }
@@ -101,7 +101,7 @@
                 <a href="#coaches" class="text-gray-300 hover:text-secondary font-medium transition">Coaches</a>
                 <a href="#about" class="text-gray-300 hover:text-secondary font-medium transition">About</a>
                 <a href="#fundraising" class="text-gray-300 hover:text-secondary font-medium transition">Fundraising</a>
-                <a href="{% url 'book' %}" class="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-lg">
+                <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-[#b8e000] transition transform hover:scale-105 shadow-lg">
                     Book Now
                 </a>
             </div>
@@ -121,7 +121,7 @@
     <div id="mobile-menu" class="hidden md:hidden bg-primary border-t border-gray-700">
         <div class="px-2 pt-2 pb-3 space-y-1">
             {% if user.is_authenticated %}
-            <a href="/login-redirect/" class="block px-3 py-2 bg-secondary text-white font-semibold rounded flex items-center">
+            <a href="/login-redirect/" class="block px-3 py-2 bg-secondary text-gray-900 font-semibold rounded flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 My Portal
             </a>
@@ -130,7 +130,7 @@
                 Sign Out
             </a>
             {% else %}
-            <a href="/accounts/login/" class="block px-3 py-2 bg-secondary text-white font-semibold rounded flex items-center">
+            <a href="/accounts/login/" class="block px-3 py-2 bg-secondary text-gray-900 font-semibold rounded flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                 Login
             </a>
@@ -144,7 +144,7 @@
             <a href="#programs" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Programs</a>
             <a href="#coaches" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Coaches</a>
             <a href="#about" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">About</a>
-            <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-white hover:bg-red-600 rounded">Book Now</a>
+            <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-gray-900 hover:bg-[#b8e000] rounded">Book Now</a>
         </div>
     </div>
 </nav>
@@ -160,7 +160,7 @@
                 Empowering athletes of all levels with tailored training programs. Your success is our priority.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#programs" class="bg-accent text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
+                <a href="#programs" class="bg-accent text-gray-900 px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl">
                     Explore Programs
                 </a>
                 <a href="/accounts/login/" class="bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">
@@ -289,7 +289,7 @@
                 <img src="https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/d69c34be-9afc-48bf-ba06-08cacabe6eca/nz9_0181_53908342723_o.jpg" 
                      alt="Training session" 
                      class="rounded-2xl shadow-2xl">
-                <div class="absolute -bottom-6 -left-6 bg-accent text-white p-6 rounded-2xl shadow-xl">
+                <div class="absolute -bottom-6 -left-6 bg-accent text-gray-900 p-6 rounded-2xl shadow-xl">
                     <div class="text-3xl font-bold">Your Success</div>
                     <div class="text-lg">Is Our Priority</div>
                 </div>
@@ -355,14 +355,14 @@
                         {% if prog.requires_package %}
                         <div class="mb-4">
                             <p class="text-sm text-gray-500 mb-2">Pre-paid via training package</p>
-                            <a href="#packages" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">View Packages</a>
+                            <a href="#packages" class="block text-center bg-accent text-gray-900 py-3 rounded-lg font-semibold hover:bg-[#b8e000] transition shadow-lg">View Packages</a>
                         </div>
                         {% else %}
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-3xl font-bold text-primary">${{ prog.price }}</span>
                             <span class="text-gray-600">per session</span>
                         </div>
-                        <a href="{% url 'book' %}" class="block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition shadow-lg">Book Now</a>
+                        <a href="{% url 'book' %}" class="block text-center bg-accent text-gray-900 py-3 rounded-lg font-semibold hover:bg-[#b8e000] transition shadow-lg">Book Now</a>
                         {% endif %}
                     </div>
                 </div>
@@ -398,7 +398,7 @@
                     </p>
                     {% endif %}
                     <div class="mt-4">
-                    <a href="{% url 'book' %}" class="block text-center {% cycle 'bg-secondary hover:bg-green-600' 'bg-accent hover:bg-red-600' 'bg-primary hover:bg-gray-800' 'bg-secondary hover:bg-green-600' %} text-white py-2 rounded-lg font-semibold transition">Book Now</a>
+                    <a href="{% url 'book' %}" class="block text-center {% cycle 'bg-secondary hover:bg-[#b8e000]' 'bg-accent hover:bg-[#b8e000]' 'bg-primary hover:bg-gray-800' 'bg-secondary hover:bg-[#b8e000]' %} text-white py-2 rounded-lg font-semibold transition">Book Now</a>
                     </div>
                 </div>
                 {% endfor %}
@@ -514,13 +514,13 @@
                 <div class="bg-white text-gray-900 rounded-2xl p-8 shadow-2xl">
                     <h3 class="text-2xl font-bold mb-6">Make a Donation</h3>
                     <div class="space-y-4">
-                        <button class="w-full bg-accent text-white py-4 rounded-lg font-semibold hover:bg-red-600 transition text-lg">
+                        <button class="w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg">
                             $25 - Equipment Fund
                         </button>
-                        <button class="w-full bg-accent text-white py-4 rounded-lg font-semibold hover:bg-red-600 transition text-lg">
+                        <button class="w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg">
                             $50 - One Training Session
                         </button>
-                        <button class="w-full bg-accent text-white py-4 rounded-lg font-semibold hover:bg-red-600 transition text-lg">
+                        <button class="w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg">
                             $100 - Monthly Scholarship
                         </button>
                         <button class="w-full border-2 border-accent text-accent py-4 rounded-lg font-semibold hover:bg-accent hover:text-white transition text-lg">
@@ -615,7 +615,7 @@
                 Join hundreds of athletes who have elevated their game with Atletas Performance Center's personalized approach
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'book' %}" class="bg-accent text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-xl">
+                <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl">
                     Book Your First Session
                 </a>
                 <a href="#contact" class="bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">

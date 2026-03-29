@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance - Coach Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } } }</script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-primary text-white shadow-lg">
@@ -118,7 +118,7 @@
                                 <option value="{{ value }}" {% if item.attendance.status == value %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
                             </select>
-                            <button type="submit" class="bg-secondary text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600">Update</button>
+                            <button type="submit" class="bg-secondary text-gray-900 px-4 py-2 rounded-lg text-sm hover:bg-[#b8e000]">Update</button>
                         </form>
                     </div>
                 </div>

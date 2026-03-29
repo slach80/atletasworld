@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } }
         }
     </script>
 </head>
@@ -23,7 +23,7 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <a href="/" class="text-white hover:text-secondary">Home</a>
-                    <a href="{% url 'book' %}" class="bg-accent text-white px-4 py-2 rounded-full hover:bg-red-600">Book Now</a>
+                    <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full hover:bg-[#b8e000]">Book Now</a>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 </div>
                 <div class="md:w-2/3 p-8">
                     <div class="flex items-center mb-4">
-                        <span class="bg-secondary text-white px-3 py-1 rounded-full text-sm font-semibold">COACH</span>
+                        <span class="bg-secondary text-gray-900 px-3 py-1 rounded-full text-sm font-semibold">COACH</span>
                         {% if review_stats.avg_rating %}
                         <span class="ml-2 flex items-center text-yellow-500">
                             {% for i in "12345" %}
@@ -103,7 +103,7 @@
                         {% endif %}
                     </div>
 
-                    <a href="{% url 'book' %}" class="inline-block bg-accent text-white px-8 py-3 rounded-full font-semibold hover:bg-red-600 transition">
+                    <a href="{% url 'book' %}" class="inline-block bg-accent text-gray-900 px-8 py-3 rounded-full font-semibold hover:bg-[#b8e000] transition">
                         Book with {{ coach.user.first_name }}
                     </a>
                 </div>

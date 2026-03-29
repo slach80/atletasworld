@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } }
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } }
         }
     </script>
 </head>
@@ -176,7 +176,7 @@
                                 </div>
                                 <div class="flex space-x-2">
                                     <a href="{% url 'coaches:player_detail' player_data.player.id %}" 
-                                       class="bg-secondary text-white px-3 py-1 rounded text-sm hover:bg-green-600">View</a>
+                                       class="bg-secondary text-gray-900 px-3 py-1 rounded text-sm hover:bg-[#b8e000]">View</a>
                                     <button onclick="showNotifyModal({{ player_data.player.id }}, '{{ player_data.player.first_name }}')"
                                             class="bg-purple-500 text-white px-3 py-1 rounded text-sm hover:bg-purple-600">Notify</button>
                                 </div>
@@ -221,7 +221,7 @@
                 </div>
                 <div class="flex space-x-3">
                     <button type="button" onclick="closeNotifyModal()" class="flex-1 border rounded-lg py-2 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" class="flex-1 bg-secondary text-white rounded-lg py-2 hover:bg-green-600">Send Notification</button>
+                    <button type="submit" class="flex-1 bg-secondary text-gray-900 rounded-lg py-2 hover:bg-[#b8e000]">Send Notification</button>
                 </div>
             </form>
         </div>

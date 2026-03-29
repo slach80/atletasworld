@@ -4,7 +4,7 @@
 <div class="bg-white rounded-xl shadow-md p-6">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-gray-800">My Teams</h2>
-        <a href="{% url 'clients:team_create' %}" class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition text-sm flex items-center">
+        <a href="{% url 'clients:team_create' %}" class="bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000] transition text-sm flex items-center">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
@@ -48,7 +48,7 @@
                 <a href="{% url 'clients:team_detail' team.id %}" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition text-center text-sm">
                     Manage Team
                 </a>
-                <a href="{% url 'clients:team_book' team.id %}" class="flex-1 bg-secondary text-white py-2 rounded-lg hover:bg-green-600 transition text-center text-sm">
+                <a href="{% url 'clients:team_book' team.id %}" class="flex-1 bg-secondary text-gray-900 py-2 rounded-lg hover:bg-[#b8e000] transition text-center text-sm">
                     Book Session
                 </a>
             </div>
@@ -62,7 +62,7 @@
         </svg>
         <h3 class="text-xl font-semibold text-gray-700 mb-2">No Teams Yet</h3>
         <p class="text-gray-500 mb-6 max-w-md mx-auto">Create your first team to manage your roster and book team training sessions.</p>
-        <a href="{% url 'clients:team_create' %}" class="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-green-600 transition inline-flex items-center">
+        <a href="{% url 'clients:team_create' %}" class="bg-secondary text-gray-900 px-6 py-3 rounded-lg hover:bg-[#b8e000] transition inline-flex items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>

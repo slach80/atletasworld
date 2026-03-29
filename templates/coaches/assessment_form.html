@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Assessment - Coach Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c' } } } }</script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } } }</script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-primary text-white shadow-lg">
@@ -170,7 +170,7 @@
 
                 <div class="flex space-x-4">
                     <a href="{% url 'coaches:assessments' %}" class="flex-1 text-center py-3 border rounded-lg hover:bg-gray-50">Cancel</a>
-                    <button type="submit" class="flex-1 bg-secondary text-white py-3 rounded-lg hover:bg-green-600">Submit Assessment</button>
+                    <button type="submit" class="flex-1 bg-secondary text-gray-900 py-3 rounded-lg hover:bg-[#b8e000]">Submit Assessment</button>
                 </div>
             </form>
         </div>

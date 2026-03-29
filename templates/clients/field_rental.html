@@ -124,7 +124,7 @@
             {% if slot.title %}<div class="text-sm font-medium text-gray-700 mb-1">{{ slot.title }}</div>{% endif %}
             {% if slot.notes %}<div class="text-xs text-gray-500 mb-3">{{ slot.notes }}</div>{% endif %}
             <a href="{% url 'clients:field_rental_request' slot.id %}{% if preselect_team_id %}?team={{ preselect_team_id }}{% endif %}"
-               class="block w-full text-center bg-secondary text-white py-2 rounded-lg hover:bg-green-600 transition text-sm font-medium">
+               class="block w-full text-center bg-secondary text-gray-900 py-2 rounded-lg hover:bg-[#b8e000] transition text-sm font-medium">
                 Request This Slot
             </a>
         </div>

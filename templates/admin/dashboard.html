@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#2ecc71', accent: '#e74c3c', admin: '#6366f1' } } }
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00', admin: '#6366f1' } } }
         }
     </script>
 </head>
@@ -150,7 +150,7 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <span class="{% if coach.sessions_today > 0 %}bg-secondary text-white{% else %}bg-gray-200 text-gray-600{% endif %} px-2 py-1 rounded-full text-xs">
+                            <span class="{% if coach.sessions_today > 0 %}bg-secondary text-gray-900{% else %}bg-gray-200 text-gray-600{% endif %} px-2 py-1 rounded-full text-xs">
                                 {{ coach.sessions_today }} today
                             </span>
                         </div>
