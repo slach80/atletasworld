@@ -1,6 +1,9 @@
 """
 REST API endpoints for booking calendar integration.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -445,6 +448,8 @@ class BookingViewSet(viewsets.ModelViewSet):
         except AvailabilitySlot.DoesNotExist:
             return Response({'error': 'Availability slot not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.exception('Booking creation failed: slot_id=%s slot_type=%s player_id=%s',
+                             data.get('slot_id'), data.get('slot_type'), data.get('player_id'))
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
