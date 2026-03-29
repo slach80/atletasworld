@@ -40,19 +40,19 @@ def dashboard(request):
     coach = request.coach
     today = timezone.now().date()
 
-    # Today's sessions
+    # Today's sessions — only blocks with actual client bookings
     todays_blocks = ScheduleBlock.objects.filter(
         coach=coach,
         date=today,
-        status__in=['available', 'booked']
+        status__in=['partially_booked', 'fully_booked']
     ).prefetch_related('attendances__booking__player')
 
-    # Upcoming sessions (next 7 days)
+    # Upcoming sessions (next 7 days) — only blocks with actual client bookings
     upcoming_blocks = ScheduleBlock.objects.filter(
         coach=coach,
         date__gt=today,
         date__lte=today + timedelta(days=7),
-        status__in=['available', 'booked']
+        status__in=['partially_booked', 'fully_booked']
     ).order_by('date', 'start_time')[:10]
 
     # Pending assessments (sessions completed but not assessed)
