@@ -107,7 +107,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
         # Also include ScheduleBlock records (coach portal schedule)
         sb_queryset = ScheduleBlock.objects.filter(
             status='available'
-        ).select_related('coach')
+        ).select_related('coach').prefetch_related('catalog_session_types')
         if start_date:
             sb_queryset = sb_queryset.filter(date__gte=start_date)
         if end_date:
@@ -117,27 +117,39 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
 
         for block in sb_queryset:
             cal = SCHEDULE_BLOCK_CALENDARS.get(block.session_type, SCHEDULE_BLOCK_CALENDARS['group'])
+            catalog_types = list(block.catalog_session_types.all())
+            if catalog_types:
+                name  = ' / '.join(st.name for st in catalog_types)
+                color = catalog_types[0].color if catalog_types[0].color else cal['color']
+                price = str(block.price_override or catalog_types[0].price)
+                dur   = catalog_types[0].duration_minutes
+            else:
+                name  = cal['name']
+                color = cal['color']
+                price = str(block.price_override) if block.price_override else '0'
+                dur   = block.duration_minutes
+
             events.append({
                 'id': f"sb_{block.id}",
                 'calendarId': cal['id'],
-                'title': cal['name'],
+                'title': name,
                 'category': 'time',
                 'start': f"{block.date}T{block.start_time}",
                 'end': f"{block.date}T{block.end_time}",
-                'backgroundColor': cal['color'],
-                'borderColor': cal['color'],
+                'backgroundColor': color,
+                'borderColor': color,
                 'isReadOnly': False,
                 'raw': {
                     'slot_id': block.id,
                     'slot_type': 'schedule_block',
                     'coach_id': block.coach_id,
                     'coach_name': str(block.coach),
-                    'session_type_name': cal['name'],
+                    'session_type_name': name,
                     'status': block.status,
                     'spots_remaining': block.spots_remaining,
                     'max_bookings': block.max_participants,
-                    'price': str(block.price_override) if block.price_override else '0',
-                    'duration': block.duration_minutes,
+                    'price': price,
+                    'duration': dur,
                 }
             })
 
@@ -356,8 +368,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                     return Response({'error': 'This slot is no longer available'},
                                   status=status.HTTP_400_BAD_REQUEST)
 
-                # Find matching session type for display
-                session_type = SessionType.objects.filter(
+                # Use first catalog session type if set, otherwise find by format
+                catalog_types = list(block.catalog_session_types.all())
+                session_type = catalog_types[0] if catalog_types else SessionType.objects.filter(
                     session_format='private' if block.session_type == 'private' else 'clinic',
                     is_active=True
                 ).first()

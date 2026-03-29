@@ -14,6 +14,8 @@ urlpatterns = [
     path('schedule/', views.schedule, name='schedule'),
     path('schedule/add/', views.add_schedule_block, name='add_schedule_block'),
     path('schedule/bulk/', views.add_bulk_schedule, name='add_bulk_schedule'),
+    path('schedule/bulk-delete/', views.bulk_delete_blocks, name='bulk_delete_blocks'),
+    path('schedule/bulk-edit/', views.bulk_edit_blocks, name='bulk_edit_blocks'),
     path('schedule/<int:block_id>/delete/', views.delete_schedule_block, name='delete_schedule_block'),
 
     # Attendance

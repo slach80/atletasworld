@@ -115,49 +115,100 @@
 </script>
 
     <div class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Header with navigation -->
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-lg text-sm font-medium
+                {% if message.tags == 'success' %}bg-secondary/20 text-gray-900
+                {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200
+                {% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+                {% else %}bg-blue-50 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Header -->
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Schedule Management</h1>
-            <div class="flex space-x-2">
-                <a href="{% url 'coaches:add_bulk_schedule' %}" class="bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000] transition">
+            <div class="flex gap-2">
+                <a href="{% url 'coaches:add_bulk_schedule' %}" class="bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000] transition text-sm font-semibold">
                     + Add Availability
                 </a>
             </div>
         </div>
 
         <!-- Week Navigation -->
-        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
             <div class="flex justify-between items-center">
-                <a href="?start={{ prev_week }}" class="px-4 py-2 border rounded-lg hover:bg-gray-50">&larr; Previous Week</a>
-                <h2 class="text-lg font-semibold">{{ start_date|date:"M j" }} - {{ end_date|date:"M j, Y" }}</h2>
-                <a href="?start={{ next_week }}" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Next Week &rarr;</a>
+                <a href="?start={{ prev_week }}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">&larr; Prev</a>
+                <h2 class="text-lg font-semibold">{{ start_date|date:"M j" }} – {{ end_date|date:"M j, Y" }}</h2>
+                <a href="?start={{ next_week }}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">Next &rarr;</a>
             </div>
         </div>
 
+        <!-- Bulk Action Toolbar (hidden until blocks selected) -->
+        <div id="bulk-toolbar" class="hidden bg-primary text-white rounded-xl px-5 py-3 mb-4 flex items-center justify-between gap-4">
+            <span class="text-sm font-semibold"><span id="selected-count">0</span> block(s) selected</span>
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="selectAll()" class="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded-lg">Select All</button>
+                <button onclick="clearSelection()" class="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded-lg">Clear</button>
+                <button onclick="openEditModal()" class="px-3 py-1.5 text-xs bg-secondary text-gray-900 hover:bg-[#b8e000] rounded-lg font-semibold">✏️ Edit Selected</button>
+                <button onclick="submitBulkDelete()" class="px-3 py-1.5 text-xs bg-red-500 hover:bg-red-600 rounded-lg font-semibold">🗑 Delete Selected</button>
+            </div>
+        </div>
+
+        <!-- Bulk Delete form (submitted by JS) -->
+        <form id="bulk-delete-form" method="POST" action="{% url 'coaches:bulk_delete_blocks' %}">
+            {% csrf_token %}
+            <input type="hidden" name="redirect" value="?start={{ start_date|date:'Y-m-d' }}">
+            <div id="bulk-delete-ids"></div>
+        </form>
+
+        <!-- Bulk Edit form (submitted by JS) -->
+        <form id="bulk-edit-form" method="POST" action="{% url 'coaches:bulk_edit_blocks' %}">
+            {% csrf_token %}
+            <input type="hidden" name="redirect" value="?start={{ start_date|date:'Y-m-d' }}">
+            <div id="bulk-edit-ids"></div>
+            <input type="hidden" name="session_type" id="edit-session-type">
+            <input type="hidden" name="duration" id="edit-duration">
+            <input type="hidden" name="max_participants" id="edit-max-participants">
+        </form>
+
         <!-- Week Calendar -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <div class="grid grid-cols-7 gap-4">
+        <div class="bg-white rounded-xl shadow-md p-4">
+            <div class="grid grid-cols-7 gap-2">
                 {% for day in week_days %}
-                <div class="border rounded-lg p-3 min-h-[200px] {% if day.date == today %}bg-secondary/5 border-secondary{% endif %}">
-                    <div class="text-center mb-3 pb-2 border-b">
-                        <p class="text-sm text-gray-500">{{ day.day_name }}</p>
-                        <p class="font-bold {% if day.date == today %}text-secondary{% endif %}">{{ day.date|date:"j" }}</p>
+                <div class="border rounded-lg p-2 min-h-[180px] {% if day.date == today %}bg-secondary/5 border-secondary{% endif %}">
+                    <div class="text-center mb-2 pb-2 border-b">
+                        <p class="text-xs text-gray-500">{{ day.day_name|slice:":3" }}</p>
+                        <p class="font-bold text-sm {% if day.date == today %}text-secondary{% endif %}">{{ day.date|date:"j" }}</p>
                     </div>
-                    <div class="space-y-2">
+                    <div class="space-y-1.5">
                         {% for block in day.blocks %}
-                        <div class="p-2 rounded text-xs {% if block.status == 'booked' %}bg-blue-100 border-blue-300{% elif block.status == 'available' %}bg-green-100 border-green-300{% else %}bg-gray-100{% endif %} border">
-                            <p class="font-semibold">{{ block.start_time|time:"g:i A" }}</p>
-                            <p class="text-gray-600">{{ block.get_session_type_display|truncatechars:10 }}</p>
-                            <p class="text-gray-500">{{ block.current_participants }}/{{ block.max_participants }}</p>
-                            {% if block.current_participants == 0 %}
-                            <form method="POST" action="{% url 'coaches:delete_schedule_block' block.id %}" class="mt-1">
-                                {% csrf_token %}
-                                <button type="submit" class="text-red-500 hover:text-red-700 text-xs">Delete</button>
-                            </form>
+                        <div class="relative p-2 rounded text-xs border cursor-pointer select-none transition
+                            {% if block.status == 'booked' %}bg-blue-50 border-blue-200
+                            {% elif block.status == 'available' %}bg-gray-50 border-gray-200
+                            {% else %}bg-gray-100 border-gray-300{% endif %}"
+                            onclick="toggleBlock(this, {{ block.id }})"
+                            data-block-id="{{ block.id }}"
+                            data-booked="{{ block.current_participants }}">
+                            <!-- Checkbox indicator -->
+                            <div class="block-check hidden absolute top-1 right-1 w-4 h-4 bg-secondary rounded-full flex items-center justify-center">
+                                <svg class="w-2.5 h-2.5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <p class="font-semibold pr-4">{{ block.start_time|time:"g:i A" }}</p>
+                            <p class="text-gray-500">{{ block.display_session_type|truncatechars:14 }}</p>
+                            <p class="text-gray-400">{{ block.current_participants }}/{{ block.max_participants }} spots</p>
+                            {% if block.status == 'booked' %}
+                            <span class="inline-block mt-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Booked</span>
                             {% endif %}
                         </div>
                         {% empty %}
-                        <p class="text-gray-400 text-xs text-center">No slots</p>
+                        <p class="text-gray-300 text-xs text-center py-4">—</p>
                         {% endfor %}
                     </div>
                 </div>
@@ -166,45 +217,214 @@
         </div>
 
         <!-- Legend -->
-        <div class="mt-4 flex justify-center space-x-6 text-sm">
-            <div class="flex items-center"><span class="w-4 h-4 bg-green-100 border border-green-300 rounded mr-2"></span> Available</div>
-            <div class="flex items-center"><span class="w-4 h-4 bg-blue-100 border border-blue-300 rounded mr-2"></span> Booked</div>
+        <div class="mt-3 flex gap-4 text-xs text-gray-500 px-1">
+            <div class="flex items-center gap-1"><span class="w-3 h-3 bg-gray-50 border border-gray-200 rounded"></span> Available</div>
+            <div class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-50 border border-blue-200 rounded"></span> Booked</div>
+            <div class="flex items-center gap-1"><span class="w-3 h-3 bg-secondary rounded"></span> Selected</div>
         </div>
 
-        <!-- Quick Add Form -->
-        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
-            <h3 class="text-lg font-bold mb-4">Quick Add Single Slot</h3>
-            <form method="POST" action="{% url 'coaches:add_schedule_block' %}" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <!-- Bulk Delete by Date Range -->
+        <div class="bg-white rounded-xl shadow-md p-5 mt-6">
+            <h3 class="text-base font-bold mb-3 text-gray-800">🗑 Clear Schedule by Date Range</h3>
+            <p class="text-xs text-gray-500 mb-4">Deletes all <strong>empty</strong> (unbooked) blocks in the selected range. Booked blocks are skipped.</p>
+            <form method="POST" action="{% url 'coaches:bulk_delete_blocks' %}"
+                  onsubmit="return confirm('Delete all empty blocks in this date range?')">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">From</label>
+                        <input type="date" name="range_start" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">To</label>
+                        <input type="date" name="range_end" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Session Type (optional)</label>
+                        <select name="range_session_type" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            <option value="">All types</option>
+                            {% for value, label in session_types %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm font-semibold">
+                        Clear Range
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quick Add Single Slot -->
+        <div class="bg-white rounded-xl shadow-md p-5 mt-4">
+            <h3 class="text-base font-bold mb-3 text-gray-800">+ Quick Add Single Slot</h3>
+            <form method="POST" action="{% url 'coaches:add_schedule_block' %}" class="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {% csrf_token %}
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Date</label>
-                    <input type="date" name="date" required class="w-full px-3 py-2 border rounded-lg">
+                    <input type="date" name="date" required class="w-full px-3 py-2 border rounded-lg text-sm">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Start Time</label>
-                    <input type="time" name="start_time" required step="1800" class="w-full px-3 py-2 border rounded-lg">
+                    <input type="time" name="start_time" required step="1800" class="w-full px-3 py-2 border rounded-lg text-sm">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Session Type</label>
-                    <select name="session_type" class="w-full px-3 py-2 border rounded-lg">
-                        {% for value, label in session_types %}
-                        <option value="{{ value }}">{{ label }}</option>
+                    <select name="catalog_session_type" multiple class="w-full px-3 py-2 border rounded-lg text-sm" style="min-height:70px;">
+                        {% for st in all_session_types %}
+                        <option value="{{ st.id }}">{{ st.name }}</option>
                         {% endfor %}
                     </select>
+                    <p class="text-xs text-gray-400 mt-0.5">Ctrl/Cmd = multi</p>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Duration</label>
-                    <select name="duration" class="w-full px-3 py-2 border rounded-lg">
+                    <select name="duration" class="w-full px-3 py-2 border rounded-lg text-sm">
                         {% for value, label in duration_choices %}
                         <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="w-full bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000]">Add Slot</button>
+                    <button type="submit" class="w-full bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000] text-sm font-semibold">Add Slot</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+            <h3 class="text-lg font-bold mb-4">Edit Selected Blocks</h3>
+            <p class="text-xs text-gray-500 mb-4">Only empty (unbooked) blocks will be modified.</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Session Type</label>
+                    <select id="modal-session-type" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <option value="">— no change —</option>
+                        {% for st in all_session_types %}
+                        <option value="{{ st.id }}">{{ st.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                    <select id="modal-duration" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <option value="">— no change —</option>
+                        {% for value, label in duration_choices %}
+                        <option value="{{ value }}">{{ value }} minutes</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Max Participants</label>
+                    <input type="number" id="modal-max-part" min="1" max="50" placeholder="no change"
+                           class="w-full px-3 py-2 border rounded-lg text-sm">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeEditModal()" class="flex-1 px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button onclick="submitBulkEdit()" class="flex-1 bg-secondary text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#b8e000]">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const selectedIds = new Set();
+
+    function toggleBlock(el, blockId) {
+        const check = el.querySelector('.block-check');
+        if (selectedIds.has(blockId)) {
+            selectedIds.delete(blockId);
+            el.classList.remove('ring-2', 'ring-secondary', 'bg-secondary/10');
+            check.classList.add('hidden');
+        } else {
+            selectedIds.add(blockId);
+            el.classList.add('ring-2', 'ring-secondary', 'bg-secondary/10');
+            check.classList.remove('hidden');
+        }
+        updateToolbar();
+    }
+
+    function selectAll() {
+        document.querySelectorAll('[data-block-id]').forEach(el => {
+            const id = parseInt(el.dataset.blockId);
+            selectedIds.add(id);
+            el.classList.add('ring-2', 'ring-secondary', 'bg-secondary/10');
+            el.querySelector('.block-check').classList.remove('hidden');
+        });
+        updateToolbar();
+    }
+
+    function clearSelection() {
+        selectedIds.clear();
+        document.querySelectorAll('[data-block-id]').forEach(el => {
+            el.classList.remove('ring-2', 'ring-secondary', 'bg-secondary/10');
+            el.querySelector('.block-check').classList.add('hidden');
+        });
+        updateToolbar();
+    }
+
+    function updateToolbar() {
+        const toolbar = document.getElementById('bulk-toolbar');
+        document.getElementById('selected-count').textContent = selectedIds.size;
+        toolbar.classList.toggle('hidden', selectedIds.size === 0);
+    }
+
+    function buildIdInputs(containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        selectedIds.forEach(id => {
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'block_ids';
+            inp.value = id;
+            container.appendChild(inp);
+        });
+    }
+
+    function submitBulkDelete() {
+        if (!selectedIds.size) return;
+        const booked = [...selectedIds].filter(id => {
+            const el = document.querySelector(`[data-block-id="${id}"]`);
+            return el && parseInt(el.dataset.booked) > 0;
+        });
+        const empty = selectedIds.size - booked.length;
+        let msg = `Delete ${empty} empty block(s)?`;
+        if (booked.length) msg += `\n\n${booked.length} block(s) with bookings will be skipped.`;
+        if (!confirm(msg)) return;
+        buildIdInputs('bulk-delete-ids');
+        document.getElementById('bulk-delete-form').submit();
+    }
+
+    function openEditModal() {
+        if (!selectedIds.size) return;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').classList.add('hidden');
+    }
+
+    function submitBulkEdit() {
+        const sessionType = document.getElementById('modal-session-type').value;
+        const duration    = document.getElementById('modal-duration').value;
+        const maxPart     = document.getElementById('modal-max-part').value;
+        if (!sessionType && !duration && !maxPart) {
+            alert('Select at least one field to change.');
+            return;
+        }
+        document.getElementById('edit-session-type').value   = sessionType;
+        document.getElementById('edit-duration').value        = duration;
+        document.getElementById('edit-max-participants').value = maxPart;
+        buildIdInputs('bulk-edit-ids');
+        document.getElementById('bulk-edit-form').submit();
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('edit-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditModal();
+    });
+    </script>
 </body>
 </html>

@@ -100,7 +100,12 @@ class ScheduleBlock(models.Model):
     date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-    session_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES, default='private')
+    session_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES, default='group')
+    # Session types from catalog (M2M — one block can offer multiple session types)
+    catalog_session_types = models.ManyToManyField(
+        'bookings.SessionType', blank=True,
+        related_name='schedule_blocks', help_text="Session types offered in this block"
+    )
     duration_minutes = models.IntegerField(choices=DURATION_CHOICES, default=60)
     max_participants = models.IntegerField(default=1, help_text="1 for private, more for group")
     current_participants = models.IntegerField(default=0)
@@ -110,8 +115,15 @@ class ScheduleBlock(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def display_session_type(self):
+        types = self.catalog_session_types.all()
+        if types.exists():
+            return ', '.join(t.name for t in types[:2])
+        return self.get_session_type_display()
+
     def __str__(self):
-        return f"{self.coach} - {self.date} {self.start_time} ({self.get_session_type_display()})"
+        return f"{self.coach} - {self.date} {self.start_time} ({self.display_session_type})"
 
     @property
     def is_available(self):

@@ -8,7 +8,7 @@ from django.db.models import Count, Q, Avg
 from django.db import models
 from datetime import datetime, timedelta, time
 from .models import Coach, ScheduleBlock, SessionAttendance, PlayerAssessment
-from bookings.models import Booking
+from bookings.models import Booking, SessionType
 from clients.models import Notification
 
 
@@ -139,11 +139,13 @@ def schedule(request):
         'week_days': week_days,
         'start_date': start_date,
         'end_date': end_date,
+        'today': today,
         'prev_week': (start_date - timedelta(days=7)).isoformat(),
         'next_week': (start_date + timedelta(days=7)).isoformat(),
         'overlap_warnings': overlap_warnings,
         'session_types': ScheduleBlock.SESSION_TYPE_CHOICES,
         'duration_choices': ScheduleBlock.DURATION_CHOICES,
+        'all_session_types': SessionType.objects.filter(is_active=True).order_by('name'),
     }
     return render(request, 'coaches/schedule.html', context)
 
@@ -156,7 +158,7 @@ def add_schedule_block(request):
     if request.method == 'POST':
         date_str = request.POST.get('date')
         start_time_str = request.POST.get('start_time')
-        session_type = request.POST.get('session_type', 'private')
+        catalog_id = request.POST.get('catalog_session_type', '').strip()
         duration = int(request.POST.get('duration', 60))
         max_participants = int(request.POST.get('max_participants', 1))
 
@@ -164,14 +166,19 @@ def add_schedule_block(request):
             date = datetime.strptime(date_str, '%Y-%m-%d').date()
             start_time = datetime.strptime(start_time_str, '%H:%M').time()
 
+            # Resolve catalog session type
+            catalog_st = None
+            session_type = 'group'
+            if catalog_id:
+                catalog_st = SessionType.objects.filter(id=catalog_id).first()
+                if catalog_st and catalog_st.session_format == 'private':
+                    session_type = 'private'
+                    max_participants = 1
+
             # Calculate end time
             start_dt = datetime.combine(date, start_time)
             end_dt = start_dt + timedelta(minutes=duration)
             end_time = end_dt.time()
-
-            # For private sessions, max_participants is always 1
-            if session_type == 'private':
-                max_participants = 1
 
             block = ScheduleBlock.objects.create(
                 coach=coach,
@@ -182,6 +189,10 @@ def add_schedule_block(request):
                 duration_minutes=duration,
                 max_participants=max_participants,
             )
+            if catalog_ids := request.POST.getlist('catalog_session_type'):
+                block.catalog_session_types.set(
+                    SessionType.objects.filter(id__in=catalog_ids, is_active=True)
+                )
 
             # Check for overlaps
             overlaps = block.check_overlap_warnings()
@@ -207,10 +218,10 @@ def add_bulk_schedule(request):
     if request.method == 'POST':
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
-        days_of_week = request.POST.getlist('days_of_week')  # [0, 1, 2, ...]
+        days_of_week = request.POST.getlist('days_of_week')
         start_time_str = request.POST.get('start_time')
         end_time_str = request.POST.get('end_time')
-        session_type = request.POST.get('session_type', 'private')
+        catalog_ids = request.POST.getlist('catalog_session_type')
         duration = int(request.POST.get('duration', 60))
         max_participants = int(request.POST.get('max_participants', 1))
 
@@ -220,7 +231,10 @@ def add_bulk_schedule(request):
             block_start_time = datetime.strptime(start_time_str, '%H:%M').time()
             block_end_time = datetime.strptime(end_time_str, '%H:%M').time()
 
-            if session_type == 'private':
+            catalog_session_types = list(SessionType.objects.filter(id__in=catalog_ids, is_active=True)) if catalog_ids else []
+            session_type = 'group'
+            if any(st.session_format == 'private' for st in catalog_session_types):
+                session_type = 'private'
                 max_participants = 1
 
             blocks_created = 0
@@ -228,20 +242,18 @@ def add_bulk_schedule(request):
 
             while current_date <= end_date:
                 if str(current_date.weekday()) in days_of_week:
-                    # Create blocks for this day
                     current_time = datetime.combine(current_date, block_start_time)
                     day_end = datetime.combine(current_date, block_end_time)
 
                     while current_time + timedelta(minutes=duration) <= day_end:
                         slot_end = current_time + timedelta(minutes=duration)
 
-                        # Check if block already exists
                         if not ScheduleBlock.objects.filter(
                             coach=coach,
                             date=current_date,
                             start_time=current_time.time()
                         ).exists():
-                            ScheduleBlock.objects.create(
+                            new_block = ScheduleBlock.objects.create(
                                 coach=coach,
                                 date=current_date,
                                 start_time=current_time.time(),
@@ -250,6 +262,8 @@ def add_bulk_schedule(request):
                                 duration_minutes=duration,
                                 max_participants=max_participants,
                             )
+                            if catalog_session_types:
+                                new_block.catalog_session_types.set(catalog_session_types)
                             blocks_created += 1
 
                         current_time = slot_end
@@ -268,6 +282,7 @@ def add_bulk_schedule(request):
         'coach': coach,
         'session_types': ScheduleBlock.SESSION_TYPE_CHOICES,
         'duration_choices': ScheduleBlock.DURATION_CHOICES,
+        'all_session_types': SessionType.objects.filter(is_active=True).order_by('name'),
         'days_of_week': [
             (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'),
             (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')
@@ -290,6 +305,116 @@ def delete_schedule_block(request, block_id):
         messages.success(request, 'Schedule block deleted.')
 
     return redirect('coaches:schedule')
+
+
+@coach_required
+@require_POST
+def bulk_delete_blocks(request):
+    """Bulk delete schedule blocks by selected IDs or date range."""
+    coach = request.coach
+
+    # Mode 1: selected block IDs from weekly view
+    block_ids = request.POST.getlist('block_ids')
+
+    # Mode 2: date range filter
+    start_date_str = request.POST.get('range_start')
+    end_date_str   = request.POST.get('range_end')
+    session_type   = request.POST.get('range_session_type', '')
+
+    qs = ScheduleBlock.objects.none()
+
+    if block_ids:
+        qs = ScheduleBlock.objects.filter(id__in=block_ids, coach=coach)
+    elif start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date   = datetime.strptime(end_date_str,   '%Y-%m-%d').date()
+            qs = ScheduleBlock.objects.filter(
+                coach=coach, date__gte=start_date, date__lte=end_date
+            )
+            if session_type:
+                qs = qs.filter(session_type=session_type)
+        except ValueError:
+            messages.error(request, 'Invalid date range.')
+            return redirect('coaches:schedule')
+
+    empty   = qs.filter(current_participants=0)
+    booked  = qs.filter(current_participants__gt=0)
+    deleted = empty.count()
+    skipped = booked.count()
+    empty.delete()
+
+    if deleted:
+        messages.success(request, f'{deleted} block(s) deleted.')
+    if skipped:
+        messages.warning(request, f'{skipped} block(s) skipped — have active bookings.')
+    if not deleted and not skipped:
+        messages.info(request, 'No blocks matched.')
+
+    redirect_url = request.POST.get('redirect', '') or 'coaches:schedule'
+    try:
+        return redirect(redirect_url)
+    except Exception:
+        return redirect('coaches:schedule')
+
+
+@coach_required
+@require_POST
+def bulk_edit_blocks(request):
+    """Bulk edit session type, duration, or max participants on selected blocks."""
+    coach = request.coach
+
+    block_ids       = request.POST.getlist('block_ids')
+    catalog_id      = request.POST.get('session_type', '').strip()  # now sends catalog id
+    max_part_str    = request.POST.get('max_participants', '').strip()
+    duration_str    = request.POST.get('duration', '').strip()
+
+    if not block_ids:
+        messages.error(request, 'No blocks selected.')
+        return redirect('coaches:schedule')
+
+    # Resolve catalog session types (modal sends single id via 'session_type' field)
+    catalog_ids = [catalog_id] if catalog_id else []
+    catalog_session_types = list(SessionType.objects.filter(id__in=catalog_ids, is_active=True))
+    new_session_type = ''
+    if catalog_session_types:
+        new_session_type = 'private' if any(st.session_format == 'private' for st in catalog_session_types) else 'group'
+
+    updated = 0
+    skipped = 0
+    for bid in block_ids:
+        try:
+            block = ScheduleBlock.objects.get(id=bid, coach=coach)
+            if block.current_participants > 0:
+                skipped += 1
+                continue
+            if catalog_session_types:
+                block.catalog_session_types.set(catalog_session_types)
+                block.session_type = new_session_type
+                if new_session_type == 'private':
+                    block.max_participants = 1
+            if max_part_str and block.session_type != 'private':
+                block.max_participants = int(max_part_str)
+            if duration_str:
+                dur = int(duration_str)
+                block.duration_minutes = dur
+                start_dt = datetime.combine(block.date, block.start_time)
+                block.end_time = (start_dt + timedelta(minutes=dur)).time()
+            block.save()
+            updated += 1
+        except (ScheduleBlock.DoesNotExist, ValueError):
+            pass
+
+    if updated:
+        messages.success(request, f'{updated} block(s) updated.')
+    if skipped:
+        messages.warning(request, f'{skipped} block(s) skipped — have active bookings.')
+
+    redirect_url = request.POST.get('redirect', '') or 'coaches:schedule'
+    try:
+        return redirect(redirect_url)
+    except Exception:
+        return redirect('coaches:schedule')
 
 
 @coach_required
