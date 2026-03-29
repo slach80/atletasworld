@@ -888,20 +888,28 @@ def send_notification(request):
             except Exception:
                 method = 'email'
 
-            # Create notification
-            Notification.objects.create(
+            # Create and send notification
+            notification = Notification.objects.create(
                 client=client,
                 notification_type='promotional' if notification_type == 'general' else notification_type,
-                title=f'Message from Coach {coach.user.first_name}',
+                title=f'Message from Coach {coach.user.first_name or coach.user.username}',
                 message=message,
                 method=method,
             )
+            notification.send()
             sent_count += 1
 
+        failed = [n for n in Notification.objects.filter(
+            client__players__id__in=player_ids,
+            status='failed'
+        ).values_list('client__user__email', flat=True)]
+
         if sent_count == 1:
-            messages.success(request, f'Notification sent to 1 parent!')
+            messages.success(request, f'Notification sent to 1 parent.')
         else:
-            messages.success(request, f'Notification sent to {sent_count} parents!')
+            messages.success(request, f'Notifications sent to {sent_count} parents.')
+        if failed:
+            messages.warning(request, f'Failed to deliver to: {", ".join(set(failed))}')
     else:
         messages.error(request, 'Please select recipients and provide a message.')
 
