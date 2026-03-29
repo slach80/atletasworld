@@ -155,8 +155,8 @@
                 <p class="text-gray-500 text-sm">Today's Sessions</p>
             </a>
             <a href="{% url 'coaches:schedule' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-blue-500 border border-transparent transition group">
-                <p class="text-3xl font-bold text-blue-500 group-hover:scale-110 transition">{{ stats.weeks_sessions }}</p>
-                <p class="text-gray-500 text-sm">This Week</p>
+                <p class="text-3xl font-bold text-blue-500 group-hover:scale-110 transition">{{ stats.upcoming_sessions }}</p>
+                <p class="text-gray-500 text-sm">Next 30 Days</p>
             </a>
             <a href="{% url 'coaches:assessments' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-accent border border-transparent transition group">
                 <p class="text-3xl font-bold text-accent group-hover:scale-110 transition">{{ stats.pending_assessments }}</p>
@@ -195,7 +195,7 @@
             <!-- Upcoming Sessions -->
             <div class="bg-white rounded-xl shadow-md p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Upcoming Sessions</h2>
+                    <h2 class="text-xl font-bold text-gray-800">Upcoming Sessions (30 days)</h2>
                     <a href="{% url 'coaches:schedule' %}" class="text-secondary text-sm hover:underline">Manage Schedule</a>
                 </div>
                 {% if upcoming_blocks %}

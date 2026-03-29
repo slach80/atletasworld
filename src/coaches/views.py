@@ -47,11 +47,11 @@ def dashboard(request):
         current_participants__gt=0
     ).prefetch_related('attendances__booking__player')
 
-    # Upcoming sessions (next 7 days) — blocks with at least one booking
+    # Upcoming sessions (next 30 days) — blocks with at least one booking
     upcoming_blocks = ScheduleBlock.objects.filter(
         coach=coach,
         date__gt=today,
-        date__lte=today + timedelta(days=7),
+        date__lte=today + timedelta(days=30),
         current_participants__gt=0
     ).order_by('date', 'start_time')[:10]
 
@@ -67,7 +67,7 @@ def dashboard(request):
     # Stats
     stats = {
         'todays_sessions': todays_blocks.count(),
-        'weeks_sessions': upcoming_blocks.count(),
+        'upcoming_sessions': upcoming_blocks.count(),
         'pending_assessments': pending_assessments.count(),
         'total_students_this_month': Booking.objects.filter(
             coach=coach,
