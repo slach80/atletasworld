@@ -352,10 +352,26 @@ class Booking(models.Model):
         self.cancelled_by = cancelled_by
         self.save()
 
-        # Update slot booking count
+        # Update AvailabilitySlot booking count
         if self.availability_slot and self.availability_slot.current_bookings > 0:
             self.availability_slot.current_bookings -= 1
             self.availability_slot.update_status()
+
+        # Update ScheduleBlock participant count (for coach-portal-created slots)
+        from coaches.models import ScheduleBlock
+        try:
+            block = ScheduleBlock.objects.get(
+                coach=self.coach,
+                date=self.scheduled_date,
+                start_time=self.scheduled_time,
+            )
+            if block.current_participants > 0:
+                block.current_participants -= 1
+                if block.status == 'booked':
+                    block.status = 'available'
+                block.save()
+        except ScheduleBlock.DoesNotExist:
+            pass
 
         # Return session to package if applicable
         if self.client_package and self.payment_status == 'package':
