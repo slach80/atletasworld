@@ -134,7 +134,7 @@
                     {% for booking in item.bookings %}
                     <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                         <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center mr-3">
-                            <span class="font-bold text-secondary">{{ booking.player.first_name|first }}</span>
+                            <span class="font-bold text-primary">{{ booking.player.first_name|first }}</span>
                         </div>
                         <div>
                             <p class="font-semibold">{{ booking.player.first_name }} {{ booking.player.last_name }}</p>
@@ -151,7 +151,7 @@
         {% empty %}
         <div class="bg-white rounded-xl shadow-md p-8 text-center">
             <p class="text-gray-500">No sessions scheduled for today.</p>
-            <a href="{% url 'coaches:schedule' %}" class="inline-block mt-4 text-secondary hover:underline">Manage your schedule</a>
+            <a href="{% url 'coaches:schedule' %}" class="inline-block mt-4 text-primary hover:underline">Manage your schedule</a>
         </div>
         {% endfor %}
     </div>

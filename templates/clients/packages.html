@@ -126,7 +126,7 @@
                             <p class="text-sm text-gray-600">{% if pkg.package.sessions_included > 0 %}{{ pkg.package.sessions_included }} classes{% else %}Unlimited{% endif %} / {{ pkg.package.validity_weeks }} weeks</p>
                         </div>
                         <div class="text-right">
-                            <div class="text-3xl font-bold text-secondary">
+                            <div class="inline-block text-3xl font-bold text-secondary bg-primary rounded-xl px-3 py-1.5">
                                 {% if pkg.package.sessions_included > 0 %}
                                 {{ pkg.sessions_remaining }}
                                 {% else %}

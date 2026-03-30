@@ -185,7 +185,7 @@
                 <div class="border rounded-lg p-2 min-h-[180px] {% if day.date == today %}bg-secondary/5 border-secondary{% endif %}">
                     <div class="text-center mb-2 pb-2 border-b">
                         <p class="text-xs text-gray-500">{{ day.day_name|slice:":3" }}</p>
-                        <p class="font-bold text-sm {% if day.date == today %}text-secondary{% endif %}">{{ day.date|date:"j" }}</p>
+                        <p class="font-bold text-sm {% if day.date == today %}text-primary{% endif %}">{{ day.date|date:"j" }}</p>
                     </div>
                     <div class="space-y-1.5">
                         {% for block in day.blocks %}

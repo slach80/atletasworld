@@ -135,7 +135,7 @@
         <!-- Stats -->
         <div class="grid grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-3xl font-bold text-secondary">{{ players|length }}</p>
+                <p class="inline-block text-3xl font-bold text-secondary bg-primary rounded-xl px-3 py-1.5">{{ players|length }}</p>
                 <p class="text-gray-500 text-sm">Total Players</p>
             </div>
             <div class="bg-white rounded-xl shadow p-4 text-center">
@@ -180,7 +180,7 @@
                             <div class="flex items-center space-x-4">
                                 <div>
                                     <p class="text-sm text-gray-500">Sessions</p>
-                                    <p class="font-bold text-secondary">{{ player_data.sessions_count }}</p>
+                                    <p class="font-bold text-primary">{{ player_data.sessions_count }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-gray-500">Avg Rating</p>

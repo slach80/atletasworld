@@ -74,7 +74,7 @@
                     </div>
                     <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ coach.user.get_full_name }}</h1>
                     {% if coach.tagline %}
-                    <p class="text-xl text-secondary font-semibold mb-4">{{ coach.tagline }}</p>
+                    <p class="text-xl text-primary font-semibold mb-4">{{ coach.tagline }}</p>
                     {% endif %}
 
                     {% if coach.full_bio %}
@@ -175,13 +175,13 @@
             <div class="space-y-4 text-gray-600">
                 {% if coach.experience_years %}
                 <div class="flex items-start">
-                    <span class="text-secondary mr-3">&#10003;</span>
+                    <span class="text-primary mr-3">&#10003;</span>
                     <p>{{ coach.experience_years }}+ years of coaching experience</p>
                 </div>
                 {% endif %}
                 {% if total_sessions %}
                 <div class="flex items-start">
-                    <span class="text-secondary mr-3">&#10003;</span>
+                    <span class="text-primary mr-3">&#10003;</span>
                     <p>{{ total_sessions }}+ training sessions completed</p>
                 </div>
                 {% endif %}
