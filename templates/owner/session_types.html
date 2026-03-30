@@ -62,27 +62,46 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner">
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Days of Week</label>
-                <div class="grid grid-cols-4 gap-2">
-                    {% for day in days_of_week_choices %}
-                    <label class="flex items-center gap-1.5 text-sm cursor-pointer">
-                        <input type="checkbox" name="days_of_week" value="{{ day }}" class="rounded text-owner">
-                        {{ day }}
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
+            <!-- Days + Times grouped by weekday / weekend -->
+            <div class="space-y-4">
+                <label class="block text-sm font-semibold text-gray-700">Days of Week &amp; Start Times</label>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Start Times</label>
-                <div id="start-times-list" class="space-y-2 mb-2">
-                    <div class="flex items-center gap-2">
-                        <input type="time" name="start_times" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner">
-                        <button type="button" onclick="addStartTime()" class="text-xs px-2 py-1 bg-owner text-white rounded hover:bg-indigo-600">+ Add</button>
+                <!-- Weekdays -->
+                <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Weekdays — Mon to Fri</p>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        {% for day in days_of_week_choices %}{% if day in "Mon,Tue,Wed,Thu,Fri" %}
+                        <label class="day-pill text-sm cursor-pointer px-3 py-1.5 border rounded-full bg-white text-gray-600 border-gray-300 hover:border-owner select-none">
+                            <input type="checkbox" name="days_of_week" value="{{ day }}" class="sr-only"> {{ day }}
+                        </label>
+                        {% endif %}{% endfor %}
                     </div>
+                    <p class="text-xs text-gray-500 mb-2 font-medium">Start Times</p>
+                    <div id="start-times-list" class="space-y-2 mb-2">
+                        <div class="flex items-center gap-2">
+                            <input type="time" name="start_times" step="1800" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner">
+                            <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addStartTime('start-times-list','start_times')" class="text-xs px-3 py-1.5 bg-owner text-white rounded-lg hover:bg-indigo-700">+ Add</button>
                 </div>
-                <p class="text-xs text-gray-400">Add multiple start times for this session</p>
+
+                <!-- Weekends -->
+                <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Weekends — Sat &amp; Sun</p>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        {% for day in days_of_week_choices %}{% if day in "Sat,Sun" %}
+                        <label class="day-pill text-sm cursor-pointer px-3 py-1.5 border rounded-full bg-white text-gray-600 border-gray-300 hover:border-owner select-none">
+                            <input type="checkbox" name="days_of_week" value="{{ day }}" class="sr-only"> {{ day }}
+                        </label>
+                        {% endif %}{% endfor %}
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2 font-medium">Start Times <span class="text-gray-400 font-normal">— leave empty to use weekday times</span></p>
+                    <div id="weekend-times-list" class="space-y-2 mb-2">
+                        <p class="text-xs text-gray-400 italic py-1">No weekend times set.</p>
+                    </div>
+                    <button type="button" onclick="addStartTime('weekend-times-list','weekend_start_times')" class="text-xs px-3 py-1.5 bg-owner text-white rounded-lg hover:bg-indigo-700">+ Add</button>
+                </div>
             </div>
 
             <!-- Seasonal hint + package selector -->
@@ -246,14 +265,32 @@
 </div>
 
 <script>
-function addStartTime() {
-    const list = document.getElementById('start-times-list');
+function addStartTime(listId, fieldName) {
+    const list = document.getElementById(listId || 'start-times-list');
+    const name = fieldName || 'start_times';
+    list.querySelectorAll('p.italic').forEach(p => p.remove());
     const row = document.createElement('div');
     row.className = 'flex items-center gap-2';
-    row.innerHTML = '<input type="time" name="start_times" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner">'
+    row.innerHTML = `<input type="time" name="${name}" step="1800" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner">`
                   + '<button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>';
     list.appendChild(row);
 }
+// Day pill toggle
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.day-pill').forEach(lbl => {
+        lbl.addEventListener('click', () => {
+            const cb = lbl.querySelector('input');
+            setTimeout(() => {
+                lbl.classList.toggle('bg-owner', cb.checked);
+                lbl.classList.toggle('text-white', cb.checked);
+                lbl.classList.toggle('border-owner', cb.checked);
+                lbl.classList.toggle('bg-white', !cb.checked);
+                lbl.classList.toggle('text-gray-600', !cb.checked);
+                lbl.classList.toggle('border-gray-300', !cb.checked);
+            }, 0);
+        });
+    });
+});
 
 function toggleClinicFields() {
     const format = document.getElementById('session_format').value;
