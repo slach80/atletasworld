@@ -506,15 +506,127 @@ def owner_package_edit(request, pk):
 @user_passes_test(is_owner)
 @require_POST
 def owner_package_delete(request, pk):
-    """Delete a package (soft delete by deactivating)."""
+    """Archive a package (soft delete — sets is_active=False)."""
     from clients.models import Package
     from django.shortcuts import get_object_or_404
 
     package = get_object_or_404(Package, pk=pk)
     package.is_active = False
     package.save()
-    messages.success(request, f'Package "{package.name}" has been deactivated.')
+    messages.success(request, f'Package "{package.name}" archived.')
     return redirect('owner_packages')
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_package_restore(request, pk):
+    """Restore an archived package."""
+    from clients.models import Package
+    from django.shortcuts import get_object_or_404
+
+    package = get_object_or_404(Package, pk=pk)
+    package.is_active = True
+    package.save()
+    messages.success(request, f'Package "{package.name}" restored.')
+    return redirect('owner_packages')
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_package_hard_delete(request, pk):
+    """Permanently delete a package (only if no active client purchases)."""
+    from clients.models import Package, ClientPackage
+    from django.shortcuts import get_object_or_404
+
+    package = get_object_or_404(Package, pk=pk)
+    active_count = ClientPackage.objects.filter(package=package, status='active').count()
+    if active_count > 0:
+        messages.error(request, f'Cannot delete "{package.name}" — {active_count} active purchase(s) exist. Archive it instead.')
+    else:
+        name = package.name
+        package.delete()
+        messages.success(request, f'Package "{name}" permanently deleted.')
+    return redirect('owner_packages')
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_package_duplicate(request, pk):
+    """Duplicate a package."""
+    from clients.models import Package
+    from django.shortcuts import get_object_or_404
+
+    orig = get_object_or_404(Package, pk=pk)
+    copy = Package.objects.create(
+        name=f'{orig.name} (Copy)',
+        package_type=orig.package_type,
+        description=orig.description,
+        price=orig.price,
+        sessions_included=orig.sessions_included,
+        validity_weeks=orig.validity_weeks,
+        is_active=False,  # start archived so owner can review before publishing
+        is_special=orig.is_special,
+        age_group=orig.age_group,
+        max_participants=orig.max_participants,
+    )
+    messages.success(request, f'Package duplicated as "{copy.name}". Review and activate when ready.')
+    return redirect('owner_package_edit', pk=copy.pk)
+
+
+# ── Session Type actions ──────────────────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_session_type_hard_delete(request, pk):
+    """Permanently delete a session type (only if no bookings reference it)."""
+    from bookings.models import SessionType, Booking
+    from django.shortcuts import get_object_or_404
+
+    st = get_object_or_404(SessionType, pk=pk)
+    booking_count = Booking.objects.filter(session_type=st).count()
+    if booking_count > 0:
+        messages.error(request, f'Cannot delete "{st.name}" — {booking_count} booking(s) reference it. Archive it instead.')
+    else:
+        name = st.name
+        st.delete()
+        messages.success(request, f'Session type "{name}" permanently deleted.')
+    return redirect('owner_session_types')
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_session_type_duplicate(request, pk):
+    """Duplicate a session type."""
+    from bookings.models import SessionType
+    from django.shortcuts import get_object_or_404
+
+    orig = get_object_or_404(SessionType, pk=pk)
+    copy = SessionType.objects.create(
+        name=f'{orig.name} (Copy)',
+        description=orig.description,
+        session_format=orig.session_format,
+        duration_minutes=orig.duration_minutes,
+        price=orig.price,
+        drop_in_price=orig.drop_in_price,
+        max_participants=orig.max_participants,
+        color=orig.color,
+        is_active=False,  # start archived
+        requires_package=orig.requires_package,
+        show_as_event=False,
+        show_as_program=False,
+        location=orig.location,
+        age_group=orig.age_group,
+        days_of_week=orig.days_of_week,
+        start_times=orig.start_times,
+        weekend_start_times=orig.weekend_start_times,
+    )
+    messages.success(request, f'Session type duplicated as "{copy.name}". Review and activate when ready.')
+    return redirect('owner_session_type_edit', pk=copy.pk)
 
 
 # ============================================================================

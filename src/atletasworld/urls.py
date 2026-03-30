@@ -14,6 +14,8 @@ from .views import home_view
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
+    owner_package_restore, owner_package_hard_delete, owner_package_duplicate,
+    owner_session_type_hard_delete, owner_session_type_duplicate,
     owner_coaches, owner_coach_add, owner_coach_edit, owner_coach_delete, owner_coach_schedule,
     owner_bookings, owner_booking_detail,
     owner_clients, owner_client_detail, owner_client_approve, owner_client_reject, owner_players,
@@ -95,6 +97,9 @@ urlpatterns = [
     path('owner-portal/packages/add/', owner_package_add, name='owner_package_add'),
     path('owner-portal/packages/<int:pk>/edit/', owner_package_edit, name='owner_package_edit'),
     path('owner-portal/packages/<int:pk>/delete/', owner_package_delete, name='owner_package_delete'),
+    path('owner-portal/packages/<int:pk>/restore/', owner_package_restore, name='owner_package_restore'),
+    path('owner-portal/packages/<int:pk>/hard-delete/', owner_package_hard_delete, name='owner_package_hard_delete'),
+    path('owner-portal/packages/<int:pk>/duplicate/', owner_package_duplicate, name='owner_package_duplicate'),
 
     # Owner - Coach Management
     path('owner-portal/coaches/', owner_coaches, name='owner_coaches'),
@@ -117,6 +122,8 @@ urlpatterns = [
     # Owner - Session Types
     path('owner-portal/session-types/', owner_session_types, name='owner_session_types'),
     path('owner-portal/session-types/<int:pk>/edit/', owner_session_type_edit, name='owner_session_type_edit'),
+    path('owner-portal/session-types/<int:pk>/delete/', owner_session_type_hard_delete, name='owner_session_type_delete'),
+    path('owner-portal/session-types/<int:pk>/duplicate/', owner_session_type_duplicate, name='owner_session_type_duplicate'),
 
     # Owner - Team Management
     path('owner-portal/teams/', owner_teams, name='owner_teams'),
