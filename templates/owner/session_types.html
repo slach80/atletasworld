@@ -251,13 +251,12 @@
                         <span class="px-2 py-1 text-xs rounded-full {% if st.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
                             {% if st.is_active %}Active{% else %}Inactive{% endif %}
                         </span>
-                        <div class="relative inline-block" x-data="{open:false}">
-                            <button @click="open=!open" @click.outside="open=false"
+                        <div class="relative inline-block dropdown-wrap">
+                            <button onclick="toggleDrop(this)"
                                     class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-1.5">
                                 Actions <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
-                            <div x-show="open" x-transition
-                                 class="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-1" style="display:none">
+                            <div class="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-1" style="display:none">
                                 <a href="{% url 'owner_session_type_edit' st.pk %}"
                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                     ✏️ Edit
@@ -317,12 +316,12 @@
                         <h3 class="font-semibold text-gray-600">{{ st.name }}</h3>
                         <p class="text-xs text-gray-400">{{ st.get_session_format_display }} · {{ st.duration_minutes }}min</p>
                     </div>
-                    <div class="relative inline-block ml-2" x-data="{open:false}">
-                        <button @click="open=!open" @click.outside="open=false"
+                    <div class="relative inline-block ml-2 dropdown-wrap">
+                        <button onclick="toggleDrop(this)"
                                 class="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded hover:bg-gray-300 flex items-center gap-1">
                             ··· <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-transition class="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-1" style="display:none">
+                        <div class="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-1" style="display:none">
                             <a href="{% url 'owner_session_type_edit' st.pk %}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">✏️ Edit</a>
                             <form method="post" action="{% url 'owner_session_type_duplicate' st.pk %}">{% csrf_token %}
                                 <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">📋 Duplicate</button>

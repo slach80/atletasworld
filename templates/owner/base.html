@@ -156,5 +156,27 @@
     <div class="max-w-7xl mx-auto px-4 py-6">
         {% block content %}{% endblock %}
     </div>
+<script>
+function toggleDrop(btn) {
+    var menu = btn.nextElementSibling;
+    var isOpen = menu.style.display === 'block';
+    // close all other open menus
+    document.querySelectorAll('.dropdown-wrap > div').forEach(function(m) {
+        m.style.display = 'none';
+    });
+    if (!isOpen) {
+        menu.style.display = 'block';
+        function closeOnOutside(e) {
+            if (!menu.contains(e.target) && e.target !== btn) {
+                menu.style.display = 'none';
+                document.removeEventListener('click', closeOnOutside);
+            }
+        }
+        setTimeout(function() {
+            document.addEventListener('click', closeOnOutside);
+        }, 0);
+    }
+}
+</script>
 </body>
 </html>
