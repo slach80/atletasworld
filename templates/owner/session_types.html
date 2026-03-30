@@ -211,16 +211,26 @@
                                 {% if st.show_as_event %}<span class="text-xs bg-red-50 text-accent px-1.5 py-0.5 rounded">🔥 Event</span>{% endif %}
                                 {% if st.show_as_program %}<span class="text-xs bg-green-50 text-secondary px-1.5 py-0.5 rounded">📋 Program</span>{% endif %}
                             </div>
-                            {% if st.start_times %}
-                            <div class="text-xs text-gray-500 mt-1">
-                                🕐 {{ st.start_times }}
-                            </div>
-                            {% endif %}
-                            {% if st.location or st.age_group or st.days_of_week %}
-                            <div class="text-xs text-gray-500 mt-1 space-x-3">
-                                {% if st.location %}<span>📍 {{ st.location }}</span>{% endif %}
-                                {% if st.age_group %}<span>🎂 {{ st.age_group }}</span>{% endif %}
-                                {% if st.days_of_week %}<span>📅 {{ st.days_of_week }}</span>{% endif %}
+                            {% if st.start_times or st.days_of_week %}
+                            <div class="text-xs text-gray-500 mt-1.5 space-y-0.5">
+                                {% if st.location %}<div>📍 {{ st.location }}</div>{% endif %}
+                                {% if st.age_group %}<div>🎂 {{ st.age_group }}</div>{% endif %}
+                                <!-- Weekday group -->
+                                {% if st.start_times %}
+                                <div class="flex items-start gap-1">
+                                    <span class="text-gray-400 shrink-0">Mon–Fri</span>
+                                    <span>🕐 {{ st.start_times }}</span>
+                                </div>
+                                {% endif %}
+                                <!-- Weekend group -->
+                                {% if st.weekend_start_times %}
+                                <div class="flex items-start gap-1">
+                                    <span class="text-gray-400 shrink-0">Sat–Sun</span>
+                                    <span>🕐 {{ st.weekend_start_times }}</span>
+                                </div>
+                                {% elif st.start_times %}
+                                <div class="text-xs text-gray-400 italic">Sat–Sun: same as weekday</div>
+                                {% endif %}
                             </div>
                             {% endif %}
                             {% if st.session_format == 'seasonal' and st.linked_packages.exists %}

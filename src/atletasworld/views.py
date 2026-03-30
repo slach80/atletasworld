@@ -28,6 +28,7 @@ def home_view(request):
     # Annotate formatted start times and a single date range from linked packages
     for obj in list(events_qs) + list(programs_qs):
         obj.start_times_fmt = _fmt_times(obj.start_times)
+        obj.weekend_start_times_fmt = _fmt_times(obj.weekend_start_times) if obj.weekend_start_times else ''
         obj.pkg_date = obj.linked_packages.filter(event_start_date__isnull=False).first()
 
     return render(request, 'home.html', {
