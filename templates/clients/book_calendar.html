@@ -45,8 +45,8 @@
         /* Tooltip */
         .tip { position:relative; display:inline-flex; cursor:pointer; color:#d1d5db; font-size:.65rem; font-weight:700; width:1rem; height:1rem; align-items:center; justify-content:center; border-radius:50%; border:1px solid #e5e7eb; background:#f9fafb; transition:all .15s; user-select:none; }
         .tip:hover,.tip.tip-open { color:#1a1a1a; border-color:#1a1a1a; background:#D7FF00; }
-        .tip::after { content:attr(data-tip); display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1a1a1a; color:#fff; padding:.4rem .6rem; border-radius:.5rem; font-size:.7rem; font-weight:400; line-height:1.4; width:max-content; max-width:220px; white-space:normal; z-index:200; pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,.25); }
-        .tip::before { content:''; display:none; position:absolute; bottom:calc(100% + 1px); left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1a1a1a; z-index:201; pointer-events:none; }
+        .tip::after { content:attr(data-tip); display:none; position:absolute; top:calc(100% + 6px); left:0; background:#1a1a1a; color:#fff; padding:.4rem .6rem; border-radius:.5rem; font-size:.7rem; font-weight:400; line-height:1.4; width:max-content; max-width:220px; white-space:normal; z-index:200; pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,.25); }
+        .tip::before { content:''; display:none; position:absolute; top:calc(100% + 1px); left:50%; transform:translateX(-50%); border:5px solid transparent; border-bottom-color:#1a1a1a; z-index:201; pointer-events:none; }
         .tip:hover::after,.tip:hover::before,.tip.tip-open::after,.tip.tip-open::before { display:block; }
         /* Dual-range slider */
         .dual-range-wrap { position:relative; height:28px; display:flex; align-items:center; }
