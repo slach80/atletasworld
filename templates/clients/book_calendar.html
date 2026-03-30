@@ -267,11 +267,11 @@
                 <div class="card-header bg-transparent">
                     <div class="calendar-controls">
                         <div class="calendar-nav">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.prev(); loadAvailability();">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.prev(); updateCalendarTitle();">
                                 <i class="bi bi-chevron-left"></i>
                             </button>
-                            <button class="btn btn-outline-primary btn-sm" onclick="calendar.today(); loadAvailability();">Today</button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.next(); loadAvailability();">
+                            <button class="btn btn-outline-primary btn-sm" onclick="calendar.today(); updateCalendarTitle();">Today</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.next(); updateCalendarTitle();">
                                 <i class="bi bi-chevron-right"></i>
                             </button>
                             <span class="calendar-title" id="calendar-title"></span>
@@ -507,7 +507,7 @@
     }
 
     function updateCalendarTitle() {
-        const date = calendar.getDate();
+        // Always load today → +90 days so all sessions stay in the calendar
         const options = { year: 'numeric', month: 'long' };
         document.getElementById('calendar-title').textContent =
             date.toDate().toLocaleDateString('en-US', options);
@@ -521,16 +521,17 @@
     }
 
     async function loadAvailability() {
-        const date = calendar.getDate();
-        const start = new Date(date);
-        start.setDate(start.getDate() - 7);
-        const end = new Date(date);
-        end.setDate(end.getDate() + 30);
+        // Always load today → +90 days so all sessions stay in the calendar
+        // regardless of which week the user navigates to
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + 90);
 
         const coachId = document.getElementById('coachFilter').value;
         const sessionTypeId = document.getElementById('sessionTypeFilter').value;
 
-        let url = `/api/bookings/availability/?start=${start.toISOString().split('T')[0]}&end=${end.toISOString().split('T')[0]}`;
+        let url = `/api/bookings/availability/?start=${today.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}`;
         if (coachId) url += `&coach_id=${coachId}`;
 
         try {
