@@ -18,13 +18,20 @@
         }
     </script>
     <style>
+        html, body { overflow-x: hidden; max-width: 100vw; }
         body { font-family: 'Archivo Condensed', system-ui, sans-serif; font-weight: 400; }
         h1,.brand-heading { font-family: 'Bilgen','Archivo Condensed',system-ui,sans-serif; font-weight:800; }
         h2,h3 { font-family: 'Bilgen','Archivo Condensed',system-ui,sans-serif; font-weight:700; }
         h4,h5,h6 { font-family:'Archivo Condensed',system-ui,sans-serif; font-weight:700; }
         small,caption { font-weight:300; }
-        .filter-scroll { scrollbar-width:none; -ms-overflow-style:none; }
+        .filter-scroll { scrollbar-width:none; -ms-overflow-style:none; overflow-x:auto; }
         .filter-scroll::-webkit-scrollbar { display:none; }
+        /* Contain pill rows within viewport */
+        #filter-bar { overflow-x: hidden; }
+        #filter-bar .max-w-7xl { overflow-x: hidden; }
+        #filter-bar .flex.overflow-x-auto,
+        #filter-bar [class*="filter-scroll"],
+        #type-pills { overflow-x: auto; min-width: 0; max-width: 100%; }
         @keyframes spin { to { transform:rotate(360deg); } }
         .spinner { display:inline-block; width:2rem; height:2rem; border:3px solid #e5e7eb; border-top-color:#D7FF00; border-radius:50%; animation:spin .7s linear infinite; }
         /* Filter bar */
@@ -166,21 +173,21 @@
         </div>
 
         <!-- Session Type -->
-        <div class="md:col-span-2">
+        <div class="md:col-span-2 min-w-0 w-full">
             <div class="filter-label-row">
                 <span class="filter-label">Session Type</span>
                 <span class="tip" data-tip="Filter by the type of training offered — e.g. Spring Program, Private Training. Tap once to select, tap again to clear.">ⓘ</span>
             </div>
-            <div id="type-pills" class="flex gap-1.5 overflow-x-auto filter-scroll flex-nowrap pb-0.5"></div>
+            <div id="type-pills" class="flex gap-1.5 overflow-x-auto filter-scroll flex-nowrap pb-0.5 w-full"></div>
         </div>
 
         <!-- Date Range -->
-        <div class="md:col-span-2">
+        <div class="md:col-span-2 min-w-0 w-full">
             <div class="filter-label-row">
                 <span class="filter-label">Date Range</span>
                 <span class="tip" data-tip="Jump to a specific time window. 'This week' shows Mon–Sun of the current week. Combines with all other filters.">ⓘ</span>
             </div>
-            <div class="flex gap-1.5 overflow-x-auto filter-scroll flex-nowrap pb-0.5">
+            <div class="flex gap-1.5 overflow-x-auto filter-scroll flex-nowrap pb-0.5 w-full">
                 <button data-date="" onclick="setDateFilter('')" class="date-pill f-pill f-pill-on whitespace-nowrap">All dates</button>
                 <button data-date="today" onclick="setDateFilter('today')" class="date-pill f-pill whitespace-nowrap">Today</button>
                 <button data-date="tomorrow" onclick="setDateFilter('tomorrow')" class="date-pill f-pill whitespace-nowrap">Tomorrow</button>
