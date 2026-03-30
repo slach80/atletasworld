@@ -2,293 +2,225 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-        <!-- Welcome Header -->
-        <div class="bg-gradient-to-r from-owner to-purple-600 rounded-xl p-6 mb-6 text-white">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold">Owner Overview</h1>
-                    <p class="text-white/80">{{ today|date:"l, F j, Y" }} - Full system view across all coaches, clients, and players</p>
-                </div>
-                <a href="{% url 'owner_notifications' %}" class="flex items-center px-6 py-3 bg-white text-owner rounded-lg font-semibold hover:bg-gray-100 shadow-lg transition transform hover:scale-105">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    Send Notifications
-                </a>
+<!-- Header -->
+<div class="bg-gradient-to-r from-owner to-purple-600 rounded-xl p-6 mb-6 text-white">
+    <div class="flex justify-between items-center flex-wrap gap-3">
+        <div>
+            <h1 class="text-2xl font-bold">Owner Overview</h1>
+            <p class="text-white/80 text-sm">{{ today|date:"l, F j, Y" }}</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            {% if pending_approvals %}
+            <a href="{% url 'owner_clients' %}" class="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg font-semibold hover:bg-yellow-300 transition text-sm">
+                ⏳ {{ pending_approvals }} Pending Approval{{ pending_approvals|pluralize }}
+            </a>
+            {% endif %}
+            <a href="{% url 'owner_notifications' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white text-owner rounded-lg font-semibold hover:bg-gray-100 transition text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Notifications
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ── Key Stats (8 cards) ──────────────────────────────────────────────────── -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <a href="{% url 'owner_coaches' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-owner hover:shadow-md transition">
+        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Coaches</p>
+        <p class="text-3xl font-bold text-owner mt-1">{{ total_coaches }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">active</p>
+    </a>
+    <a href="{% url 'owner_clients' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-blue-500 hover:shadow-md transition">
+        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Clients</p>
+        <p class="text-3xl font-bold text-blue-500 mt-1">{{ total_clients }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">{{ total_players }} players</p>
+    </a>
+    <a href="{% url 'owner_bookings' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-orange-500 hover:shadow-md transition">
+        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Today's Bookings</p>
+        <p class="text-3xl font-bold text-orange-500 mt-1">{{ todays_bookings }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">{{ total_sessions_today }} sessions scheduled</p>
+    </a>
+    <a href="{% url 'owner_bookings' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-cyan-500 hover:shadow-md transition">
+        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Upcoming</p>
+        <p class="text-3xl font-bold text-cyan-500 mt-1">{{ pending_bookings }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">confirmed / pending</p>
+    </a>
+</div>
+
+<!-- ── Financial Overview ──────────────────────────────────────────────────── -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span>💰</span> Financial Overview
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">This Month</p>
+            <p class="text-2xl font-bold text-primary mt-1">${{ revenue_this_month|floatformat:0 }}</p>
+            {% if revenue_last_month %}
+            <p class="text-xs mt-1 {% if revenue_this_month >= revenue_last_month %}text-green-600{% else %}text-red-500{% endif %}">
+                vs ${{ revenue_last_month|floatformat:0 }} last month
+            </p>
+            {% endif %}
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">YTD Revenue</p>
+            <p class="text-2xl font-bold text-primary mt-1">${{ revenue_ytd|floatformat:0 }}</p>
+            <p class="text-xs text-gray-400 mt-1">Jan – today</p>
+        </div>
+        <div class="text-center p-4 {% if pending_payments %}bg-yellow-50{% else %}bg-gray-50{% endif %} rounded-xl">
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Pending Payment</p>
+            <p class="text-2xl font-bold {% if pending_payments %}text-yellow-600{% else %}text-gray-400{% endif %} mt-1">${{ pending_payments|floatformat:0 }}</p>
+            <p class="text-xs text-gray-400 mt-1">awaiting collection</p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Rental (month)</p>
+            <p class="text-2xl font-bold text-primary mt-1">${{ rental_revenue_month|floatformat:0 }}</p>
+            <p class="text-xs text-gray-400 mt-1">field / facility</p>
+        </div>
+    </div>
+
+    {% if recent_transactions %}
+    <h3 class="text-sm font-semibold text-gray-600 mb-3">Recent Transactions</h3>
+    <div class="space-y-2">
+        {% for bk in recent_transactions %}
+        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-sm">
+            <div>
+                <span class="font-medium text-gray-800">{{ bk.player.first_name|default:bk.client.user.first_name }} {{ bk.player.last_name|default:'' }}</span>
+                <span class="text-gray-400 mx-1">·</span>
+                <span class="text-gray-500">{{ bk.session_type.name|default:"Session" }}</span>
+            </div>
+            <div class="text-right">
+                <span class="font-bold text-green-700">${{ bk.amount_paid|floatformat:2 }}</span>
+                <span class="text-gray-400 text-xs ml-2">{{ bk.scheduled_date|date:"M j" }}</span>
             </div>
         </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-400 text-center py-4">No paid transactions yet this month.</p>
+    {% endif %}
+</div>
 
-        <!-- Main Stats Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-            <!-- Coaches -->
-            <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-owner">
-                <p class="text-3xl font-bold text-owner">{{ total_coaches }}</p>
-                <p class="text-gray-500 text-sm">Active Coaches</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-secondary">
-                <p class="inline-block text-3xl font-bold text-secondary bg-primary rounded-xl px-3 py-1.5">{{ coaches_with_sessions_today }}</p>
-                <p class="text-gray-500 text-sm">Coaches Today</p>
-            </div>
-            <!-- Clients/Players -->
-            <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-blue-500">
-                <p class="text-3xl font-bold text-blue-500">{{ total_clients }}</p>
-                <p class="text-gray-500 text-sm">Total Clients</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-purple-500">
-                <p class="text-3xl font-bold text-purple-500">{{ total_players }}</p>
-                <p class="text-gray-500 text-sm">Active Players</p>
-            </div>
-            <!-- Sessions -->
-            <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-orange-500">
-                <p class="text-3xl font-bold text-orange-500">{{ total_sessions_today }}</p>
-                <p class="text-gray-500 text-sm">Sessions Today</p>
-            </div>
-            <!-- Bookings -->
-            <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-cyan-500">
-                <p class="text-3xl font-bold text-cyan-500">{{ todays_bookings }}</p>
-                <p class="text-gray-500 text-sm">Bookings Today</p>
-            </div>
+<!-- ── Main Grid ───────────────────────────────────────────────────────────── -->
+<div class="grid lg:grid-cols-2 gap-6 mb-6">
+
+    <!-- Coaches -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-800">Coaches</h2>
+            <a href="{% url 'owner_coaches' %}" class="text-owner text-sm hover:underline">Manage</a>
         </div>
-
-        <!-- Secondary Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow p-4">
-                <div class="flex justify-between items-center">
+        {% if coaches %}
+        <div class="space-y-3">
+            {% for coach in coaches %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-owner/10 flex items-center justify-center text-sm font-bold text-owner">
+                        {{ coach.user.first_name.0 }}{{ coach.user.last_name.0 }}
+                    </div>
                     <div>
-                        <p class="text-gray-500 text-sm">Week Sessions</p>
-                        <p class="text-2xl font-bold">{{ sessions_this_week }}</p>
-                    </div>
-                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <p class="font-semibold text-sm text-gray-800">{{ coach.user.get_full_name }}</p>
+                        <p class="text-xs text-gray-500">{{ coach.total_players }} player{{ coach.total_players|pluralize }}</p>
                     </div>
                 </div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-gray-500 text-sm">Pending Bookings</p>
-                        <p class="text-2xl font-bold">{{ pending_bookings }}</p>
-                    </div>
-                    <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
+                <div class="text-right text-xs">
+                    {% if coach.sessions_today %}<span class="px-2 py-1 bg-owner/10 text-owner rounded-full font-semibold">{{ coach.sessions_today }} today</span>{% endif %}
+                    {% if coach.upcoming %}<span class="ml-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full">{{ coach.upcoming }} upcoming</span>{% endif %}
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow p-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-gray-500 text-sm">Completed</p>
-                        <p class="text-2xl font-bold">{{ completed_bookings }}</p>
-                    </div>
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-gray-500 text-sm">Month Revenue</p>
-                        <p class="text-2xl font-bold">${{ revenue_this_month|floatformat:0 }}</p>
-                    </div>
-                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
-
-        <!-- Main Content Grid -->
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
-            <!-- Coaches Overview -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Coaches Overview</h2>
-                    <a href="/admin/coaches/coach/" class="text-owner text-sm hover:underline">Manage</a>
-                </div>
-                {% if coaches %}
-                <div class="space-y-3">
-                    {% for coach in coaches %}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center space-x-3">
-                            {% if coach.photo %}
-                            <img src="{{ coach.photo.url }}" alt="{{ coach.user.first_name }}" class="w-10 h-10 rounded-full object-cover">
-                            {% else %}
-                            <div class="w-10 h-10 rounded-full bg-owner flex items-center justify-center text-white font-bold">{{ coach.user.first_name|slice:":1" }}</div>
-                            {% endif %}
-                            <div>
-                                <p class="font-semibold">{{ coach.user.first_name }} {{ coach.user.last_name }}</p>
-                                <p class="text-sm text-gray-500">{{ coach.total_players }} players | {{ coach.total_bookings }} bookings</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <span class="{% if coach.sessions_today > 0 %}bg-secondary text-gray-900{% else %}bg-gray-200 text-gray-600{% endif %} px-2 py-1 rounded-full text-xs">
-                                {{ coach.sessions_today }} today
-                            </span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-gray-500 text-center py-4">No active coaches.</p>
-                {% endif %}
-            </div>
-
-            <!-- Today's Schedule (All Coaches) -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Today's Schedule</h2>
-                    <span class="text-sm text-gray-500">All Coaches</span>
-                </div>
-                {% if todays_schedule %}
-                <div class="space-y-2 max-h-80 overflow-y-auto">
-                    {% for block in todays_schedule %}
-                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-sm">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-mono text-gray-600">{{ block.start_time|time:"g:iA" }}</span>
-                            <span class="font-semibold">{{ block.coach.user.first_name }}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-gray-500">{{ block.get_session_type_display }}</span>
-                            <span class="{% if block.status == 'booked' %}bg-blue-100 text-blue-700{% else %}bg-green-100 text-green-700{% endif %} px-2 py-0.5 rounded text-xs">{{ block.status }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-gray-500 text-center py-4">No sessions scheduled for today.</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Second Row -->
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
-            <!-- Recent Bookings -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Recent Bookings</h2>
-                    <a href="/admin/bookings/booking/" class="text-owner text-sm hover:underline">View All</a>
-                </div>
-                {% if recent_bookings %}
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-gray-500 border-b">
-                            <tr>
-                                <th class="text-left py-2">Player</th>
-                                <th class="text-left py-2">Coach</th>
-                                <th class="text-left py-2">Date</th>
-                                <th class="text-left py-2">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for booking in recent_bookings %}
-                            <tr class="border-b border-gray-100">
-                                <td class="py-2">{{ booking.player.first_name }} {{ booking.player.last_name }}</td>
-                                <td class="py-2">{{ booking.coach.user.first_name }}</td>
-                                <td class="py-2">{{ booking.scheduled_date|date:"M j" }}</td>
-                                <td class="py-2">
-                                    <span class="{% if booking.status == 'completed' %}bg-green-100 text-green-700{% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %} px-2 py-0.5 rounded text-xs">{{ booking.status }}</span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-gray-500 text-center py-4">No recent bookings.</p>
-                {% endif %}
-            </div>
-
-            <!-- Upcoming by Coach -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Upcoming Bookings by Coach</h2>
-                </div>
-                {% if upcoming_by_coach %}
-                <div class="space-y-3">
-                    {% for item in upcoming_by_coach %}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 rounded-full bg-owner flex items-center justify-center text-white text-sm font-bold">{{ item.coach.user.first_name|slice:":1" }}</div>
-                            <span class="font-semibold">{{ item.coach.user.first_name }} {{ item.coach.user.last_name }}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-2xl font-bold {% if item.upcoming > 5 %}text-secondary{% elif item.upcoming > 0 %}text-blue-500{% else %}text-gray-400{% endif %}">{{ item.upcoming }}</span>
-                            <span class="text-gray-500 text-sm">upcoming</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-gray-500 text-center py-4">No upcoming data.</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Third Row - Assessments & Reviews -->
-        <div class="grid md:grid-cols-3 gap-6">
-            <!-- Assessment Stats -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Assessments</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-500">Total Assessments</span>
-                        <span class="text-2xl font-bold text-owner">{{ total_assessments }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-500">This Week</span>
-                        <span class="inline-block text-xl font-bold text-secondary bg-primary rounded-lg px-3 py-1">{{ assessments_this_week }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Review Stats -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Reviews</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-500">Total Reviews</span>
-                        <span class="text-2xl font-bold text-owner">{{ total_reviews }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-500">Average Rating</span>
-                        <div class="flex items-center">
-                            <span class="text-xl font-bold text-yellow-500">{{ avg_rating|floatformat:1 }}</span>
-                            <svg class="w-5 h-5 text-yellow-400 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- New This Month -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">This Month</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-500">New Clients</span>
-                        <span class="text-2xl font-bold text-purple-500">{{ new_clients_this_month }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-500">Total Bookings</span>
-                        <span class="text-xl font-bold text-blue-500">{{ total_bookings }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Assessments -->
-        {% if players_pending_assessment %}
-        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Pending Assessments (All Coaches)</h2>
-            </div>
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {% for booking in players_pending_assessment %}
-                <div class="border border-orange-200 bg-orange-50 rounded-lg p-4">
-                    <p class="font-semibold">{{ booking.player.first_name }} {{ booking.player.last_name }}</p>
-                    <p class="text-sm text-gray-500">Coach: {{ booking.coach.user.first_name }}</p>
-                    <p class="text-sm text-gray-500">{{ booking.scheduled_date|date:"M j, Y" }}</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-6">No active coaches.</p>
         {% endif %}
+    </div>
+
+    <!-- Today's Schedule -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4">Today's Schedule</h2>
+        {% if todays_schedule %}
+        <div class="space-y-2 max-h-80 overflow-y-auto">
+            {% for block in todays_schedule %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm">
+                <div>
+                    <span class="font-semibold text-gray-800">{{ block.start_time|time:"g:i A" }}</span>
+                    <span class="text-gray-400 mx-1">·</span>
+                    <span class="text-gray-600">{{ block.coach.user.first_name }}</span>
+                    <span class="text-gray-400 mx-1">·</span>
+                    <span class="text-gray-500">{{ block.get_session_type_display }}</span>
+                </div>
+                <span class="px-2 py-0.5 text-xs rounded-full {% if block.status == 'booked' %}bg-green-100 text-green-700{% else %}bg-blue-50 text-blue-600{% endif %}">
+                    {{ block.current_participants }}/{{ block.max_participants }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-8">No sessions scheduled for today.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Bookings -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-gray-800">Recent Bookings</h2>
+        <a href="{% url 'owner_bookings' %}" class="text-owner text-sm hover:underline">View All</a>
+    </div>
+    {% if recent_bookings %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead><tr class="text-left text-xs text-gray-500 border-b">
+                <th class="pb-2 font-semibold">Player</th>
+                <th class="pb-2 font-semibold">Coach</th>
+                <th class="pb-2 font-semibold">Session</th>
+                <th class="pb-2 font-semibold">Date</th>
+                <th class="pb-2 font-semibold">Status</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for booking in recent_bookings %}
+                <tr class="hover:bg-gray-50">
+                    <td class="py-2.5 font-medium text-gray-800">{{ booking.player.first_name|default:booking.client.user.first_name }} {{ booking.player.last_name|default:'' }}</td>
+                    <td class="py-2.5 text-gray-500">{{ booking.coach.user.first_name }}</td>
+                    <td class="py-2.5 text-gray-500">{{ booking.session_type.name|default:"—" }}</td>
+                    <td class="py-2.5 text-gray-500">{{ booking.scheduled_date|date:"M j" }}</td>
+                    <td class="py-2.5">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                            {% if booking.status == 'completed' %}bg-green-100 text-green-700
+                            {% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-700
+                            {% elif booking.status == 'cancelled' %}bg-red-100 text-red-600
+                            {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                            {{ booking.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-400 text-center py-6">No recent bookings.</p>
+    {% endif %}
+</div>
+
+<!-- Pending Assessments -->
+{% if players_pending_assessment %}
+<div class="bg-white rounded-xl shadow-md p-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">⚠️ Pending Assessments</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {% for booking in players_pending_assessment %}
+        <div class="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+            <div class="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center text-xs font-bold text-yellow-800">
+                {{ booking.player.first_name.0 }}{{ booking.player.last_name.0 }}
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800">{{ booking.player.first_name }} {{ booking.player.last_name }}</p>
+                <p class="text-xs text-gray-500">{{ booking.coach.user.first_name }} · {{ booking.scheduled_date|date:"M j, Y" }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

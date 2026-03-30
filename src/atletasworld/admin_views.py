@@ -29,123 +29,94 @@ def is_owner(user):
 @user_passes_test(is_owner)
 def owner_dashboard(request):
     """Owner dashboard with overview across all entities."""
+    from clients.models import FieldRentalSlot
     today = timezone.now().date()
+    month_start = today.replace(day=1)
+    year_start  = today.replace(month=1, day=1)
 
-    # Coach stats
-    total_coaches = Coach.objects.filter(is_active=True).count()
-    coaches_with_sessions_today = Coach.objects.filter(
-        schedule_blocks__date=today
-    ).distinct().count()
+    # ── Core counts ────────────────────────────────────────────────────────────
+    total_coaches  = Coach.objects.filter(is_active=True).count()
+    _client_qs = Client.objects.filter(user__is_staff=False, user__is_superuser=False
+                   ).exclude(user__groups__name__in=['Owner', 'Coach'])
+    total_clients  = _client_qs.count()
+    total_players  = Player.objects.filter(is_active=True).count()
+    pending_approvals = _client_qs.filter(approval_status='pending').count()
 
-    # Client/Player stats — exclude owners, coaches, and staff from client counts
-    _client_qs = Client.objects.filter(
-        user__is_staff=False,
-        user__is_superuser=False,
-    ).exclude(user__groups__name__in=['Owner', 'Coach'])
-    total_clients = _client_qs.count()
-    total_players = Player.objects.filter(is_active=True).count()
-    new_clients_this_month = _client_qs.filter(
-        user__date_joined__month=today.month,
-        user__date_joined__year=today.year
-    ).count()
-
-    # Booking stats
-    total_bookings = Booking.objects.count()
-    todays_bookings = Booking.objects.filter(scheduled_date=today).count()
-    completed_bookings = Booking.objects.filter(status='completed').count()
-    pending_bookings = Booking.objects.filter(status__in=['pending', 'confirmed']).count()
-
-    # Session stats
+    # ── Today ──────────────────────────────────────────────────────────────────
+    todays_bookings      = Booking.objects.filter(scheduled_date=today).count()
     total_sessions_today = ScheduleBlock.objects.filter(date=today).count()
-    sessions_this_week = ScheduleBlock.objects.filter(
-        date__gte=today,
-        date__lte=today + timedelta(days=7)
-    ).count()
+    pending_bookings     = Booking.objects.filter(status__in=['pending', 'confirmed'],
+                                                   scheduled_date__gte=today).count()
 
-    # Revenue (this month)
-    revenue_this_month = Booking.objects.filter(
-        scheduled_date__month=today.month,
-        scheduled_date__year=today.year,
+    # ── Financial ──────────────────────────────────────────────────────────────
+    def _rev(qs):
+        return qs.aggregate(t=Sum('amount_paid'))['t'] or 0
+
+    paid_qs = Booking.objects.filter(payment_status='paid')
+    revenue_this_month = _rev(paid_qs.filter(scheduled_date__gte=month_start,
+                                             scheduled_date__lte=today))
+    revenue_ytd        = _rev(paid_qs.filter(scheduled_date__gte=year_start,
+                                             scheduled_date__lte=today))
+    revenue_last_month = _rev(paid_qs.filter(
+        scheduled_date__gte=(month_start - timedelta(days=1)).replace(day=1),
+        scheduled_date__lt=month_start
+    ))
+    pending_payments   = Booking.objects.filter(
+        payment_status='pending', status__in=['pending', 'confirmed']
+    ).aggregate(t=Sum('amount_paid'))['t'] or 0
+    rental_revenue_month = FieldRentalSlot.objects.filter(
+        status='booked',
+        date__gte=month_start, date__lte=today
+    ).aggregate(t=Sum('service__price'))['t'] or 0
+
+    # Recent paid transactions
+    recent_transactions = Booking.objects.filter(
         payment_status='paid'
-    ).aggregate(total=Sum('amount_paid'))['total'] or 0
+    ).select_related('client__user', 'player', 'session_type').order_by('-updated_at')[:8]
 
-    # Assessment stats
-    total_assessments = PlayerAssessment.objects.count()
-    assessments_this_week = PlayerAssessment.objects.filter(
-        assessment_date__gte=today - timedelta(days=7)
-    ).count()
-
-    # Review stats
-    total_reviews = Review.objects.filter(is_approved=True).count()
-    avg_rating = Review.objects.filter(is_approved=True).aggregate(
-        avg=Avg('rating')
-    )['avg'] or 0
-
-    # Coaches list with their stats
+    # ── Coaches ────────────────────────────────────────────────────────────────
     coaches = Coach.objects.filter(is_active=True).annotate(
-        sessions_today=Count(
-            'schedule_blocks',
-            filter=Q(schedule_blocks__date=today)
-        ),
-        total_bookings=Count('bookings'),
+        sessions_today=Count('schedule_blocks', filter=Q(schedule_blocks__date=today)),
+        upcoming=Count('bookings', filter=Q(bookings__scheduled_date__gte=today,
+                                            bookings__status__in=['pending','confirmed'])),
         total_players=Count('bookings__player', distinct=True)
     ).order_by('-sessions_today')[:10]
 
-    # Today's schedule across all coaches
     todays_schedule = ScheduleBlock.objects.filter(
         date=today
     ).select_related('coach__user').order_by('start_time')[:20]
 
-    # Recent bookings
     recent_bookings = Booking.objects.select_related(
         'client__user', 'player', 'coach__user', 'session_type'
     ).order_by('-created_at')[:10]
 
-    # Upcoming bookings by coach
-    upcoming_by_coach = []
-    for coach in Coach.objects.filter(is_active=True)[:5]:
-        upcoming = Booking.objects.filter(
-            coach=coach,
-            scheduled_date__gte=today,
-            status__in=['pending', 'confirmed']
-        ).count()
-        upcoming_by_coach.append({
-            'coach': coach,
-            'upcoming': upcoming
-        })
-
-    # Players needing assessment
     players_pending_assessment = Booking.objects.filter(
         status='completed',
-        scheduled_date__gte=today - timedelta(days=7)
-    ).exclude(
-        assessments__isnull=False
-    ).select_related('player', 'coach__user')[:10]
+        scheduled_date__gte=today - timedelta(days=14)
+    ).exclude(assessments__isnull=False).select_related('player', 'coach__user')[:10]
 
     context = {
         'today': today,
-        # Main stats
+        # Core counts
         'total_coaches': total_coaches,
-        'coaches_with_sessions_today': coaches_with_sessions_today,
         'total_clients': total_clients,
         'total_players': total_players,
-        'new_clients_this_month': new_clients_this_month,
-        'total_bookings': total_bookings,
+        'pending_approvals': pending_approvals,
+        # Today
         'todays_bookings': todays_bookings,
-        'completed_bookings': completed_bookings,
-        'pending_bookings': pending_bookings,
         'total_sessions_today': total_sessions_today,
-        'sessions_this_week': sessions_this_week,
+        'pending_bookings': pending_bookings,
+        # Financial
         'revenue_this_month': revenue_this_month,
-        'total_assessments': total_assessments,
-        'assessments_this_week': assessments_this_week,
-        'total_reviews': total_reviews,
-        'avg_rating': avg_rating,
+        'revenue_ytd': revenue_ytd,
+        'revenue_last_month': revenue_last_month,
+        'pending_payments': pending_payments,
+        'rental_revenue_month': rental_revenue_month,
+        'recent_transactions': recent_transactions,
         # Lists
         'coaches': coaches,
         'todays_schedule': todays_schedule,
         'recent_bookings': recent_bookings,
-        'upcoming_by_coach': upcoming_by_coach,
         'players_pending_assessment': players_pending_assessment,
     }
     return render(request, 'owner/dashboard.html', context)
