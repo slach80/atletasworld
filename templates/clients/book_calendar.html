@@ -83,35 +83,37 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center">
-                <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+                <a href="{% url 'clients:dashboard' %}"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
             </div>
             <!-- Desktop nav -->
             <div class="hidden md:flex items-center space-x-1 text-sm">
+                <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'dashboard' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Dashboard</a>
+                <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'dashboard' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Dashboard</a>
                 <!-- Players dropdown -->
                 <div class="relative group">
-                    <button class="flex items-center gap-1 px-3 py-2 rounded text-gray-700 hover:bg-gray-100 transition">
+                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' or request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">
                         Players
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div class="absolute left-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                        <a href="{% url 'clients:players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-t-lg">👥 My Players</a>
-                        <a href="{% url 'clients:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">📋 Assessments</a>
+                        <a href="{% url 'clients:players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' %}text-gray-900 font-semibold{% endif %} rounded-t-lg">👥 My Players</a>
+                        <a href="{% url 'clients:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">📋 Assessments</a>
                     </div>
                 </div>
                 <!-- Account dropdown -->
                 <div class="relative group">
-                    <button class="flex items-center gap-1 px-3 py-2 rounded text-gray-700 hover:bg-gray-100 transition">
+                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'bookings' or request.resolver_match.url_name == 'packages' or request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'notification_settings' or request.resolver_match.url_name == 'notification_history' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">
                         Account
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                        <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-t-lg">📅 My Bookings</a>
-                        <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700">📦 Packages</a>
-                        <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700">👤 My Profile</a>
-                        <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">🔔 Notifications</a>
+                        <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'bookings' %}text-gray-900 font-semibold{% endif %} rounded-t-lg">📅 My Bookings</a>
+                        <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'packages' %}text-gray-900 font-semibold{% endif %}">📦 Packages</a>
+                        <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'profile' %}text-gray-900 font-semibold{% endif %}">👤 My Profile</a>
+                        <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'notification_settings' or request.resolver_match.url_name == 'notification_history' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">🔔 Notifications</a>
                     </div>
                 </div>
-                <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full font-semibold ml-2" style="background-color:#D7FF00;">
+                <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full hover:bg-[#b8e000] transition font-semibold ml-2">
                     Book Session
                 </a>
                 <span class="text-gray-500 mx-1">|</span>
@@ -128,6 +130,8 @@
     <!-- Mobile menu -->
     <div id="client-mobile-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-700">
         <div class="px-2 pt-2 pb-3 space-y-1 text-sm">
+            <a href="{% url 'clients:dashboard' %}" class="block px-3 py-2 rounded text-white hover:bg-white/10 font-semibold">🏠 Dashboard</a>
+            <a href="{% url 'clients:dashboard' %}" class="block px-3 py-2 rounded text-white hover:bg-white/10 font-semibold">🏠 Dashboard</a>
             <p class="px-3 pt-1 text-xs text-gray-500 uppercase tracking-wider">Players</p>
             <a href="{% url 'clients:players' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👥 My Players</a>
             <a href="{% url 'clients:assessments' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📋 Assessments</a>
@@ -136,7 +140,7 @@
             <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📦 Packages</a>
             <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👤 My Profile</a>
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🔔 Notifications</a>
-            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 text-gray-900 rounded-full font-semibold text-center" style="background-color:#D7FF00;"Book Session</a>
+            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full hover:bg-[#b8e000] font-semibold text-center">Book Session</a>
             <hr class="my-1 border-gray-700">
             <a href="/accounts/logout/" class="block px-3 py-2 text-gray-300 hover:text-accent rounded">Logout</a>
         </div>
