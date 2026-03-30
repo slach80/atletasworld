@@ -1,0 +1,72 @@
+{% extends 'owner/base.html' %}
+{% block title %}Payments{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Stripe Payments</h1>
+        <p class="text-sm text-gray-500 mt-0.5">
+            {% if stripe_live %}<span class="text-green-600 font-semibold">● Live mode</span>{% else %}<span class="text-yellow-600 font-semibold">● Test mode</span>{% endif %}
+        </p>
+    </div>
+    <a href="{% url 'owner_finances' %}" class="text-owner text-sm hover:underline">← Finances</a>
+</div>
+
+{% if messages %}
+<div class="space-y-2 mb-4">
+    {% for m in messages %}
+    <div class="px-4 py-3 rounded-lg text-sm {% if m.tags == 'success' %}bg-green-50 text-green-800{% else %}bg-red-50 text-red-800{% endif %}">{{ m }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+            <tr class="text-left text-xs text-gray-500 uppercase">
+                <th class="py-3 px-4 font-semibold">Client</th>
+                <th class="py-3 px-4 font-semibold">Amount</th>
+                <th class="py-3 px-4 font-semibold">Description</th>
+                <th class="py-3 px-4 font-semibold">Status</th>
+                <th class="py-3 px-4 font-semibold">Date</th>
+                <th class="py-3 px-4 font-semibold">Action</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for p in payments %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-3 px-4 font-medium">{{ p.client.user.get_full_name|default:p.client.user.username }}</td>
+                <td class="py-3 px-4 font-bold">${{ p.amount }}</td>
+                <td class="py-3 px-4 text-gray-500 max-w-xs truncate">{{ p.description|default:"—" }}</td>
+                <td class="py-3 px-4">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold
+                        {% if p.status == 'succeeded' %}bg-green-100 text-green-700
+                        {% elif p.status == 'refunded' %}bg-blue-100 text-blue-700
+                        {% elif p.status == 'failed' %}bg-red-100 text-red-600
+                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {{ p.get_status_display }}
+                    </span>
+                </td>
+                <td class="py-3 px-4 text-gray-500">{{ p.created_at|date:"M d, Y" }}</td>
+                <td class="py-3 px-4">
+                    {% if p.status == 'succeeded' %}
+                    <details class="inline">
+                        <summary class="text-xs text-red-500 hover:text-red-700 cursor-pointer list-none">Refund</summary>
+                        <form method="post" action="{% url 'owner_issue_refund' p.pk %}" class="mt-2 flex gap-2 items-center">
+                            {% csrf_token %}
+                            <input type="number" name="amount" step="0.01" min="0.50" max="{{ p.amount }}" placeholder="{{ p.amount }}"
+                                   class="w-24 px-2 py-1 border rounded text-xs focus:ring-2 focus:ring-owner">
+                            <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                                    onclick="return confirm('Issue refund?')">Confirm</button>
+                        </form>
+                    </details>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="py-8 text-center text-gray-400">No payment records yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -18,6 +18,8 @@ urlpatterns = [
 
     # Packages
     path('packages/', views.packages_list, name='packages'),
+    path('packages/<int:package_id>/pay/', views.package_payment_intent, name='package_pay'),
+    path('packages/<int:package_id>/subscribe/', views.package_subscribe, name='package_subscribe'),
 
     # Bookings
     path('bookings/', views.bookings_list, name='bookings'),

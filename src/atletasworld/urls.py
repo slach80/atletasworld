@@ -26,6 +26,7 @@ from .admin_views import (
     owner_field_slot_cancel, owner_field_slot_conflict_check,
     owner_services, owner_service_edit,
     owner_finances,
+    owner_payments, owner_issue_refund,
 )
 
 
@@ -131,6 +132,8 @@ urlpatterns = [
 
     # Owner - Finance Dashboard
     path('owner-portal/finances/', owner_finances, name='owner_finances'),
+    path('owner-portal/payments/', owner_payments, name='owner_payments'),
+    path('owner-portal/payments/<int:payment_id>/refund/', owner_issue_refund, name='owner_issue_refund'),
 
     # Owner - Service Catalog
     path('owner-portal/services/', owner_services, name='owner_services'),
@@ -177,7 +180,7 @@ urlpatterns = [
 
     # API endpoints
     path('api/bookings/', include('bookings.urls')),
-    path('api/payments/', include('payments.urls')),
+    path('payments/', include('payments.urls')),  # webhook at /payments/webhook/
     path('api/analytics/', include('analytics.urls')),
     path('api/reviews/', include('reviews.urls')),
 ]

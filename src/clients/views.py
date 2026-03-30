@@ -248,6 +248,22 @@ def player_delete(request, player_id):
 
 
 @login_required
+@require_POST
+def package_payment_intent(request, package_id):
+    """Proxy to payments app — create PaymentIntent for one-time package purchase."""
+    from payments.views import create_package_payment_intent
+    return create_package_payment_intent(request, package_id)
+
+
+@login_required
+@require_POST
+def package_subscribe(request, package_id):
+    """Proxy to payments app — create Stripe Subscription for recurring package."""
+    from payments.views import create_package_subscription
+    return create_package_subscription(request, package_id)
+
+
+@login_required
 def packages_list(request):
     """List all packages for the client."""
     client, created = Client.objects.get_or_create(user=request.user)
@@ -265,11 +281,13 @@ def packages_list(request):
     # Available packages for purchase
     available_packages = Package.objects.filter(is_active=True)
 
+    from django.conf import settings as django_settings
     context = {
         'client': client,
         'active_packages': active_packages,
         'expired_packages': expired_packages,
         'available_packages': available_packages,
+        'stripe_public_key': django_settings.STRIPE_PUBLIC_KEY,
     }
     return render(request, 'clients/packages.html', context)
 

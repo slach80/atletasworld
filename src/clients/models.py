@@ -47,6 +47,8 @@ class Client(models.Model):
         'clients.RentalService', blank=True, related_name='allowed_clients',
         help_text='Rental services this client is permitted to book')
 
+    stripe_customer_id = models.CharField(max_length=100, blank=True,
+                                           help_text="Stripe Customer ID (cus_xxx)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -177,6 +179,8 @@ class Package(models.Model):
     package_type = models.CharField(max_length=20, choices=PACKAGE_TYPE_CHOICES)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
+    stripe_price_id = models.CharField(max_length=100, blank=True,
+                                        help_text="Stripe Price ID for recurring packages (price_xxx)")
     sessions_included = models.IntegerField(help_text="Number of sessions included, 0 for unlimited")
     validity_weeks = models.IntegerField(help_text="How many weeks the package is valid")
     is_active = models.BooleanField(default=True)
@@ -237,7 +241,10 @@ class ClientPackage(models.Model):
     sessions_remaining = models.IntegerField()
     sessions_used = models.IntegerField(default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    stripe_payment_id = models.CharField(max_length=100, blank=True)
+    stripe_payment_id = models.CharField(max_length=100, blank=True,
+                                          help_text="Stripe PaymentIntent ID for one-time purchase")
+    stripe_subscription_id = models.CharField(max_length=100, blank=True,
+                                               help_text="Stripe Subscription ID for recurring packages")
     notes = models.TextField(blank=True)
 
     def __str__(self):

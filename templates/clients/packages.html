@@ -210,9 +210,16 @@
                         </li>
                     </ul>
 
-                    <a href="{% url 'clients:book' %}" class="block w-full text-center py-3 bg-accent text-gray-900 rounded-lg hover:bg-[#b8e000] transition">
-                        Purchase
+                    {% if stripe_public_key %}
+                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }})"
+                            class="block w-full text-center py-3 bg-accent text-gray-900 rounded-lg hover:bg-[#b8e000] transition font-semibold">
+                        Buy Now — ${{ package.price }}
+                    </button>
+                    {% else %}
+                    <a href="/contact" class="block w-full text-center py-3 bg-gray-200 text-gray-600 rounded-lg transition text-sm">
+                        Contact to Purchase
                     </a>
+                    {% endif %}
                 </div>
                 {% empty %}
                 <p class="text-gray-500 col-span-4 text-center py-8">No packages available at this time.</p>
@@ -261,5 +268,108 @@
         </div>
         {% endif %}
     </div>
+</div>
+
+{% if stripe_public_key %}
+<!-- Payment modal -->
+<div id="payment-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <h2 class="text-xl font-bold mb-1">Complete Purchase</h2>
+        <p id="payment-package-name" class="text-gray-500 text-sm mb-4"></p>
+
+        <div id="card-element" class="border border-gray-300 rounded-xl px-4 py-3 mb-3"></div>
+        <div id="card-errors" class="text-red-600 text-xs mb-3 hidden"></div>
+
+        <button id="pay-btn" onclick="submitPayment()"
+                class="w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
+            Pay <span id="pay-amount"></span>
+        </button>
+        <button onclick="closePaymentModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+    </div>
+</div>
+
+<!-- Success overlay -->
+<div id="payment-success" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div class="text-5xl mb-3">🎉</div>
+        <h2 class="text-xl font-bold mb-2">Package Activated!</h2>
+        <p class="text-gray-500 text-sm mb-5">Your package is now active and ready to use.</p>
+        <a href="{% url 'clients:book' %}" class="block py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">Book a Session →</a>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripeJs = Stripe('{{ stripe_public_key }}');
+const elements = stripeJs.elements();
+const cardElement = elements.create('card', {
+    style: { base: { fontSize: '15px', fontFamily: "'Archivo Condensed', sans-serif", color: '#1a1a1a' } }
+});
+cardElement.mount('#card-element');
+cardElement.on('change', e => {
+    const el = document.getElementById('card-errors');
+    if (e.error) { el.textContent = e.error.message; el.classList.remove('hidden'); }
+    else el.classList.add('hidden');
+});
+
+let currentPackageId = null;
+
+function buyPackage(id, name, price) {
+    currentPackageId = id;
+    document.getElementById('payment-package-name').textContent = name;
+    document.getElementById('pay-amount').textContent = '$' + parseFloat(price).toFixed(2);
+    document.getElementById('payment-modal').classList.remove('hidden');
+}
+
+function closePaymentModal() {
+    document.getElementById('payment-modal').classList.add('hidden');
+}
+
+async function submitPayment() {
+    const btn = document.getElementById('pay-btn');
+    btn.disabled = true;
+    btn.textContent = 'Processing…';
+
+    try {
+        const res = await fetch(`/portal/packages/${currentPackageId}/pay/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Payment failed'); return; }
+
+        const { error } = await stripeJs.confirmCardPayment(data.client_secret, {
+            payment_method: {
+                card: cardElement,
+                billing_details: { name: '{{ request.user.get_full_name }}' },
+            }
+        });
+
+        if (error) {
+            showError(error.message);
+        } else {
+            closePaymentModal();
+            document.getElementById('payment-success').classList.remove('hidden');
+        }
+    } catch(e) {
+        showError('Network error — please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Pay <span id="pay-amount">' + document.getElementById('pay-amount').textContent + '</span>';
+    }
+}
+
+function showError(msg) {
+    const el = document.getElementById('card-errors');
+    el.textContent = msg; el.classList.remove('hidden');
+    document.getElementById('pay-btn').disabled = false;
+}
+
+function getCookie(n) {
+    const v = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+}
+</script>
+{% endif %}
 </body>
 </html>

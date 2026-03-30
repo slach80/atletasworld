@@ -1937,3 +1937,48 @@ def owner_finances(request):
         'package_breakdown': package_breakdown,
     }
     return render(request, 'owner/finances.html', context)
+
+
+# ── Stripe Payments (owner portal) ───────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_owner)
+def owner_payments(request):
+    """List all Stripe payment records."""
+    from payments.models import Payment
+    payments = Payment.objects.select_related('client__user').order_by('-created_at')[:100]
+    context = {
+        'payments': payments,
+        'stripe_live': bool(settings.STRIPE_SECRET_KEY and settings.STRIPE_SECRET_KEY.startswith('sk_live')),
+    }
+    return render(request, 'owner/payments.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+@require_POST
+def owner_issue_refund(request, payment_id):
+    """Issue a full or partial Stripe refund."""
+    from payments.models import Payment
+    from django.shortcuts import get_object_or_404
+
+    if not settings.STRIPE_SECRET_KEY:
+        messages.error(request, 'Stripe is not configured.')
+        return redirect('owner_payments')
+
+    import stripe
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    payment = get_object_or_404(Payment, pk=payment_id, status='succeeded')
+    amount_str = request.POST.get('amount', '').strip()
+
+    try:
+        kwargs = {'payment_intent': payment.stripe_payment_intent_id}
+        if amount_str:
+            kwargs['amount'] = int(float(amount_str) * 100)
+        stripe.Refund.create(**kwargs)
+        messages.success(request, f'Refund initiated for {payment.client} — ${payment.amount}. Status updates via webhook.')
+    except stripe.error.StripeError as e:
+        messages.error(request, f'Refund failed: {e.user_message}')
+
+    return redirect('owner_payments')
