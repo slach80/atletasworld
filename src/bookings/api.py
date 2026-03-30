@@ -23,21 +23,22 @@ SCHEDULE_BLOCK_CALENDARS = {
 }
 
 
+def is_team_coach(user):
+    """Team coaches/managers see team session types; regular parents don't."""
+    if hasattr(user, 'coach'):
+        return True
+    if hasattr(user, 'client') and user.client.client_type == 'coach':
+        return True
+    return False
+
+
 class SessionTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint for session types."""
     permission_classes = [IsAuthenticated]
 
-    def _is_team_coach(self, user):
-        """Team coaches/managers see team session types; regular parents don't."""
-        if hasattr(user, 'coach'):
-            return True
-        if hasattr(user, 'client') and user.client.client_type == 'coach':
-            return True
-        return False
-
     def get_queryset(self):
         qs = SessionType.objects.filter(is_active=True)
-        if not self._is_team_coach(self.request.user):
+        if not is_team_coach(self.request.user):
             qs = qs.exclude(session_format='team')
         return qs
 
@@ -129,13 +130,13 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
         if coach_id:
             sb_queryset = sb_queryset.filter(coach_id=coach_id)
 
-        is_team_coach = self._is_team_coach(request.user)
+        team_coach = is_team_coach(request.user)
 
         for block in sb_queryset:
             cal = SCHEDULE_BLOCK_CALENDARS.get(block.session_type, SCHEDULE_BLOCK_CALENDARS['group'])
             catalog_types = list(block.catalog_session_types.all())
             # Skip blocks that are exclusively team session types for non-team-coach clients
-            if catalog_types and not is_team_coach:
+            if catalog_types and not team_coach:
                 non_team = [st for st in catalog_types if st.session_format != 'team']
                 if not non_team:
                     continue  # all types are team-only — hide from regular clients
