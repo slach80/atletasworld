@@ -88,7 +88,8 @@
 
 <!-- Filter bar -->
 <div class="sticky top-16 z-40 bg-gray-50 border-b border-gray-200 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap md:flex-nowrap items-center gap-2">
+    <!-- Row 1: Player · Session type pills · Coach -->
+    <div class="max-w-7xl mx-auto px-4 pt-2 pb-1 flex flex-wrap md:flex-nowrap items-center gap-2">
         <select id="playerSelect" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
             {% for player in players %}
             <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
@@ -103,6 +104,21 @@
             <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
             {% endfor %}
         </select>
+    </div>
+    <!-- Row 2: Date presets -->
+    <div class="max-w-7xl mx-auto px-4 pb-2 flex items-center gap-1.5 overflow-x-auto filter-scroll">
+        <button data-date="" onclick="setDateFilter('')"
+            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-bold bg-primary text-white border border-transparent whitespace-nowrap">All dates</button>
+        <button data-date="today" onclick="setDateFilter('today')"
+            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Today</button>
+        <button data-date="tomorrow" onclick="setDateFilter('tomorrow')"
+            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Tomorrow</button>
+        <button data-date="this_week" onclick="setDateFilter('this_week')"
+            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">This week</button>
+        <button data-date="next_week" onclick="setDateFilter('next_week')"
+            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Next week</button>
+        <button data-date="this_month" onclick="setDateFilter('this_month')"
+            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">This month</button>
     </div>
 </div>
 
@@ -183,7 +199,7 @@
 
 <script>
 // State
-let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='';
+let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='', activeDateFilter='';
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
 const existingBookings=[{% for b in existing_bookings %}{"date":"{{ b.scheduled_date|date:'Y-m-d' }}","time":"{{ b.scheduled_time|time:'H:i' }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
@@ -232,6 +248,7 @@ function renderSlots(){
         if(activeType && s.calendar_id!==activeType && !s.catalog_type_ids.includes(activeType)) continue;
         if(activeCoach && String(s.coach_id)!==activeCoach) continue;
         const d=s.start.split('T')[0];
+        const dr=getDateRange(activeDateFilter); if(dr && (d<dr.start||d>dr.end)) continue;
         (byDate[d]||(byDate[d]=[])).push(s);
     }
     const dates=Object.keys(byDate).sort();
@@ -374,6 +391,36 @@ function setTypeFilter(id){
     renderSlots();
 }
 function setCoachFilter(id){ activeCoach=id; renderSlots(); }
+function setDateFilter(preset){
+    activeDateFilter=preset;
+    document.querySelectorAll('[data-date]').forEach(p=>{
+        const on=p.dataset.date===preset;
+        p.className='date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap transition '+(on&&preset===''?'bg-primary text-white border-transparent font-bold':on?'bg-secondary text-gray-900 border-transparent font-bold':'bg-white text-gray-600 border-gray-200 hover:border-secondary');
+    });
+    renderSlots();
+}
+function getDateRange(preset){
+    if(!preset) return null;
+    const t=new Date(); t.setHours(0,0,0,0);
+    if(preset==='today') return{start:isoDate(t),end:isoDate(t)};
+    if(preset==='tomorrow'){const d=new Date(t);d.setDate(d.getDate()+1);return{start:isoDate(d),end:isoDate(d)};}
+    if(preset==='this_week'){
+        const dow=t.getDay(); const mon=new Date(t); mon.setDate(t.getDate()-(dow===0?6:dow-1));
+        const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+        return{start:isoDate(mon),end:isoDate(sun)};
+    }
+    if(preset==='next_week'){
+        const dow=t.getDay(); const mon=new Date(t); mon.setDate(t.getDate()-(dow===0?6:dow-1)+7);
+        const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+        return{start:isoDate(mon),end:isoDate(sun)};
+    }
+    if(preset==='this_month'){
+        const s=new Date(t.getFullYear(),t.getMonth(),1);
+        const e=new Date(t.getFullYear(),t.getMonth()+1,0);
+        return{start:isoDate(s),end:isoDate(e)};
+    }
+    return null;
+}
 
 function switchTab(name){
     const ps=document.getElementById('panel-slots'),pc=document.getElementById('panel-cart');
