@@ -132,12 +132,12 @@
 
     <!-- Header row: toggle left, clear-all right -->
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
-        <!-- Left: toggle collapse -->
-        <button onclick="toggleFilters()" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
-            <span class="text-sm font-bold text-gray-800">Filters</span>
-            <span id="filter-badge" class="hidden items-center justify-center px-2 py-0.5 bg-secondary text-gray-900 rounded-full text-xs font-bold leading-tight"></span>
-            <svg id="filter-chevron" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <!-- Left: toggle collapse — styled as f-pill, highlights yellow when expanded -->
+        <button id="filter-toggle-btn" onclick="toggleFilters()" class="f-pill flex items-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+            <span>Filters</span>
+            <span id="filter-badge" class="hidden items-center justify-center px-1.5 py-0.5 bg-primary text-secondary rounded-full text-xs font-bold leading-tight"></span>
+            <svg id="filter-chevron" class="w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <!-- Right: clear all -->
         <button onclick="clearAllFilters()" id="clear-all-btn" class="hidden text-xs font-semibold text-gray-400 hover:text-red-500 transition px-2 py-1 rounded-lg hover:bg-red-50">✕ Clear all</button>
@@ -548,10 +548,14 @@ function onTimeSlider(){
 function toggleFilters(){
     const body=document.getElementById('filter-body');
     const chevron=document.getElementById('filter-chevron');
+    const btn=document.getElementById('filter-toggle-btn');
     const collapsed=body.classList.toggle('hidden');
     if(chevron) chevron.style.transform=collapsed?'rotate(-90deg)':'rotate(0deg)';
+    if(btn) btn.classList.toggle('f-pill-on', !collapsed);
     fitPanels();
 }
+// Start expanded — apply highlight on load
+document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('filter-toggle-btn'); if(b) b.classList.add('f-pill-on'); });
 function updateFilterBadge(){
     const active=(activeType?1:0)+(activeCoach?1:0)+(activeDateFilter?1:0)+activeDays.size+(timeStart!==6||timeEnd!==23?1:0);
     const badge=document.getElementById('filter-badge');
