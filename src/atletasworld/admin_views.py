@@ -415,13 +415,16 @@ def owner_packages(request):
     from clients.models import Package, ClientPackage
     from django.db.models import Count
 
-    packages = Package.objects.annotate(
+    base_qs = Package.objects.annotate(
         active_purchases=Count('clientpackage', filter=Q(clientpackage__status='active')),
         total_purchases=Count('clientpackage')
-    ).order_by('-is_active', 'price')
+    )
+    packages         = base_qs.filter(is_active=True).order_by('price')
+    archived_packages= base_qs.filter(is_active=False).order_by('price')
 
     context = {
         'packages': packages,
+        'archived_packages': archived_packages,
     }
     return render(request, 'owner/packages.html', context)
 
@@ -1130,9 +1133,9 @@ def owner_players(request):
 @user_passes_test(is_owner)
 def owner_session_types(request):
     """Manage session types."""
-    session_types = SessionType.objects.annotate(
-        total_bookings=Count('bookings')
-    ).order_by('name')
+    base_st = SessionType.objects.annotate(total_bookings=Count('bookings'))
+    session_types          = base_st.filter(is_active=True).order_by('name')
+    archived_session_types = base_st.filter(is_active=False).order_by('name')
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -1184,6 +1187,7 @@ def owner_session_types(request):
     from clients.models import Package
     context = {
         'session_types': session_types,
+        'archived_session_types': archived_session_types,
         'format_choices': SessionType.SESSION_FORMAT_CHOICES,
         'days_of_week_choices': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         'packages': Package.objects.filter(is_active=True).order_by('name'),
