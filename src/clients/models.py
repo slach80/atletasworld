@@ -10,6 +10,7 @@ class Client(models.Model):
     CLIENT_TYPE_CHOICES = [
         ('parent', 'Parent/Guardian'),
         ('coach', 'Team Coach'),
+        ('renter', 'Facility Renter'),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)

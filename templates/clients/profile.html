@@ -159,13 +159,10 @@
                         <option value="{{ value }}" {% if client.client_type == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
-                    <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p class="text-sm text-blue-800">
-                            <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                            </svg>
-                            <strong>Team Coach/Manager?</strong> Select "Team Coach" to access Team Training Packages on the booking page.
-                        </p>
+                    <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 space-y-1">
+                        <p><strong>Parent/Guardian</strong> — booking training sessions for a player.</p>
+                        <p><strong>Team Coach</strong> — manages a team; unlocks Team Training packages on the booking page.</p>
+                        <p><strong>Facility Renter</strong> — renting a field, room, or gym space. Access the Field Rental section from your dashboard.</p>
                     </div>
                 </div>
 
