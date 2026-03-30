@@ -322,7 +322,6 @@ function addToCart(key){
     const s=slotMap[key]; if(!s) return;
     cart.push({key,slot:s,notes:''});
     updateCartBadge(); renderSlots(); renderCart();
-    if(cart.length===1) switchTab('cart');
 }
 function removeFromCartByKey(key){
     cart=cart.filter(c=>c.key!==key);
