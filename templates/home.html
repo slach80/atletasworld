@@ -211,7 +211,7 @@
                     {% endif %}
                 </div>
                 <h3 class="text-xl font-bold mb-2">{{ event.name }}</h3>
-                {% if event.description %}<p class="text-white/80 mb-3 text-sm">{{ event.description }}</p>{% endif %}
+                {% if event.description %}<p class="text-white/80 mb-3 text-sm">{{ event.description|linebreaksbr }}</p>{% endif %}
                 <div class="space-y-1.5 text-sm mb-4">
                     <div class="flex items-center"><span class="mr-2">⏱️</span> {{ event.duration_minutes }} minutes per session</div>
                     {% if event.start_times_fmt %}<div class="flex items-start gap-2"><span>🕐</span><div>{% if event.weekend_start_times_fmt %}<div><span class="text-white/60 text-xs">Mon–Fri</span> {{ event.start_times_fmt }}</div><div><span class="text-white/60 text-xs">Sat–Sun</span> {{ event.weekend_start_times_fmt }}</div>{% else %}{{ event.start_times_fmt }}{% endif %}</div></div>{% endif %}
@@ -326,7 +326,7 @@
                         <span class="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">{{ prog.get_session_format_display }}</span>
                     </div>
                     {% if prog.description %}
-                    <p class="text-gray-600 mb-6">{{ prog.description }}</p>
+                    <p class="text-gray-600 mb-6">{{ prog.description|linebreaksbr }}</p>
                     {% endif %}
                     <div class="space-y-2 mb-6">
                         <div class="flex items-center text-gray-700">
