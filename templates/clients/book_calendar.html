@@ -27,6 +27,13 @@
         .filter-scroll::-webkit-scrollbar { display:none; }
         @keyframes spin { to { transform:rotate(360deg); } }
         .spinner { display:inline-block; width:2rem; height:2rem; border:3px solid #e5e7eb; border-top-color:#D7FF00; border-radius:50%; animation:spin .7s linear infinite; }
+        /* Dual-range slider */
+        .dual-range-wrap { position:relative; height:28px; display:flex; align-items:center; }
+        .dual-range-track { position:absolute; left:0; right:0; height:4px; background:#e5e7eb; border-radius:2px; }
+        .dual-range-fill  { position:absolute; height:100%; background:#D7FF00; border-radius:2px; }
+        .dual-range-input { position:absolute; width:100%; height:0; background:transparent; appearance:none; -webkit-appearance:none; pointer-events:none; outline:none; }
+        .dual-range-input::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#D7FF00; border:2.5px solid #1a1a1a; cursor:pointer; pointer-events:auto; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+        .dual-range-input::-moz-range-thumb { width:22px; height:22px; border-radius:50%; background:#D7FF00; border:2.5px solid #1a1a1a; cursor:pointer; pointer-events:auto; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -138,18 +145,21 @@
         <button data-dow="0" onclick="toggleDayFilter(0)"
             class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Sun</button>
     </div>
-    <!-- Row 5: Time blocks (multi-select) -->
-    <div class="max-w-7xl mx-auto px-4 pb-2 flex items-center gap-1.5 overflow-x-auto filter-scroll">
-        <button data-time="early" onclick="toggleTimeBlock('early')"
-            class="time-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">🌅 Early (6–9 AM)</button>
-        <button data-time="morning" onclick="toggleTimeBlock('morning')"
-            class="time-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">☀️ Morning (9–12 PM)</button>
-        <button data-time="afternoon" onclick="toggleTimeBlock('afternoon')"
-            class="time-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">🌤 Afternoon (12–5 PM)</button>
-        <button data-time="evening" onclick="toggleTimeBlock('evening')"
-            class="time-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">🌆 Evening (5–9 PM)</button>
-        <button data-time="late" onclick="toggleTimeBlock('late')"
-            class="time-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">🌙 Late (9 PM+)</button>
+    <!-- Row 5: Time range slider -->
+    <div class="max-w-7xl mx-auto px-4 pb-3">
+        <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Time</span>
+            <span id="time-range-label" class="text-xs font-bold text-primary">All day</span>
+        </div>
+        <div class="dual-range-wrap">
+            <div class="dual-range-track">
+                <div id="dual-range-fill" class="dual-range-fill"></div>
+            </div>
+            <input id="time-start" type="range" min="6" max="23" step="0.5" value="6"
+                oninput="onTimeSlider()" class="dual-range-input">
+            <input id="time-end" type="range" min="6" max="23" step="0.5" value="23"
+                oninput="onTimeSlider()" class="dual-range-input">
+        </div>
     </div>
 </div>
 
@@ -230,8 +240,8 @@
 
 <script>
 // State
-let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='', activeDateFilter='', activeDays=new Set(), activeTimeBlocks=new Set();
-const TIME_RANGES={'early':[6,9],'morning':[9,12],'afternoon':[12,17],'evening':[17,21],'late':[21,24]};
+let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='', activeDateFilter='', activeDays=new Set();
+let timeStart=6, timeEnd=23;
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
 const existingBookings=[{% for b in existing_bookings %}{"date":"{{ b.scheduled_date|date:'Y-m-d' }}","time":"{{ b.scheduled_time|time:'H:i' }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
@@ -282,7 +292,7 @@ function renderSlots(){
         const d=s.start.split('T')[0];
         const dr=getDateRange(activeDateFilter); if(dr && (d<dr.start||d>dr.end)) continue;
         if(activeDays.size && !activeDays.has(new Date(d+'T12:00:00').getDay())) continue;
-        if(activeTimeBlocks.size){const h=parseInt((s.start.split('T')[1]||'').split(':')[0],10);const inBlock=[...activeTimeBlocks].some(b=>{const[lo,hi]=TIME_RANGES[b];return h>=lo&&h<hi;});if(!inBlock) continue;}
+        {const t=(s.start.split('T')[1]||'00:00').split(':'); const h=parseInt(t[0],10)+parseInt(t[1]||0,10)/60; if(!(timeStart===6&&timeEnd===23) && (h<timeStart||h>=timeEnd)) continue;}
         (byDate[d]||(byDate[d]=[])).push(s);
     }
     const dates=Object.keys(byDate).sort();
@@ -424,14 +434,22 @@ function setTypeFilter(id){
     renderSlots();
 }
 function setCoachFilter(id){ activeCoach=id; renderSlots(); }
-function toggleTimeBlock(block){
-    activeTimeBlocks.has(block)?activeTimeBlocks.delete(block):activeTimeBlocks.add(block);
-    document.querySelectorAll('[data-time]').forEach(p=>{
-        const on=activeTimeBlocks.has(p.dataset.time);
-        p.className='time-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap transition '+(on?'bg-secondary text-gray-900 border-transparent font-bold':'bg-white text-gray-600 border-gray-200 hover:border-secondary');
-    });
+function onTimeSlider(){
+    const s=document.getElementById('time-start'), e=document.getElementById('time-end');
+    let lo=parseFloat(s.value), hi=parseFloat(e.value);
+    // Keep handles from crossing
+    if(lo>hi){ if(this===s) lo=hi; else hi=lo; s.value=lo; e.value=hi; }
+    timeStart=lo; timeEnd=hi;
+    // Update fill bar
+    const pct=(v)=>((v-6)/(23-6))*100;
+    const fill=document.getElementById('dual-range-fill');
+    if(fill){ fill.style.left=pct(lo)+'%'; fill.style.width=(pct(hi)-pct(lo))+'%'; }
+    // Update label
+    const lbl=document.getElementById('time-range-label');
+    if(lbl) lbl.textContent=(lo===6&&hi===23)?'All day':fmtHour(lo)+' – '+fmtHour(hi);
     renderSlots();
 }
+function fmtHour(h){const whole=Math.floor(h),half=h%1===0.5,ampm=whole>=12?'PM':'AM',hr=whole%12||12;return hr+(half?':30':':00')+' '+ampm;}
 function toggleDayFilter(dow){
     activeDays.has(dow)?activeDays.delete(dow):activeDays.add(dow);
     document.querySelectorAll('[data-dow]').forEach(p=>{
