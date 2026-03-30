@@ -41,7 +41,10 @@ class SessionType(models.Model):
     # Clinic/Camp specific fields
     start_date = models.DateField(null=True, blank=True, help_text="Start date for clinics/camps")
     end_date = models.DateField(null=True, blank=True, help_text="End date for clinics/camps")
-    start_times = models.CharField(max_length=200, blank=True, help_text="Comma-separated start times, e.g. 09:00,10:30,14:00")
+    start_times = models.CharField(max_length=200, blank=True,
+                                   help_text="Weekday (Mon–Fri) start times, space-separated e.g. 09:00 10:30 16:30")
+    weekend_start_times = models.CharField(max_length=200, blank=True,
+                                           help_text="Weekend (Sat–Sun) start times. Leave blank to use weekday times.")
     location = models.CharField(max_length=200, blank=True, help_text="Training location")
     age_group = models.CharField(max_length=100, blank=True, help_text="Target age group (e.g., U13-U15, All ages)")
     days_of_week = models.CharField(max_length=50, blank=True, help_text="Comma-separated days, e.g. Mon,Wed,Fri")

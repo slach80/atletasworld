@@ -1022,6 +1022,7 @@ def owner_session_type_edit(request, pk):
             session_type.show_as_event = request.POST.get('show_as_event') == 'on'
             session_type.show_as_program = request.POST.get('show_as_program') == 'on'
             session_type.start_times = ' '.join(t for t in request.POST.getlist('start_times') if t)
+            session_type.weekend_start_times = ' '.join(t for t in request.POST.getlist('weekend_start_times') if t)
             session_type.location = request.POST.get('location', '')
             session_type.age_group = request.POST.get('age_group', '')
             session_type.days_of_week = ','.join(request.POST.getlist('days_of_week'))
