@@ -88,8 +88,8 @@
 
 <!-- Filter bar -->
 <div class="sticky top-16 z-40 bg-gray-50 border-b border-gray-200 shadow-sm">
-    <!-- Row 1: Player · Session type pills · Coach -->
-    <div class="max-w-7xl mx-auto px-4 pt-2 pb-1 flex flex-wrap md:flex-nowrap items-center gap-2">
+    <!-- Row 1: Player · Coach -->
+    <div class="max-w-7xl mx-auto px-4 pt-2 pb-1 flex flex-wrap items-center gap-2">
         <select id="playerSelect" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
             {% for player in players %}
             <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
@@ -97,7 +97,6 @@
             <option value="">No players — add one first</option>
             {% endfor %}
         </select>
-        <div id="type-pills" class="flex items-center gap-1.5 overflow-x-auto filter-scroll flex-nowrap flex-1 min-w-0 py-0.5"></div>
         <select id="coachSelect" onchange="setCoachFilter(this.value)" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
             <option value="">Any Coach</option>
             {% for coach in coaches %}
@@ -105,8 +104,10 @@
             {% endfor %}
         </select>
     </div>
-    <!-- Row 2: Date presets -->
-    <div class="max-w-7xl mx-auto px-4 pb-2 flex items-center gap-1.5 overflow-x-auto filter-scroll">
+    <!-- Row 2: Session type pills -->
+    <div id="type-pills" class="max-w-7xl mx-auto px-4 pb-1 flex items-center gap-1.5 overflow-x-auto filter-scroll flex-nowrap"></div>
+    <!-- Row 3: Date presets -->
+    <div class="max-w-7xl mx-auto px-4 pb-1 flex items-center gap-1.5 overflow-x-auto filter-scroll">
         <button data-date="" onclick="setDateFilter('')"
             class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-bold bg-primary text-white border border-transparent whitespace-nowrap">All dates</button>
         <button data-date="today" onclick="setDateFilter('today')"
@@ -119,6 +120,23 @@
             class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Next week</button>
         <button data-date="this_month" onclick="setDateFilter('this_month')"
             class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">This month</button>
+    </div>
+    <!-- Row 4: Days of week (multi-select) -->
+    <div class="max-w-7xl mx-auto px-4 pb-2 flex items-center gap-1.5 overflow-x-auto filter-scroll">
+        <button data-dow="1" onclick="toggleDayFilter(1)"
+            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Mon</button>
+        <button data-dow="2" onclick="toggleDayFilter(2)"
+            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Tue</button>
+        <button data-dow="3" onclick="toggleDayFilter(3)"
+            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Wed</button>
+        <button data-dow="4" onclick="toggleDayFilter(4)"
+            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Thu</button>
+        <button data-dow="5" onclick="toggleDayFilter(5)"
+            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Fri</button>
+        <button data-dow="6" onclick="toggleDayFilter(6)"
+            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Sat</button>
+        <button data-dow="0" onclick="toggleDayFilter(0)"
+            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Sun</button>
     </div>
 </div>
 
@@ -199,7 +217,7 @@
 
 <script>
 // State
-let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='', activeDateFilter='';
+let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='', activeDateFilter='', activeDays=new Set();
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
 const existingBookings=[{% for b in existing_bookings %}{"date":"{{ b.scheduled_date|date:'Y-m-d' }}","time":"{{ b.scheduled_time|time:'H:i' }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
@@ -249,6 +267,7 @@ function renderSlots(){
         if(activeCoach && String(s.coach_id)!==activeCoach) continue;
         const d=s.start.split('T')[0];
         const dr=getDateRange(activeDateFilter); if(dr && (d<dr.start||d>dr.end)) continue;
+        if(activeDays.size && !activeDays.has(new Date(d+'T12:00:00').getDay())) continue;
         (byDate[d]||(byDate[d]=[])).push(s);
     }
     const dates=Object.keys(byDate).sort();
@@ -391,6 +410,14 @@ function setTypeFilter(id){
     renderSlots();
 }
 function setCoachFilter(id){ activeCoach=id; renderSlots(); }
+function toggleDayFilter(dow){
+    activeDays.has(dow)?activeDays.delete(dow):activeDays.add(dow);
+    document.querySelectorAll('[data-dow]').forEach(p=>{
+        const on=activeDays.has(Number(p.dataset.dow));
+        p.className='dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap transition '+(on?'bg-secondary text-gray-900 border-transparent font-bold':'bg-white text-gray-600 border-gray-200 hover:border-secondary');
+    });
+    renderSlots();
+}
 function setDateFilter(preset){
     activeDateFilter=preset;
     document.querySelectorAll('[data-date]').forEach(p=>{
