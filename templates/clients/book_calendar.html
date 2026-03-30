@@ -27,6 +27,19 @@
         .filter-scroll::-webkit-scrollbar { display:none; }
         @keyframes spin { to { transform:rotate(360deg); } }
         .spinner { display:inline-block; width:2rem; height:2rem; border:3px solid #e5e7eb; border-top-color:#D7FF00; border-radius:50%; animation:spin .7s linear infinite; }
+        /* Filter bar */
+        .filter-label-row { display:flex; align-items:center; gap:0.3rem; margin-bottom:0.5rem; }
+        .filter-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; }
+        /* Generic pill base */
+        .f-pill { display:inline-flex; align-items:center; justify-content:center; padding:.3rem .75rem; border-radius:9999px; font-size:.75rem; font-weight:600; border:1.5px solid #e5e7eb; background:#f9fafb; color:#4b5563; cursor:pointer; transition:all .15s; white-space:nowrap; }
+        .f-pill:hover { border-color:#D7FF00; background:#fff; color:#1a1a1a; }
+        .f-pill-on { background:#D7FF00 !important; color:#1a1a1a !important; border-color:#D7FF00 !important; font-weight:700; }
+        /* Tooltip */
+        .tip { position:relative; display:inline-flex; cursor:pointer; color:#d1d5db; font-size:.65rem; font-weight:700; width:1rem; height:1rem; align-items:center; justify-content:center; border-radius:50%; border:1px solid #e5e7eb; background:#f9fafb; transition:all .15s; user-select:none; }
+        .tip:hover,.tip.tip-open { color:#1a1a1a; border-color:#1a1a1a; background:#D7FF00; }
+        .tip::after { content:attr(data-tip); display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1a1a1a; color:#fff; padding:.4rem .6rem; border-radius:.5rem; font-size:.7rem; font-weight:400; line-height:1.4; width:max-content; max-width:220px; white-space:normal; z-index:200; pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,.25); }
+        .tip::before { content:''; display:none; position:absolute; bottom:calc(100% + 1px); left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1a1a1a; z-index:201; pointer-events:none; }
+        .tip:hover::after,.tip:hover::before,.tip.tip-open::after,.tip.tip-open::before { display:block; }
         /* Dual-range slider */
         .dual-range-wrap { position:relative; height:28px; display:flex; align-items:center; }
         .dual-range-track { position:absolute; left:0; right:0; height:4px; background:#e5e7eb; border-radius:2px; }
@@ -91,75 +104,128 @@
         </div>
     </div>
 </nav>
-<script>(function(){document.getElementById('mobile-nav-btn').addEventListener('click',function(){document.getElementById('mobile-nav-menu').classList.toggle('hidden');});})()</script>
+<script>
+(function(){
+    document.getElementById('mobile-nav-btn').addEventListener('click',function(){document.getElementById('mobile-nav-menu').classList.toggle('hidden');});
+    // Tooltip tap-to-toggle on mobile
+    document.addEventListener('click',function(e){
+        if(e.target.classList.contains('tip')){
+            e.stopPropagation();
+            document.querySelectorAll('.tip.tip-open').forEach(t=>{ if(t!==e.target) t.classList.remove('tip-open'); });
+            e.target.classList.toggle('tip-open');
+        } else {
+            document.querySelectorAll('.tip.tip-open').forEach(t=>t.classList.remove('tip-open'));
+        }
+    });
+})();
+</script>
 
 <!-- Filter bar -->
-<div id="filter-bar" class="sticky top-16 z-40 bg-gray-50 border-b border-gray-200 shadow-sm">
-    <!-- Row 1: Player · Coach -->
-    <div class="max-w-7xl mx-auto px-4 pt-2 pb-1 flex flex-wrap items-center gap-2">
-        <select id="playerSelect" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
-            {% for player in players %}
-            <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
-            {% empty %}
-            <option value="">No players — add one first</option>
-            {% endfor %}
-        </select>
-        <select id="coachSelect" onchange="setCoachFilter(this.value)" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
-            <option value="">Any Coach</option>
-            {% for coach in coaches %}
-            <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <!-- Row 2: Session type pills -->
-    <div id="type-pills" class="max-w-7xl mx-auto px-4 pb-1 flex items-center gap-1.5 overflow-x-auto filter-scroll flex-nowrap"></div>
-    <!-- Row 3: Date presets -->
-    <div class="max-w-7xl mx-auto px-4 pb-1 flex items-center gap-1.5 overflow-x-auto filter-scroll">
-        <button data-date="" onclick="setDateFilter('')"
-            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-bold bg-primary text-white border border-transparent whitespace-nowrap">All dates</button>
-        <button data-date="today" onclick="setDateFilter('today')"
-            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Today</button>
-        <button data-date="tomorrow" onclick="setDateFilter('tomorrow')"
-            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Tomorrow</button>
-        <button data-date="this_week" onclick="setDateFilter('this_week')"
-            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">This week</button>
-        <button data-date="next_week" onclick="setDateFilter('next_week')"
-            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Next week</button>
-        <button data-date="this_month" onclick="setDateFilter('this_month')"
-            class="date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">This month</button>
-    </div>
-    <!-- Row 4: Days of week (multi-select) -->
-    <div class="max-w-7xl mx-auto px-4 pb-2 flex items-center gap-1.5 overflow-x-auto filter-scroll">
-        <button data-dow="1" onclick="toggleDayFilter(1)"
-            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Mon</button>
-        <button data-dow="2" onclick="toggleDayFilter(2)"
-            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Tue</button>
-        <button data-dow="3" onclick="toggleDayFilter(3)"
-            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Wed</button>
-        <button data-dow="4" onclick="toggleDayFilter(4)"
-            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Thu</button>
-        <button data-dow="5" onclick="toggleDayFilter(5)"
-            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Fri</button>
-        <button data-dow="6" onclick="toggleDayFilter(6)"
-            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Sat</button>
-        <button data-dow="0" onclick="toggleDayFilter(0)"
-            class="dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">Sun</button>
-    </div>
-    <!-- Row 5: Time range slider -->
-    <div class="max-w-7xl mx-auto px-4 pb-3">
-        <div class="flex items-center justify-between mb-1.5">
-            <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Time</span>
-            <span id="time-range-label" class="text-xs font-bold text-primary">All day</span>
+<div id="filter-bar" class="sticky top-16 z-40 bg-white shadow-md border-b border-gray-100">
+
+    <!-- Header -->
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between border-b border-gray-100">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+            <span class="text-sm font-bold text-gray-800">Filters</span>
+            <span id="filter-badge" class="hidden items-center justify-center px-2 py-0.5 bg-secondary text-gray-900 rounded-full text-xs font-bold leading-tight"></span>
         </div>
-        <div class="dual-range-wrap">
-            <div class="dual-range-track">
-                <div id="dual-range-fill" class="dual-range-fill"></div>
+        <button onclick="clearAllFilters()" id="clear-all-btn" class="hidden text-xs font-semibold text-gray-400 hover:text-red-500 transition px-2 py-1 rounded-lg hover:bg-red-50">✕ Clear all</button>
+    </div>
+
+    <!-- Filter sections: 2-col on desktop, stacked on mobile -->
+    <div class="max-w-7xl mx-auto px-4 py-3 grid md:grid-cols-2 md:gap-x-10 gap-y-3">
+
+        <!-- Player -->
+        <div>
+            <div class="filter-label-row">
+                <span class="filter-label">Player</span>
+                <span class="tip" data-tip="Select which player you are booking sessions for. Each booking is assigned to one player.">ⓘ</span>
             </div>
-            <input id="time-start" type="range" min="6" max="23" step="0.5" value="6"
-                oninput="onTimeSlider()" class="dual-range-input">
-            <input id="time-end" type="range" min="6" max="23" step="0.5" value="23"
-                oninput="onTimeSlider()" class="dual-range-input">
+            <select id="playerSelect" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-secondary focus:border-transparent transition">
+                {% for player in players %}
+                <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
+                {% empty %}
+                <option value="">No players — add one first</option>
+                {% endfor %}
+            </select>
         </div>
+
+        <!-- Coach -->
+        <div>
+            <div class="filter-label-row">
+                <span class="filter-label">Coach</span>
+                <span class="tip" data-tip="Filter sessions by a specific coach. Leave as 'Any' to see all available sessions regardless of coach.">ⓘ</span>
+            </div>
+            <select id="coachSelect" onchange="setCoachFilter(this.value)" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-secondary focus:border-transparent transition">
+                <option value="">Any Coach</option>
+                {% for coach in coaches %}
+                <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Session Type -->
+        <div class="md:col-span-2">
+            <div class="filter-label-row">
+                <span class="filter-label">Session Type</span>
+                <span class="tip" data-tip="Filter by the type of training offered — e.g. Spring Program, Private Training. Tap once to select, tap again to clear.">ⓘ</span>
+            </div>
+            <div id="type-pills" class="flex gap-1.5 overflow-x-auto filter-scroll flex-nowrap pb-0.5"></div>
+        </div>
+
+        <!-- Date Range -->
+        <div class="md:col-span-2">
+            <div class="filter-label-row">
+                <span class="filter-label">Date Range</span>
+                <span class="tip" data-tip="Jump to a specific time window. 'This week' shows Mon–Sun of the current week. Combines with all other filters.">ⓘ</span>
+            </div>
+            <div class="flex gap-1.5 overflow-x-auto filter-scroll flex-nowrap pb-0.5">
+                <button data-date="" onclick="setDateFilter('')" class="date-pill f-pill f-pill-on whitespace-nowrap">All dates</button>
+                <button data-date="today" onclick="setDateFilter('today')" class="date-pill f-pill whitespace-nowrap">Today</button>
+                <button data-date="tomorrow" onclick="setDateFilter('tomorrow')" class="date-pill f-pill whitespace-nowrap">Tomorrow</button>
+                <button data-date="this_week" onclick="setDateFilter('this_week')" class="date-pill f-pill whitespace-nowrap">This week</button>
+                <button data-date="next_week" onclick="setDateFilter('next_week')" class="date-pill f-pill whitespace-nowrap">Next week</button>
+                <button data-date="this_month" onclick="setDateFilter('this_month')" class="date-pill f-pill whitespace-nowrap">This month</button>
+            </div>
+        </div>
+
+        <!-- Day of Week -->
+        <div>
+            <div class="filter-label-row">
+                <span class="filter-label">Day of Week</span>
+                <span class="tip" data-tip="Show sessions on specific days. Multi-select — picking Mon + Wed shows sessions on either day across all weeks.">ⓘ</span>
+            </div>
+            <div class="flex gap-1.5 flex-nowrap">
+                <button data-dow="1" onclick="toggleDayFilter(1)" class="dow-pill f-pill flex-1 text-center">M</button>
+                <button data-dow="2" onclick="toggleDayFilter(2)" class="dow-pill f-pill flex-1 text-center">T</button>
+                <button data-dow="3" onclick="toggleDayFilter(3)" class="dow-pill f-pill flex-1 text-center">W</button>
+                <button data-dow="4" onclick="toggleDayFilter(4)" class="dow-pill f-pill flex-1 text-center">T</button>
+                <button data-dow="5" onclick="toggleDayFilter(5)" class="dow-pill f-pill flex-1 text-center">F</button>
+                <button data-dow="6" onclick="toggleDayFilter(6)" class="dow-pill f-pill flex-1 text-center">S</button>
+                <button data-dow="0" onclick="toggleDayFilter(0)" class="dow-pill f-pill flex-1 text-center">S</button>
+            </div>
+        </div>
+
+        <!-- Time Range -->
+        <div>
+            <div class="filter-label-row">
+                <span class="filter-label">Time Window</span>
+                <span class="tip" data-tip="Drag the yellow handles to set your preferred session start time. Both handles at full range means no time restriction.">ⓘ</span>
+                <span id="time-range-label" class="ml-auto text-xs font-bold text-primary">All day</span>
+            </div>
+            <div class="dual-range-wrap mt-2">
+                <div class="dual-range-track">
+                    <div id="dual-range-fill" class="dual-range-fill"></div>
+                </div>
+                <input id="time-start" type="range" min="6" max="23" step="0.5" value="6" oninput="onTimeSlider()" class="dual-range-input">
+                <input id="time-end"   type="range" min="6" max="23" step="0.5" value="23" oninput="onTimeSlider()" class="dual-range-input">
+            </div>
+            <div class="flex justify-between mt-1.5 text-xs text-gray-400">
+                <span>6 AM</span><span>11 PM</span>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -437,50 +503,61 @@ function closeSuccess(){
 }
 
 function renderTypePills(){
-    let html=`<button data-pill="" onclick="setTypeFilter('')" class="pill shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-primary text-white border border-transparent whitespace-nowrap">All</button>`;
-    for(const st of sessionTypes) html+=`<button data-pill="${st.id}" onclick="setTypeFilter('${st.id}')" class="pill shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">${st.name}</button>`;
+    let html=`<button data-pill="" onclick="setTypeFilter('')" class="f-pill f-pill-on shrink-0 whitespace-nowrap">All</button>`;
+    for(const st of sessionTypes) html+=`<button data-pill="${st.id}" onclick="setTypeFilter('${st.id}')" class="f-pill shrink-0 whitespace-nowrap">${st.name}</button>`;
     document.getElementById('type-pills').innerHTML=html;
 }
 function setTypeFilter(id){
     activeType=id;
     document.querySelectorAll('[data-pill]').forEach(p=>{
-        const on=p.dataset.pill===id;
-        p.className='pill shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition '+(on&&id===''?'bg-primary text-white border-transparent font-bold':on?'bg-secondary text-gray-900 border-transparent font-bold':'bg-white text-gray-600 border-gray-200 hover:border-secondary');
+        p.classList.toggle('f-pill-on', p.dataset.pill===id);
     });
-    renderSlots();
+    updateFilterBadge(); renderSlots();
 }
-function setCoachFilter(id){ activeCoach=id; renderSlots(); }
+function setCoachFilter(id){ activeCoach=id; updateFilterBadge(); renderSlots(); }
 function onTimeSlider(){
     const s=document.getElementById('time-start'), e=document.getElementById('time-end');
     let lo=parseFloat(s.value), hi=parseFloat(e.value);
-    // Keep handles from crossing
-    if(lo>hi){ if(this===s) lo=hi; else hi=lo; s.value=lo; e.value=hi; }
+    if(lo>hi){ lo=hi; s.value=lo; }
     timeStart=lo; timeEnd=hi;
-    // Update fill bar
     const pct=(v)=>((v-6)/(23-6))*100;
     const fill=document.getElementById('dual-range-fill');
     if(fill){ fill.style.left=pct(lo)+'%'; fill.style.width=(pct(hi)-pct(lo))+'%'; }
-    // Update label
     const lbl=document.getElementById('time-range-label');
     if(lbl) lbl.textContent=(lo===6&&hi===23)?'All day':fmtHour(lo)+' – '+fmtHour(hi);
-    renderSlots();
+    updateFilterBadge(); renderSlots();
+}
+function updateFilterBadge(){
+    const active=(activeType?1:0)+(activeCoach?1:0)+(activeDateFilter?1:0)+activeDays.size+(timeStart!==6||timeEnd!==23?1:0);
+    const badge=document.getElementById('filter-badge');
+    const clearBtn=document.getElementById('clear-all-btn');
+    if(badge){ badge.textContent=active; badge.classList.toggle('hidden',active===0); badge.classList.toggle('inline-flex',active>0); }
+    if(clearBtn) clearBtn.classList.toggle('hidden',active===0);
+}
+function clearAllFilters(){
+    activeType=''; activeCoach=''; activeDateFilter=''; activeDays.clear(); timeStart=6; timeEnd=23;
+    document.querySelectorAll('[data-pill]').forEach(p=>p.classList.toggle('f-pill-on',p.dataset.pill===''));
+    document.querySelectorAll('[data-date]').forEach(p=>p.classList.toggle('f-pill-on',p.dataset.date===''));
+    document.querySelectorAll('[data-dow]').forEach(p=>p.classList.remove('f-pill-on'));
+    const cs=document.getElementById('coachSelect'); if(cs) cs.value='';
+    const ts=document.getElementById('time-start'),te=document.getElementById('time-end');
+    if(ts){ts.value=6;} if(te){te.value=23;} onTimeSlider();
+    updateFilterBadge(); renderSlots();
 }
 function fmtHour(h){const whole=Math.floor(h),half=h%1===0.5,ampm=whole>=12?'PM':'AM',hr=whole%12||12;return hr+(half?':30':':00')+' '+ampm;}
 function toggleDayFilter(dow){
     activeDays.has(dow)?activeDays.delete(dow):activeDays.add(dow);
     document.querySelectorAll('[data-dow]').forEach(p=>{
-        const on=activeDays.has(Number(p.dataset.dow));
-        p.className='dow-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap transition '+(on?'bg-secondary text-gray-900 border-transparent font-bold':'bg-white text-gray-600 border-gray-200 hover:border-secondary');
+        p.classList.toggle('f-pill-on', activeDays.has(Number(p.dataset.dow)));
     });
-    renderSlots();
+    updateFilterBadge(); renderSlots();
 }
 function setDateFilter(preset){
     activeDateFilter=preset;
     document.querySelectorAll('[data-date]').forEach(p=>{
-        const on=p.dataset.date===preset;
-        p.className='date-pill shrink-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap transition '+(on&&preset===''?'bg-primary text-white border-transparent font-bold':on?'bg-secondary text-gray-900 border-transparent font-bold':'bg-white text-gray-600 border-gray-200 hover:border-secondary');
+        p.classList.toggle('f-pill-on', p.dataset.date===preset);
     });
-    renderSlots();
+    updateFilterBadge(); renderSlots();
 }
 function getDateRange(preset){
     if(!preset) return null;
