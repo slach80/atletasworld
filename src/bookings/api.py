@@ -444,15 +444,36 @@ class BookingViewSet(viewsets.ModelViewSet):
                 )
                 session_name = slot.session_type.name
 
-            # Use package if provided
-            if package:
-                booking.use_package(package)
+            # Determine amount due (from slot price or session type)
+            try:
+                if slot_type == 'schedule_block':
+                    st_price = catalog_types[0].price if catalog_types else Decimal('0')
+                    amount_due = block.price_override if block.price_override else st_price
+                else:
+                    amount_due = slot.effective_price
+            except Exception:
+                amount_due = Decimal('0')
 
-            # Auto-confirm the booking
-            booking.confirm()
+            if package:
+                # Package booking — deduct session, confirm immediately
+                booking.use_package(package)
+                booking.confirm()
+                payment_required = False
+            elif amount_due and amount_due > 0:
+                # Pay-now booking with a cost — hold as pending until payment received
+                booking.payment_status = 'pending'
+                booking.save()
+                payment_required = True
+            else:
+                # Free session (price = $0) — confirm directly
+                booking.confirm()
+                payment_required = False
 
             return Response({
                 'id': booking.id,
+                'payment_required': payment_required,
+                'amount_due': str(amount_due),
+                'booking_status': booking.status,
                 'message': 'Booking created successfully',
                 'booking': {
                     'date': str(booking.scheduled_date),
