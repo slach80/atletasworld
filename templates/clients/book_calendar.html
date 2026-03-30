@@ -317,7 +317,7 @@
 
 <script>
 // State
-let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='', activeDateFilter='', activeDays=new Set();
+let slotMap={}, cart=[], packages=[], sessionTypes=[], activeTypes=new Set(), activeCoach='', activeDateFilter='', activeDays=new Set();
 let timeStart=6, timeEnd=23;
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
@@ -387,7 +387,7 @@ function renderSlots(){
     const tom=new Date(tod); tom.setDate(tom.getDate()+1);
     const byDate={};
     for(const [k,s] of Object.entries(slotMap)){
-        if(activeType && s.calendar_id!==activeType && !s.catalog_type_ids.includes(activeType)) continue;
+        if(activeTypes.size && !activeTypes.has(s.calendar_id) && !s.catalog_type_ids.some(id=>activeTypes.has(id))) continue;
         if(activeCoach && String(s.coach_id)!==activeCoach) continue;
         const d=s.start.split('T')[0];
         const dr=getDateRange(activeDateFilter); if(dr && (d<dr.start||d>dr.end)) continue;
@@ -521,14 +521,20 @@ function closeSuccess(){
 }
 
 function renderTypePills(){
-    let html=`<button data-pill="" onclick="setTypeFilter('')" class="f-pill f-pill-on shrink-0 whitespace-nowrap">All</button>`;
-    for(const st of sessionTypes) html+=`<button data-pill="${st.id}" onclick="setTypeFilter('${st.id}')" class="f-pill shrink-0 whitespace-nowrap">${st.name}</button>`;
+    let html=`<button data-pill="" onclick="toggleTypeFilter('')" class="f-pill f-pill-on shrink-0 whitespace-nowrap">All</button>`;
+    for(const st of sessionTypes) html+=`<button data-pill="${st.id}" onclick="toggleTypeFilter('${st.id}')" class="f-pill shrink-0 whitespace-nowrap">${st.name}</button>`;
     document.getElementById('type-pills').innerHTML=html;
 }
-function setTypeFilter(id){
-    activeType=id;
+function toggleTypeFilter(id){
+    if(id===''){
+        activeTypes.clear();
+    } else {
+        activeTypes.has(id)?activeTypes.delete(id):activeTypes.add(id);
+    }
+    // Update pill states: All active when nothing selected, others toggle
     document.querySelectorAll('[data-pill]').forEach(p=>{
-        p.classList.toggle('f-pill-on', p.dataset.pill===id);
+        const on = p.dataset.pill==='' ? activeTypes.size===0 : activeTypes.has(p.dataset.pill);
+        p.classList.toggle('f-pill-on', on);
     });
     updateFilterBadge(); renderSlots();
 }
@@ -557,14 +563,14 @@ function toggleFilters(){
 // Start expanded — apply highlight on load
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('filter-toggle-btn'); if(b) b.classList.add('f-pill-on'); });
 function updateFilterBadge(){
-    const active=(activeType?1:0)+(activeCoach?1:0)+(activeDateFilter?1:0)+activeDays.size+(timeStart!==6||timeEnd!==23?1:0);
+    const active=activeTypes.size+(activeCoach?1:0)+(activeDateFilter?1:0)+activeDays.size+(timeStart!==6||timeEnd!==23?1:0);
     const badge=document.getElementById('filter-badge');
     const clearBtn=document.getElementById('clear-all-btn');
     if(badge){ badge.textContent=active; badge.classList.toggle('hidden',active===0); badge.classList.toggle('inline-flex',active>0); }
     if(clearBtn) clearBtn.classList.toggle('hidden',active===0);
 }
 function clearAllFilters(){
-    activeType=''; activeCoach=''; activeDateFilter=''; activeDays.clear(); timeStart=6; timeEnd=23;
+    activeTypes.clear(); activeCoach=''; activeDateFilter=''; activeDays.clear(); timeStart=6; timeEnd=23;
     document.querySelectorAll('[data-pill]').forEach(p=>p.classList.toggle('f-pill-on',p.dataset.pill===''));
     document.querySelectorAll('[data-date]').forEach(p=>p.classList.toggle('f-pill-on',p.dataset.date===''));
     document.querySelectorAll('[data-dow]').forEach(p=>p.classList.remove('f-pill-on'));
