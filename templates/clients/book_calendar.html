@@ -14,123 +14,61 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1a1a1a',
-                        secondary: '#D7FF00',
-                        accent: '#D7FF00',
-                    }
-                }
-            }
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } }
         }
     </script>
-    <!-- Bootstrap 5 CSS (for calendar, modals) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Toast UI Calendar CSS -->
-    <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
     <style>
-        body { background: #f9fafb; }
-        #calendar { height: 600px; }
-        .calendar-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .calendar-nav {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .calendar-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            min-width: 200px;
-            text-align: center;
-        }
-        .package-card {
-            border-left: 4px solid #D7FF00;
-        }
-        .package-card.low-sessions {
-            border-left-color: #f39c12;
-        }
-        .package-card.no-sessions {
-            border-left-color: #e74c3c;
-        }
-        .session-info-badge {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .slot-card {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .slot-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
+        body { font-family: 'Archivo Condensed', system-ui, sans-serif; font-weight: 400; }
+        h1,.brand-heading { font-family: 'Bilgen','Archivo Condensed',system-ui,sans-serif; font-weight:800; }
+        h2,h3 { font-family: 'Bilgen','Archivo Condensed',system-ui,sans-serif; font-weight:700; }
+        h4,h5,h6 { font-family:'Archivo Condensed',system-ui,sans-serif; font-weight:700; }
+        small,caption { font-weight:300; }
+        .filter-scroll { scrollbar-width:none; -ms-overflow-style:none; }
+        .filter-scroll::-webkit-scrollbar { display:none; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .spinner { display:inline-block; width:2rem; height:2rem; border:3px solid #e5e7eb; border-top-color:#D7FF00; border-radius:50%; animation:spin .7s linear infinite; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-<!-- Client Portal Navigation -->
+<!-- Nav -->
 <nav class="bg-gray-900 shadow-lg sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center">
-                <a href="{% url 'clients:dashboard' %}"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+                <a href="{% url 'clients:dashboard' %}"><img src="/static/img/apc-logo-yellow.png" alt="APC" class="h-10 w-auto"></a>
             </div>
-            <!-- Desktop nav -->
             <div class="hidden md:flex items-center space-x-1 text-sm">
-                <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'dashboard' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Dashboard</a>
-                <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'dashboard' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Dashboard</a>
-                <!-- Players dropdown -->
+                <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded text-white hover:bg-white/10 transition">Dashboard</a>
                 <div class="relative group">
-                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' or request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">
-                        Players
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
+                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'assessments' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Players <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></button>
                     <div class="absolute left-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                        <a href="{% url 'clients:players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' %}text-gray-900 font-semibold{% endif %} rounded-t-lg">👥 My Players</a>
-                        <a href="{% url 'clients:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">📋 Assessments</a>
+                        <a href="{% url 'clients:players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-t-lg">👥 My Players</a>
+                        <a href="{% url 'clients:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">📋 Assessments</a>
                     </div>
                 </div>
-                <!-- Account dropdown -->
                 <div class="relative group">
-                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'bookings' or request.resolver_match.url_name == 'packages' or request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'notification_settings' or request.resolver_match.url_name == 'notification_history' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">
-                        Account
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
+                    <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'bookings' or request.resolver_match.url_name == 'packages' or request.resolver_match.url_name == 'profile' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Account <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></button>
                     <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                        <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'bookings' %}text-gray-900 font-semibold{% endif %} rounded-t-lg">📅 My Bookings</a>
-                        <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'packages' %}text-gray-900 font-semibold{% endif %}">📦 Packages</a>
-                        <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'profile' %}text-gray-900 font-semibold{% endif %}">👤 My Profile</a>
-                        <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'notification_settings' or request.resolver_match.url_name == 'notification_history' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">🔔 Notifications</a>
+                        <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-t-lg">📅 My Bookings</a>
+                        <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700">📦 Packages</a>
+                        <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700">👤 My Profile</a>
+                        <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">🔔 Notifications</a>
                     </div>
                 </div>
-                <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full hover:bg-[#b8e000] transition font-semibold ml-2">
-                    Book Session
-                </a>
+                <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full hover:bg-[#b8e000] transition font-semibold ml-2">Book Session</a>
                 <span class="text-gray-500 mx-1">|</span>
                 <a href="/accounts/logout/" class="px-3 py-2 text-gray-300 hover:text-accent transition text-xs">Logout</a>
             </div>
-            <!-- Mobile button -->
             <div class="md:hidden flex items-center">
-                <button id="client-mobile-btn" class="p-2 rounded text-white hover:bg-white/10">
+                <button id="mobile-nav-btn" class="p-2 rounded text-white hover:bg-white/10">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
             </div>
         </div>
     </div>
-    <!-- Mobile menu -->
-    <div id="client-mobile-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-700">
+    <div id="mobile-nav-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-700">
         <div class="px-2 pt-2 pb-3 space-y-1 text-sm">
-            <a href="{% url 'clients:dashboard' %}" class="block px-3 py-2 rounded text-white hover:bg-white/10 font-semibold">🏠 Dashboard</a>
             <a href="{% url 'clients:dashboard' %}" class="block px-3 py-2 rounded text-white hover:bg-white/10 font-semibold">🏠 Dashboard</a>
             <p class="px-3 pt-1 text-xs text-gray-500 uppercase tracking-wider">Players</p>
             <a href="{% url 'clients:players' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👥 My Players</a>
@@ -146,635 +84,311 @@
         </div>
     </div>
 </nav>
-<script>
-(function(){
-    var btn = document.getElementById('client-mobile-btn');
-    if(btn) btn.addEventListener('click', function(){
-        document.getElementById('client-mobile-menu').classList.toggle('hidden');
-    });
-})();
-</script>
+<script>(function(){document.getElementById('mobile-nav-btn').addEventListener('click',function(){document.getElementById('mobile-nav-menu').classList.toggle('hidden');});})()</script>
 
-<!-- Page Header -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-    <h1 class="text-2xl font-bold text-gray-900">Book a Session</h1>
-    <p class="text-gray-500 text-sm mt-1">Select a slot on the calendar to book with a coach.</p>
+<!-- Filter bar -->
+<div class="sticky top-16 z-40 bg-gray-50 border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap md:flex-nowrap items-center gap-2">
+        <select id="playerSelect" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
+            {% for player in players %}
+            <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
+            {% empty %}
+            <option value="">No players — add one first</option>
+            {% endfor %}
+        </select>
+        <div id="type-pills" class="flex items-center gap-1.5 overflow-x-auto filter-scroll flex-nowrap flex-1 min-w-0 py-0.5"></div>
+        <select id="coachSelect" onchange="setCoachFilter(this.value)" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
+            <option value="">Any Coach</option>
+            {% for coach in coaches %}
+            <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
 </div>
 
-<!-- Main Content -->
-<div class="container-fluid py-3" style="max-width:1400px;">
-    <div class="row g-3">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2">
+<!-- Main -->
+<div class="max-w-7xl mx-auto px-4 pt-4 pb-10">
+    {% if not has_package %}
+    <div class="mb-4 flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+        <div>
+            <p class="text-sm font-semibold text-yellow-800">No active package</p>
+            <p class="text-xs text-yellow-600 mt-0.5">A package is required to book sessions.</p>
+        </div>
+        <a href="{% url 'clients:packages' %}" class="shrink-0 ml-3 px-4 py-2 bg-secondary text-gray-900 rounded-full text-xs font-bold hover:bg-[#b8e000] transition">Get a Package</a>
+    </div>
+    {% endif %}
 
-            <!-- Package Status (server-rendered — no spinner) -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="bi bi-box me-2"></i>Your Package</h6>
+    <div class="md:grid md:grid-cols-3 md:gap-6">
+        <!-- Slots (2/3) -->
+        <div class="md:col-span-2">
+            <!-- Mobile tabs -->
+            <div class="md:hidden flex bg-white rounded-xl border border-gray-200 p-1 mb-4 shadow-sm">
+                <button id="tab-slots-btn" onclick="switchTab('slots')" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-primary text-white transition">📅 Sessions</button>
+                <button id="tab-cart-btn" onclick="switchTab('cart')" class="flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 transition">🛒 Cart</button>
+            </div>
+            <!-- Slot cards panel -->
+            <div id="panel-slots">
+                <div id="slots-loading" class="py-16 text-center text-gray-400">
+                    <div class="spinner mb-3 mx-auto"></div>
+                    <p class="text-sm">Loading sessions…</p>
                 </div>
-                <div class="card-body">
+                <div id="slots-container" class="hidden"></div>
+            </div>
+            <!-- Cart panel (mobile) -->
+            <div id="panel-cart" class="hidden md:hidden">
+                <div id="cart-mobile"></div>
+            </div>
+        </div>
+
+        <!-- Cart sidebar (desktop 1/3) -->
+        <aside class="hidden md:block">
+            <div class="sticky top-36 space-y-4">
+                <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                     {% if active_package %}
-                        {% with remaining=active_package.sessions_remaining total=active_package.package.sessions_included %}
-                        <div class="package-card {% if remaining <= 0 %}no-sessions{% elif remaining <= 2 %}low-sessions{% endif %} p-2 rounded">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-bold small">{{ active_package.package.name }}</div>
-                                    <small class="text-muted">Expires: {{ active_package.expiry_date|date:"M d, Y" }}</small>
-                                </div>
-                                <div class="text-end">
-                                    <div class="session-info-badge {% if remaining <= 0 %}text-danger{% else %}text-success{% endif %}">
-                                        {% if total > 0 %}{{ remaining }}{% else %}∞{% endif %}
-                                    </div>
-                                    <small class="text-muted">sessions</small>
-                                </div>
-                            </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700">{{ active_package.package.name }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Expires {{ active_package.expiry_date|date:"M d, Y" }}</p>
                         </div>
-                        {% if remaining <= 2 %}
-                        <a href="{% url 'clients:packages' %}" class="btn btn-outline-warning btn-sm w-100 mt-2">
-                            <i class="bi bi-arrow-up-circle me-1"></i> Upgrade Package
-                        </a>
-                        {% endif %}
-                        {% endwith %}
+                        <div class="text-right">
+                            <p id="sessions-remaining-display" class="text-2xl font-bold text-primary">{{ active_package.sessions_remaining }}</p>
+                            <p class="text-xs text-gray-400">sessions left</p>
+                        </div>
+                    </div>
                     {% else %}
-                        <div class="text-center">
-                            <p class="text-muted small mb-2">No active package</p>
-                            <a href="{% url 'clients:packages' %}" class="btn btn-success btn-sm">
-                                <i class="bi bi-plus-circle me-1"></i> Get Package
-                            </a>
-                        </div>
+                    <div class="text-center py-1">
+                        <p class="text-sm text-gray-500 mb-1">No active package</p>
+                        <a href="{% url 'clients:packages' %}" class="text-xs text-secondary font-bold hover:underline">Browse Packages →</a>
+                    </div>
                     {% endif %}
                 </div>
+                <div id="cart-desktop"></div>
             </div>
+        </aside>
+    </div>
+</div>
 
-            <!-- Players -->
-            <div class="card border-0 shadow-sm mt-3">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="bi bi-person me-2"></i>Select Player</h6>
-                </div>
-                <div class="card-body">
-                    <select class="form-select" id="playerSelect">
-                        {% for player in players %}
-                        <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
-                        {% empty %}
-                        <option value="">No players added</option>
-                        {% endfor %}
-                    </select>
-                    {% if not players %}
-                    <a href="{% url 'clients:player_add' %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
-                        <i class="bi bi-plus me-1"></i> Add Player
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="card border-0 shadow-sm mt-3">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label small">Coach</label>
-                        <select class="form-select form-select-sm" id="coachFilter">
-                            <option value="">All Coaches</option>
-                            {% for coach in coaches %}
-                            <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small">Session Type</label>
-                        <select class="form-select form-select-sm" id="sessionTypeFilter">
-                            <option value="">All Types</option>
-                            <!-- Populated by JavaScript -->
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="col-md-9 col-lg-10">
-            {% if available_field_rentals %}
-            <div class="alert border-0 shadow-sm mb-3 d-flex align-items-center justify-content-between"
-                 style="background:#f0fdf4; border-left:4px solid #D7FF00 !important; border-radius:0.5rem;">
-                <div>
-                    <strong style="color:#166534;">Entire Field Available for Rental</strong>
-                    <span class="text-muted small ms-2">
-                        {{ available_field_rentals|length }} exclusive slot{{ available_field_rentals|length|pluralize }} available — reserve the full field for your session.
-                    </span>
-                </div>
-                <a href="{% url 'clients:field_rental_list' %}" class="btn btn-sm btn-outline-success ms-3 flex-shrink-0">View Field Slots</a>
-            </div>
-            {% endif %}
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <div class="calendar-controls">
-                        <div class="calendar-nav">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.prev(); updateCalendarTitle();">
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                            <button class="btn btn-outline-primary btn-sm" onclick="calendar.today(); updateCalendarTitle();">Today</button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="calendar.next(); updateCalendarTitle();">
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                            <span class="calendar-title" id="calendar-title"></span>
-                        </div>
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="changeView('day')">Day</button>
-                            <button class="btn btn-outline-secondary btn-sm active" onclick="changeView('week')">Week</button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="changeView('month')">Month</button>
-                        </div>
-                    </div>
-                    <!-- Legend -->
-                    <div class="d-flex align-items-center gap-3 small text-muted">
-                        <span><span class="badge" style="background-color: #6c757d;">&nbsp;&nbsp;</span> My Booked</span>
-                        <span><span class="badge" style="background-color: #D7FF00;">&nbsp;&nbsp;</span> Available</span>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div id="calendar"></div>
-                </div>
-            </div>
+<!-- Success overlay -->
+<div id="success-overlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div class="text-5xl mb-3">🎉</div>
+        <h2 class="text-xl font-bold mb-2">Sessions Booked!</h2>
+        <div id="success-details" class="text-sm text-gray-500 mb-5 space-y-1 text-left"></div>
+        <div class="flex gap-3">
+            <button onclick="closeSuccess()" class="flex-1 py-2.5 bg-gray-100 rounded-xl text-sm font-semibold hover:bg-gray-200 transition">Book More</button>
+            <a href="{% url 'clients:bookings' %}" class="flex-1 py-2.5 bg-secondary text-gray-900 rounded-xl text-sm font-bold hover:bg-[#b8e000] transition text-center">View Bookings</a>
         </div>
     </div>
 </div>
 
-<!-- Booking Confirmation Modal -->
-<div class="modal fade" id="bookingModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Booking</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="bookingDetails">
-                    <!-- Populated by JavaScript -->
-                </div>
-
-                <hr>
-
-                <div id="packageSection">
-                    <h6>Payment Method</h6>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="paymentMethod" id="usePackage" value="package" checked>
-                        <label class="form-check-label" for="usePackage">
-                            Use Package Session <span id="packageRemaining" class="text-muted small"></span>
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="paymentMethod" id="payNow" value="pay">
-                        <label class="form-check-label" for="payNow">
-                            Pay Now <span id="sessionPrice" class="fw-bold"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div id="noPackageWarning" class="alert alert-warning mt-3" style="display: none;">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>No sessions remaining!</strong>
-                    <p class="mb-2 small">You need to purchase or upgrade a package to book this session.</p>
-                    <a href="{% url 'clients:packages' %}" class="btn btn-warning btn-sm">
-                        <i class="bi bi-arrow-up-circle me-1"></i> Upgrade Package
-                    </a>
-                </div>
-
-                <div id="sameDayWarning" class="alert alert-info mt-3" style="display: none;">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>Multiple sessions on the same day</strong>
-                    <p class="mb-0 small">You already have <span id="sameDayCount">1</span> session(s) booked on this day. Are you sure you want to book another?</p>
-                </div>
-
-                <div class="mb-3 mt-3">
-                    <label class="form-label">Notes (optional)</label>
-                    <textarea class="form-control" id="bookingNotes" rows="2" placeholder="Any special requests or notes..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmBookingBtn" onclick="confirmBooking()">
-                    <i class="bi bi-check-circle me-1"></i> Confirm Booking
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-center">
-            <div class="modal-body py-5">
-                <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                <h4 class="mt-3">Booking Confirmed!</h4>
-                <p class="text-muted" id="successMessage"></p>
-                <div class="d-flex justify-content-center gap-2">
-                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">
-                        <i class="bi bi-plus-circle me-1"></i> Book Another
-                    </button>
-                    <a href="{% url 'clients:bookings' %}" class="btn btn-outline-primary">
-                        <i class="bi bi-calendar-check me-1"></i> View My Bookings
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Bootstrap 5 JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Toast UI Calendar JS -->
-<script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
 <script>
-    const Calendar = tui.Calendar;
-    let calendar;
-    let sessionTypes = [];
-    let packages = [];
-    let selectedSlot = null;
-    let bookingModal, successModal;
+// State
+let slotMap={}, cart=[], packages=[], sessionTypes=[], activeType='', activeCoach='';
+let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
+const hasPackage={{ has_package|yesno:"true,false" }};
+const existingBookings=[{% for b in existing_bookings %}{"date":"{{ b.scheduled_date|date:'Y-m-d' }}","time":"{{ b.scheduled_time|time:'H:i' }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
 
-    // Existing bookings for same-day conflict detection
-    const existingBookings = [
-        {% for booking in existing_bookings %}
-        {
-            id: {{ booking.id }},
-            date: "{{ booking.scheduled_date|date:'Y-m-d' }}",
-            time: "{{ booking.scheduled_time|time:'H:i' }}",
-            player_id: {{ booking.player.id|default:'null' }},
-            player_name: "{{ booking.player.first_name|default:'' }} {{ booking.player.last_name|default:'' }}".trim(),
-            session_type: "{{ booking.session_type.name|default:'' }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ];
+// Startup
+document.addEventListener('DOMContentLoaded',()=>{
+    Promise.all([loadSessionTypes(),loadPackages()]).then(()=>loadSlots());
+});
 
-    document.addEventListener('DOMContentLoaded', function() {
-        bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
-        successModal = new bootstrap.Modal(document.getElementById('successModal'));
-
-        // Load data then initialize
-        Promise.all([loadSessionTypes(), loadPackages()]).then(() => {
-            initCalendar();
-            loadAvailability();
-        });
-
-        // Filter change handlers
-        document.getElementById('coachFilter').addEventListener('change', loadAvailability);
-        document.getElementById('sessionTypeFilter').addEventListener('change', loadAvailability);
-    });
-
-    async function loadSessionTypes() {
-        try {
-            const response = await fetch('/api/bookings/session-types/');
-            sessionTypes = await response.json();
-
-            // Populate filter
-            const select = document.getElementById('sessionTypeFilter');
-            select.innerHTML = '<option value="">All Types</option>' +
-                sessionTypes.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
-        } catch (error) {
-            console.error('Error loading session types:', error);
+async function loadSessionTypes(){
+    try{ sessionTypes=await fetch('/api/bookings/session-types/').then(r=>r.json()); renderTypePills(); }
+    catch(e){ console.error('ST:',e); }
+}
+async function loadPackages(){
+    try{
+        const d=await fetch('/api/bookings/packages/').then(r=>r.json());
+        packages=d.packages||[];
+        if(packages.length){ sessionsLeft=packages[0].sessions_remaining; const el=document.getElementById('sessions-remaining-display'); if(el) el.textContent=sessionsLeft; }
+    }catch(e){ console.error('Pkg:',e); }
+}
+async function loadSlots(){
+    const t=new Date(); t.setHours(0,0,0,0);
+    const e=new Date(t); e.setDate(e.getDate()+90);
+    try{
+        const events=await fetch(`/api/bookings/availability/?start=${isoDate(t)}&end=${isoDate(e)}`).then(r=>r.json());
+        slotMap={};
+        for(const ev of events){
+            if((ev.raw?.spots_remaining||0)<=0) continue;
+            const k=`${ev.raw.slot_type}_${ev.raw.slot_id}`;
+            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
         }
+        document.getElementById('slots-loading').classList.add('hidden');
+        document.getElementById('slots-container').classList.remove('hidden');
+        renderSlots();
+    }catch(e){
+        document.getElementById('slots-loading').innerHTML='<p class="text-red-500 text-sm text-center py-8">Failed to load sessions. Please refresh.</p>';
     }
+}
 
-    async function loadPackages() {
-        try {
-            const response = await fetch('/api/bookings/packages/');
-            const data = await response.json();
-            packages = data.packages || [];
-        } catch (error) {
-            console.error('Error loading packages:', error);
+function renderSlots(){
+    const c=document.getElementById('slots-container');
+    const tod=new Date(); tod.setHours(0,0,0,0);
+    const tom=new Date(tod); tom.setDate(tom.getDate()+1);
+    const byDate={};
+    for(const [k,s] of Object.entries(slotMap)){
+        if(activeType && s.calendar_id!==activeType && !s.catalog_type_ids.includes(activeType)) continue;
+        if(activeCoach && String(s.coach_id)!==activeCoach) continue;
+        const d=s.start.split('T')[0];
+        (byDate[d]||(byDate[d]=[])).push(s);
+    }
+    const dates=Object.keys(byDate).sort();
+    if(!dates.length){ c.innerHTML='<div class="text-center py-16 text-gray-400"><p class="text-5xl mb-3">📭</p><p class="font-semibold text-gray-600">No sessions found</p><p class="text-sm mt-1">Try removing a filter or check back later.</p></div>'; return; }
+    let html='';
+    for(const d of dates){
+        const slots=byDate[d].sort((a,b)=>a.start.localeCompare(b.start));
+        const dt=new Date(d+'T12:00:00');
+        const label=d===isoDate(tod)?'Today':d===isoDate(tom)?'Tomorrow':dt.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+        html+=`<div class="mb-6"><p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">${label} <span class="font-normal normal-case opacity-70">— ${slots.length} slot${slots.length!==1?'s':''}</span></p><div class="space-y-2">`;
+        for(const s of slots){
+            const inCart=cart.some(c=>c.key===s.key);
+            const booked=isBooked(s);
+            const time=fmtTime(s.start);
+            const low=s.spots_remaining<=3;
+            let btn;
+            if(booked) btn=`<span class="shrink-0 px-3 py-1.5 text-xs text-gray-300 border border-gray-200 rounded-full">Booked</span>`;
+            else if(inCart) btn=`<button onclick="removeFromCartByKey('${s.key}')" class="shrink-0 px-3 py-1.5 text-xs rounded-full font-semibold bg-secondary/20 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-secondary/40 transition" title="Remove">✓ Added</button>`;
+            else btn=`<button onclick="addToCart('${s.key}')" class="shrink-0 px-4 py-1.5 text-xs bg-secondary text-gray-900 rounded-full font-bold hover:bg-[#b8e000] active:scale-95 transition">+ Add</button>`;
+            html+=`<div class="flex items-center justify-between p-3.5 bg-white rounded-xl border shadow-sm transition ${inCart?'border-secondary/50 bg-secondary/5':'border-gray-100 hover:border-secondary/30'}">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="shrink-0 w-1 h-12 rounded-full" style="background:${s.color}"></div>
+                    <div class="min-w-0">
+                        <p class="font-semibold text-sm">${time} · ${s.duration} min</p>
+                        <p class="text-xs text-gray-500 truncate">${s.session_type_name}</p>
+                        <p class="text-xs mt-0.5 ${low?'text-orange-500 font-semibold':'text-gray-400'}">${s.coach_name} · ${s.spots_remaining} spot${s.spots_remaining!==1?'s':''}</p>
+                    </div>
+                </div>${btn}</div>`;
         }
+        html+=`</div></div>`;
     }
+    c.innerHTML=html;
+}
 
-    function initCalendar() {
-        const calendars = sessionTypes.map(st => ({
-            id: String(st.id),
-            name: st.name,
-            backgroundColor: st.color,
-            borderColor: st.color,
-        }));
-
-        // Schedule block calendars (coach portal schedule)
-        calendars.push({ id: 'sb_group',   name: 'Group Training',   backgroundColor: '#D7FF00', borderColor: '#b8e000' });
-        calendars.push({ id: 'sb_private', name: 'Private Training', backgroundColor: '#1a1a1a', borderColor: '#333' });
-        // Booked sessions (greyed out)
-        calendars.push({ id: 'booked', name: 'My Booked Sessions', backgroundColor: '#6c757d', borderColor: '#495057' });
-
-        calendar = new Calendar('#calendar', {
-            defaultView: 'week',
-            usageStatistics: false,
-            isReadOnly: false,
-            useDetailPopup: false,
-            useFormPopup: false,
-            calendars: calendars,
-            week: {
-                startDayOfWeek: 1,
-                hourStart: 6,
-                hourEnd: 22,
-                taskView: false,
-                eventView: ['time'],
-            },
-            month: {
-                startDayOfWeek: 1,
-            },
-            template: {
-                time: function(event) {
-                    // Check if this is a booked session
-                    if (event.raw?.is_booked) {
-                        return `
-                            <div style="color: white; font-size: 11px; opacity: 0.9;">
-                                <div><strong>${event.title}</strong></div>
-                                <div>${event.raw?.player_name || ''}</div>
-                                <div style="font-size: 10px;">Already Booked</div>
-                            </div>
-                        `;
-                    }
-                    const spots = event.raw?.spots_remaining || 0;
-                    return `
-                        <div style="color: white; font-size: 11px;">
-                            <div>${event.title}</div>
-                            <div>${event.raw?.coach_name || ''}</div>
-                            <div>${spots} spot${spots !== 1 ? 's' : ''} left</div>
-                        </div>
-                    `;
-                },
-            },
-        });
-
-        updateCalendarTitle();
-
-        // Click to book
-        calendar.on('clickEvent', (info) => {
-            openBookingModal(info.event);
-        });
-    }
-
-    function updateCalendarTitle() {
-        // Always load today → +90 days so all sessions stay in the calendar
-        const options = { year: 'numeric', month: 'long' };
-        document.getElementById('calendar-title').textContent =
-            date.toDate().toLocaleDateString('en-US', options);
-    }
-
-    function changeView(view) {
-        calendar.changeView(view);
-        updateCalendarTitle();
-        document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-    }
-
-    async function loadAvailability() {
-        // Always load today → +90 days so all sessions stay in the calendar
-        // regardless of which week the user navigates to
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const endDate = new Date(today);
-        endDate.setDate(endDate.getDate() + 90);
-
-        const coachId = document.getElementById('coachFilter').value;
-        const sessionTypeId = document.getElementById('sessionTypeFilter').value;
-
-        let url = `/api/bookings/availability/?start=${today.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}`;
-        if (coachId) url += `&coach_id=${coachId}`;
-
-        try {
-            const response = await fetch(url);
-            let events = await response.json();
-
-            // Filter by session type — check calendarId OR catalog_type_ids for multi-type blocks
-            if (sessionTypeId) {
-                events = events.filter(e =>
-                    e.calendarId === sessionTypeId ||
-                    (e.raw?.catalog_type_ids?.includes(sessionTypeId))
-                );
-            }
-
-            // Filter out fully booked
-            events = events.filter(e => e.raw?.spots_remaining > 0);
-
-            calendar.clear();
-            events.forEach(event => {
-                calendar.createEvents([event]);
-            });
-
-            // Add client's already booked sessions to the calendar
-            addBookedSessionsToCalendar();
-
-            updateCalendarTitle();
-        } catch (error) {
-            console.error('Error loading availability:', error);
-        }
-    }
-
-    function addBookedSessionsToCalendar() {
-        existingBookings.forEach(booking => {
-            const [year, month, day] = booking.date.split('-').map(Number);
-            const [hour, minute] = booking.time.split(':').map(Number);
-
-            const startDate = new Date(year, month - 1, day, hour, minute);
-            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-
-            calendar.createEvents([{
-                id: `booked-${booking.id}`,
-                calendarId: 'booked',
-                title: `✓ ${booking.session_type || 'Booked'}`,
-                start: startDate,
-                end: endDate,
-                isReadOnly: true,
-                raw: {
-                    is_booked: true,
-                    player_name: booking.player_name,
-                    booking_id: booking.id
-                }
-            }]);
-        });
-    }
-
-    function openBookingModal(event) {
-        selectedSlot = event;
-        const raw = event.raw || {};
-
-        if (raw.is_booked) {
-            alert(`You already have this session booked for ${raw.player_name || 'your player'}.`);
-            return;
-        }
-
-        if (raw.spots_remaining <= 0) {
-            alert('This slot is fully booked.');
-            return;
-        }
-
-        const playerId = document.getElementById('playerSelect').value;
-        if (!playerId) {
-            alert('Please select a player first.');
-            return;
-        }
-
-        const startDate = new Date(event.start.valueOf());
-        document.getElementById('bookingDetails').innerHTML = `
-            <div class="mb-3">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Session Type:</span>
-                    <span class="fw-bold">${raw.session_type_name}</span>
+function addToCart(key){
+    if(cart.some(c=>c.key===key)) return;
+    const s=slotMap[key]; if(!s) return;
+    cart.push({key,slot:s,notes:''});
+    updateCartBadge(); renderSlots(); renderCart();
+    if(cart.length===1) switchTab('cart');
+}
+function removeFromCartByKey(key){
+    cart=cart.filter(c=>c.key!==key);
+    updateCartBadge(); renderSlots(); renderCart();
+}
+function updateCartBadge(){
+    const n=cart.length;
+    const btn=document.getElementById('tab-cart-btn');
+    if(btn) btn.innerHTML=n?`🛒 Cart <span class="ml-1 inline-flex items-center justify-center w-5 h-5 bg-secondary text-gray-900 rounded-full text-xs font-bold">${n}</span>`:'🛒 Cart';
+}
+function renderCart(){
+    const html=buildCartHtml();
+    const m=document.getElementById('cart-mobile'); if(m) m.innerHTML=html;
+    const d=document.getElementById('cart-desktop'); if(d) d.innerHTML=html;
+}
+function buildCartHtml(){
+    if(!cart.length) return`<div class="text-center py-10 text-gray-400"><p class="text-4xl mb-2">🛒</p><p class="text-sm font-semibold text-gray-500">Cart is empty</p><p class="text-xs mt-1">Tap <strong>+ Add</strong> on a session to get started.</p></div>`;
+    const pkg=packages.find(p=>p.can_book);
+    const after=sessionsLeft-cart.length;
+    const over=hasPackage&&after<0;
+    let html='<div class="space-y-3 mb-4">';
+    cart.forEach((item,i)=>{
+        const {slot}=item;
+        html+=`<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-1 h-10 rounded-full shrink-0" style="background:${slot.color}"></div>
+                    <div>
+                        <p class="font-semibold text-sm">${fmtDateLabel(slot.start.split('T')[0])} · ${fmtTime(slot.start)}</p>
+                        <p class="text-xs text-gray-500">${slot.session_type_name} · ${slot.coach_name}</p>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Coach:</span>
-                    <span class="fw-bold">${raw.coach_name}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Date:</span>
-                    <span class="fw-bold">${startDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Time:</span>
-                    <span class="fw-bold">${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="text-muted">Duration:</span>
-                    <span class="fw-bold">${raw.duration} minutes</span>
-                </div>
+                <button onclick="removeFromCartByKey('${slot.key}')" class="text-gray-300 hover:text-red-500 transition text-xl leading-none ml-2">&times;</button>
             </div>
-        `;
+            <div id="cis-${i}" class="mt-1"></div>
+            <details class="mt-2.5"><summary class="text-xs text-gray-400 cursor-pointer select-none hover:text-gray-600">+ Add note (optional)</summary>
+            <textarea onchange="cart[${i}].notes=this.value" placeholder="Any special requests…" class="mt-2 w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-secondary resize-none" rows="2"></textarea></details>
+        </div>`;
+    });
+    html+='</div>';
+    if(hasPackage) html+=`<div class="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 mb-3 text-xs"><span class="text-gray-500">Sessions after booking</span><span class="font-bold ${after<0?'text-red-600':after<=2?'text-orange-500':'text-primary'}">${after}</span></div>`;
+    if(over) html+=`<div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">⚠️ Not enough sessions — need ${Math.abs(after)} more. <a href="{% url 'clients:packages' %}" class="underline font-bold">Upgrade</a></div>`;
+    else if(!hasPackage) html+=`<div class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-xs text-yellow-700 font-medium">⚠️ No active package. <a href="{% url 'clients:packages' %}" class="underline font-bold">Get one →</a></div>`;
+    const ok=hasPackage&&!over;
+    html+=`<button id="confirm-btn" onclick="confirmBookings()" ${ok?'':'disabled'} class="w-full py-3.5 rounded-xl font-bold text-sm transition ${ok?'bg-secondary text-gray-900 hover:bg-[#b8e000] active:scale-95':'bg-gray-100 text-gray-400 cursor-not-allowed'}">Confirm ${cart.length} Booking${cart.length!==1?'s':''}</button>`;
+    return html;
+}
 
-        document.getElementById('sessionPrice').textContent = `$${raw.price}`;
-
-        const activePackage = packages.find(p => p.can_book);
-        if (activePackage) {
-            document.getElementById('packageRemaining').textContent = `(${activePackage.sessions_remaining} remaining)`;
-            document.getElementById('packageSection').style.display = 'block';
-            document.getElementById('noPackageWarning').style.display = 'none';
-            document.getElementById('confirmBookingBtn').disabled = false;
-            document.getElementById('usePackage').checked = true;
-        } else {
-            document.getElementById('packageSection').style.display = 'none';
-            document.getElementById('noPackageWarning').style.display = 'block';
-            document.getElementById('confirmBookingBtn').disabled = true;
-        }
-
-        checkSameDayBookings(startDate, playerId);
-        bookingModal.show();
-    }
-
-    function checkSameDayBookings(selectedDate, selectedPlayerId) {
-        const selectedDateStr = selectedDate.toISOString().split('T')[0];
-
-        const sameDayBookings = existingBookings.filter(booking => booking.date === selectedDateStr);
-        const samePlayerSameDayBookings = sameDayBookings.filter(booking => booking.player_id === parseInt(selectedPlayerId));
-
-        const warningDiv = document.getElementById('sameDayWarning');
-        const countSpan = document.getElementById('sameDayCount');
-
-        if (samePlayerSameDayBookings.length > 0) {
-            countSpan.textContent = samePlayerSameDayBookings.length;
-            warningDiv.style.display = 'block';
-            warningDiv.className = 'alert alert-warning mt-3';
-            warningDiv.innerHTML = `
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Multiple sessions on the same day</strong>
-                <p class="mb-0 small">This player already has <strong>${samePlayerSameDayBookings.length}</strong> session(s) booked on this day:
-                <ul class="mb-0 small">
-                    ${samePlayerSameDayBookings.map(b => `<li>${b.session_type} at ${b.time}</li>`).join('')}
-                </ul>
-                Are you sure you want to book another session?</p>
-            `;
-        } else if (sameDayBookings.length > 0) {
-            countSpan.textContent = sameDayBookings.length;
-            warningDiv.style.display = 'block';
-            warningDiv.className = 'alert alert-info mt-3';
-            warningDiv.innerHTML = `
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Other sessions on this day</strong>
-                <p class="mb-0 small">You have <strong>${sameDayBookings.length}</strong> other session(s) booked on this day for different players.</p>
-            `;
-        } else {
-            warningDiv.style.display = 'none';
-        }
-    }
-
-    async function confirmBooking() {
-        if (!selectedSlot) return;
-
-        const playerId = document.getElementById('playerSelect').value;
-        const notes = document.getElementById('bookingNotes').value;
-        const usePackage = document.querySelector('input[name="paymentMethod"]:checked')?.value === 'package';
-
-        const activePackage = packages.find(p => p.can_book);
-
-        const data = {
-            slot_id: selectedSlot.raw.slot_id,
-            slot_type: selectedSlot.raw.slot_type || 'availability_slot',
-            player_id: playerId,
-            package_id: usePackage && activePackage ? activePackage.id : null,
-            notes: notes,
-        };
-
-        try {
-            document.getElementById('confirmBookingBtn').disabled = true;
-            document.getElementById('confirmBookingBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Booking...';
-
-            const response = await fetch('/api/bookings/bookings/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken'),
-                },
-                body: JSON.stringify(data),
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                bookingModal.hide();
-
-                const bookedDate = new Date(selectedSlot.start.valueOf());
-                const bookedDateStr = bookedDate.toISOString().split('T')[0];
-                const bookedTimeStr = bookedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                existingBookings.push({
-                    id: result.booking?.id || Date.now(),
-                    date: bookedDateStr,
-                    time: bookedTimeStr,
-                    player_id: parseInt(playerId),
-                    player_name: document.getElementById('playerSelect').selectedOptions[0]?.text || '',
-                    session_type: selectedSlot.raw?.session_type_name || result.booking?.session_type || ''
-                });
-
-                document.getElementById('successMessage').textContent =
-                    `Your ${result.booking.session_type} session with ${result.booking.coach} on ${result.booking.date} at ${result.booking.time} has been confirmed.`;
-                successModal.show();
-
-                loadAvailability();
-                loadPackages();
-            } else {
-                if (result.upgrade_available) {
-                    document.getElementById('noPackageWarning').style.display = 'block';
-                }
-                alert(result.error || 'Error creating booking');
+async function confirmBookings(){
+    if(!cart.length) return;
+    document.querySelectorAll('#confirm-btn').forEach(b=>{ b.disabled=true; b.innerHTML='<span style="display:inline-block;width:1rem;height:1rem;border:2px solid #ccc;border-top-color:#1a1a1a;border-radius:50%;animation:spin .7s linear infinite;margin-right:.4rem;vertical-align:middle"></span>Booking…'; });
+    const playerId=document.getElementById('playerSelect').value;
+    const pkg=packages.find(p=>p.can_book);
+    const results=[];
+    for(let i=0;i<cart.length;i++){
+        const {slot,notes}=cart[i];
+        try{
+            const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:pkg?pkg.id:null,notes:notes||''})});
+            const data=await res.json();
+            if(res.ok){
+                results.push({ok:true,slot});
+                setItemStatus(i,'ok','✅ Confirmed');
+                existingBookings.push({date:slot.start.split('T')[0],time:slot.start.split('T')[1].substring(0,5)});
+                delete slotMap[slot.key];
+            }else{
+                results.push({ok:false,slot,msg:data.error||'Failed'});
+                setItemStatus(i,'err',`❌ ${data.error||'This slot is no longer available.'}`);
             }
-        } catch (error) {
-            console.error('Error creating booking:', error);
-            alert('Error creating booking');
-        } finally {
-            document.getElementById('confirmBookingBtn').disabled = false;
-            document.getElementById('confirmBookingBtn').innerHTML = '<i class="bi bi-check-circle me-1"></i> Confirm Booking';
-        }
+        }catch(e){ results.push({ok:false,slot,msg:'Network error'}); setItemStatus(i,'err','❌ Network error — try again'); }
     }
+    await loadPackages();
+    const failedKeys=results.filter(r=>!r.ok).map(r=>r.slot.key);
+    cart=cart.filter(c=>failedKeys.includes(c.key));
+    updateCartBadge(); renderSlots();
+    const successes=results.filter(r=>r.ok);
+    if(successes.length){
+        document.getElementById('success-details').innerHTML=successes.map(r=>`<p>✅ ${fmtDateLabel(r.slot.start.split('T')[0])} at ${fmtTime(r.slot.start)} — ${r.slot.session_type_name}</p>`).join('');
+        document.getElementById('success-overlay').classList.remove('hidden');
+    } else { renderCart(); }
+}
+function setItemStatus(i,type,msg){
+    document.querySelectorAll(`#cis-${i}`).forEach(el=>{ el.innerHTML=`<p class="text-xs mt-1 ${type==='ok'?'text-green-600 font-semibold':'text-red-600'}">${msg}</p>`; });
+}
+function closeSuccess(){
+    document.getElementById('success-overlay').classList.add('hidden');
+    cart=[]; updateCartBadge(); renderSlots(); renderCart(); switchTab('slots');
+}
 
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+function renderTypePills(){
+    let html=`<button data-pill="" onclick="setTypeFilter('')" class="pill shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-primary text-white border border-transparent whitespace-nowrap">All</button>`;
+    for(const st of sessionTypes) html+=`<button data-pill="${st.id}" onclick="setTypeFilter('${st.id}')" class="pill shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:border-secondary transition whitespace-nowrap">${st.name}</button>`;
+    document.getElementById('type-pills').innerHTML=html;
+}
+function setTypeFilter(id){
+    activeType=id;
+    document.querySelectorAll('[data-pill]').forEach(p=>{
+        const on=p.dataset.pill===id;
+        p.className='pill shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition '+(on&&id===''?'bg-primary text-white border-transparent font-bold':on?'bg-secondary text-gray-900 border-transparent font-bold':'bg-white text-gray-600 border-gray-200 hover:border-secondary');
+    });
+    renderSlots();
+}
+function setCoachFilter(id){ activeCoach=id; renderSlots(); }
+
+function switchTab(name){
+    const ps=document.getElementById('panel-slots'),pc=document.getElementById('panel-cart');
+    const bs=document.getElementById('tab-slots-btn'),bc=document.getElementById('tab-cart-btn');
+    const toS=name==='slots';
+    ps.classList.toggle('hidden',!toS); pc.classList.toggle('hidden',toS);
+    if(toS){ bs.className='flex-1 py-2 rounded-lg text-sm font-semibold bg-primary text-white transition'; bc.className='flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 transition'; }
+    else    { bc.className='flex-1 py-2 rounded-lg text-sm font-semibold bg-primary text-white transition'; bs.className='flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 transition'; }
+}
+
+function isBooked(s){ const d=s.start.split('T')[0],t=(s.start.split('T')[1]||'').substring(0,5); return existingBookings.some(b=>b.date===d&&b.time===t); }
+function isoDate(d){ return d.toISOString().split('T')[0]; }
+function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
+function fmtDateLabel(ds){ const t=new Date(); t.setHours(0,0,0,0); const tm=new Date(t); tm.setDate(tm.getDate()+1); if(ds===isoDate(t)) return'Today'; if(ds===isoDate(tm)) return'Tomorrow'; return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+function getCookie(n){ const v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)'); return v?v.pop():''; }
 </script>
 </body>
 </html>
