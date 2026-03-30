@@ -94,7 +94,7 @@
 <script>(function(){document.getElementById('mobile-nav-btn').addEventListener('click',function(){document.getElementById('mobile-nav-menu').classList.toggle('hidden');});})()</script>
 
 <!-- Filter bar -->
-<div class="sticky top-16 z-40 bg-gray-50 border-b border-gray-200 shadow-sm">
+<div id="filter-bar" class="sticky top-16 z-40 bg-gray-50 border-b border-gray-200 shadow-sm">
     <!-- Row 1: Player · Coach -->
     <div class="max-w-7xl mx-auto px-4 pt-2 pb-1 flex flex-wrap items-center gap-2">
         <select id="playerSelect" class="shrink-0 text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-secondary focus:border-transparent">
@@ -179,12 +179,12 @@
         <!-- Slots (2/3) -->
         <div class="md:col-span-2">
             <!-- Mobile tabs -->
-            <div class="md:hidden flex bg-white rounded-xl border border-gray-200 p-1 mb-4 shadow-sm">
+            <div id="tab-bar" class="md:hidden flex bg-white rounded-xl border border-gray-200 p-1 mb-3 shadow-sm">
                 <button id="tab-slots-btn" onclick="switchTab('slots')" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-primary text-white transition">📅 Sessions</button>
                 <button id="tab-cart-btn" onclick="switchTab('cart')" class="flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 transition">🛒 Cart</button>
             </div>
             <!-- Slot cards panel -->
-            <div id="panel-slots">
+            <div id="panel-slots" style="overflow-y:auto;-webkit-overflow-scrolling:touch;">
                 <div id="slots-loading" class="py-16 text-center text-gray-400">
                     <div class="spinner mb-3 mx-auto"></div>
                     <p class="text-sm">Loading sessions…</p>
@@ -192,7 +192,7 @@
                 <div id="slots-container" class="hidden"></div>
             </div>
             <!-- Cart panel (mobile) -->
-            <div id="panel-cart" class="hidden md:hidden">
+            <div id="panel-cart" class="hidden md:hidden" style="overflow-y:auto;-webkit-overflow-scrolling:touch;">
                 <div id="cart-mobile"></div>
             </div>
         </div>
@@ -248,8 +248,23 @@ const existingBookings=[{% for b in existing_bookings %}{"date":"{{ b.scheduled_
 
 // Startup
 document.addEventListener('DOMContentLoaded',()=>{
+    fitPanels();
     Promise.all([loadSessionTypes(),loadPackages()]).then(()=>loadSlots());
 });
+window.addEventListener('resize', fitPanels);
+
+function fitPanels(){
+    if(window.innerWidth>=768) return; // desktop scrolls naturally
+    const nav    = 64;
+    const filter = document.getElementById('filter-bar')?.offsetHeight||0;
+    const tabs   = document.getElementById('tab-bar')?.offsetHeight||0;
+    const notice = document.querySelector('#panel-slots')?.previousElementSibling?.classList.contains('bg-yellow-50') ? (document.querySelector('.bg-yellow-50')?.offsetHeight||0) : 0;
+    const h = window.innerHeight - nav - filter - tabs - notice - 16;
+    ['panel-slots','panel-cart'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.style.height=Math.max(h,200)+'px';
+    });
+}
 
 async function loadSessionTypes(){
     try{ sessionTypes=await fetch('/api/bookings/session-types/').then(r=>r.json()); renderTypePills(); }
@@ -276,6 +291,7 @@ async function loadSlots(){
         document.getElementById('slots-loading').classList.add('hidden');
         document.getElementById('slots-container').classList.remove('hidden');
         renderSlots();
+        fitPanels();
     }catch(e){
         document.getElementById('slots-loading').innerHTML='<p class="text-red-500 text-sm text-center py-8">Failed to load sessions. Please refresh.</p>';
     }
@@ -493,7 +509,7 @@ function switchTab(name){
     const ps=document.getElementById('panel-slots'),pc=document.getElementById('panel-cart');
     const bs=document.getElementById('tab-slots-btn'),bc=document.getElementById('tab-cart-btn');
     const toS=name==='slots';
-    ps.classList.toggle('hidden',!toS); pc.classList.toggle('hidden',toS);
+    ps.classList.toggle('hidden',!toS); pc.classList.toggle('hidden',toS); fitPanels();
     if(toS){ bs.className='flex-1 py-2 rounded-lg text-sm font-semibold bg-primary text-white transition'; bc.className='flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 transition'; }
     else    { bc.className='flex-1 py-2 rounded-lg text-sm font-semibold bg-primary text-white transition'; bs.className='flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 transition'; }
 }
