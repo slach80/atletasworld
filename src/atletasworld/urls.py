@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from coaches.views import coach_public_profile
-from .views import home_view
+from .views import home_view, apple_pay_verification
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
@@ -181,6 +181,9 @@ urlpatterns = [
     # API endpoints
     path('api/bookings/', include('bookings.urls')),
     path('payments/', include('payments.urls')),  # webhook at /payments/webhook/
+    # Apple Pay domain verification — download file from Stripe Dashboard → Settings → Apple Pay
+    # then place it at static/apple-developer-merchantid-domain-association
+    path('.well-known/apple-developer-merchantid-domain-association', apple_pay_verification),
     path('api/analytics/', include('analytics.urls')),
     path('api/reviews/', include('reviews.urls')),
 ]

@@ -271,17 +271,23 @@
 </div>
 
 {% if stripe_public_key %}
-<!-- Payment modal -->
+<!-- Payment modal — uses Payment Element (Apple Pay + Google Pay + card) -->
 <div id="payment-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-        <h2 class="text-xl font-bold mb-1">Complete Purchase</h2>
+        <h2 class="text-xl font-bold mb-0.5">Complete Purchase</h2>
         <p id="payment-package-name" class="text-gray-500 text-sm mb-4"></p>
 
-        <div id="card-element" class="border border-gray-300 rounded-xl px-4 py-3 mb-3"></div>
-        <div id="card-errors" class="text-red-600 text-xs mb-3 hidden"></div>
+        <!-- Loading state while creating PaymentIntent -->
+        <div id="payment-loading" class="py-8 text-center text-gray-400">
+            <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
+            <p class="text-sm">Loading payment options…</p>
+        </div>
 
-        <button id="pay-btn" onclick="submitPayment()"
-                class="w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
+        <!-- Payment Element (Apple Pay / Google Pay / Card) -->
+        <div id="payment-element" class="hidden mb-4"></div>
+        <div id="payment-errors" class="text-red-600 text-xs mb-3 hidden"></div>
+
+        <button id="pay-btn" onclick="submitPayment()" class="hidden w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
             Pay <span id="pay-amount"></span>
         </button>
         <button onclick="closePaymentModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
@@ -301,48 +307,81 @@
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 const stripeJs = Stripe('{{ stripe_public_key }}');
-const elements = stripeJs.elements();
-const cardElement = elements.create('card', {
-    style: { base: { fontSize: '15px', fontFamily: "'Archivo Condensed', sans-serif", color: '#1a1a1a' } }
-});
-cardElement.mount('#card-element');
-cardElement.on('change', e => {
-    const el = document.getElementById('card-errors');
-    if (e.error) { el.textContent = e.error.message; el.classList.remove('hidden'); }
-    else el.classList.add('hidden');
-});
-
+let paymentElements = null;   // stripe.elements() instance, created per payment
 let currentPackageId = null;
 
-function buyPackage(id, name, price) {
+// Step 1: user taps "Buy Now" → create PaymentIntent → mount Payment Element
+async function buyPackage(id, name, price) {
     currentPackageId = id;
     document.getElementById('payment-package-name').textContent = name;
     document.getElementById('pay-amount').textContent = '$' + parseFloat(price).toFixed(2);
+    document.getElementById('payment-loading').classList.remove('hidden');
+    document.getElementById('payment-element').classList.add('hidden');
+    document.getElementById('pay-btn').classList.add('hidden');
+    document.getElementById('payment-errors').classList.add('hidden');
     document.getElementById('payment-modal').classList.remove('hidden');
+
+    try {
+        const res = await fetch(`/portal/packages/${id}/pay/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
+
+        // Create Elements with clientSecret — this enables Apple Pay / Google Pay detection
+        paymentElements = stripeJs.elements({
+            clientSecret: data.client_secret,
+            appearance: {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#1a1a1a',
+                    borderRadius: '12px',
+                    fontFamily: "'Archivo Condensed', system-ui, sans-serif",
+                },
+            },
+        });
+
+        const paymentElement = paymentElements.create('payment', {
+            layout: 'tabs',   // shows Apple Pay / Google Pay as tabs if available
+        });
+        paymentElement.mount('#payment-element');
+
+        document.getElementById('payment-loading').classList.add('hidden');
+        document.getElementById('payment-element').classList.remove('hidden');
+        document.getElementById('pay-btn').classList.remove('hidden');
+
+    } catch(e) {
+        showError('Network error — please try again.');
+    }
 }
 
 function closePaymentModal() {
     document.getElementById('payment-modal').classList.add('hidden');
+    if (paymentElements) {
+        // Clean up mounted element
+        document.getElementById('payment-element').innerHTML = '';
+        paymentElements = null;
+    }
 }
 
+// Step 2: user clicks Pay → confirm via Payment Element (handles all methods)
 async function submitPayment() {
+    if (!paymentElements) return;
     const btn = document.getElementById('pay-btn');
     btn.disabled = true;
     btn.textContent = 'Processing…';
 
     try {
-        const res = await fetch(`/portal/packages/${currentPackageId}/pay/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCookie('csrftoken') },
-        });
-        const data = await res.json();
-        if (!res.ok) { showError(data.error || 'Payment failed'); return; }
-
-        const { error } = await stripeJs.confirmCardPayment(data.client_secret, {
-            payment_method: {
-                card: cardElement,
-                billing_details: { name: '{{ request.user.get_full_name }}' },
-            }
+        const { error } = await stripeJs.confirmPayment({
+            elements: paymentElements,
+            confirmParams: {
+                return_url: window.location.origin + '/portal/packages/?purchased=1',
+                payment_method_data: {
+                    billing_details: { name: '{{ request.user.get_full_name }}' },
+                },
+            },
+            redirect: 'if_required',  // stay on page for card payments; redirect for wallets
         });
 
         if (error) {
@@ -359,9 +398,15 @@ async function submitPayment() {
     }
 }
 
+// Handle return from Apple Pay / Google Pay redirect
+if (window.location.search.includes('purchased=1')) {
+    document.getElementById('payment-success').classList.remove('hidden');
+}
+
 function showError(msg) {
-    const el = document.getElementById('card-errors');
+    const el = document.getElementById('payment-errors');
     el.textContent = msg; el.classList.remove('hidden');
+    document.getElementById('payment-loading').classList.add('hidden');
     document.getElementById('pay-btn').disabled = false;
 }
 

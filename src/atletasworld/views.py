@@ -1,6 +1,20 @@
+import os
 from django.shortcuts import render
+from django.http import FileResponse, HttpResponse
+from django.conf import settings
 from clients.models import Package
 from bookings.models import SessionType
+
+
+def apple_pay_verification(request):
+    """Serve Apple Pay domain verification file for Stripe.
+    Download from: Stripe Dashboard → Settings → Payment methods → Apple Pay → Add domain.
+    Place the downloaded file at: static/apple-developer-merchantid-domain-association
+    """
+    path = os.path.join(settings.BASE_DIR, 'static', 'apple-developer-merchantid-domain-association')
+    if os.path.exists(path):
+        return FileResponse(open(path, 'rb'), content_type='text/plain')
+    return HttpResponse('', content_type='text/plain', status=404)
 
 
 def _fmt_times(start_times_str):
