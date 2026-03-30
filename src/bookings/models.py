@@ -23,7 +23,10 @@ class SessionType(models.Model):
     description = models.TextField(blank=True)
     session_format = models.CharField(max_length=20, choices=SESSION_FORMAT_CHOICES, default='private')
     duration_minutes = models.IntegerField(default=60)
-    price = models.DecimalField(max_digits=8, decimal_places=2)
+    price = models.DecimalField(max_digits=8, decimal_places=2,
+                                help_text="Package/standard price per session")
+    drop_in_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+                                        help_text="Drop-in fee for clients without a package. Leave blank to use standard price.")
     max_participants = models.IntegerField(default=1)
     color = models.CharField(max_length=7, default='#2ecc71', help_text="Hex color for calendar display")
     is_active = models.BooleanField(default=True)
@@ -46,6 +49,10 @@ class SessionType(models.Model):
     max_age = models.IntegerField(null=True, blank=True, help_text="Maximum age restriction")
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_drop_in_price(self):
+        """Return drop-in price, falling back to standard price."""
+        return self.drop_in_price if self.drop_in_price is not None else self.price
 
     def __str__(self):
         return f"{self.name} ({self.duration_minutes}min - ${self.price})"

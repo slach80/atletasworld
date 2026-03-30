@@ -1013,6 +1013,8 @@ def owner_session_type_edit(request, pk):
             session_type.session_format = request.POST.get('session_format', 'private')
             session_type.duration_minutes = request.POST.get('duration_minutes', 60)
             session_type.price = request.POST.get('price')
+            drop_in = request.POST.get('drop_in_price', '').strip()
+            session_type.drop_in_price = drop_in if drop_in else None
             session_type.max_participants = request.POST.get('max_participants', 1)
             session_type.color = request.POST.get('color', '#2ecc71')
             session_type.is_active = request.POST.get('is_active') == 'on'

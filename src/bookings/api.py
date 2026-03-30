@@ -51,6 +51,7 @@ class SessionTypeViewSet(viewsets.ReadOnlyModelViewSet):
             'session_format': st.session_format,
             'duration_minutes': st.duration_minutes,
             'price': str(st.price),
+            'drop_in_price': str(st.get_drop_in_price()),
             'max_participants': st.max_participants,
             'color': st.color,
             'requires_package': st.requires_package,
@@ -143,7 +144,8 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
             if catalog_types:
                 name       = ' / '.join(st.name for st in catalog_types)
                 color      = catalog_types[0].color if catalog_types[0].color else cal['color']
-                price      = str(block.price_override or catalog_types[0].price)
+                # Use drop-in price for the slot card display (clients without package pay this)
+                price      = str(block.price_override or catalog_types[0].get_drop_in_price())
                 dur        = catalog_types[0].duration_minutes
                 # Use first catalog type's ID as calendarId so session type filter works
                 calendar_id = str(catalog_types[0].id)
@@ -447,10 +449,12 @@ class BookingViewSet(viewsets.ModelViewSet):
             # Determine amount due (from slot price or session type)
             try:
                 if slot_type == 'schedule_block':
-                    st_price = catalog_types[0].price if catalog_types else Decimal('0')
-                    amount_due = block.price_override if block.price_override else st_price
+                    # Use drop-in price for non-package clients
+                    st_drop_in = catalog_types[0].get_drop_in_price() if catalog_types else Decimal('0')
+                    amount_due = block.price_override if block.price_override else st_drop_in
                 else:
-                    amount_due = slot.effective_price
+                    # AvailabilitySlot — use drop-in price
+                    amount_due = block.price_override if block.price_override else slot.session_type.get_drop_in_price()
             except Exception:
                 amount_due = Decimal('0')
 
