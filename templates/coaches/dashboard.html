@@ -116,47 +116,48 @@
 
     <div class="max-w-7xl mx-auto px-4 py-6">
         <!-- Welcome Header -->
-        <div class="bg-gradient-to-r from-secondary to-green-600 rounded-xl p-6 mb-6 text-white">
-            <h1 class="text-2xl font-bold">Welcome, Coach {{ coach.user.first_name }}!</h1>
-            <p class="text-white/80">{{ today|date:"l, F j, Y" }}</p>
+        <div class="bg-gradient-to-r from-primary to-gray-800 rounded-xl p-6 mb-4 text-white flex justify-between items-center flex-wrap gap-3">
+            <div>
+                <h1 class="text-2xl font-bold">Welcome, Coach {{ coach.user.first_name }}!</h1>
+                <p class="text-white/70 text-sm">{{ today|date:"l, F j, Y" }}
+                {% if coach_rating %} &middot; <span class="text-secondary font-semibold">⭐ {{ coach_rating }}</span> <span class="text-white/50">({{ coach_review_count }} review{{ coach_review_count|pluralize }})</span>{% endif %}</p>
+            </div>
+            <div class="flex gap-2">
+                {% if teams %}
+                <a href="{% url 'clients:team_list' %}" class="px-3 py-1.5 bg-white/10 text-white rounded-lg text-sm hover:bg-white/20 transition">My Teams</a>
+                {% endif %}
+                <a href="{% url 'coaches:notify_parents' %}" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">🔔 Notify Parents</a>
+            </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="flex flex-wrap items-center gap-2 mb-4">
-            {% if teams %}
-            <a href="{% url 'clients:team_list' %}" class="inline-flex items-center px-3 py-1.5 bg-white border rounded-lg text-sm hover:border-orange-500 hover:bg-orange-50 transition">
-                <svg class="w-4 h-4 text-orange-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
-                My Teams
-            </a>
-            {% endif %}
-            <div class="flex-grow"></div>
-            <a href="{% url 'coaches:notify_parents' %}" class="inline-flex items-center px-4 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 shadow-sm hover:shadow transition">
-                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                Notify Parents
-            </a>
+        <!-- Pending assessment banner -->
+        {% if stats.pending_assessments %}
+        <div class="mb-4 flex items-center justify-between p-3 bg-yellow-50 border border-yellow-300 rounded-xl">
+            <div class="flex items-center gap-2">
+                <span>⚠️</span>
+                <p class="text-sm font-semibold text-yellow-800">{{ stats.pending_assessments }} session{{ stats.pending_assessments|pluralize }} need{{ stats.pending_assessments|pluralize:"s," }} assessment — players are waiting for feedback</p>
+            </div>
+            <a href="{% url 'coaches:assessments' %}" class="shrink-0 px-3 py-1 bg-yellow-500 text-white rounded-lg text-xs font-semibold hover:bg-yellow-600 transition ml-3">Write Now →</a>
         </div>
+        {% endif %}
 
-        <!-- Quick Stats (clickable) -->
+        <!-- Quick Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <!-- 1. Now -->
-            <a href="{% url 'coaches:todays_sessions' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-secondary border border-transparent transition group">
-                <p class="inline-block text-3xl font-bold text-secondary bg-primary rounded-xl px-3 py-1.5 group-hover:scale-110 transition">{{ stats.todays_sessions }}</p>
-                <p class="text-gray-500 text-sm">Today's Sessions</p>
-            </a>
-            <!-- 2. Who this week -->
             <a href="{% url 'coaches:my_players' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-purple-500 border border-transparent transition group">
                 <p class="text-3xl font-bold text-purple-500 group-hover:scale-110 transition">{{ stats.students_this_week }}</p>
-                <p class="text-gray-500 text-sm">Students This Week</p>
+                <p class="text-gray-500 text-sm mt-1">Students This Week</p>
             </a>
-            <!-- 3. Forward schedule -->
             <a href="{% url 'coaches:schedule' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-blue-500 border border-transparent transition group">
-                <p class="text-3xl font-bold text-blue-500 group-hover:scale-110 transition">{{ stats.upcoming_sessions }}</p>
-                <p class="text-gray-500 text-sm">Upcoming (30 days)</p>
+                <p class="text-3xl font-bold text-blue-500 group-hover:scale-110 transition">{{ stats.sessions_this_month }}</p>
+                <p class="text-gray-500 text-sm mt-1">Sessions This Month</p>
             </a>
-            <!-- 4. Action needed -->
+            <a href="{% url 'coaches:schedule' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-secondary border border-transparent transition group">
+                <p class="text-3xl font-bold text-gray-700 group-hover:scale-110 transition">{{ stats.upcoming_sessions }}</p>
+                <p class="text-gray-500 text-sm mt-1">Upcoming (30 days)</p>
+            </a>
             <a href="{% url 'coaches:assessments' %}" class="bg-white rounded-xl shadow p-4 text-center hover:shadow-md hover:border-accent border border-transparent transition group">
                 <p class="text-3xl font-bold text-accent group-hover:scale-110 transition">{{ stats.pending_assessments }}</p>
-                <p class="text-gray-500 text-sm">Pending Assessments</p>
+                <p class="text-gray-500 text-sm mt-1">Pending Assessments</p>
             </a>
         </div>
 
@@ -165,52 +166,50 @@
             <div class="bg-white rounded-xl shadow-md p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold text-gray-800">Today's Sessions</h2>
-                    <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary text-sm hover:underline">View All</a>
+                    <a href="{% url 'coaches:todays_sessions' %}" class="text-secondary text-sm hover:underline">View All →</a>
                 </div>
                 {% if todays_blocks %}
                 <div class="space-y-3">
                     {% for block in todays_blocks %}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between p-3 {% if starts_soon and block.id in starts_soon %}bg-secondary/10 border border-secondary/30{% else %}bg-gray-50{% endif %} rounded-lg">
                         <div>
-                            <p class="font-semibold">{{ block.start_time|time:"g:i A" }} - {{ block.end_time|time:"g:i A" }}</p>
-                            <p class="text-sm text-gray-500">{{ block.display_session_type }} {% if block.current_participants > 0 %}({{ block.current_participants }}/{{ block.max_participants }}){% endif %}</p>
+                            <div class="flex items-center gap-2">
+                                <p class="font-semibold">{{ block.start_time|time:"g:i A" }} - {{ block.end_time|time:"g:i A" }}</p>
+                                {% if starts_soon and block.id in starts_soon %}<span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">{{ starts_soon|get_item:block.id }}m</span>{% endif %}
+                            </div>
+                            <p class="text-sm text-gray-500">{{ block.display_session_type }} · {{ block.current_participants }}/{{ block.max_participants }}</p>
                         </div>
                         <a href="{% url 'coaches:session_attendance' block.id %}" class="bg-secondary text-gray-900 px-3 py-1 rounded text-sm hover:bg-[#b8e000]">Attendance</a>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-center py-4">No sessions scheduled for today.</p>
+                <p class="text-gray-500 text-center py-4">No sessions today.</p>
                 {% endif %}
             </div>
 
-            <!-- Confirmed Bookings (all future, no cutoff) -->
+            <!-- Confirmed Bookings (next 14 days) -->
             <div class="bg-white rounded-xl shadow-md p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Confirmed Bookings</h2>
-                    <a href="{% url 'coaches:schedule' %}" class="text-secondary text-sm hover:underline">Manage Schedule</a>
+                    <h2 class="text-xl font-bold text-gray-800">Next 14 Days</h2>
+                    <a href="{% url 'coaches:schedule' %}" class="text-secondary text-sm hover:underline">Full Schedule →</a>
                 </div>
                 {% if confirmed_bookings %}
                 <div class="space-y-2">
                     {% for booking in confirmed_bookings %}
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
-                            <p class="font-semibold text-sm">{{ booking.scheduled_date|date:"D, M j" }} &middot; {{ booking.scheduled_time|time:"g:i A" }}</p>
-                            <p class="text-xs text-gray-500">
-                                {{ booking.player.first_name }} {{ booking.player.last_name }}
-                                {% if booking.session_type %}&mdash; {{ booking.session_type.name }}{% endif %}
-                            </p>
+                            <p class="font-semibold text-sm">{{ booking.scheduled_date|date:"D, M j" }} · {{ booking.scheduled_time|time:"g:i A" }}</p>
+                            <p class="text-xs text-gray-500">{{ booking.player.first_name }} {{ booking.player.last_name }}{% if booking.session_type %} — {{ booking.session_type.name }}{% endif %}</p>
                         </div>
-                        <span class="px-2 py-1 rounded text-xs font-medium
-                            {% if booking.status == 'confirmed' %}bg-secondary/20 text-gray-800
-                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        <span class="px-2 py-0.5 rounded text-xs font-medium {% if booking.status == 'confirmed' %}bg-secondary/20 text-gray-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
                             {{ booking.get_status_display }}
                         </span>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-center py-4">No upcoming bookings.</p>
+                <p class="text-gray-500 text-center py-4">No bookings in the next 14 days.</p>
                 {% endif %}
             </div>
         </div>

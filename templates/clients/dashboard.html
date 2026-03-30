@@ -151,68 +151,83 @@
         {% endif %}
 
         <!-- Welcome Header -->
-        <div class="bg-gradient-to-r from-primary to-secondary rounded-2xl p-8 mb-8 text-white">
-            <h1 class="text-3xl font-bold mb-2">Welcome back, {{ client.user.first_name|default:client.user.username }}!</h1>
-            <p class="text-gray-200">Manage your players, packages, and bookings all in one place.</p>
+        <div class="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 mb-4 text-white">
+            <h1 class="text-2xl font-bold mb-1">Welcome back, {{ client.user.first_name|default:client.user.username }}!</h1>
+            <p class="text-gray-200 text-sm">Manage your players, packages, and bookings all in one place.</p>
         </div>
 
+        <!-- Quick Actions -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <a href="{% url 'clients:book' %}" class="flex items-center gap-1.5 px-4 py-2 bg-secondary text-gray-900 rounded-full text-sm font-semibold hover:bg-[#b8e000] transition">📅 Book Session</a>
+            <a href="{% url 'clients:packages' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📦 My Packages</a>
+            <a href="{% url 'clients:players' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">👥 My Players</a>
+            <a href="{% url 'clients:bookings' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📋 All Bookings</a>
+        </div>
+
+        <!-- Upcoming session reminder (within 24h) -->
+        {% if next_booking_soon %}
+        <div class="mb-6 flex items-center justify-between p-4 bg-secondary/10 border border-secondary/40 rounded-xl">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">⏰</span>
+                <div>
+                    <p class="font-semibold text-gray-800">Session today — {{ next_booking_soon.session_type.name|default:"Training" }}</p>
+                    <p class="text-sm text-gray-600">{{ next_booking_soon.scheduled_date|date:"l" }} at {{ next_booking_soon.scheduled_time|time:"g:i A" }} with {{ next_booking_soon.coach }}</p>
+                </div>
+            </div>
+            <span class="px-3 py-1 bg-secondary text-gray-900 rounded-full text-xs font-bold">Today</span>
+        </div>
+        {% endif %}
+
+        <!-- Package expiry alerts -->
+        {% if expiring_soon %}
+        <div class="mb-6 space-y-2">
+            {% for pkg in expiring_soon %}
+            {% with days_left=pkg.expiry_date|timeuntil %}
+            <div class="flex items-center justify-between p-3 {% if pkg.expiry_date|timeuntil == '0\xa0minutes' or pkg.sessions_remaining == 0 %}bg-red-50 border border-red-300{% elif pkg.sessions_remaining <= 2 %}bg-orange-50 border border-orange-300{% else %}bg-yellow-50 border border-yellow-300{% endif %} rounded-xl">
+                <div class="flex items-center gap-2">
+                    <span>⚠️</span>
+                    <p class="text-sm font-semibold text-gray-800">{{ pkg.package.name }}</p>
+                    {% if pkg.package.sessions_included > 0 %}
+                    <span class="text-xs text-gray-500">— {{ pkg.sessions_remaining }} session{{ pkg.sessions_remaining|pluralize }} left</span>
+                    {% endif %}
+                </div>
+                <span class="text-xs font-semibold text-gray-600">Expires {{ pkg.expiry_date|date:"M j" }}</span>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="bg-blue-100 rounded-full p-3">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-500">Players</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ players.count }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="bg-green-100 rounded-full p-3">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-500">Active Packages</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ active_packages.count }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="bg-purple-100 rounded-full p-3">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-500">Upcoming Sessions</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ upcoming_bookings.count }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="bg-orange-100 rounded-full p-3">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-500">Sessions Used</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ past_bookings.count }}</p>
-                    </div>
-                </div>
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <a href="{% url 'clients:players' %}" class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition group">
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Players</p>
+                <p class="text-3xl font-bold text-blue-600 mt-1 group-hover:scale-110 transition">{{ players.count }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">registered</p>
+            </a>
+            <a href="{% url 'clients:packages' %}" class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition group">
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Sessions Left</p>
+                {% if has_unlimited %}
+                <p class="text-3xl font-bold text-green-600 mt-1 group-hover:scale-110 transition">∞</p>
+                <p class="text-xs text-gray-400 mt-0.5">unlimited package</p>
+                {% elif sessions_remaining_total > 0 %}
+                <p class="text-3xl font-bold text-green-600 mt-1 group-hover:scale-110 transition">{{ sessions_remaining_total }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">in active packages</p>
+                {% else %}
+                <p class="text-3xl font-bold text-gray-400 mt-1">0</p>
+                <p class="text-xs text-red-500 mt-0.5">no active package</p>
+                {% endif %}
+            </a>
+            <a href="{% url 'clients:bookings' %}" class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition group">
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Upcoming</p>
+                <p class="text-3xl font-bold text-purple-600 mt-1 group-hover:scale-110 transition">{{ upcoming_bookings.count }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">sessions booked</p>
+            </a>
+            <a href="{% url 'clients:bookings' %}" class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition group">
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Completed</p>
+                <p class="text-3xl font-bold text-orange-500 mt-1 group-hover:scale-110 transition">{{ sessions_completed_total }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">all time</p>
+            </a>
         </div>
 
         <!-- Main Content -->

@@ -65,29 +65,60 @@ def dashboard(request):
     ).select_related('player', 'session_type')[:10]
 
     # Stats
-    week_start = today - timedelta(days=today.weekday())  # Monday
-    week_end   = week_start + timedelta(days=6)           # Sunday
+    week_start   = today - timedelta(days=today.weekday())
+    week_end     = week_start + timedelta(days=6)
+    month_start  = today.replace(day=1)
+    sessions_this_month = Booking.objects.filter(
+        coach=coach,
+        scheduled_date__gte=month_start,
+        scheduled_date__lte=today,
+        status__in=['confirmed', 'completed'],
+    ).count()
     stats = {
-        'todays_sessions': todays_blocks.count(),
         'students_this_week': Booking.objects.filter(
             coach=coach,
             scheduled_date__gte=week_start,
             scheduled_date__lte=week_end,
             status__in=['pending', 'confirmed'],
         ).values('player').distinct().count(),
+        'sessions_this_month': sessions_this_month,
         'upcoming_sessions': upcoming_blocks.count(),
         'pending_assessments': pending_assessments.count(),
     }
 
-    # All confirmed/pending future bookings (no date cutoff)
+    # Confirmed bookings — next 14 days only (add "View All" link to schedule)
     confirmed_bookings = Booking.objects.filter(
         coach=coach,
         scheduled_date__gte=today,
+        scheduled_date__lte=today + timedelta(days=14),
         status__in=['pending', 'confirmed'],
     ).select_related('player', 'client', 'session_type').order_by('scheduled_date', 'scheduled_time')
 
+    # Coach rating
+    from reviews.models import Review
+    from django.db.models import Avg
+    coach_rating = None
+    coach_review_count = 0
+    if coach.profile_enabled:
+        review_agg = Review.objects.filter(coach=coach, is_approved=True).aggregate(
+            avg=Avg('rating'), count=__import__('django.db.models', fromlist=['Count']).Count('id')
+        )
+        coach_rating      = round(review_agg['avg'], 1) if review_agg['avg'] else None
+        coach_review_count= review_agg['count'] or 0
+
     # Teams this coach is assigned to
     teams = coach.teams.filter(is_active=True)
+
+    # "Starts soon" — blocks starting within 2 hours
+    now_dt = timezone.now()
+    starts_soon = {}
+    for block in todays_blocks:
+        import datetime as dt
+        block_dt = dt.datetime.combine(today, block.start_time)
+        block_dt = timezone.make_aware(block_dt) if timezone.is_naive(block_dt) else block_dt
+        mins = int((block_dt - now_dt).total_seconds() / 60)
+        if 0 < mins <= 120:
+            starts_soon[block.id] = mins
 
     context = {
         'coach': coach,
@@ -98,6 +129,9 @@ def dashboard(request):
         'stats': stats,
         'today': today,
         'teams': teams,
+        'coach_rating': coach_rating,
+        'coach_review_count': coach_review_count,
+        'starts_soon': starts_soon,
     }
     return render(request, 'coaches/dashboard.html', context)
 
@@ -499,7 +533,7 @@ def todays_sessions(request):
         date=today
     ).order_by('start_time')
 
-    # Get bookings for each block
+    now_dt = timezone.now()
     blocks_with_players = []
     for block in blocks:
         bookings = Booking.objects.filter(
@@ -509,9 +543,23 @@ def todays_sessions(request):
             status__in=['pending', 'confirmed']
         ).select_related('player', 'client')
 
+        # Minutes until start
+        import datetime as dt
+        block_dt = dt.datetime.combine(today, block.start_time)
+        block_dt = timezone.make_aware(block_dt) if timezone.is_naive(block_dt) else block_dt
+        mins_until = int((block_dt - now_dt).total_seconds() / 60)
+
+        # Location from catalog session type if available
+        location = ''
+        catalog_types = list(block.catalog_session_types.all())
+        if catalog_types and catalog_types[0].location:
+            location = catalog_types[0].location
+
         blocks_with_players.append({
             'block': block,
             'bookings': bookings,
+            'mins_until': mins_until,
+            'location': location,
         })
 
     context = {

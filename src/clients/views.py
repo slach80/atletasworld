@@ -38,12 +38,47 @@ def dashboard(request):
         scheduled_date__lt=timezone.now().date()
     ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')[:5]
 
+    # Total sessions remaining across all active packages
+    sessions_remaining_total = sum(
+        p.sessions_remaining for p in active_packages if p.package.sessions_included > 0
+    )
+    has_unlimited = active_packages.filter(package__sessions_included=0).exists()
+
+    # All-time completed sessions count
+    sessions_completed_total = Booking.objects.filter(
+        client=client, status__in=['completed', 'cancelled', 'no_show']
+    ).count()
+
+    # Next upcoming booking (for 24h reminder)
+    today_dt = timezone.now()
+    next_booking = upcoming_bookings.first()
+    next_booking_soon = None
+    if next_booking:
+        import datetime as dt
+        next_dt = dt.datetime.combine(next_booking.scheduled_date, next_booking.scheduled_time)
+        next_dt = timezone.make_aware(next_dt) if timezone.is_naive(next_dt) else next_dt
+        hours_away = (next_dt - today_dt).total_seconds() / 3600
+        if 0 < hours_away <= 24:
+            next_booking_soon = next_booking
+
+    # Packages expiring soon (within 14 days)
+    today = timezone.now().date()
+    expiring_soon = [
+        p for p in active_packages
+        if (p.expiry_date - today).days <= 14
+    ]
+
     context = {
         'client': client,
         'players': players,
         'active_packages': active_packages,
         'upcoming_bookings': upcoming_bookings,
         'past_bookings': past_bookings,
+        'sessions_remaining_total': sessions_remaining_total,
+        'has_unlimited': has_unlimited,
+        'sessions_completed_total': sessions_completed_total,
+        'next_booking_soon': next_booking_soon,
+        'expiring_soon': expiring_soon,
     }
     return render(request, 'clients/dashboard.html', context)
 
