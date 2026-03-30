@@ -96,7 +96,7 @@
     </div>
     <div id="mobile-nav-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-700">
         <div class="px-2 pt-2 pb-3 space-y-1 text-sm">
-            <a href="{% url 'clients:dashboard' %}" class="block px-3 py-2 rounded text-white hover:bg-white/10 font-semibold">🏠 Dashboard</a>
+            <a href="{% url 'clients:dashboard' %}" aria-hidden="true" class="block px-3 py-2 rounded text-white hover:bg-white/10 font-semibold">🏠 Dashboard</a>
             <p class="px-3 pt-1 text-xs text-gray-500 uppercase tracking-wider">Players</p>
             <a href="{% url 'clients:players' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👥 My Players</a>
             <a href="{% url 'clients:assessments' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📋 Assessments</a>
