@@ -62,11 +62,37 @@ def profile(request):
         request.user.save()
 
         # Update client info
+        old_type = client.client_type
+        new_type = request.POST.get('client_type', 'parent')
         client.phone = request.POST.get('phone', '')
         client.address = request.POST.get('address', '')
         client.emergency_contact = request.POST.get('emergency_contact', '')
         client.emergency_phone = request.POST.get('emergency_phone', '')
-        client.client_type = request.POST.get('client_type', 'parent')
+        client.client_type = new_type
+
+        # Trigger approval workflow when switching to coach or renter
+        if new_type in ('coach', 'renter') and old_type != new_type:
+            client.approval_status = 'pending'
+            # Notify owner
+            from django.contrib.auth.models import User as AuthUser
+            type_label = dict(Client.CLIENT_TYPE_CHOICES).get(new_type, new_type)
+            owner_users = AuthUser.objects.filter(groups__name='Owner')
+            for owner in owner_users:
+                if hasattr(owner, 'client'):
+                    owner_client = owner.client
+                else:
+                    continue
+                Notification.objects.create(
+                    client=owner_client,
+                    notification_type='promotional',
+                    title=f'Approval Required: {client} — {type_label}',
+                    message=f'{client.user.get_full_name() or client.user.username} has requested {type_label} access and is pending your approval.\n\nReview in the Owner Portal → Clients → {client}.',
+                    method='email',
+                )
+        elif new_type == 'parent' and old_type in ('coach', 'renter'):
+            # Switching back to parent — reset approval
+            client.approval_status = 'not_required'
+
         client.save()
 
         # Update booking preferences

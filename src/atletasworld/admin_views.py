@@ -898,20 +898,101 @@ def owner_clients(request):
 def owner_client_detail(request, pk):
     """View a client's details including players and bookings."""
     from django.shortcuts import get_object_or_404
-    from clients.models import ClientPackage
+    from clients.models import ClientPackage, RentalService
 
-    client = get_object_or_404(Client.objects.select_related('user'), pk=pk)
+    client = get_object_or_404(Client.objects.select_related('user').prefetch_related('allowed_services'), pk=pk)
     players = Player.objects.filter(client=client, is_active=True)
     packages = ClientPackage.objects.filter(client=client).select_related('package')
     recent_bookings = Booking.objects.filter(client=client).select_related('player', 'coach__user')[:20]
+    all_services = RentalService.objects.filter(is_active=True)
 
     context = {
         'client': client,
         'players': players,
         'packages': packages,
         'recent_bookings': recent_bookings,
+        'all_services': all_services,
+        'allowed_service_ids': list(client.allowed_services.values_list('id', flat=True)),
     }
     return render(request, 'owner/client_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_client_approve(request, pk):
+    """Approve a coach or renter client with term dates and allowed services."""
+    from django.shortcuts import get_object_or_404
+    from django.utils import timezone
+    from clients.models import RentalService, Notification
+
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        term_start_str = request.POST.get('term_start', '').strip()
+        term_end_str   = request.POST.get('term_end', '').strip()
+        service_ids    = request.POST.getlist('allowed_services')
+        notes          = request.POST.get('approval_notes', '').strip()
+
+        from datetime import datetime
+        def parse_dt(s):
+            for fmt in ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
+                try:
+                    return datetime.strptime(s, fmt)
+                except ValueError:
+                    continue
+            return None
+
+        client.approval_status = 'approved'
+        client.approved_by     = request.user
+        client.approved_at     = timezone.now()
+        client.approval_notes  = notes
+        client.term_start      = parse_dt(term_start_str) if term_start_str else None
+        client.term_end        = parse_dt(term_end_str) if term_end_str else None
+        client.save()
+        client.allowed_services.set(RentalService.objects.filter(id__in=service_ids))
+
+        # Notify client
+        Notification.objects.create(
+            client=client,
+            notification_type='promotional',
+            title='Your access has been approved!',
+            message=f'Your {client.get_client_type_display()} access has been approved by APC.'
+                    + (f'\nTerm: {client.term_start.strftime("%b %d, %Y") if client.term_start else "Immediate"}'
+                       + (f' → {client.term_end.strftime("%b %d, %Y")}' if client.term_end else '') if client.term_start or client.term_end else ''),
+            method='email',
+        ).send()
+
+        messages.success(request, f'{client} approved successfully.')
+    return redirect('owner_client_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_client_reject(request, pk):
+    """Reject a coach or renter client access request."""
+    from django.shortcuts import get_object_or_404
+    from django.utils import timezone
+    from clients.models import Notification
+
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        notes = request.POST.get('rejection_notes', '').strip()
+        client.approval_status = 'rejected'
+        client.rejected_at     = timezone.now()
+        client.approval_notes  = notes
+        client.save()
+
+        Notification.objects.create(
+            client=client,
+            notification_type='promotional',
+            title='Access request not approved',
+            message=f'Your {client.get_client_type_display()} access request could not be approved at this time.'
+                    + (f'\n\nNote from APC: {notes}' if notes else '')
+                    + '\n\nPlease contact us if you have questions.',
+            method='email',
+        ).send()
+
+        messages.warning(request, f'{client} access rejected.')
+    return redirect('owner_client_detail', pk=pk)
 
 
 @login_required

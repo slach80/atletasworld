@@ -2,9 +2,113 @@
 {% block title %}{{ client.user.first_name }} {{ client.user.last_name }}{% endblock %}
 
 {% block content %}
-<div class="mb-6">
+<div class="mb-4 flex items-center justify-between">
     <a href="{% url 'owner_clients' %}" class="text-owner hover:underline">&larr; Back to Clients</a>
 </div>
+
+<!-- ── Approval Panel (coach / renter only) ──────────────────────────────── -->
+{% if client.needs_approval %}
+<div class="mb-6 rounded-xl border-2 p-6
+    {% if client.approval_status == 'pending' %}border-yellow-400 bg-yellow-50
+    {% elif client.approval_status == 'approved' %}border-green-400 bg-green-50
+    {% elif client.approval_status == 'rejected' %}border-red-400 bg-red-50
+    {% endif %}">
+
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-lg font-bold
+                {% if client.approval_status == 'pending' %}text-yellow-800
+                {% elif client.approval_status == 'approved' %}text-green-800
+                {% else %}text-red-800{% endif %}">
+                {% if client.approval_status == 'pending' %}⏳ Pending Approval — {{ client.get_client_type_display }}
+                {% elif client.approval_status == 'approved' %}✅ Approved — {{ client.get_client_type_display }}
+                {% elif client.approval_status == 'rejected' %}❌ Rejected — {{ client.get_client_type_display }}
+                {% else %}{{ client.get_client_type_display }}{% endif %}
+            </h2>
+            {% if client.approved_at %}<p class="text-xs text-gray-500 mt-0.5">Approved {{ client.approved_at|date:"M d, Y" }} by {{ client.approved_by.get_full_name|default:client.approved_by.username }}</p>{% endif %}
+            {% if client.rejected_at %}<p class="text-xs text-gray-500 mt-0.5">Rejected {{ client.rejected_at|date:"M d, Y" }}</p>{% endif %}
+        </div>
+        {% if client.approval_status == 'rejected' %}
+        <form method="POST" action="{% url 'owner_client_approve' client.pk %}" id="approve-form"></form>
+        {% endif %}
+    </div>
+
+    {% if client.approval_status == 'pending' or client.approval_status == 'approved' or client.approval_status == 'rejected' %}
+    <!-- Approve form -->
+    <form method="POST" action="{% url 'owner_client_approve' client.pk %}">
+        {% csrf_token %}
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Term Start</label>
+                <input type="datetime-local" name="term_start"
+                       value="{% if client.term_start %}{{ client.term_start|date:'Y-m-d' }}T{{ client.term_start|time:'H:i' }}{% endif %}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-owner">
+                <p class="text-xs text-gray-400 mt-0.5">Leave blank for immediate access</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Term End</label>
+                <input type="datetime-local" name="term_end"
+                       value="{% if client.term_end %}{{ client.term_end|date:'Y-m-d' }}T{{ client.term_end|time:'H:i' }}{% endif %}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-owner">
+                <p class="text-xs text-gray-400 mt-0.5">Leave blank for no expiry</p>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Allowed Rental Services</label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {% for svc in all_services %}
+                <label class="flex items-center gap-2 text-sm cursor-pointer p-2 border rounded-lg hover:bg-white">
+                    <input type="checkbox" name="allowed_services" value="{{ svc.pk }}"
+                           {% if svc.pk in allowed_service_ids %}checked{% endif %}
+                           class="rounded text-owner">
+                    <span>{{ svc.name }}<br><span class="text-xs text-gray-400">{{ svc.get_service_type_display }}</span></span>
+                </label>
+                {% empty %}
+                <p class="text-sm text-gray-500 col-span-3">No rental services configured. <a href="{% url 'owner_services' %}" class="text-owner hover:underline">Add services →</a></p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <textarea name="approval_notes" rows="2" placeholder="Internal notes on this approval…"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-owner">{{ client.approval_notes }}</textarea>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit" class="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition">
+                {% if client.approval_status == 'approved' %}Update Approval{% else %}Approve Access{% endif %}
+            </button>
+            {% if client.approval_status != 'rejected' %}
+            <button type="button" onclick="document.getElementById('reject-modal').classList.remove('hidden')"
+                    class="px-5 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-200 transition">
+                Reject Access
+            </button>
+            {% endif %}
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+<!-- Reject modal -->
+<div id="reject-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+        <h3 class="font-bold text-lg mb-3">Reject Access</h3>
+        <form method="POST" action="{% url 'owner_client_reject' client.pk %}">
+            {% csrf_token %}
+            <textarea name="rejection_notes" rows="3" placeholder="Reason for rejection (sent to client)…"
+                      class="w-full px-3 py-2 border rounded-lg text-sm mb-4 focus:ring-2 focus:ring-red-400"></textarea>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('reject-modal').classList.add('hidden')"
+                        class="flex-1 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">Cancel</button>
+                <button type="submit" class="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700">Confirm Reject</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+<!-- ────────────────────────────────────────────────────────────────────────── -->
 
 <div class="grid lg:grid-cols-3 gap-6">
     <!-- Client Info -->

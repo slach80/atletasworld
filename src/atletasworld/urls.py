@@ -16,7 +16,7 @@ from .admin_views import (
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
     owner_coaches, owner_coach_add, owner_coach_edit, owner_coach_delete, owner_coach_schedule,
     owner_bookings, owner_booking_detail,
-    owner_clients, owner_client_detail, owner_players,
+    owner_clients, owner_client_detail, owner_client_approve, owner_client_reject, owner_players,
     owner_session_types, owner_session_type_edit,
     owner_teams, owner_team_detail,
     owner_field_slots, owner_field_slot_edit,
@@ -110,6 +110,8 @@ urlpatterns = [
     # Owner - Client/Player Management
     path('owner-portal/clients/', owner_clients, name='owner_clients'),
     path('owner-portal/clients/<int:pk>/', owner_client_detail, name='owner_client_detail'),
+    path('owner-portal/clients/<int:pk>/approve/', owner_client_approve, name='owner_client_approve'),
+    path('owner-portal/clients/<int:pk>/reject/', owner_client_reject, name='owner_client_reject'),
     path('owner-portal/players/', owner_players, name='owner_players'),
 
     # Owner - Session Types

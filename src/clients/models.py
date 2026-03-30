@@ -13,6 +13,13 @@ class Client(models.Model):
         ('renter', 'Facility Renter'),
     ]
 
+    APPROVAL_STATUS_CHOICES = [
+        ('not_required', 'Not Required'),
+        ('pending',      'Pending Approval'),
+        ('approved',     'Approved'),
+        ('rejected',     'Rejected'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     client_type = models.CharField(max_length=10, choices=CLIENT_TYPE_CHOICES, default='parent')
     phone = models.CharField(max_length=20, blank=True)
@@ -20,8 +27,44 @@ class Client(models.Model):
     emergency_contact = models.CharField(max_length=100, blank=True)
     emergency_phone = models.CharField(max_length=20, blank=True)
     notes = models.TextField(blank=True)
+
+    # Approval workflow (required for coach and renter types)
+    approval_status = models.CharField(
+        max_length=20, choices=APPROVAL_STATUS_CHOICES, default='not_required',
+        help_text='Coaches and renters require owner approval before services are enabled')
+    approved_by  = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL,
+                                     related_name='approved_clients')
+    approved_at  = models.DateTimeField(null=True, blank=True)
+    rejected_at  = models.DateTimeField(null=True, blank=True)
+    approval_notes = models.TextField(blank=True, help_text='Owner notes on approval/rejection')
+
+    # Service term (start/end date+time for coach/renter access)
+    term_start = models.DateTimeField(null=True, blank=True, help_text='When this client\'s access begins')
+    term_end   = models.DateTimeField(null=True, blank=True, help_text='When this client\'s access expires')
+
+    # Allowed rental services (owner configures per client)
+    allowed_services = models.ManyToManyField(
+        'clients.RentalService', blank=True, related_name='allowed_clients',
+        help_text='Rental services this client is permitted to book')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def needs_approval(self):
+        return self.client_type in ('coach', 'renter')
+
+    @property
+    def is_approved(self):
+        from django.utils import timezone
+        if self.approval_status != 'approved':
+            return False
+        now = timezone.now()
+        if self.term_start and now < self.term_start:
+            return False
+        if self.term_end and now > self.term_end:
+            return False
+        return True
 
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username}"
