@@ -44,7 +44,7 @@
             <!-- Desktop nav -->
             <div class="hidden md:flex items-center space-x-1 text-sm">
                 <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'dashboard' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Dashboard</a>
-                <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'dashboard' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">Dashboard</a>
+                
                 <!-- Players dropdown -->
                 <div class="relative group">
                     <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' or request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">
