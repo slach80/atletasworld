@@ -18,7 +18,8 @@
         }
     </script>
     <style>
-        html, body { overflow-x: hidden; max-width: 100vw; }
+        /* overflow-x:clip stops page-level horizontal scroll WITHOUT breaking position:sticky */
+        html, body { overflow-x: clip; max-width: 100vw; }
         body { font-family: 'Archivo Condensed', system-ui, sans-serif; font-weight: 400; }
         h1,.brand-heading { font-family: 'Bilgen','Archivo Condensed',system-ui,sans-serif; font-weight:800; }
         h2,h3 { font-family: 'Bilgen','Archivo Condensed',system-ui,sans-serif; font-weight:700; }
@@ -59,7 +60,7 @@
 <body class="bg-gray-50 min-h-screen">
 
 <!-- Nav -->
-<nav class="bg-gray-900 shadow-lg sticky top-0 z-50">
+<nav class="bg-gray-900 shadow-lg fixed top-0 left-0 right-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center">
@@ -128,7 +129,7 @@
 </script>
 
 <!-- Filter bar -->
-<div id="filter-bar" class="sticky top-16 z-40 bg-white shadow-md border-b border-gray-100">
+<div id="filter-bar" class="sticky top-16 z-40 bg-white shadow-md border-b border-gray-100" style="top:64px;">
 
     <!-- Header (click to collapse/expand) -->
     <button onclick="toggleFilters()" class="w-full max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition" style="display:flex;">
@@ -240,7 +241,8 @@
 </div>
 
 <!-- Main -->
-<div class="max-w-7xl mx-auto px-4 pt-4 pb-10">
+<!-- pt-16 offsets fixed nav -->
+<div class="max-w-7xl mx-auto px-4 pt-4 pb-10" style="padding-top:80px;">
     {% if not has_package %}
     <div class="mb-4 flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
         <div>
@@ -273,9 +275,9 @@
             </div>
         </div>
 
-        <!-- Cart sidebar (desktop 1/3) -->
+        <!-- Cart sidebar (desktop 1/3) — locked below nav+filter bar, scrolls internally -->
         <aside class="hidden md:block">
-            <div class="sticky top-36 space-y-4">
+            <div id="cart-sidebar" class="sticky space-y-4" style="top:64px;max-height:calc(100vh - 64px);overflow-y:auto;padding-bottom:1rem;">
                 <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                     {% if active_package %}
                     <div class="flex justify-between items-center">
@@ -330,12 +332,19 @@ document.addEventListener('DOMContentLoaded',()=>{
 window.addEventListener('resize', fitPanels);
 
 function fitPanels(){
-    if(window.innerWidth>=768) return; // desktop scrolls naturally
     const nav    = 64;
     const filter = document.getElementById('filter-bar')?.offsetHeight||0;
+    // Desktop: lock cart sidebar just below nav+filter bar
+    const sidebar=document.getElementById('cart-sidebar');
+    if(sidebar){
+        const top=nav+filter;
+        sidebar.style.top=top+'px';
+        sidebar.style.maxHeight=`calc(100vh - ${top}px)`;
+    }
+    if(window.innerWidth>=768) return; // mobile-only panel height below
     const tabs   = document.getElementById('tab-bar')?.offsetHeight||0;
-    const notice = document.querySelector('#panel-slots')?.previousElementSibling?.classList.contains('bg-yellow-50') ? (document.querySelector('.bg-yellow-50')?.offsetHeight||0) : 0;
-    const h = window.innerHeight - nav - filter - tabs - notice - 16;
+    const notice = document.querySelector('.bg-yellow-50')?.offsetHeight||0;
+    const h = window.innerHeight - nav - filter - tabs - (notice||0) - 16;
     ['panel-slots','panel-cart'].forEach(id=>{
         const el=document.getElementById(id);
         if(el) el.style.height=Math.max(h,200)+'px';
