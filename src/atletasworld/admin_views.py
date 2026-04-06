@@ -2110,3 +2110,59 @@ def owner_waivers(request):
         'signed_count': len(signed),
     }
     return render(request, 'owner/waivers.html', context)
+
+
+# ============================================================================
+# CONTACT IMPORT MANAGEMENT
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_contacts(request):
+    """Imported contact registry — parents from past events with their players."""
+    from clients.models import ContactParent, ContactPlayer
+    from django.db.models import Count, Prefetch
+
+    search  = request.GET.get('q', '').strip()
+    status  = request.GET.get('status', '')   # linked / unlinked
+    source  = request.GET.get('source', '')
+
+    qs = ContactParent.objects.prefetch_related('players').annotate(
+        player_count=Count('players', distinct=True)
+    ).order_by('last_name', 'first_name', 'email')
+
+    if search:
+        from django.db.models import Q
+        qs = qs.filter(
+            Q(email__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(phone__icontains=search) |
+            Q(players__first_name__icontains=search) |
+            Q(players__last_name__icontains=search)
+        ).distinct()
+
+    if status == 'linked':
+        qs = qs.filter(client__isnull=False)
+    elif status == 'unlinked':
+        qs = qs.filter(client__isnull=True)
+
+    if source:
+        qs = qs.filter(source=source)
+
+    total         = ContactParent.objects.count()
+    linked_count  = ContactParent.objects.filter(client__isnull=False).count()
+    player_count  = ContactPlayer.objects.count()
+
+    context = {
+        'contacts':      qs,
+        'total':         total,
+        'linked_count':  linked_count,
+        'unlinked_count':total - linked_count,
+        'player_count':  player_count,
+        'search':        search,
+        'status':        status,
+        'source_filter': source,
+        'source_choices':ContactParent.SOURCE_CHOICES,
+    }
+    return render(request, 'owner/contacts.html', context)

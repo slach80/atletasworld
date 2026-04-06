@@ -54,3 +54,8 @@ npm-debug.log*
 
 # Demo credentials (local only)
 demo_credentials.json
+
+# Client data — PII, do not commit
+docs/clients/*.csv
+docs/clients/*.xlsx
+docs/clients/*.pdf

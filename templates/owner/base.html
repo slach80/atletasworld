@@ -56,7 +56,8 @@
                             <a href="{% url 'owner_clients' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'client' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">👥 Clients</a>
                             <a href="{% url 'owner_players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'player' in request.resolver_match.url_name %}text-owner{% endif %}">⚽ Players</a>
                             <a href="{% url 'owner_teams' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'team' in request.resolver_match.url_name %}text-owner{% endif %}">🏆 Teams</a>
-                            <a href="{% url 'owner_waivers' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'waiver' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">📋 Waivers</a>
+                            <a href="{% url 'owner_waivers' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'waiver' in request.resolver_match.url_name %}text-owner{% endif %}">📋 Waivers</a>
+                            <a href="{% url 'owner_contacts' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'contact' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">📇 Contacts</a>
                         </div>
                     </div>
 
@@ -122,6 +123,7 @@
                 <a href="{% url 'owner_players' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">⚽ Players</a>
                 <a href="{% url 'owner_teams' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🏆 Teams</a>
                 <a href="{% url 'owner_waivers' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📋 Waivers</a>
+                <a href="{% url 'owner_contacts' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📇 Contacts</a>
                 <p class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wider">Operations</p>
                 <a href="{% url 'owner_coaches' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🏋️ Coaches</a>
                 <a href="{% url 'owner_bookings' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📅 Bookings</a>

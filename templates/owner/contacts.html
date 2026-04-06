@@ -1,0 +1,174 @@
+{% extends 'owner/base.html' %}
+{% block title %}Contacts{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Contact Registry</h1>
+        <p class="text-gray-500 text-sm mt-0.5">Past program registrations — {{ total }} parents · {{ player_count }} players</p>
+    </div>
+    <div class="flex gap-3 flex-wrap">
+        <div class="text-center px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl">
+            <p class="text-xl font-black text-green-700">{{ linked_count }}</p>
+            <p class="text-xs text-green-600">Linked to Account</p>
+        </div>
+        <div class="text-center px-4 py-2.5 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <p class="text-xl font-black text-yellow-700">{{ unlinked_count }}</p>
+            <p class="text-xs text-yellow-600">Not Yet Registered</p>
+        </div>
+        <div class="text-center px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-xl">
+            <p class="text-xl font-black text-blue-700">{{ player_count }}</p>
+            <p class="text-xs text-blue-600">Total Players</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-48">
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Search</label>
+        <input type="text" name="q" value="{{ search }}" placeholder="Name, email, phone, player…"
+               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Account Status</label>
+        <select name="status" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner">
+            <option value="">All</option>
+            <option value="linked"   {% if status == 'linked' %}selected{% endif %}>Linked</option>
+            <option value="unlinked" {% if status == 'unlinked' %}selected{% endif %}>Not Registered</option>
+        </select>
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Source</label>
+        <select name="source" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner">
+            <option value="">All Sources</option>
+            {% for val, label in source_choices %}
+            <option value="{{ val }}" {% if source_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-owner text-white rounded-lg text-sm font-semibold hover:bg-indigo-600 transition">Filter</button>
+    {% if search or status or source_filter %}
+    <a href="{% url 'owner_contacts' %}" class="px-4 py-2 border border-gray-200 text-gray-500 rounded-lg text-sm hover:bg-gray-50 transition">Clear</a>
+    {% endif %}
+</form>
+
+<!-- Contacts table -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="px-6 py-3 border-b flex justify-between items-center bg-gray-50 text-xs text-gray-500 font-semibold uppercase tracking-wide">
+        <span>{{ contacts|length }} result{{ contacts|length|pluralize }}</span>
+    </div>
+
+    {% if contacts %}
+    <div class="divide-y divide-gray-100">
+        {% for contact in contacts %}
+        <details class="group">
+            <summary class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 select-none list-none">
+                <!-- Left: contact info -->
+                <div class="flex items-center gap-4 min-w-0 flex-1">
+                    <!-- Avatar -->
+                    <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                        <span class="text-xs font-black text-secondary">
+                            {% if contact.first_name %}{{ contact.first_name|first }}{{ contact.last_name|first }}
+                            {% else %}{{ contact.email|first|upper }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold text-gray-800 text-sm">
+                                {% if contact.first_name or contact.last_name %}
+                                    {{ contact.first_name }} {{ contact.last_name }}
+                                {% else %}
+                                    <span class="text-gray-400 italic">Name unknown</span>
+                                {% endif %}
+                            </span>
+                            {% if contact.is_linked %}
+                            <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-semibold">✓ Account linked</span>
+                            {% else %}
+                            <span class="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full">Not registered</span>
+                            {% endif %}
+                            <span class="text-xs text-gray-400">{{ contact.get_source_display }}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-3 mt-0.5 text-xs text-gray-500">
+                            {% if contact.email %}<span>{{ contact.email }}</span>{% endif %}
+                            {% if contact.phone %}<span>{{ contact.phone }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: player count + chevron -->
+                <div class="flex items-center gap-3 shrink-0 ml-3">
+                    <span class="text-xs text-gray-500">
+                        <strong class="text-gray-800">{{ contact.player_count }}</strong>
+                        player{{ contact.player_count|pluralize }}
+                    </span>
+                    {% if contact.is_linked %}
+                    <a href="{% url 'owner_client_detail' contact.client.pk %}" onclick="event.stopPropagation()"
+                       class="px-2.5 py-1 text-xs bg-owner text-white rounded hover:bg-indigo-600 transition">
+                        View Client
+                    </a>
+                    {% endif %}
+                    <svg class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+            </summary>
+
+            <!-- Expanded: players list -->
+            <div class="px-5 pb-4 pt-2 bg-gray-50 border-t border-gray-100">
+                {% with players=contact.players.all %}
+                {% if players %}
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Registered Players</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {% for player in players %}
+                    <div class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100">
+                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                            <span class="text-xs font-black text-secondary">{{ player.first_name|first }}{{ player.last_name|first }}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-semibold text-sm text-gray-800 truncate">{{ player.display_name }}</p>
+                            <div class="flex flex-wrap gap-1.5 mt-0.5">
+                                {% if player.birth_year %}
+                                <span class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-semibold">{{ player.birth_year }}</span>
+                                {% endif %}
+                                {% if player.sex %}<span class="text-xs text-gray-400">{{ player.sex }}</span>{% endif %}
+                                {% if player.position %}<span class="text-xs text-gray-500">{{ player.position }}</span>{% endif %}
+                                {% if player.is_linked %}
+                                <span class="text-xs text-green-600 font-semibold">✓ Player linked</span>
+                                {% endif %}
+                            </div>
+                            {% if player.club_team %}<p class="text-xs text-gray-400 truncate mt-0.5">{{ player.club_team }}</p>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400">No players on record.</p>
+                {% endif %}
+                {% endwith %}
+
+                {% if not contact.is_linked and contact.email %}
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <p class="text-xs text-gray-500">
+                        Not registered yet —
+                        <a href="mailto:{{ contact.email }}" class="text-owner hover:underline font-semibold">Email {{ contact.email }}</a>
+                        to invite them to create an account.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </details>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="py-16 text-center text-gray-400">
+        <p class="text-4xl mb-3">📇</p>
+        <p class="font-semibold text-gray-600">No contacts found.</p>
+        {% if search or status or source_filter %}<p class="text-sm mt-1">Try adjusting your filters.</p>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

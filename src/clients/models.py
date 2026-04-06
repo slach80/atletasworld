@@ -1018,3 +1018,110 @@ def get_current_waiver(client):
         valid_year=timezone.now().year,
         waiver_version=ClientWaiver.WAIVER_VERSION,
     ).first()
+
+
+# ============================================================================
+# CONTACT IMPORT (pre-registration contacts from past events/programs)
+# ============================================================================
+
+class ContactParent(models.Model):
+    """
+    A parent/guardian contact imported from past APC event registrations.
+    Linked to a Client once they create an account with a matching email.
+    """
+    SOURCE_CHOICES = [
+        ('sp_camp',         'S&P Camp'),
+        ('apc_summer_2025', 'APC Summer Program 2025'),
+        ('aw_summer_2025',  'AW Summer 2025'),
+        ('ff_camp_jun_2024','Future Footballers Camp Jun 2024'),
+        ('ff_camp_jul_2024','Future Footballers Camp Jul 2024'),
+        ('ff_program',      'Future Footballers Program'),
+        ('nkc_spring_2025', 'NKC Spring Break 2025'),
+        ('winter_2024',     'Winter Clinic 2024'),
+        ('manual',          'Manually Added'),
+        ('other',           'Other'),
+    ]
+
+    email          = models.EmailField(blank=True, db_index=True)
+    phone          = models.CharField(max_length=30, blank=True)
+    first_name     = models.CharField(max_length=100, blank=True)
+    last_name      = models.CharField(max_length=100, blank=True)
+    notes          = models.TextField(blank=True)
+    source         = models.CharField(max_length=30, choices=SOURCE_CHOICES, default='other')
+
+    # Linked once parent creates an APC account
+    client         = models.OneToOneField(
+        'Client', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='contact_import'
+    )
+    linked_at      = models.DateTimeField(null=True, blank=True)
+
+    imported_at    = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        name = f'{self.first_name} {self.last_name}'.strip() or self.email or self.phone
+        return f'{name} ({self.player_count} players)'
+
+    @property
+    def player_count(self):
+        return self.players.count()
+
+    @property
+    def is_linked(self):
+        return self.client_id is not None
+
+    @property
+    def display_name(self):
+        return f'{self.first_name} {self.last_name}'.strip() or self.email
+
+    class Meta:
+        ordering = ['last_name', 'first_name', 'email']
+        indexes  = [
+            models.Index(fields=['email']),
+            models.Index(fields=['client']),
+        ]
+
+
+class ContactPlayer(models.Model):
+    """A player/child associated with a ContactParent from imported event data."""
+
+    SEX_CHOICES = [('M', 'Male'), ('F', 'Female'), ('', 'Unknown')]
+
+    parent       = models.ForeignKey(ContactParent, on_delete=models.CASCADE, related_name='players')
+    first_name   = models.CharField(max_length=100)
+    last_name    = models.CharField(max_length=100, blank=True)
+    birth_year   = models.IntegerField(null=True, blank=True)
+    dob          = models.CharField(max_length=30, blank=True, help_text='Raw DOB from source')
+    sex          = models.CharField(max_length=1, choices=SEX_CHOICES, blank=True)
+    club_team    = models.CharField(max_length=150, blank=True)
+    position     = models.CharField(max_length=100, blank=True)
+    tshirt_size  = models.CharField(max_length=10, blank=True)
+    notes        = models.TextField(blank=True)
+    source       = models.CharField(max_length=30, blank=True)
+
+    # Linked to a real Player record once the parent creates their APC account
+    player       = models.OneToOneField(
+        'Player', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='contact_import'
+    )
+    linked_at    = models.DateTimeField(null=True, blank=True)
+
+    imported_at  = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name} ({self.birth_year or "?"}) — {self.parent.email}'
+
+    @property
+    def is_linked(self):
+        return self.player_id is not None
+
+    @property
+    def display_name(self):
+        return f'{self.first_name} {self.last_name}'.strip()
+
+    class Meta:
+        ordering = ['last_name', 'first_name']
+        indexes  = [
+            models.Index(fields=['parent', 'birth_year']),
+        ]
