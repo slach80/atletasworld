@@ -112,4 +112,15 @@ def programs_view(request):
             'is_outdoor': is_outdoor,
         })
 
-    return render(request, 'programs.html', {'tryout_sessions': sessions_enriched})
+    # Serie A session type IDs for direct booking links
+    serie_a = {}
+    for st in SessionType.objects.filter(name__icontains='Serie A Elite Scouts'):
+        if 'U13' in st.name:
+            serie_a['u13_id'] = st.id
+        elif 'U19' in st.name:
+            serie_a['u19_id'] = st.id
+
+    return render(request, 'programs.html', {
+        'tryout_sessions': sessions_enriched,
+        'serie_a': serie_a,
+    })
