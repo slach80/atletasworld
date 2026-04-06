@@ -302,75 +302,40 @@
         </div>
 
         <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
-
+            {% for session in tryout_sessions %}
             <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
                 <div class="flex items-center space-x-4 mb-4">
-                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
+                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center shrink-0">
                         <div class="text-xs font-bold uppercase">May</div>
-                        <div class="text-3xl font-black leading-none">21</div>
+                        <div class="text-3xl font-black leading-none">{{ session.day_num }}</div>
                     </div>
                     <div>
-                        <p class="text-white font-bold text-lg">Wednesday, May 21</p>
-                        <p class="text-gray-400 text-sm">Atletas Performance Center</p>
+                        <p class="text-white font-bold text-lg">{{ session.label }}</p>
+                        <p class="text-gray-400 text-sm">{{ session.location }}</p>
                     </div>
                 </div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between text-gray-300"><span>2016s</span><span class="font-semibold text-white">6:00 PM</span></div>
-                    <div class="flex justify-between text-gray-300"><span>2015s</span><span class="font-semibold text-white">7:00 PM</span></div>
-                    <div class="flex justify-between text-gray-300"><span>2014s</span><span class="font-semibold text-white">8:00 PM</span></div>
+                <div class="space-y-2.5 text-sm">
+                    {% for slot in session.slots %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-300">
+                            <span>{{ slot.age_label }}</span>
+                            <span class="text-gray-600">·</span>
+                            <span class="font-semibold text-white">{{ slot.time_str }}</span>
+                        </div>
+                        {% if slot.spots_remaining is not None %}
+                            {% if slot.spots_remaining == 0 %}
+                            <span class="px-2 py-0.5 bg-red-900/60 text-red-300 text-xs rounded-full font-semibold">Full</span>
+                            {% elif slot.spots_remaining <= 5 %}
+                            <span class="px-2 py-0.5 bg-orange-900/60 text-orange-300 text-xs rounded-full font-semibold">{{ slot.spots_remaining }} left</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 bg-gray-700 text-gray-300 text-xs rounded-full">{{ slot.spots_remaining }}/{{ slot.max_participants }} open</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-
-            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
-                <div class="flex items-center space-x-4 mb-4">
-                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
-                        <div class="text-xs font-bold uppercase">May</div>
-                        <div class="text-3xl font-black leading-none">22</div>
-                    </div>
-                    <div>
-                        <p class="text-white font-bold text-lg">Thursday, May 22</p>
-                        <p class="text-gray-400 text-sm">Atletas Performance Center</p>
-                    </div>
-                </div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between text-gray-300"><span>2016s</span><span class="font-semibold text-white">6:00 PM</span></div>
-                    <div class="flex justify-between text-gray-300"><span>2015s</span><span class="font-semibold text-white">7:00 PM</span></div>
-                    <div class="flex justify-between text-gray-300"><span>2014s</span><span class="font-semibold text-white">8:00 PM</span></div>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
-                <div class="flex items-center space-x-4 mb-4">
-                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
-                        <div class="text-xs font-bold uppercase">May</div>
-                        <div class="text-3xl font-black leading-none">23</div>
-                    </div>
-                    <div>
-                        <p class="text-white font-bold text-lg">Friday, May 23</p>
-                        <p class="text-gray-400 text-sm">Hocker Grove Middle School</p>
-                    </div>
-                </div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between text-gray-300"><span>All Ages</span><span class="font-semibold text-white">9:00 AM – 11:00 AM</span></div>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
-                <div class="flex items-center space-x-4 mb-4">
-                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
-                        <div class="text-xs font-bold uppercase">May</div>
-                        <div class="text-3xl font-black leading-none">24</div>
-                    </div>
-                    <div>
-                        <p class="text-white font-bold text-lg">Saturday, May 24</p>
-                        <p class="text-gray-400 text-sm">Hocker Grove Middle School</p>
-                    </div>
-                </div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between text-gray-300"><span>All Ages</span><span class="font-semibold text-white">9:00 AM – 11:00 AM</span></div>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
 
         <!-- Registration CTA -->

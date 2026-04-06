@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from coaches.views import coach_public_profile
-from .views import home_view, apple_pay_verification
+from .views import home_view, apple_pay_verification, programs_view
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
@@ -158,7 +158,7 @@ urlpatterns = [
     path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
     path('book/', book_redirect_view, name='book'),  # Redirects to portal booking
     path('comparison/', TemplateView.as_view(template_name='comparison.html'), name='comparison'),
-    path('programs/', TemplateView.as_view(template_name='programs.html'), name='programs'),
+    path('programs/', programs_view, name='programs'),
 
     # Coach public profiles - static templates for main coaches (must be before dynamic route)
     path('coach/mirko/', TemplateView.as_view(template_name='coach_mirko.html'), name='coach_mirko'),
