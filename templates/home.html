@@ -598,64 +598,98 @@
     </section>
 
     <!-- Footer -->
-    <footer id="contact" class="bg-gray-900 text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
+    <footer id="contact" class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+
+                <!-- Brand -->
                 <div>
-                    <h3 class="text-2xl font-bold mb-4">⚽ APC</h3>
-                    <p class="text-gray-400">Empowering athletes through tailored training programs and holistic development.</p>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4 text-secondary">Quick Links</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="#programs" class="hover:text-secondary transition">Programs</a></li>
-                        <li><a href="#coaches" class="hover:text-secondary transition">Coaches</a></li>
-                        <li><a href="#about" class="hover:text-secondary transition">About</a></li>
-                        <li><a href="#fundraising" class="hover:text-secondary transition">Fundraising</a></li>
-                        <li><a href="{% url 'book' %}" class="hover:text-secondary transition">Book Session</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4 text-secondary">Contact & Social</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li class="flex items-center">
-                            <span class="mr-2">📧</span> info@atletasperformancecenter.com
-                        </li>
-                        <li class="flex items-start">
-                            <span class="mr-2 mt-0.5">📍</span>
-                            <span>11301 W 88th St<br>Overland Park, KS 66214</span>
-                        </li>
-                    </ul>
-                    <div class="flex space-x-4 mt-4 mb-4">
-                        <a href="https://www.instagram.com/worldatletas/" target="_blank" class="text-pink-500 hover:text-pink-400 transition">
-                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                        </a>
-                    </div>
-                    <!-- Mini Map -->
-                    <a href="https://maps.google.com/?q=11301+W+88th+St,+Overland+Park,+KS+66214" target="_blank" class="block rounded-lg overflow-hidden border border-gray-700 hover:border-secondary transition">
-                        <iframe
-                            src="https://maps.google.com/maps?q=11301+W+88th+St,+Overland+Park,+KS+66214&output=embed&z=15"
-                            width="100%"
-                            height="140"
-                            style="border:0; display:block;"
-                            loading="lazy"
-                            title="APC Location">
-                        </iframe>
+                    <a href="/">
+                        <img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-12 w-auto mb-4">
+                    </a>
+                    <p class="text-gray-400 text-sm leading-relaxed">Empowering athletes through tailored training programs and holistic development.</p>
+                    <a href="https://www.instagram.com/worldatletas/" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-2 mt-5 text-gray-400 hover:text-pink-400 transition text-sm">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                        @worldatletas
                     </a>
                 </div>
+
+                <!-- Quick Links -->
                 <div>
-                    <h4 class="font-semibold mb-4 text-secondary">Hours</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li>Mon-Fri: 3pm - 9pm</li>
-                        <li>Saturday: 9am - 6pm</li>
-                        <li>Sunday: 10am - 4pm</li>
+                    <h4 class="text-sm font-bold uppercase tracking-widest text-secondary mb-5">Quick Links</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="/#programs"       class="hover:text-secondary transition">Programs</a></li>
+                        <li><a href="/#coaches"        class="hover:text-secondary transition">Coaches</a></li>
+                        <li><a href="/#about"          class="hover:text-secondary transition">About</a></li>
+                        <li><a href="/#fundraising"    class="hover:text-secondary transition">Fundraising</a></li>
+                        <li><a href="/programs/"       class="hover:text-secondary transition">Special Projects ✦</a></li>
+                        <li><a href="{% url 'book' %}" class="hover:text-secondary transition">Book a Session</a></li>
+                        <li><a href="/accounts/login/" class="hover:text-secondary transition">Client Login</a></li>
                     </ul>
                 </div>
-            </div>
-            <div class="border-t border-gray-800 pt-8">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <p class="text-gray-400 mb-4 md:mb-0">&copy; 2026 Atletas Performance Center. All rights reserved.</p>
+
+                <!-- Contact -->
+                <div>
+                    <h4 class="text-sm font-bold uppercase tracking-widest text-secondary mb-5">Contact</h4>
+                    <ul class="space-y-4 text-sm text-gray-400">
+                        <li>
+                            <a href="mailto:info@atletasperformancecenter.com"
+                               class="flex items-start gap-2 hover:text-secondary transition">
+                                <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                info@atletasperformancecenter.com
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://maps.google.com/?q=11301+W+88th+St,+Overland+Park,+KS+66214"
+                               target="_blank" rel="noopener"
+                               class="flex items-start gap-2 hover:text-secondary transition">
+                                <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span>11301 W 88th St<br>Overland Park, KS 66214</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <a href="https://maps.google.com/?q=11301+W+88th+St,+Overland+Park,+KS+66214"
+                       target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-2 mt-5 px-4 py-2 border border-gray-700 rounded-lg text-xs text-gray-300 hover:border-secondary hover:text-secondary transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                        Get Directions
+                    </a>
                 </div>
+
+                <!-- Hours -->
+                <div>
+                    <h4 class="text-sm font-bold uppercase tracking-widest text-secondary mb-5">Hours</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li class="flex justify-between gap-4">
+                            <span>Mon – Fri</span>
+                            <span class="text-white font-medium">3:00 PM – 9:00 PM</span>
+                        </li>
+                        <li class="flex justify-between gap-4">
+                            <span>Saturday</span>
+                            <span class="text-white font-medium">9:00 AM – 6:00 PM</span>
+                        </li>
+                        <li class="flex justify-between gap-4">
+                            <span>Sunday</span>
+                            <span class="text-white font-medium">10:00 AM – 4:00 PM</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-500">
+                <p>&copy; 2026 Atletas Performance Center. All rights reserved.</p>
+                <p>11301 W 88th St, Overland Park, KS 66214</p>
             </div>
         </div>
     </footer>
