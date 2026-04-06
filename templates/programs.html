@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-touch-icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
+    <title>Special Projects & Events - Atletas Performance Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a1a1a',
+                        secondary: '#D7FF00',
+                        accent: '#D7FF00',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Archivo Condensed', system-ui, sans-serif; }
+        h1, h2, h3 { font-weight: 800; }
+        .hero-select {
+            background: linear-gradient(135deg, rgba(26,26,26,0.97) 0%, rgba(20,20,20,0.92) 100%),
+                        url('https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .principle-card { border-top: 4px solid #D7FF00; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Top Bar -->
+<div class="bg-primary text-white py-2 text-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            {% if user.is_authenticated %}
+            <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span class="text-gray-300">Welcome, <span class="text-white font-medium">{{ user.get_full_name|default:user.username }}</span></span>
+            {% endif %}
+        </div>
+        <div class="hidden md:flex items-center space-x-4">
+            {% if user.is_authenticated %}
+            <a href="/login-redirect/" class="hover:text-secondary transition">My Portal</a>
+            <span class="text-gray-500">|</span>
+            <a href="/accounts/logout/" class="hover:text-accent transition">Sign Out</a>
+            {% else %}
+            <a href="/accounts/login/" class="hover:text-secondary transition">Login</a>
+            <span class="text-gray-500">|</span>
+            <a href="/accounts/signup/" class="hover:text-secondary transition">Sign Up</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<nav class="bg-primary text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20">
+            <div class="flex items-center">
+                <a href="/">
+                    <img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-14 w-auto">
+                </a>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="/" class="text-gray-300 hover:text-secondary font-medium transition">Home</a>
+                <a href="/#programs" class="text-gray-300 hover:text-secondary font-medium transition">Programs</a>
+                <a href="/#coaches" class="text-gray-300 hover:text-secondary font-medium transition">Coaches</a>
+                <a href="/#about" class="text-gray-300 hover:text-secondary font-medium transition">About</a>
+                <a href="/programs/" class="text-secondary font-bold transition border-b-2 border-secondary pb-1">Special Projects</a>
+                <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-[#b8e000] transition transform hover:scale-105 shadow-lg">
+                    Book Now
+                </a>
+            </div>
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-btn" class="text-gray-300 hover:text-white">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-primary border-t border-gray-700">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            {% if user.is_authenticated %}
+            <a href="/login-redirect/" class="block px-3 py-2 bg-secondary text-gray-900 font-semibold rounded">My Portal</a>
+            <a href="/accounts/logout/" class="block px-3 py-2 bg-gray-700 text-gray-200 font-semibold rounded">Sign Out</a>
+            {% else %}
+            <a href="/accounts/login/" class="block px-3 py-2 bg-secondary text-gray-900 font-semibold rounded">Login</a>
+            <a href="/accounts/signup/" class="block px-3 py-2 bg-gray-700 text-white font-semibold rounded">Sign Up</a>
+            {% endif %}
+            <hr class="my-2 border-gray-700">
+            <a href="/" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Home</a>
+            <a href="/#programs" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Programs</a>
+            <a href="/#coaches" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Coaches</a>
+            <a href="/#about" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">About</a>
+            <a href="/programs/" class="block px-3 py-2 text-secondary font-bold hover:bg-gray-800 rounded">Special Projects</a>
+            <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-gray-900 hover:bg-[#b8e000] rounded">Book Now</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<section class="bg-primary text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center space-x-3 mb-4">
+            <a href="/" class="text-gray-400 hover:text-secondary text-sm transition">Home</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-secondary text-sm font-semibold">Special Projects & Events</span>
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
+            Special Projects<br><span class="text-secondary">&amp; Events</span>
+        </h1>
+        <p class="text-gray-300 text-lg max-w-2xl">
+            Beyond our daily training programs — exclusive initiatives, select teams, and special events designed to elevate the APC experience.
+        </p>
+    </div>
+</section>
+
+<!-- APC Select Hero -->
+<section class="hero-select text-white py-20 md:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl">
+            <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1 rounded mb-6">New Program — 2026</span>
+            <h2 class="text-5xl md:text-7xl font-black uppercase tracking-tight mb-6 leading-none">
+                APC<br><span class="text-secondary">Select</span>
+            </h2>
+            <p class="text-xl text-gray-200 mb-8 leading-relaxed">
+                A high-performance supplemental program built for serious youth players. Three elite teams training and competing year-round — without replacing your club commitments.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="#tryouts" class="bg-secondary text-gray-900 px-8 py-4 rounded-full text-lg font-black hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl uppercase tracking-wide">
+                    Register for Tryouts →
+                </a>
+                <a href="#details" class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-gray-900 transition">
+                    Program Details
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Philosophy / 3 Principles -->
+<section id="details" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+            <span class="text-secondary font-bold uppercase tracking-widest text-sm">Our Philosophy</span>
+            <h2 class="text-4xl md:text-5xl font-black text-gray-900 mt-2 uppercase">Built on Three Core Principles</h2>
+            <p class="text-gray-500 mt-4 max-w-2xl mx-auto text-lg">APC Select is <strong>Global. Accessible. Sustainable.</strong></p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+
+            <!-- Global -->
+            <div class="principle-card bg-gray-50 rounded-2xl p-8 card-hover">
+                <div class="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 uppercase mb-3">Global</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    A complete, 360° approach to development with the individual player at the center. Our training goes beyond technical ability — focusing on performance, tactical understanding, mindset, and nutrition to develop well-rounded athletes.
+                </p>
+            </div>
+
+            <!-- Accessible -->
+            <div class="principle-card bg-gray-50 rounded-2xl p-8 card-hover">
+                <div class="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 uppercase mb-3">Accessible</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Our mission has always been to create opportunities for athletes from all backgrounds. APC Select is committed to providing access to high-level coaching, resources, and exposure to help every player reach their potential.
+                </p>
+            </div>
+
+            <!-- Sustainable -->
+            <div class="principle-card bg-gray-50 rounded-2xl p-8 card-hover">
+                <div class="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 uppercase mb-3">Sustainable</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Player development is a long-term journey. Success is built through consistency, resilience, and smart progression — not just talent. Our structure and pricing are designed so players can commit fully without unnecessary financial or time barriers.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- What's Included -->
+<section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-16 items-start">
+
+            <!-- Program Details -->
+            <div>
+                <span class="text-secondary font-bold uppercase tracking-widest text-sm">What You Get</span>
+                <h2 class="text-4xl font-black text-gray-900 mt-2 uppercase mb-8">Program Details</h2>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <p class="text-gray-700 text-lg">1 indoor team training session per month at APC <span class="text-gray-500">(includes performance assessment)</span></p>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <p class="text-gray-700 text-lg">1 outdoor team training session per month <span class="text-gray-500">(location TBD)</span></p>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <p class="text-gray-700 text-lg">1 monthly scrimmage or tournament against ECNL, MLS Next, older local, and international teams</p>
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-black text-gray-900 uppercase mt-10 mb-5">Additional Benefits</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-secondary font-black text-xl">→</span>
+                        <p class="text-gray-700">$40 monthly credit toward APC Training packages</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-secondary font-black text-xl">→</span>
+                        <p class="text-gray-700">Discounted pick-up sessions <span class="text-gray-500">($5 instead of $10)</span></p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-secondary font-black text-xl">→</span>
+                        <p class="text-gray-700">10% discount on all APC camps and clinics</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Info & Cost -->
+            <div class="space-y-6">
+                <!-- Team Info -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    <h3 class="text-2xl font-black text-gray-900 uppercase mb-5">Team Information</h3>
+                    <div class="space-y-3 text-gray-700">
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="font-semibold">Birth Years</span>
+                            <span class="bg-primary text-secondary px-3 py-1 rounded-full text-sm font-bold">2014 · 2015 · 2016 (Boys)</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="font-semibold">Roster Size</span>
+                            <span class="font-bold text-gray-900">15 players per team</span>
+                        </div>
+                        <div class="py-3">
+                            <p class="text-sm text-gray-500">We also welcome girls, 2017/2018 players, and 2013 players entering 7th grade to try out if they are ready for a high-level, mixed training environment.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+                        <p class="text-sm text-yellow-800 font-medium">⚠️ This is a competitive program designed for experienced players. Player safety and support will always remain a priority.</p>
+                    </div>
+                </div>
+
+                <!-- Cost -->
+                <div class="bg-primary text-white rounded-2xl p-8">
+                    <div class="flex items-end space-x-2 mb-2">
+                        <span class="text-6xl font-black text-secondary">$100</span>
+                        <span class="text-gray-300 text-xl pb-2">/month</span>
+                    </div>
+                    <p class="text-gray-300 mb-4">6-month commitment · Includes playing and training kits</p>
+                    <div class="border-t border-gray-700 pt-4">
+                        <p class="text-secondary font-bold text-lg">Tryouts are FREE — No fee to attend.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Tryout Schedule -->
+<section id="tryouts" class="py-20 bg-primary text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+            <span class="text-secondary font-bold uppercase tracking-widest text-sm">Coming Up</span>
+            <h2 class="text-4xl md:text-5xl font-black mt-2 uppercase">Tryout Schedule</h2>
+            <p class="text-gray-400 mt-4 text-lg">No registration fee — just show up and play.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+
+            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
+                        <div class="text-xs font-bold uppercase">May</div>
+                        <div class="text-3xl font-black leading-none">21</div>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold text-lg">Wednesday, May 21</p>
+                        <p class="text-gray-400 text-sm">Atletas Performance Center</p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-300"><span>2016s</span><span class="font-semibold text-white">6:00 PM</span></div>
+                    <div class="flex justify-between text-gray-300"><span>2015s</span><span class="font-semibold text-white">7:00 PM</span></div>
+                    <div class="flex justify-between text-gray-300"><span>2014s</span><span class="font-semibold text-white">8:00 PM</span></div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
+                        <div class="text-xs font-bold uppercase">May</div>
+                        <div class="text-3xl font-black leading-none">22</div>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold text-lg">Thursday, May 22</p>
+                        <p class="text-gray-400 text-sm">Atletas Performance Center</p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-300"><span>2016s</span><span class="font-semibold text-white">6:00 PM</span></div>
+                    <div class="flex justify-between text-gray-300"><span>2015s</span><span class="font-semibold text-white">7:00 PM</span></div>
+                    <div class="flex justify-between text-gray-300"><span>2014s</span><span class="font-semibold text-white">8:00 PM</span></div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
+                        <div class="text-xs font-bold uppercase">May</div>
+                        <div class="text-3xl font-black leading-none">23</div>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold text-lg">Friday, May 23</p>
+                        <p class="text-gray-400 text-sm">Hocker Grove Middle School</p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-300"><span>All Ages</span><span class="font-semibold text-white">9:00 AM – 11:00 AM</span></div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center">
+                        <div class="text-xs font-bold uppercase">May</div>
+                        <div class="text-3xl font-black leading-none">24</div>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold text-lg">Saturday, May 24</p>
+                        <p class="text-gray-400 text-sm">Hocker Grove Middle School</p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-300"><span>All Ages</span><span class="font-semibold text-white">9:00 AM – 11:00 AM</span></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Registration CTA -->
+        <div class="text-center">
+            <p class="text-gray-300 mb-6 text-lg">Register under <strong class="text-white">"APC Select Tryout"</strong> on our website.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'book' %}" class="bg-secondary text-gray-900 px-10 py-4 rounded-full text-lg font-black hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl uppercase tracking-wide">
+                    Register Now
+                </a>
+                <a href="mailto:info@atletasperformancecenter.com" class="border-2 border-gray-600 text-gray-300 px-10 py-4 rounded-full text-lg font-semibold hover:border-secondary hover:text-secondary transition">
+                    Questions? Email Us
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-primary text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-6 md:mb-0">
+                <img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-12 w-auto mb-3">
+                <p class="text-gray-400 text-sm">11301 W 88th St, Overland Park, KS 66214</p>
+                <p class="text-gray-400 text-sm">info@atletasperformancecenter.com</p>
+            </div>
+            <div class="flex space-x-8 text-gray-400">
+                <a href="/" class="hover:text-secondary transition">Home</a>
+                <a href="/#programs" class="hover:text-secondary transition">Programs</a>
+                <a href="/#coaches" class="hover:text-secondary transition">Coaches</a>
+                <a href="/#about" class="hover:text-secondary transition">About</a>
+                <a href="/contact/" class="hover:text-secondary transition">Contact</a>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400">&copy; 2026 Atletas Performance Center. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+</script>
+</body>
+</html>
