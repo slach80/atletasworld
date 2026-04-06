@@ -11,15 +11,46 @@ The backend is set to `console` — emails print to the server terminal instead 
 
 ## What Needs to Be Done
 
-1. Choose a provider (SendGrid, Mailgun, or Resend)
-2. Create an account and get an API key
-3. Verify the sending domain (`atletasperformancecenter.com`) via DNS
-4. Add 3 lines to `/var/www/atletasworld/.env` on the server
-5. Restart the app
+1. Choose a provider (Google Workspace, SendGrid, Mailgun, or Resend)
+2. Follow the setup steps for your chosen option
+3. Add the required lines to `/var/www/atletasworld/.env` on the server
+4. Restart the app
 
 ---
 
 ## Provider Options
+
+### Option A — Google Workspace (Gmail Business) ⭐ Recommended if you already use Google
+
+If `info@atletasperformancecenter.com` is a Google Workspace account, you can send email directly through it using an **App Password** — no third-party service needed.
+
+> **Note:** This uses Django's built-in SMTP backend, NOT django-anymail. No API key required.
+
+**Steps:**
+
+1. Log in to the Google account: `info@atletasperformancecenter.com`
+2. Go to **https://myaccount.google.com/security**
+3. Make sure **2-Step Verification is ON** (required for App Passwords)
+4. Search for **App Passwords** in the search bar → click it
+5. Select app: **Mail** · Select device: **Other (custom name)** → type `APC Website`
+6. Click **Generate** → copy the 16-character password (looks like: `xxxx xxxx xxxx xxxx`)
+
+**`.env` additions:**
+```
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=info@atletasperformancecenter.com
+EMAIL_HOST_PASSWORD=xxxxxxxxxxxxxxxxxxxx
+PRODUCTION_EMAIL_ENABLED=True
+```
+
+> **Limits:** Google Workspace allows up to **2,000 emails/day** — more than enough for APC.
+
+> **Important:** Use the App Password (16 chars, no spaces), NOT your regular Google account password.
+
+---
 
 ### Option A — SendGrid ⭐ (recommended)
 - **Free tier:** 100 emails/day
