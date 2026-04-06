@@ -107,6 +107,7 @@
                 <a href="#programs" class="text-gray-300 hover:text-secondary font-medium transition">Programs</a>
                 <a href="#coaches" class="text-gray-300 hover:text-secondary font-medium transition">Coaches</a>
                 <a href="#about" class="text-gray-300 hover:text-secondary font-medium transition">About</a>
+                <a href="#services" class="text-gray-300 hover:text-secondary font-medium transition">Services</a>
                 <a href="#fundraising" class="text-gray-300 hover:text-secondary font-medium transition">Fundraising</a>
                 <a href="/programs/" class="text-secondary font-bold transition">Special Projects ✦</a>
                 <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-[#b8e000] transition transform hover:scale-105 shadow-lg">
@@ -152,6 +153,7 @@
             <a href="#programs" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Programs</a>
             <a href="#coaches" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Coaches</a>
             <a href="#about" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">About</a>
+            <a href="#services" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Services</a>
             <a href="/programs/" class="block px-3 py-2 text-secondary font-bold hover:bg-gray-800 rounded">Special Projects ✦</a>
             <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-gray-900 hover:bg-[#b8e000] rounded">Book Now</a>
         </div>
@@ -511,6 +513,79 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Upcoming Services Section -->
+    <section id="services" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-14">
+                <span class="inline-block bg-primary text-secondary text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Coming Soon</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Upcoming Services</h2>
+                <p class="text-xl text-gray-500 max-w-2xl mx-auto">We are expanding our offerings to support athletes at every level — beyond the field.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+
+                <!-- Nutritional Consultation -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg hover:border-secondary transition-all duration-200">
+                    <div class="flex items-start gap-5">
+                        <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0 text-2xl">🥗</div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-xl font-black text-gray-900">Nutritional Consultation</h3>
+                                <span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">Soon</span>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed">Nutrition plays a key role for athletes of any fitness level — not only for body composition, but also for injury prevention and longevity. Tailored nutrition plans designed around your training demands.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Athleticism Development Class -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg hover:border-secondary transition-all duration-200">
+                    <div class="flex items-start gap-5">
+                        <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0 text-2xl">⚡</div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-xl font-black text-gray-900">Athleticism Development Class</h3>
+                                <span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">Soon</span>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed">Coordination, strength, mobility, speed, agility, endurance — being an athlete requires all these qualities regardless of sport. More than a standard SAQ or weightlifting program. We develop athletes based on their training stage: youth, high school, or college/pro.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Return to Play -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg hover:border-secondary transition-all duration-200">
+                    <div class="flex items-start gap-5">
+                        <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0 text-2xl">🩹</div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-xl font-black text-gray-900">Return to Play &amp; Injury Prevention</h3>
+                                <span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">Soon</span>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed">In the later stages of rehabilitation or struggling with chronic sports injuries? Through specific physical assessments, every client receives a tailored protocol to get back on the field quickly and build long-term injury resilience.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mindset Coaching -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg hover:border-secondary transition-all duration-200">
+                    <div class="flex items-start gap-5">
+                        <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0 text-2xl">🧠</div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-xl font-black text-gray-900">Mindset Coaching</h3>
+                                <span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">Soon</span>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed">Everything starts from the mind. If you struggle with motivation, sports anxiety, discipline, or other mental performance aspects, our certified mindset coaches will help you make the next step in your game.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <p class="text-center mt-10 text-gray-400 text-sm">Interested in early access? <a href="mailto:info@atletasperformancecenter.com" class="text-secondary font-semibold hover:underline">Contact us →</a></p>
         </div>
     </section>
 
