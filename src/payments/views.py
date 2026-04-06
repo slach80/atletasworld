@@ -238,6 +238,22 @@ def _activate_package(client_id, package_id, payment_intent_id):
     )
     logger.info('ClientPackage #%s activated for %s — %s', cp.pk, client, package.name)
 
+    # APC Select: auto-grant 6×$40 monthly credits (staggered, one per month)
+    if package.package_type == 'select':
+        from clients.models import ClientCredit
+        from decimal import Decimal
+        for month in range(1, 7):
+            credit_date = date.today() + timedelta(weeks=4 * month)
+            ClientCredit.objects.create(
+                client=client,
+                amount=Decimal('40.00'),
+                credit_type='select_monthly',
+                source_package=cp,
+                expires_at=credit_date + timedelta(weeks=4),
+                notes=f'APC Select — Month {month} training credit ($40 toward any APC Training package)',
+            )
+        logger.info('APC Select: 6 monthly credits created for %s', client)
+
 
 def _mark_rental_paid(slot_id, payment_intent_id):
     """Mark a FieldRentalSlot as paid after successful payment."""

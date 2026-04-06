@@ -182,42 +182,166 @@
             {% endif %}
         </div>
 
-        <!-- Available Packages -->
+        <!-- APC Select Membership -->
+        {% if select_packages %}
+        <div class="rounded-2xl mb-8 overflow-hidden border-2 border-primary">
+            <div class="bg-primary text-white px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1 rounded mb-2">⭐ Featured Program</span>
+                    <h2 class="text-2xl font-black uppercase tracking-tight">APC Select Membership</h2>
+                    <p class="text-gray-300 text-sm mt-1">High-performance supplemental program · 6-month commitment · Kits included</p>
+                </div>
+                {% if has_select_membership %}
+                <div class="bg-secondary/10 border border-secondary/30 rounded-xl px-5 py-3 text-center shrink-0">
+                    <p class="text-xs text-gray-400 uppercase tracking-widest">Available Credit</p>
+                    <p class="text-3xl font-black text-secondary">${{ select_credit_balance|floatformat:2 }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-white p-8">
+                {% if has_select_membership %}
+                <div class="flex items-center gap-3 mb-6 p-4 bg-secondary/10 rounded-xl border border-secondary/30">
+                    <svg class="w-5 h-5 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-sm font-semibold text-gray-800">You're an active APC Select member. Your discounts and credits are applied automatically when booking.</p>
+                </div>
+                {% endif %}
+
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <!-- Benefits list -->
+                    <div>
+                        <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">What's Included</h3>
+                        <ul class="space-y-3 text-sm text-gray-700">
+                            <li class="flex items-start gap-3">
+                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+                                <span>1 indoor team training/month at APC <span class="text-gray-400">(+ performance assessment)</span></span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+                                <span>1 outdoor team training/month</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+                                <span>Monthly scrimmage vs. ECNL, MLS Next &amp; international teams</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+                                <span>Playing &amp; training kits included</span>
+                            </li>
+                        </ul>
+                        <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 mt-6">Auto-Applied Discounts</h3>
+                        <ul class="space-y-3 text-sm text-gray-700">
+                            <li class="flex items-center gap-3">
+                                <span class="font-black text-secondary text-lg leading-none">→</span>
+                                <span><strong>$40/month</strong> credit toward any APC Training package <span class="text-gray-400">(6 credits granted on purchase)</span></span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="font-black text-secondary text-lg leading-none">→</span>
+                                <span>Pick-up sessions: <strong>$5 flat</strong> <span class="text-gray-400">(normally $10)</span></span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="font-black text-secondary text-lg leading-none">→</span>
+                                <span><strong>10% off</strong> all camps &amp; clinics</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Pricing + CTA -->
+                    <div>
+                        {% for package in select_packages %}
+                        <div class="border-2 border-primary rounded-2xl p-6">
+                            <div class="flex items-end gap-2 mb-1">
+                                <span class="text-5xl font-black text-primary">${{ package.price }}</span>
+                                <span class="text-gray-400 text-lg pb-1">/month</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mb-5">6-month commitment · Club commitments remain priority</p>
+                            <div class="flex items-center gap-2 text-xs text-gray-500 mb-5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Valid for {{ package.validity_weeks }} weeks (≈ 6 months)
+                            </div>
+                            {% if has_select_membership %}
+                            <div class="w-full text-center py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold cursor-default">
+                                ✓ Already a Member
+                            </div>
+                            {% elif stripe_public_key %}
+                            <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }})"
+                                    class="w-full py-3 bg-primary text-secondary rounded-xl font-black hover:bg-gray-800 transition text-sm uppercase tracking-wide">
+                                Join APC Select — ${{ package.price }}/mo
+                            </button>
+                            {% else %}
+                            <a href="mailto:info@atletasperformancecenter.com?subject=APC Select Membership"
+                               class="block w-full text-center py-3 bg-primary text-secondary rounded-xl font-black hover:bg-gray-800 transition text-sm uppercase tracking-wide">
+                                Contact to Join
+                            </a>
+                            {% endif %}
+                            <p class="text-center text-xs text-gray-400 mt-3">Tryouts required · <a href="/programs/" class="underline hover:text-gray-600">Learn more &amp; register →</a></p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Training Packages -->
         <div class="bg-white rounded-xl shadow-md p-8 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Available Packages</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Training Packages</h2>
             <p class="text-gray-600 mb-6">Purchase a package to save on training sessions!</p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {% for package in available_packages %}
-                <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition hover:border-secondary">
-                    <h3 class="font-bold text-lg text-gray-800 mb-2">{{ package.name }}</h3>
-                    <p class="text-sm text-gray-500 mb-4">{% if package.sessions_included > 0 %}{{ package.sessions_included }} classes{% else %}Unlimited{% endif %} / {{ package.validity_weeks }} weeks</p>
+                <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col">
+                    <!-- Header -->
+                    <div class="mb-4">
+                        <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
+                        <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
+                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
+                            &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
+                        </p>
+                    </div>
 
-                    <div class="text-3xl font-bold text-primary mb-2">${{ package.price }}</div>
+                    <!-- Price -->
+                    <div class="mb-5 flex-1">
+                        <div class="text-4xl font-black text-primary">${{ package.price }}</div>
+                        {% if package.description %}
+                        <p class="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">{{ package.description }}</p>
+                        {% endif %}
+                    </div>
 
-                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-secondary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited sessions{% endif %}
+                    <!-- Details -->
+                    <ul class="space-y-2 text-sm mb-5">
+                        <li class="flex items-center gap-2 text-gray-600">
+                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions included{% else %}Unlimited sessions{% endif %}
                         </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-secondary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Valid for {{ package.validity_weeks }} weeks
+                        <li class="flex items-center gap-2 text-gray-600">
+                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Valid {{ package.validity_weeks }} weeks
                         </li>
+                        {% if package.event_start_date %}
+                        <li class="flex items-center gap-2 text-gray-600">
+                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
+                        </li>
+                        {% endif %}
+                        {% if has_select_membership %}
+                        <li class="flex items-center gap-2 text-secondary font-bold">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            ⭐ $40 Select credit applicable
+                        </li>
+                        {% endif %}
                     </ul>
 
+                    <!-- CTA -->
                     {% if stripe_public_key %}
                     <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }})"
-                            class="block w-full text-center py-3 bg-accent text-gray-900 rounded-lg hover:bg-[#b8e000] transition font-semibold">
-                        Buy Now — ${{ package.price }}
+                            class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
+                        Purchase — ${{ package.price }}
                     </button>
                     {% else %}
-                    <a href="/contact" class="block w-full text-center py-3 bg-gray-200 text-gray-600 rounded-lg transition text-sm">
-                        Contact to Purchase
+                    <a href="{% url 'clients:packages' %}"
+                       class="mt-auto block text-center w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
+                        Purchase — ${{ package.price }}
                     </a>
                     {% endif %}
                 </div>
@@ -226,6 +350,57 @@
                 {% endfor %}
             </div>
         </div>
+
+        <!-- Special Event Packages -->
+        {% if special_packages %}
+        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Event &amp; Camp Packages</h2>
+            <p class="text-gray-600 mb-6">Time-limited packages tied to specific programs.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {% for package in special_packages %}
+                <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 flex flex-col">
+                    <div class="mb-4">
+                        <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
+                        <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
+                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
+                            &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
+                        </p>
+                    </div>
+                    <div class="text-4xl font-black text-primary mb-5 flex-1">${{ package.price }}</div>
+                    <ul class="space-y-2 text-sm mb-5">
+                        <li class="flex items-center gap-2 text-gray-600">
+                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
+                        </li>
+                        {% if package.event_start_date %}
+                        <li class="flex items-center gap-2 text-gray-600">
+                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
+                        </li>
+                        {% endif %}
+                        {% if package.event_location %}
+                        <li class="flex items-center gap-2 text-gray-600">
+                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                            {{ package.event_location }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% if stripe_public_key %}
+                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }})"
+                            class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
+                        Purchase — ${{ package.price }}
+                    </button>
+                    {% else %}
+                    <a href="{% url 'clients:packages' %}"
+                       class="mt-auto block text-center w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
+                        Purchase — ${{ package.price }}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Package History -->
         {% if expired_packages %}

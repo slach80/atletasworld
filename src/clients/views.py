@@ -278,8 +278,19 @@ def packages_list(request):
         expiry_date__gte=timezone.now().date()
     )
 
-    # Available packages for purchase
-    available_packages = Package.objects.filter(is_active=True)
+    # Separate select membership from regular packages
+    select_packages = Package.objects.filter(is_active=True, package_type='select').order_by('price')
+    available_packages = Package.objects.filter(
+        is_active=True, is_special=False
+    ).exclude(package_type__in=['team', 'select']).order_by('price')
+    special_packages = Package.objects.filter(
+        is_active=True, is_special=True
+    ).order_by('event_start_date')
+
+    has_select_membership = active_packages.filter(package__package_type='select').exists()
+    select_credit_balance = sum(
+        c.amount for c in client.credits.filter(status='available') if c.is_usable
+    ) if has_select_membership else 0
 
     from django.conf import settings as django_settings
     context = {
@@ -287,6 +298,10 @@ def packages_list(request):
         'active_packages': active_packages,
         'expired_packages': expired_packages,
         'available_packages': available_packages,
+        'special_packages': special_packages,
+        'select_packages': select_packages,
+        'has_select_membership': has_select_membership,
+        'select_credit_balance': select_credit_balance,
         'stripe_public_key': django_settings.STRIPE_PUBLIC_KEY,
     }
     return render(request, 'clients/packages.html', context)
