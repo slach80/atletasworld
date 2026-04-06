@@ -417,31 +417,29 @@
         </div>
         {% endif %}
 
-        <!-- Training Packages (live from database) -->
+        <!-- Training Packages -->
         <div id="packages" class="mt-16 scroll-mt-24">
-            <h3 class="text-3xl font-bold text-gray-900 text-center mb-8">Training Packages</h3>
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-3xl font-bold text-gray-900">Training Packages</h3>
+                <a href="{% url 'clients:packages' %}" class="text-sm text-secondary font-semibold hover:underline">View all packages →</a>
+            </div>
             {% if packages %}
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {% for pkg in packages %}
-                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 {% cycle 'border-secondary' 'border-accent' 'border-primary' 'border-secondary' %}">
-                    <h4 class="text-xl font-bold text-gray-900 mb-1">{{ pkg.name }}</h4>
-                    <p class="text-3xl font-bold text-primary mb-2">${{ pkg.price }}</p>
-                    <p class="text-gray-600 text-sm mb-1">
-                        {% if pkg.sessions_included == 0 %}Unlimited sessions{% else %}{{ pkg.sessions_included }} session{{ pkg.sessions_included|pluralize }}{% endif %}
-                        · {{ pkg.validity_weeks }} week{{ pkg.validity_weeks|pluralize }}
+                <div class="group bg-white rounded-2xl shadow-md p-6 border-2 border-gray-100 hover:border-secondary hover:shadow-xl transition-all duration-200">
+                    <h4 class="text-lg font-black text-gray-900 mb-0.5">{{ pkg.name }}</h4>
+                    <p class="text-xs text-gray-400 uppercase tracking-widest mb-3">
+                        {% if pkg.sessions_included == 0 %}Unlimited{% else %}{{ pkg.sessions_included }} sessions{% endif %}
+                        · {{ pkg.validity_weeks }} weeks
                     </p>
-                    {% if pkg.description %}
-                    <p class="text-gray-500 text-xs italic">{{ pkg.description|truncatechars:70 }}</p>
-                    {% endif %}
+                    <p class="text-3xl font-black text-primary mb-4">${{ pkg.price }}</p>
                     {% if pkg.event_start_date %}
-                    <p class="text-gray-600 text-xs mt-1">
-                        📅 {{ pkg.event_start_date|date:"M j" }}{% if pkg.event_start_time %} {{ pkg.event_start_time|time:"g:i A" }}{% endif %}
-                        {% if pkg.event_end_date %} – {{ pkg.event_end_date|date:"M j, Y" }}{% if pkg.event_end_time %} {{ pkg.event_end_time|time:"g:i A" }}{% endif %}{% endif %}
-                    </p>
+                    <p class="text-xs text-gray-500 mb-3">📅 {{ pkg.event_start_date|date:"M j" }} – {{ pkg.event_end_date|date:"M j, Y" }}</p>
                     {% endif %}
-                    <div class="mt-4">
-                    <a href="{% url 'book' %}" class="block text-center bg-accent text-gray-900 py-2 rounded-lg font-semibold hover:bg-[#b8e000] transition">Book Now</a>
-                    </div>
+                    <a href="{% url 'clients:packages' %}"
+                       class="block text-center py-2.5 bg-primary text-secondary rounded-xl text-sm font-black hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
+                        Purchase →
+                    </a>
                 </div>
                 {% endfor %}
             </div>
@@ -578,76 +576,6 @@
     </section>
 
 
-    <!-- Portal Features Section -->
-    <section class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Complete Platform Experience</h2>
-                <p class="text-xl text-gray-600">Dedicated portals for coaches and clients</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-8 mb-12">
-                <!-- Coach Features -->
-                <div class="bg-gradient-to-br from-primary to-gray-800 rounded-2xl p-8 text-white">
-                    <div class="text-4xl mb-4">🏋️</div>
-                    <h3 class="text-2xl font-bold mb-4">For Coaches</h3>
-                    <ul class="space-y-3 text-gray-200 mb-6">
-                        <li class="flex items-center"><span class="mr-2">✓</span> Dashboard with today's sessions</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> View all trained players</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Set availability & schedule</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Player assessments & ratings</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Notify parents directly</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Track attendance</li>
-                    </ul>
-                    <a href="/login-redirect/" class="block text-center bg-white text-primary py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-                        Coach Login →
-                    </a>
-                </div>
-
-                <!-- Client Features -->
-                <div class="bg-gradient-to-br from-secondary to-green-600 rounded-2xl p-8 text-white">
-                    <div class="text-4xl mb-4">👨‍👩‍👧</div>
-                    <h3 class="text-2xl font-bold mb-4">For Clients</h3>
-                    <ul class="space-y-3 text-gray-100 mb-6">
-                        <li class="flex items-center"><span class="mr-2">✓</span> Personal dashboard</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Manage player profiles</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Book training sessions</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> View packages & history</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Receive assessments</li>
-                        <li class="flex items-center"><span class="mr-2">✓</span> Track player progress</li>
-                    </ul>
-                    <a href="/login-redirect/" class="block text-center bg-white text-secondary py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-                        Client Login →
-                    </a>
-                </div>
-
-            </div>
-
-            <!-- Key Features Grid -->
-            <div class="grid md:grid-cols-4 gap-6">
-                <div class="bg-gray-50 rounded-xl p-6 text-center">
-                    <div class="text-3xl mb-3">📋</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Player Assessments</h4>
-                    <p class="text-sm text-gray-600">Rate effort, technical skills, tactical awareness, and more. Parents see progress reports.</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-6 text-center">
-                    <div class="text-3xl mb-3">📅</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Smart Scheduling</h4>
-                    <p class="text-sm text-gray-600">Coaches set availability, clients book sessions. Automatic conflict detection.</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-6 text-center">
-                    <div class="text-3xl mb-3">🔔</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Parent Notifications</h4>
-                    <p class="text-sm text-gray-600">Coaches notify parents about schedule changes, progress, and important updates.</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-6 text-center">
-                    <div class="text-3xl mb-3">🔐</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Role-Based Access</h4>
-                    <p class="text-sm text-gray-600">Secure role-based access for Coaches and Clients with appropriate permissions.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- CTA Section -->
     <section class="bg-gradient-to-r from-primary to-gray-800 text-white py-20">

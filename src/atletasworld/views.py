@@ -36,7 +36,9 @@ def _fmt_times(start_times_str):
 
 def home_view(request):
     """Public homepage — packages, events, and programs from the database."""
-    packages = Package.objects.filter(is_active=True).order_by('price')
+    packages = Package.objects.filter(
+        is_active=True, is_special=False
+    ).exclude(package_type__in=['select', 'team']).order_by('price')
     events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('start_date', 'name')
     programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').order_by('name')
 
