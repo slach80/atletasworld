@@ -2166,3 +2166,61 @@ def owner_contacts(request):
         'source_choices':ContactParent.SOURCE_CHOICES,
     }
     return render(request, 'owner/contacts.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_contact_edit(request, pk):
+    """Edit a ContactParent and all their associated players."""
+    from clients.models import ContactParent, ContactPlayer
+    contact = get_object_or_404(ContactParent, pk=pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'save_parent')
+
+        if action == 'save_parent':
+            contact.first_name = request.POST.get('first_name', '').strip()
+            contact.last_name  = request.POST.get('last_name', '').strip()
+            contact.email      = request.POST.get('email', '').strip()
+            contact.phone      = request.POST.get('phone', '').strip()
+            contact.source     = request.POST.get('source', contact.source)
+            contact.notes      = request.POST.get('notes', '').strip()
+            contact.save()
+            messages.success(request, 'Contact updated.')
+
+        elif action == 'save_player':
+            player_id = request.POST.get('player_id')
+            if player_id:
+                player = get_object_or_404(ContactPlayer, pk=player_id, parent=contact)
+            else:
+                player = ContactPlayer(parent=contact)
+            player.first_name  = request.POST.get('first_name', '').strip()
+            player.last_name   = request.POST.get('last_name', '').strip()
+            by = request.POST.get('birth_year', '').strip()
+            player.birth_year  = int(by) if by.isdigit() else None
+            player.sex         = request.POST.get('sex', '')
+            player.club_team   = request.POST.get('club_team', '').strip()
+            player.position    = request.POST.get('position', '').strip()
+            player.notes       = request.POST.get('notes', '').strip()
+            player.save()
+            messages.success(request, f'Player {"added" if not player_id else "updated"}.')
+
+        elif action == 'delete_player':
+            player_id = request.POST.get('player_id')
+            ContactPlayer.objects.filter(pk=player_id, parent=contact).delete()
+            messages.success(request, 'Player removed.')
+
+        elif action == 'delete_contact':
+            contact.delete()
+            messages.success(request, 'Contact deleted.')
+            return redirect('owner_contacts')
+
+        return redirect('owner_contact_edit', pk=contact.pk)
+
+    context = {
+        'contact':  contact,
+        'players':  contact.players.order_by('last_name', 'first_name'),
+        'source_choices': ContactParent.SOURCE_CHOICES,
+        'sex_choices': ContactPlayer.SEX_CHOICES,
+    }
+    return render(request, 'owner/contact_edit.html', context)

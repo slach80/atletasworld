@@ -104,6 +104,10 @@
                         <strong class="text-gray-800">{{ contact.annotated_player_count }}</strong>
                         player{{ contact.annotated_player_count|pluralize }}
                     </span>
+                    <a href="{% url 'owner_contact_edit' contact.pk %}" onclick="event.stopPropagation()"
+                       class="px-2.5 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition font-semibold">
+                        Edit
+                    </a>
                     {% if contact.is_linked %}
                     <a href="{% url 'owner_client_detail' contact.client.pk %}" onclick="event.stopPropagation()"
                        class="px-2.5 py-1 text-xs bg-owner text-white rounded hover:bg-indigo-600 transition">

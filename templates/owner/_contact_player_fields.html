@@ -1,0 +1,41 @@
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">First Name *</label>
+        <input type="text" name="first_name" value="{{ player.first_name|default:'' }}" required
+               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Last Name</label>
+        <input type="text" name="last_name" value="{{ player.last_name|default:'' }}"
+               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Birth Year</label>
+        <input type="number" name="birth_year" value="{{ player.birth_year|default:'' }}"
+               min="2000" max="2020" placeholder="e.g. 2013"
+               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Gender</label>
+        <select name="sex" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner">
+            <option value="">Unknown</option>
+            <option value="M" {% if player.sex == 'M' %}selected{% endif %}>Male</option>
+            <option value="F" {% if player.sex == 'F' %}selected{% endif %}>Female</option>
+        </select>
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Position</label>
+        <input type="text" name="position" value="{{ player.position|default:'' }}" placeholder="e.g. Midfielder"
+               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Club / Team</label>
+        <input type="text" name="club_team" value="{{ player.club_team|default:'' }}" placeholder="e.g. KC Athletics"
+               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+    </div>
+</div>
+<div class="mt-3">
+    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Notes</label>
+    <input type="text" name="notes" value="{{ player.notes|default:'' }}" placeholder="Any additional notes…"
+           class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+</div>

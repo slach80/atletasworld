@@ -30,6 +30,7 @@ from .admin_views import (
     owner_credits,
     owner_waivers,
     owner_contacts,
+    owner_contact_edit,
 )
 
 
@@ -145,6 +146,7 @@ urlpatterns = [
     path('owner-portal/credits/', owner_credits, name='owner_credits'),
     path('owner-portal/waivers/', owner_waivers, name='owner_waivers'),
     path('owner-portal/contacts/', owner_contacts, name='owner_contacts'),
+    path('owner-portal/contacts/<int:pk>/edit/', owner_contact_edit, name='owner_contact_edit'),
 
     # Owner - Service Catalog
     path('owner-portal/services/', owner_services, name='owner_services'),
