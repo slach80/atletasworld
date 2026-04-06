@@ -69,7 +69,7 @@ def programs_view(request):
          [('All Ages', '9:00 AM – 11:00 AM')], True),
     ]
 
-    # Build a map: (date, start_time) -> {spots_remaining, max_participants, session_name}
+    # Build a map: (date, start_time) -> {spots_remaining, max_participants, session_type_id}
     tryout_blocks = ScheduleBlock.objects.filter(
         date__in=[s[0] for s in TRYOUT_SESSIONS],
         status='available',
@@ -77,11 +77,11 @@ def programs_view(request):
 
     block_map = {}
     for b in tryout_blocks:
-        st_names = [st.name for st in b.catalog_session_types.all()]
+        cat = list(b.catalog_session_types.all())
         block_map[(b.date, b.start_time.strftime('%H:%M'))] = {
             'spots_remaining': b.spots_remaining,
             'max_participants': b.max_participants,
-            'session_names': st_names,
+            'session_type_id': cat[0].id if cat else None,
         }
 
     # Enrich TRYOUT_SESSIONS with spot data
@@ -95,11 +95,13 @@ def programs_view(request):
                 '9:00 AM – 11:00 AM': '09:00',
             }.get(time_str, '00:00')
             bdata = block_map.get((date, time_24), {})
+            st_id = bdata.get('session_type_id')
             slots_enriched.append({
                 'age_label': age_label,
                 'time_str': time_str,
                 'spots_remaining': bdata.get('spots_remaining'),
                 'max_participants': bdata.get('max_participants'),
+                'book_url': f"/book/?st={st_id}" if st_id else "/book/",
             })
         sessions_enriched.append({
             'date': date,

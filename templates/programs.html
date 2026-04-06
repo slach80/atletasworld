@@ -303,7 +303,7 @@
 
         <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
             {% for session in tryout_sessions %}
-            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition">
+            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition flex flex-col">
                 <div class="flex items-center space-x-4 mb-4">
                     <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center shrink-0">
                         <div class="text-xs font-bold uppercase">May</div>
@@ -314,26 +314,53 @@
                         <p class="text-gray-400 text-sm">{{ session.location }}</p>
                     </div>
                 </div>
-                <div class="space-y-2.5 text-sm">
+                <div class="space-y-2 text-sm flex-1">
                     {% for slot in session.slots %}
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-gray-300">
+                    {% if slot.spots_remaining == 0 %}
+                    <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-gray-700/40 opacity-60 cursor-not-allowed">
+                        <div class="flex items-center gap-2 text-gray-400">
                             <span>{{ slot.age_label }}</span>
                             <span class="text-gray-600">·</span>
-                            <span class="font-semibold text-white">{{ slot.time_str }}</span>
+                            <span class="font-semibold">{{ slot.time_str }}</span>
                         </div>
-                        {% if slot.spots_remaining is not None %}
-                            {% if slot.spots_remaining == 0 %}
-                            <span class="px-2 py-0.5 bg-red-900/60 text-red-300 text-xs rounded-full font-semibold">Full</span>
-                            {% elif slot.spots_remaining <= 5 %}
-                            <span class="px-2 py-0.5 bg-orange-900/60 text-orange-300 text-xs rounded-full font-semibold">{{ slot.spots_remaining }} left</span>
-                            {% else %}
-                            <span class="px-2 py-0.5 bg-gray-700 text-gray-300 text-xs rounded-full">{{ slot.spots_remaining }}/{{ slot.max_participants }} open</span>
-                            {% endif %}
-                        {% endif %}
+                        <span class="px-2 py-0.5 bg-red-900/60 text-red-300 text-xs rounded-full font-semibold">Full</span>
                     </div>
+                    {% else %}
+                    <a href="{{ slot.book_url }}"
+                       class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-gray-700/40 hover:bg-secondary/20 hover:border-secondary border border-transparent transition group">
+                        <div class="flex items-center gap-2 text-gray-300 group-hover:text-white transition">
+                            <span>{{ slot.age_label }}</span>
+                            <span class="text-gray-600">·</span>
+                            <span class="font-semibold">{{ slot.time_str }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% if slot.spots_remaining is not None %}
+                                {% if slot.spots_remaining <= 5 %}
+                                <span class="px-2 py-0.5 bg-orange-900/60 text-orange-300 text-xs rounded-full font-semibold">{{ slot.spots_remaining }} left</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 bg-gray-600 text-gray-300 text-xs rounded-full">{{ slot.spots_remaining }}/{{ slot.max_participants }}</span>
+                                {% endif %}
+                            {% endif %}
+                            <svg class="w-4 h-4 text-secondary opacity-0 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </a>
+                    {% endif %}
                     {% endfor %}
                 </div>
+                {% with session.slots|first as first_slot %}
+                {% if first_slot.spots_remaining != 0 %}
+                <a href="{{ first_slot.book_url }}"
+                   class="mt-4 block text-center py-2 bg-secondary text-gray-900 rounded-xl text-sm font-black hover:bg-[#b8e000] transition">
+                    Register →
+                </a>
+                {% else %}
+                <div class="mt-4 block text-center py-2 bg-gray-700 text-gray-500 rounded-xl text-sm font-semibold cursor-not-allowed">
+                    Session Full
+                </div>
+                {% endif %}
+                {% endwith %}
             </div>
             {% endfor %}
         </div>

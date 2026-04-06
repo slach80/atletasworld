@@ -360,8 +360,15 @@ function fitPanels(){
 }
 
 async function loadSessionTypes(){
-    try{ sessionTypes=await fetch('/api/bookings/session-types/').then(r=>r.json()); renderTypePills(); }
-    catch(e){ console.error('ST:',e); }
+    try{
+        sessionTypes=await fetch('/api/bookings/session-types/').then(r=>r.json());
+        renderTypePills();
+        // Pre-apply filter from ?st=<id> URL param (linked from Programs page)
+        const stParam=new URLSearchParams(window.location.search).get('st');
+        if(stParam && sessionTypes.some(s=>String(s.id)===stParam)){
+            toggleTypeFilter(stParam);
+        }
+    }catch(e){ console.error('ST:',e); }
 }
 async function loadPackages(){
     try{

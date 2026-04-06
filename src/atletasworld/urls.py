@@ -81,8 +81,13 @@ def login_redirect_view(request):
 
 @login_required
 def book_redirect_view(request):
-    """Redirect to client booking page."""
-    return redirect('clients:book')
+    """Redirect to client booking page, forwarding query string."""
+    from django.urls import reverse
+    url = reverse('clients:book')
+    qs = request.META.get('QUERY_STRING', '')
+    if qs:
+        url = f"{url}?{qs}"
+    return redirect(url)
 
 
 urlpatterns = [
