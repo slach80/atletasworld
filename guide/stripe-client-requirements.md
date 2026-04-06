@@ -52,20 +52,60 @@ This is where Stripe deposits your earnings (typically within 2 business days af
 Once your account is active:
 
 1. In the Stripe Dashboard, click **Developers** (top right) → **API keys**
-2. You will see two keys in **Test mode** to start — that's fine
-3. Send us both keys **securely** (not by email — use a password manager share link or a secure message):
+2. You will see your keys — make sure you are in **Live mode** (toggle top-left), not Test mode
+3. You will see two options for the Secret key: **Standard** and **Restricted**
 
-| Key | What it looks like |
+---
+
+### Which key type should you use?
+
+#### Standard Secret Key (`sk_live_...`)
+- **Full access** to your entire Stripe account
+- Simpler — one key does everything
+- ⚠️ Higher risk if the key is ever exposed — it can do anything (refunds, payouts, etc.)
+- **Use this if** you fully trust the setup or are the only one managing the account
+
+#### Restricted Key (custom permissions)
+- **Limited access** — you control exactly what it can and cannot do
+- Lower risk — even if exposed, it can only do what you allowed
+- Slightly more setup (takes ~2 minutes to configure)
+- **Use this if** you want tighter security (recommended for production)
+
+**For this website, a Restricted Key needs these permissions:**
+
+| Resource | Permission needed |
 |---|---|
-| Publishable key | `pk_live_...` |
-| Secret key | `sk_live_...` |
+| PaymentIntents | Read + Write |
+| Customers | Read + Write |
+| Charges | Read |
+| Refunds | Write |
+| Subscriptions | Read + Write |
+| Prices | Read |
+| Webhooks | Read |
+
+To create a Restricted Key:
+1. Developers → API keys → **Create restricted key**
+2. Give it a name (e.g. "APC Website")
+3. Enable the permissions in the table above
+4. Click **Create key** → copy the key immediately (shown only once)
+
+---
+
+### What to send us
+
+We need **two** keys total:
+
+| Key | What it looks like | Where to find it |
+|---|---|---|
+| **Publishable key** | `pk_live_...` | Always standard — click **Reveal** |
+| **Secret key** | `sk_live_...` or `rk_live_...` | Standard or Restricted (your choice above) |
 
 > **Important:** Never share your Secret key by email or text. Use a secure method — options below.
 
 **Secure ways to share keys:**
-- Share via **1Password** or **Bitwarden** (send a secure link)
-- Use **https://onetimesecret.com** — paste the key, send us the one-time link
-- Share through the Stripe Dashboard itself by adding us as a team member (see Step 4)
+- Use **https://onetimesecret.com** — paste the key, send us the one-time link (expires after one view)
+- Share via **1Password** or **Bitwarden** secure link
+- Add us as a team member in Stripe and we retrieve it ourselves (see Step 4)
 
 ---
 
@@ -117,8 +157,8 @@ For each package (e.g. "10-Session Pack", "Monthly Unlimited"):
 Send us the following when ready:
 
 - [ ] Stripe account created and activated (onboarding complete)
-- [ ] Publishable key (`pk_live_...`)
-- [ ] Secret key (`sk_live_...`) — sent securely
+- [ ] Publishable key (`pk_live_...`) — click Reveal in Stripe Dashboard
+- [ ] Secret key (`sk_live_...` standard **or** `rk_live_...` restricted) — sent securely via onetimesecret.com
 - [ ] Bank account connected in Stripe (for payouts)
 - [ ] Pricing confirmed for all packages and rentals
 - [ ] Tax rate confirmed (or "no tax")
