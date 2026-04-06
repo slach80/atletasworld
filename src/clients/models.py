@@ -6,9 +6,10 @@ from django.conf import settings
 
 
 class Client(models.Model):
-    """Client profile for parents/guardians."""
+    """Client profile for parents/guardians or adult athletes."""
     CLIENT_TYPE_CHOICES = [
         ('parent', 'Parent/Guardian'),
+        ('athlete', 'Athlete (18+)'),
         ('coach', 'Team Coach'),
         ('renter', 'Facility Renter'),
     ]
@@ -962,3 +963,56 @@ class ClientCredit(models.Model):
             models.Index(fields=['client', 'status']),
             models.Index(fields=['status', 'expires_at']),
         ]
+
+
+class ClientWaiver(models.Model):
+    """
+    Digital waiver signature for Atletas Performance Center liability release.
+    Must be signed annually. Required before any session can be booked.
+    """
+    WAIVER_VERSION = '2026-v1'  # bump this string to invalidate all existing waivers
+
+    client          = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='waivers')
+    # Who physically signed (may differ from account holder for minors)
+    full_name       = models.CharField(max_length=200, help_text='Printed name of signatory')
+    signature_text  = models.CharField(max_length=200, help_text='Typed signature (full legal name)')
+    guardian_name   = models.CharField(max_length=200, blank=True,
+                                       help_text='Parent/guardian name if signing for a minor')
+    photo_video_consent = models.BooleanField(default=False,
+                                              help_text='Consent to photo/video use for promotional purposes')
+    # Audit fields
+    waiver_version  = models.CharField(max_length=20, default=WAIVER_VERSION)
+    signed_at       = models.DateTimeField(auto_now_add=True)
+    ip_address      = models.GenericIPAddressField(null=True, blank=True)
+    user_agent      = models.TextField(blank=True)
+    # Validity: waiver is valid for the calendar year it was signed
+    valid_year      = models.IntegerField(help_text='Calendar year this waiver is valid for')
+
+    def __str__(self):
+        return f'{self.client} — waiver signed {self.signed_at:%Y-%m-%d} ({self.waiver_version})'
+
+    @property
+    def is_current(self):
+        """True if this waiver covers the current calendar year and version."""
+        from django.utils import timezone
+        return (
+            self.valid_year == timezone.now().year
+            and self.waiver_version == self.WAIVER_VERSION
+        )
+
+    class Meta:
+        ordering = ['-signed_at']
+        indexes  = [
+            models.Index(fields=['client', 'valid_year']),
+            models.Index(fields=['waiver_version']),
+        ]
+
+
+def get_current_waiver(client):
+    """Return the most recent valid waiver for a client, or None."""
+    from django.utils import timezone
+    return ClientWaiver.objects.filter(
+        client=client,
+        valid_year=timezone.now().year,
+        waiver_version=ClientWaiver.WAIVER_VERSION,
+    ).first()

@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot
+from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver
 from bookings.models import Booking, Program
 from coaches.models import PlayerAssessment, Coach, ScheduleBlock
 
@@ -141,6 +141,7 @@ def profile(request):
         messages.success(request, 'Profile updated successfully!')
         return redirect('clients:profile')
 
+    current_waiver = get_current_waiver(client)
     context = {
         'client': client,
         'booking_prefs': booking_prefs,
@@ -148,8 +149,51 @@ def profile(request):
         'client_types': Client.CLIENT_TYPE_CHOICES,
         'day_choices': BookingPreference.DAY_CHOICES,
         'time_slot_choices': BookingPreference.TIME_SLOT_CHOICES,
+        'current_waiver': current_waiver,
+        'waiver_version': ClientWaiver.WAIVER_VERSION,
+        'waiver_year': timezone.now().year,
     }
     return render(request, 'clients/profile.html', context)
+
+
+@login_required
+@require_POST
+def sign_waiver(request):
+    """Process digital waiver signature."""
+    client, _ = Client.objects.get_or_create(user=request.user)
+
+    # Already signed this year?
+    if get_current_waiver(client):
+        messages.info(request, 'You have already signed the waiver for this year.')
+        return redirect('clients:profile')
+
+    full_name      = request.POST.get('waiver_full_name', '').strip()
+    signature_text = request.POST.get('waiver_signature', '').strip()
+    guardian_name  = request.POST.get('guardian_name', '').strip()
+    photo_consent  = request.POST.get('photo_video_consent') == 'on'
+    agreed         = request.POST.get('agree_terms') == 'on'
+
+    if not agreed or not full_name or not signature_text:
+        messages.error(request, 'Please read the waiver, fill in your name and typed signature, and check the agreement box.')
+        return redirect('clients:profile')
+
+    # Capture IP for audit
+    x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    ip = x_forwarded.split(',')[0].strip() if x_forwarded else request.META.get('REMOTE_ADDR')
+
+    ClientWaiver.objects.create(
+        client=client,
+        full_name=full_name,
+        signature_text=signature_text,
+        guardian_name=guardian_name,
+        photo_video_consent=photo_consent,
+        waiver_version=ClientWaiver.WAIVER_VERSION,
+        valid_year=timezone.now().year,
+        ip_address=ip,
+        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+    )
+    messages.success(request, f'Waiver signed successfully. Valid through December 31, {timezone.now().year}.')
+    return redirect('clients:profile')
 
 
 @login_required
@@ -598,6 +642,13 @@ def player_assessment_chart_data(request, player_id):
 def booking_page(request):
     """Main booking page with package info and session selection."""
     client, created = Client.objects.get_or_create(user=request.user)
+
+    # Waiver gate — must be signed before booking
+    current_waiver = get_current_waiver(client)
+    if not current_waiver:
+        messages.warning(request, 'Please sign the annual waiver before booking a session.')
+        return redirect('clients:profile')
+
     booking_prefs, _ = BookingPreference.objects.get_or_create(client=client)
 
     # Clean up expired reservations
@@ -737,6 +788,9 @@ def booking_page(request):
 def reserve_session(request):
     """Reserve a session slot (temporary hold for 10 minutes)."""
     client, created = Client.objects.get_or_create(user=request.user)
+
+    if not get_current_waiver(client):
+        return JsonResponse({'success': False, 'error': 'Annual waiver required. Please sign it in your Profile before booking.'})
 
     block_id = request.POST.get('block_id')
     player_id = request.POST.get('player_id')

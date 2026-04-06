@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from coaches.models import Coach, ScheduleBlock, PlayerAssessment
 from bookings.models import Booking, SessionType
-from clients.models import Client, Player, ClientCredit, Package, ClientPackage
+from clients.models import Client, Player, ClientCredit, Package, ClientPackage, ClientWaiver, get_current_waiver
 from reviews.models import Review
 from django.contrib.auth.models import User
 from django.core.mail import send_mass_mail, send_mail, EmailMessage
@@ -2071,3 +2071,42 @@ def owner_credits(request):
         'credit_type_choices': ClientCredit.CREDIT_TYPE_CHOICES,
     }
     return render(request, 'owner/credits.html', context)
+
+
+# ============================================================================
+# WAIVERS MANAGEMENT
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_waivers(request):
+    """Waiver compliance dashboard — shows signed and unsigned clients."""
+    today = timezone.now()
+    current_year = today.year
+
+    all_clients = Client.objects.select_related('user').order_by('user__first_name')
+
+    signed_ids = set(
+        ClientWaiver.objects.filter(
+            valid_year=current_year,
+            waiver_version=ClientWaiver.WAIVER_VERSION,
+        ).values_list('client_id', flat=True)
+    )
+
+    signed   = [c for c in all_clients if c.id in signed_ids]
+    unsigned = [c for c in all_clients if c.id not in signed_ids]
+
+    recent_waivers = ClientWaiver.objects.select_related(
+        'client__user'
+    ).order_by('-signed_at')[:100]
+
+    context = {
+        'signed': signed,
+        'unsigned': unsigned,
+        'recent_waivers': recent_waivers,
+        'current_year': current_year,
+        'waiver_version': ClientWaiver.WAIVER_VERSION,
+        'total': all_clients.count(),
+        'signed_count': len(signed),
+    }
+    return render(request, 'owner/waivers.html', context)

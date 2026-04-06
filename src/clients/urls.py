@@ -9,6 +9,7 @@ urlpatterns = [
 
     # Profile
     path('profile/', views.profile, name='profile'),
+    path('profile/sign-waiver/', views.sign_waiver, name='sign_waiver'),
 
     # Players
     path('players/', views.players_list, name='players'),

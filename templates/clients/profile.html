@@ -270,6 +270,108 @@
                 </div>
             </form>
         </div>
+
+        <!-- ============================================================ -->
+        <!-- ANNUAL WAIVER -->
+        <!-- ============================================================ -->
+        <div class="bg-white rounded-xl shadow-md p-8 mt-8">
+            <div class="flex items-start justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Annual Liability Waiver</h2>
+                    <p class="text-sm text-gray-500 mt-1">Required once per calendar year before booking sessions</p>
+                </div>
+                {% if current_waiver %}
+                <div class="flex flex-col items-end gap-1">
+                    <span class="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">✓ Signed {{ waiver_year }}</span>
+                    <span class="text-xs text-gray-400">Valid through Dec 31, {{ waiver_year }}</span>
+                </div>
+                {% else %}
+                <span class="px-3 py-1 bg-red-100 text-red-600 text-sm font-bold rounded-full">⚠️ Not Signed</span>
+                {% endif %}
+            </div>
+
+            {% if current_waiver %}
+            <!-- Already signed — show summary -->
+            <div class="p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800">
+                <p><strong>Signed by:</strong> {{ current_waiver.full_name }}</p>
+                <p><strong>Signature:</strong> <em>{{ current_waiver.signature_text }}</em></p>
+                {% if current_waiver.guardian_name %}<p><strong>Guardian:</strong> {{ current_waiver.guardian_name }}</p>{% endif %}
+                <p><strong>Date:</strong> {{ current_waiver.signed_at|date:"F j, Y g:i A" }}</p>
+                <p><strong>Version:</strong> {{ current_waiver.waiver_version }}</p>
+                <p class="mt-2 text-xs text-green-600">You will be asked to sign again on January 1, {{ waiver_year|add:1 }}.</p>
+            </div>
+            {% else %}
+            <!-- Waiver text -->
+            <div class="border border-gray-200 rounded-xl p-5 bg-gray-50 max-h-72 overflow-y-auto text-sm text-gray-700 leading-relaxed mb-6 font-mono">
+                <p class="font-black text-gray-900 text-base mb-3 not-italic font-sans">WAIVER AND RELEASE OF LIABILITY<br>ATLETAS PERFORMANCE CENTER</p>
+                <p class="mb-3">In consideration for participating in training, sports performance, fitness activities, or any event held at Atletas Performance Center ("Facility"), I, the undersigned, hereby agree to the following:</p>
+                <p class="font-bold mb-1">1. ASSUMPTION OF RISK</p>
+                <p class="mb-3">I understand that participation in athletic training, fitness activities, and use of equipment involves significant risks, including but not limited to physical injury, disability, accidents, property damage, or death. I acknowledge that these risks may be caused by my actions or inactions, the actions or inactions of others, the condition of the facility, equipment used, or the negligence of Atletas Performance Center, its owners, coaches, employees, volunteers, and representatives ("RELEASEES").<br><strong>I VOLUNTARILY ASSUME ALL SUCH RISKS, both known and unknown, and take full responsibility for my participation.</strong></p>
+                <p class="font-bold mb-1">2. RELEASE OF LIABILITY</p>
+                <p class="mb-3">To the fullest extent permitted by law, I hereby RELEASE, WAIVE, AND DISCHARGE Atletas Performance Center and all RELEASEES from any and all liability, claims, demands, losses, or damages arising from or related to my participation in activities at the Facility, whether caused by negligence or otherwise.</p>
+                <p class="font-bold mb-1">3. INDEMNIFICATION</p>
+                <p class="mb-3">I agree to INDEMNIFY AND HOLD HARMLESS Atletas Performance Center and RELEASEES from any claims, damages, costs, or expenses (including attorney fees) resulting from my participation or the participation of my child.</p>
+                <p class="font-bold mb-1">4. MEDICAL RESPONSIBILITY</p>
+                <p class="mb-3">I understand that Atletas Performance Center does not provide medical insurance and that I am responsible for my own health and accident coverage. I authorize first aid and emergency medical treatment if deemed necessary.</p>
+                <p class="font-bold mb-1">5. RULES & CONDUCT</p>
+                <p class="mb-3">I agree to follow all facility rules, instructions, and safety guidelines. Failure to follow rules may result in removal from activities without refund.</p>
+                <p class="font-bold mb-1">6. PHOTO/VIDEO CONSENT (Optional)</p>
+                <p class="mb-3">I grant permission for Atletas Performance Center to use photos or videos taken during sessions for training, social media, or promotional purposes. (If you do not agree, please leave unchecked below.)</p>
+                <p class="font-bold mb-1">7. LEGAL AGE & UNDERSTANDING</p>
+                <p>I certify that I am at least eighteen (18) years old, fully competent, and voluntarily signing this Waiver & Release. If signing on behalf of a minor, I acknowledge that I am the legal parent/guardian and accept full responsibility for the minor's participation.</p>
+            </div>
+
+            <!-- Signature form -->
+            <form method="post" action="{% url 'clients:sign_waiver' %}">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Participant Full Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="waiver_full_name" required placeholder="First and last name"
+                               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            Typed Signature <span class="text-red-500">*</span>
+                            <span class="text-xs font-normal text-gray-400 ml-1">(type your full legal name as signature)</span>
+                        </label>
+                        <input type="text" name="waiver_signature" required placeholder="Sign here by typing your full name"
+                               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent italic">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            Parent/Guardian Name
+                            <span class="text-xs font-normal text-gray-400 ml-1">(required if signing for a minor)</span>
+                        </label>
+                        <input type="text" name="guardian_name" placeholder="Guardian full name (if applicable)"
+                               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" name="photo_video_consent"
+                               class="mt-1 w-5 h-5 text-secondary border-gray-300 rounded focus:ring-secondary">
+                        <span class="text-sm text-gray-700">I consent to photo/video use for training, social media, or promotional purposes <span class="text-gray-400">(optional)</span></span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" name="agree_terms" id="agree_terms" required
+                               class="mt-1 w-5 h-5 text-secondary border-gray-300 rounded focus:ring-secondary">
+                        <span class="text-sm text-gray-700 font-semibold">I have read and agree to the Waiver and Release of Liability above. I understand this is a legally binding document. <span class="text-red-500">*</span></span>
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <button type="submit"
+                            class="px-8 py-3 bg-primary text-secondary rounded-lg font-black hover:bg-gray-800 transition">
+                        Sign Waiver — {{ waiver_year }}
+                    </button>
+                    <p class="text-xs text-gray-400">Your IP address and timestamp will be recorded for liability purposes.</p>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
     </div>
 </body>
 </html>
