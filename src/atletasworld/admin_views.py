@@ -1013,9 +1013,9 @@ def owner_clients(request):
     if client_group:
         client_user_ids = client_group.user_set.values_list('id', flat=True)
         clients = Client.objects.filter(user_id__in=client_user_ids).select_related('user').annotate(
-            player_count=Count('players'),
-            active_packages=Count('packages', filter=Q(packages__status='active')),
-            total_bookings=Count('bookings')
+            player_count=Count('players', distinct=True),
+            active_packages=Count('packages', filter=Q(packages__status='active'), distinct=True),
+            total_bookings=Count('bookings', distinct=True)
         ).order_by('-created_at')[:100]
     else:
         clients = Client.objects.none()
