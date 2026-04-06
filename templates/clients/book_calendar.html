@@ -30,9 +30,11 @@
         /* Contain pill rows within viewport */
         #filter-bar { overflow-x: hidden; }
         #filter-bar .max-w-7xl { overflow-x: hidden; }
+        /* Session type pills: wrap to multiple lines */
+        #type-pills { display:flex; flex-wrap:wrap; gap:.375rem; min-width:0; max-width:100%; }
+        /* Date pills: scroll on mobile, wrap on desktop */
         #filter-bar .flex.overflow-x-auto,
-        #filter-bar [class*="filter-scroll"],
-        #type-pills { overflow-x: auto; min-width: 0; max-width: 100%; }
+        #filter-bar [class*="filter-scroll"] { overflow-x: auto; min-width: 0; max-width: 100%; }
         @keyframes spin { to { transform:rotate(360deg); } }
         .spinner { display:inline-block; width:2rem; height:2rem; border:3px solid #e5e7eb; border-top-color:#D7FF00; border-radius:50%; animation:spin .7s linear infinite; }
         /* Filter bar */
@@ -182,7 +184,7 @@
                 <span class="filter-label">Session Type</span>
                 <span class="tip" data-tip="Filter by the type of training offered — e.g. Spring Program, Private Training. Tap once to select, tap again to clear.">ⓘ</span>
             </div>
-            <div id="type-pills" class="flex gap-1.5 overflow-x-auto filter-scroll flex-nowrap pb-0.5 w-full"></div>
+            <div id="type-pills" class="w-full"></div>
         </div>
 
         <!-- Date Range -->
@@ -581,8 +583,43 @@ function closeSuccess(){
 }
 
 function renderTypePills(){
-    let html=`<button data-pill="" onclick="toggleTypeFilter('')" class="f-pill f-pill-on shrink-0 whitespace-nowrap">All</button>`;
-    for(const st of sessionTypes) html+=`<button data-pill="${st.id}" onclick="toggleTypeFilter('${st.id}')" class="f-pill shrink-0 whitespace-nowrap">${st.name}</button>`;
+    // Group session types by category prefix for cleaner visual separation
+    const groups = {
+        'Training':  [],
+        'Programs':  [],
+        'APC Select Tryout': [],
+        'Serie A':   [],
+        'Other':     [],
+    };
+    for(const st of sessionTypes){
+        const n = st.name;
+        if(n.startsWith('APC Select Tryout'))       groups['APC Select Tryout'].push(st);
+        else if(n.startsWith('Serie A'))             groups['Serie A'].push(st);
+        else if(n.toLowerCase().includes('program')) groups['Programs'].push(st);
+        else if(['Private Training','Pick-Up Game','Semi-Private','Group Session','Camp','Clinic','Team Training','Seasonal'].some(k=>n.includes(k))) groups['Training'].push(st);
+        else                                         groups['Other'].push(st);
+    }
+
+    let html = `<button data-pill="" onclick="toggleTypeFilter('')" class="f-pill f-pill-on whitespace-nowrap">All</button>`;
+
+    // Render groups: separator dot between non-empty groups
+    let first = true;
+    for(const [label, types] of Object.entries(groups)){
+        if(!types.length) continue;
+        if(!first) html += `<span class="self-center text-gray-300 text-xs select-none">·</span>`;
+        first = false;
+        for(const st of types){
+            // Shorten long names: strip common prefix within group
+            let display = st.name
+                .replace('APC Select Tryout — ', '')
+                .replace('Serie A Elite Scouts — ', 'Serie A ')
+                .replace(' HS/College', ' HS')
+                .replace('Summer Program', 'Summer')
+                .replace('Spring Program', 'Spring');
+            html += `<button data-pill="${st.id}" title="${st.name}" onclick="toggleTypeFilter('${st.id}')" class="f-pill whitespace-nowrap">${display}</button>`;
+        }
+    }
+
     document.getElementById('type-pills').innerHTML=html;
 }
 function toggleTypeFilter(id){
