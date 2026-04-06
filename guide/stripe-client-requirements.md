@@ -180,6 +180,49 @@ Send us the following when ready:
 
 ---
 
+## Where to Copy the Keys
+
+Once you have your keys, send them securely to the developer **or** follow these steps yourself if you have server access:
+
+### 1. SSH into the server
+```bash
+ssh -i ~/Documents/certs/atletasworld-prod.pem ubuntu@3.135.174.227
+```
+
+### 2. Open the environment file
+```bash
+sudo nano /var/www/atletasworld/.env
+```
+
+### 3. Add these 3 lines (replace with your actual values)
+```
+STRIPE_PUBLIC_KEY=pk_live_...
+STRIPE_SECRET_KEY=rk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+> Get the `whsec_...` from Stripe Dashboard → Developers → Webhooks → click your endpoint → Signing secret → Reveal
+
+### 4. Save and exit
+`Ctrl+O` → Enter → `Ctrl+X`
+
+### 5. Restart the app
+```bash
+sudo supervisorctl restart atletasworld
+```
+
+### 6. Register the Webhook Endpoint in Stripe (do this before step 3)
+1. Stripe Dashboard → **Developers** → **Webhooks** → **Add endpoint**
+2. URL: `https://atletasperformancecenter.com/payments/webhook/`
+3. Events to select:
+   - `payment_intent.succeeded`
+   - `payment_intent.payment_failed`
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+4. Click **Add endpoint** → click the new endpoint → **Signing secret** → **Reveal** → copy the `whsec_...`
+
+---
+
 ## Timeline
 
 Once we have everything above:
