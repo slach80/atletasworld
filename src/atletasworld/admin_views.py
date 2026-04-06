@@ -2128,7 +2128,7 @@ def owner_contacts(request):
     source  = request.GET.get('source', '')
 
     qs = ContactParent.objects.prefetch_related('players').annotate(
-        player_count=Count('players', distinct=True)
+        annotated_player_count=Count('players', distinct=True)
     ).order_by('last_name', 'first_name', 'email')
 
     if search:

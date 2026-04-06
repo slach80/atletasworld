@@ -101,8 +101,8 @@
                 <!-- Right: player count + chevron -->
                 <div class="flex items-center gap-3 shrink-0 ml-3">
                     <span class="text-xs text-gray-500">
-                        <strong class="text-gray-800">{{ contact.player_count }}</strong>
-                        player{{ contact.player_count|pluralize }}
+                        <strong class="text-gray-800">{{ contact.annotated_player_count }}</strong>
+                        player{{ contact.annotated_player_count|pluralize }}
                     </span>
                     {% if contact.is_linked %}
                     <a href="{% url 'owner_client_detail' contact.client.pk %}" onclick="event.stopPropagation()"
