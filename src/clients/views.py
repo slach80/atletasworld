@@ -138,10 +138,37 @@ def profile(request):
         booking_prefs.auto_filter = request.POST.get('auto_filter') == 'on'
         booking_prefs.save()
 
+        # Athlete (18+) — create/update their self-player record
+        if client.client_type == 'athlete':
+            birth_year_str = request.POST.get('athlete_birth_year', '').strip()
+            if birth_year_str.isdigit():
+                self_player, _ = Player.objects.get_or_create(
+                    client=client,
+                    is_self=True,
+                    defaults={
+                        'first_name': request.user.first_name or request.user.username,
+                        'last_name': request.user.last_name,
+                        'birth_year': int(birth_year_str),
+                        'gender': request.POST.get('athlete_gender', 'O'),
+                    }
+                )
+                self_player.first_name  = request.user.first_name or request.user.username
+                self_player.last_name   = request.user.last_name
+                self_player.birth_year  = int(birth_year_str)
+                self_player.gender      = request.POST.get('athlete_gender', self_player.gender)
+                self_player.skill_level = request.POST.get('athlete_skill_level', self_player.skill_level)
+                self_player.primary_position = request.POST.get('athlete_primary_position', self_player.primary_position)
+                self_player.soccer_club = request.POST.get('athlete_soccer_club', self_player.soccer_club)
+                self_player.team_name   = request.POST.get('athlete_team_name', self_player.team_name)
+                self_player.notes       = request.POST.get('athlete_notes', self_player.notes)
+                self_player.is_active   = True
+                self_player.save()
+
         messages.success(request, 'Profile updated successfully!')
         return redirect('clients:profile')
 
     current_waiver = get_current_waiver(client)
+    athlete_player = client.players.filter(is_self=True, is_active=True).first() if client.client_type == 'athlete' else None
     context = {
         'client': client,
         'booking_prefs': booking_prefs,
@@ -152,6 +179,10 @@ def profile(request):
         'current_waiver': current_waiver,
         'waiver_version': ClientWaiver.WAIVER_VERSION,
         'waiver_year': timezone.now().year,
+        'athlete_player': athlete_player,
+        'skill_levels': Player.SKILL_LEVEL_CHOICES,
+        'positions': Player.POSITION_CHOICES,
+        'genders': Player.GENDER_CHOICES,
     }
     return render(request, 'clients/profile.html', context)
 
@@ -643,9 +674,15 @@ def booking_page(request):
     """Main booking page with package info and session selection."""
     client, created = Client.objects.get_or_create(user=request.user)
 
-    # Waiver gate — must be signed before booking
+    # Waiver gate — must be signed before booking (exempt: staff, owners, coaches)
+    is_exempt = (
+        request.user.is_staff
+        or request.user.is_superuser
+        or request.user.groups.filter(name__in=['Owner', 'Coach']).exists()
+        or hasattr(request.user, 'coach')
+    )
     current_waiver = get_current_waiver(client)
-    if not current_waiver:
+    if not is_exempt and not current_waiver:
         messages.warning(request, 'Please sign the annual waiver before booking a session.')
         return redirect('clients:profile')
 
@@ -789,7 +826,13 @@ def reserve_session(request):
     """Reserve a session slot (temporary hold for 10 minutes)."""
     client, created = Client.objects.get_or_create(user=request.user)
 
-    if not get_current_waiver(client):
+    is_exempt = (
+        request.user.is_staff
+        or request.user.is_superuser
+        or request.user.groups.filter(name__in=['Owner', 'Coach']).exists()
+        or hasattr(request.user, 'coach')
+    )
+    if not is_exempt and not get_current_waiver(client):
         return JsonResponse({'success': False, 'error': 'Annual waiver required. Please sign it in your Profile before booking.'})
 
     block_id = request.POST.get('block_id')

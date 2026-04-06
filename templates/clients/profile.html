@@ -161,6 +161,7 @@
                     </select>
                     <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 space-y-1">
                         <p><strong>Parent/Guardian</strong> — booking training sessions for a player.</p>
+                        <p><strong>Athlete (18+)</strong> — you are the player. Fill in your athlete profile below to book sessions for yourself.</p>
                         <p><strong>Team Coach</strong> — manages a team; unlocks Team Training packages on the booking page.</p>
                         <p><strong>Facility Renter</strong> — renting a field, room, or gym space. Access the Field Rental section from your dashboard.</p>
                     </div>
@@ -196,6 +197,71 @@
                                    class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
                                    placeholder="(555) 987-6543">
                         </div>
+                    </div>
+                </div>
+
+                <!-- Athlete Profile (shown only for Athlete 18+ type) -->
+                <div id="athlete-profile-section" class="border-t pt-6 {% if client.client_type != 'athlete' %}hidden{% endif %}">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-1">Athlete Profile</h2>
+                    <p class="text-sm text-gray-400 mb-5">Your personal athlete information — used to match you with the right sessions and coaches.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Birth Year <span class="text-red-500">*</span></label>
+                            <input type="number" name="athlete_birth_year"
+                                   value="{{ athlete_player.birth_year|default:'' }}"
+                                   min="1980" max="2010" placeholder="e.g. 2000"
+                                   class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                            <select name="athlete_gender"
+                                    class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                {% for value, label in genders %}
+                                <option value="{{ value }}" {% if athlete_player.gender == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Skill Level</label>
+                            <select name="athlete_skill_level"
+                                    class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                {% for value, label in skill_levels %}
+                                <option value="{{ value }}" {% if athlete_player.skill_level == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Primary Position</label>
+                            <select name="athlete_primary_position"
+                                    class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                <option value="">-- Select Position --</option>
+                                {% for value, label in positions %}
+                                <option value="{{ value }}" {% if athlete_player.primary_position == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Current Soccer Club</label>
+                            <input type="text" name="athlete_soccer_club"
+                                   value="{{ athlete_player.soccer_club|default:'' }}"
+                                   placeholder="e.g. FC United"
+                                   class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Team Name</label>
+                            <input type="text" name="athlete_team_name"
+                                   value="{{ athlete_player.team_name|default:'' }}"
+                                   placeholder="e.g. U23 Men's Select"
+                                   class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Notes for Coaches</label>
+                        <textarea name="athlete_notes" rows="3"
+                                  class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                                  placeholder="Any injuries, goals, or notes for your coaches...">{{ athlete_player.notes|default:'' }}</textarea>
                     </div>
                 </div>
 
@@ -373,5 +439,21 @@
         </div>
 
     </div>
+<script>
+(function(){
+    var sel = document.querySelector('select[name="client_type"]');
+    var section = document.getElementById('athlete-profile-section');
+    if (!sel || !section) return;
+    function toggle() {
+        if (sel.value === 'athlete') {
+            section.classList.remove('hidden');
+        } else {
+            section.classList.add('hidden');
+        }
+    }
+    sel.addEventListener('change', toggle);
+    toggle();
+})();
+</script>
 </body>
 </html>

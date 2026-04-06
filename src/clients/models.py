@@ -125,6 +125,8 @@ class Player(models.Model):
     primary_position = models.CharField(max_length=20, choices=POSITION_CHOICES, blank=True)
     notes = models.TextField(blank=True, help_text="Any special needs or notes")
     photo = models.ImageField(upload_to='players/', blank=True, null=True)
+    is_self = models.BooleanField(default=False,
+                                  help_text='True when this Player record represents the client themselves (Athlete 18+ account type)')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
