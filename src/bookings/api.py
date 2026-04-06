@@ -23,6 +23,32 @@ SCHEDULE_BLOCK_CALENDARS = {
 }
 
 
+SELECT_PICKUP_PRICE = Decimal('5.00')
+SELECT_DISCOUNT_FORMATS = {'camp', 'clinic'}   # 10% off
+SELECT_PICKUP_FORMATS = {'pickup'}              # flat $5
+
+
+def apply_select_discount(price, session_format):
+    """Return discounted price for APC Select members, or None if no discount applies."""
+    if session_format in SELECT_PICKUP_FORMATS:
+        return SELECT_PICKUP_PRICE
+    if session_format in SELECT_DISCOUNT_FORMATS:
+        return (price * Decimal('0.90')).quantize(Decimal('0.01'))
+    return None
+
+
+def get_client_select_membership(user):
+    """Return True if user has an active APC Select ClientPackage."""
+    if not user.is_authenticated or not hasattr(user, 'client'):
+        return False
+    today = timezone.now().date()
+    return user.client.packages.filter(
+        package__package_type='select',
+        status='active',
+        expiry_date__gte=today,
+    ).exists()
+
+
 def is_team_coach(user):
     """Team coaches/managers see team session types; regular parents don't."""
     if hasattr(user, 'coach'):
@@ -80,6 +106,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
     def list(self, request):
         """Get availability slots for calendar display."""
         queryset = self.get_queryset()
+        is_select_member = get_client_select_membership(request.user)
 
         # Date range filtering
         start_date = request.query_params.get('start')
@@ -115,7 +142,13 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'status': slot.status,
                     'spots_remaining': slot.spots_remaining,
                     'max_bookings': slot.max_bookings,
-                    'price': str(slot.effective_price),
+                    'price': str(
+                        apply_select_discount(slot.effective_price, slot.session_type.session_format)
+                        if is_select_member else slot.effective_price
+                    ),
+                    'select_discount': is_select_member and apply_select_discount(
+                        slot.effective_price, slot.session_type.session_format) is not None,
+                    'session_format': slot.session_type.session_format,
                     'duration': slot.session_type.duration_minutes,
                 }
             })
@@ -142,21 +175,29 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                 if not non_team:
                     continue  # all types are team-only — hide from regular clients
             if catalog_types:
-                name       = ' / '.join(st.name for st in catalog_types)
-                color      = catalog_types[0].color if catalog_types[0].color else cal['color']
-                # Use drop-in price for the slot card display (clients without package pay this)
-                price      = str(block.price_override or catalog_types[0].get_drop_in_price())
-                dur        = catalog_types[0].duration_minutes
-                # Use first catalog type's ID as calendarId so session type filter works
+                name        = ' / '.join(st.name for st in catalog_types)
+                color       = catalog_types[0].color if catalog_types[0].color else cal['color']
+                base_price  = block.price_override or catalog_types[0].get_drop_in_price()
+                sf          = catalog_types[0].session_format
+                dur         = catalog_types[0].duration_minutes
                 calendar_id = str(catalog_types[0].id)
                 type_ids    = [str(st.id) for st in catalog_types]
             else:
                 name        = cal['name']
                 color       = cal['color']
-                price       = str(block.price_override) if block.price_override else '0'
+                base_price  = block.price_override if block.price_override else Decimal('0')
+                sf          = block.session_type  # session_type field on ScheduleBlock is a string
                 dur         = block.duration_minutes
                 calendar_id = cal['id']
                 type_ids    = []
+
+            if is_select_member:
+                discounted = apply_select_discount(base_price, sf)
+                display_price = discounted if discounted is not None else base_price
+                has_discount = discounted is not None
+            else:
+                display_price = base_price
+                has_discount = False
 
             events.append({
                 'id': f"sb_{block.id}",
@@ -178,7 +219,9 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'status': block.status,
                     'spots_remaining': block.spots_remaining,
                     'max_bookings': block.max_participants,
-                    'price': price,
+                    'price': str(display_price),
+                    'select_discount': has_discount,
+                    'session_format': sf,
                     'duration': dur,
                 }
             })
@@ -449,12 +492,18 @@ class BookingViewSet(viewsets.ModelViewSet):
             # Determine amount due (from slot price or session type)
             try:
                 if slot_type == 'schedule_block':
-                    # Use drop-in price for non-package clients
                     st_drop_in = catalog_types[0].get_drop_in_price() if catalog_types else Decimal('0')
-                    amount_due = block.price_override if block.price_override else st_drop_in
+                    base_amount = block.price_override if block.price_override else st_drop_in
+                    sf = catalog_types[0].session_format if catalog_types else block.session_type
                 else:
-                    # AvailabilitySlot — use drop-in price
-                    amount_due = block.price_override if block.price_override else slot.session_type.get_drop_in_price()
+                    base_amount = slot.session_type.get_drop_in_price()
+                    sf = slot.session_type.session_format
+                # Apply APC Select discount if applicable
+                if get_client_select_membership(request.user):
+                    discounted = apply_select_discount(base_amount, sf)
+                    amount_due = discounted if discounted is not None else base_amount
+                else:
+                    amount_due = base_amount
             except Exception:
                 amount_due = Decimal('0')
 

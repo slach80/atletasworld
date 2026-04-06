@@ -27,6 +27,7 @@ from .admin_views import (
     owner_services, owner_service_edit,
     owner_finances,
     owner_payments, owner_issue_refund,
+    owner_credits,
 )
 
 
@@ -134,6 +135,7 @@ urlpatterns = [
     path('owner-portal/finances/', owner_finances, name='owner_finances'),
     path('owner-portal/payments/', owner_payments, name='owner_payments'),
     path('owner-portal/payments/<int:payment_id>/refund/', owner_issue_refund, name='owner_issue_refund'),
+    path('owner-portal/credits/', owner_credits, name='owner_credits'),
 
     # Owner - Service Catalog
     path('owner-portal/services/', owner_services, name='owner_services'),

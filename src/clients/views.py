@@ -657,6 +657,17 @@ def booking_page(request):
         status__in=['pending', 'confirmed']
     ).select_related('player')
 
+    # APC Select membership check — for discount display
+    has_select_membership = client.packages.filter(
+        package__package_type='select',
+        status='active',
+        expiry_date__gte=today,
+    ).exists()
+    select_credit_balance = sum(
+        c.amount for c in client.credits.filter(status='available')
+        if c.is_usable
+    ) if has_select_membership else 0
+
     # Get favorite coach IDs for template
     favorite_coach_ids = list(booking_prefs.favorite_coaches.values_list('id', flat=True))
 
@@ -692,6 +703,8 @@ def booking_page(request):
         'sessions_remaining': active_package.sessions_remaining if active_package else 0,
         'booking_prefs': booking_prefs,
         'favorite_coach_ids': favorite_coach_ids,
+        'has_select_membership': has_select_membership,
+        'select_credit_balance': select_credit_balance,
         'available_field_rentals': FieldRentalSlot.objects.filter(
             date__gte=today, date__lte=today + timedelta(days=30), status='available'
         ).order_by('date', 'start_time'),

@@ -242,6 +242,15 @@
 
 <!-- Main -->
 <div class="max-w-7xl mx-auto px-4 pt-4 pb-10">
+    {% if has_select_membership %}
+    <div class="mb-4 flex items-start justify-between p-4 bg-secondary/10 border border-secondary/40 rounded-xl">
+        <div>
+            <p class="text-sm font-bold text-gray-800">⭐ APC Select Member</p>
+            <p class="text-xs text-gray-600 mt-0.5">Pick-up sessions: <strong>$5</strong> · Camps &amp; Clinics: <strong>10% off</strong> · Monthly credit: <strong>${{ select_credit_balance|floatformat:2 }} available</strong></p>
+        </div>
+        <a href="{% url 'clients:packages' %}" class="shrink-0 ml-3 px-3 py-1.5 bg-secondary text-gray-900 rounded-full text-xs font-bold hover:bg-[#b8e000] transition">Use Credit</a>
+    </div>
+    {% endif %}
     {% if not has_package %}
     <div class="mb-4 flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
         <div>
@@ -370,7 +379,7 @@ async function loadSlots(){
         for(const ev of events){
             if((ev.raw?.spots_remaining||0)<=0) continue;
             const k=`${ev.raw.slot_type}_${ev.raw.slot_id}`;
-            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
+            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,select_discount:ev.raw.select_discount||false,session_format:ev.raw.session_format||'',duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
         }
         document.getElementById('slots-loading').classList.add('hidden');
         document.getElementById('slots-container').classList.remove('hidden');
@@ -408,6 +417,10 @@ function renderSlots(){
             const booked=isBooked(s);
             const time=fmtTime(s.start);
             const low=s.spots_remaining<=3;
+            const price=parseFloat(s.price||0);
+            const priceLabel=price>0?`$${price.toFixed(2)}`:'Free';
+            const discountBadge=s.select_discount?`<span class="ml-1 px-1.5 py-0.5 bg-secondary/20 text-gray-700 text-[10px] font-bold rounded">⭐ SELECT</span>`:'';
+            const priceLine=`<span class="text-[11px] ${s.select_discount?'text-green-600 font-bold':'text-gray-400'}">${priceLabel}${discountBadge}</span>`;
             let btn;
             if(booked) btn=`<span class="shrink-0 px-3 py-1.5 text-xs text-gray-300 border border-gray-200 rounded-full">Booked</span>`;
             else if(inCart) btn=`<button onclick="removeFromCartByKey('${s.key}')" class="shrink-0 px-3 py-1.5 text-xs rounded-full font-semibold bg-secondary/20 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-secondary/40 transition" title="Remove">✓ Added</button>`;
@@ -419,6 +432,7 @@ function renderSlots(){
                         <p class="font-semibold text-sm">${time} · ${s.duration} min</p>
                         <p class="text-xs text-gray-500 truncate">${s.session_type_name}</p>
                         <p class="text-xs mt-0.5 ${low?'text-orange-500 font-semibold':'text-gray-400'}">${s.coach_name} · ${s.spots_remaining} spot${s.spots_remaining!==1?'s':''}</p>
+                        ${priceLine}
                     </div>
                 </div>${btn}</div>`;
         }

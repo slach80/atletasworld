@@ -173,6 +173,7 @@ class Package(models.Model):
         ('unlimited', 'Unlimited - 12 weeks'),
         ('special', 'Special Event Package'),
         ('team', 'Team Training Package'),
+        ('select', 'APC Select Membership'),
     ]
 
     name = models.CharField(max_length=100)
@@ -896,4 +897,68 @@ class FieldRentalSlot(models.Model):
         indexes = [
             models.Index(fields=['date', 'status']),
             models.Index(fields=['status', 'date']),
+        ]
+
+
+class ClientCredit(models.Model):
+    """
+    Tracks monetary credits for clients.
+    APC Select members receive $40/month auto-credited toward APC Training packages.
+    Owner can also grant manual credits.
+    """
+    CREDIT_TYPE_CHOICES = [
+        ('select_monthly', 'APC Select Monthly Credit'),
+        ('manual', 'Manual Grant'),
+        ('referral', 'Referral Credit'),
+    ]
+    STATUS_CHOICES = [
+        ('available', 'Available'),
+        ('applied', 'Applied'),
+        ('expired', 'Expired'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='credits')
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    credit_type = models.CharField(max_length=20, choices=CREDIT_TYPE_CHOICES, default='manual')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='available')
+
+    # For select_monthly credits — which Select ClientPackage generated this
+    source_package = models.ForeignKey(
+        'ClientPackage', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='granted_credits',
+        help_text='The APC Select ClientPackage that generated this credit'
+    )
+    # What package purchase this was applied toward
+    applied_to = models.ForeignKey(
+        'ClientPackage', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='applied_credits',
+        help_text='The ClientPackage this credit was applied against'
+    )
+    applied_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateField(null=True, blank=True, help_text='Leave blank for no expiry')
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='granted_credits'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.client} — ${self.amount} ({self.get_credit_type_display()}) [{self.status}]"
+
+    @property
+    def is_usable(self):
+        from django.utils import timezone
+        if self.status != 'available':
+            return False
+        if self.expires_at and self.expires_at < timezone.now().date():
+            return False
+        return True
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['client', 'status']),
+            models.Index(fields=['status', 'expires_at']),
         ]

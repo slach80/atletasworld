@@ -1,0 +1,193 @@
+{% extends 'owner/base.html' %}
+{% block title %}Credits Management{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-start mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Credits Management</h1>
+        <p class="text-gray-500">Manage APC Select monthly credits and manual grants. Active credits reduce the cost of APC Training package purchases.</p>
+    </div>
+</div>
+
+<!-- APC Select Members Summary -->
+{% if select_members %}
+<div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">⭐ Active APC Select Members</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Client</th>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Package</th>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Expires</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Available Credit</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for cp in select_members %}
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 font-semibold text-gray-800">
+                        {{ cp.client.user.get_full_name|default:cp.client.user.username }}
+                        <div class="text-xs text-gray-400">{{ cp.client.user.email }}</div>
+                    </td>
+                    <td class="py-3 px-4 text-gray-600">{{ cp.package.name }}</td>
+                    <td class="py-3 px-4 text-gray-600">{{ cp.expiry_date|date:"M d, Y" }}</td>
+                    <td class="py-3 px-4 text-right">
+                        {% with bal=client_balances|default_if_none:0 %}
+                        {% with client_bal=client_balances %}
+                        <span class="font-bold {% if client_balances %}text-green-600{% else %}text-gray-400{% endif %}">
+                            ${{ client_balances|default:"0" }}
+                        </span>
+                        {% endwith %}{% endwith %}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="openGrantForm('{{ cp.client.id }}', '{{ cp.client.user.get_full_name|default:cp.client.user.username }}')"
+                                class="px-3 py-1 text-xs bg-owner text-white rounded hover:bg-indigo-600 transition">
+                            + Grant Credit
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-sm text-blue-700">
+    No active APC Select members yet. Create an <a href="{% url 'owner_packages' %}" class="underline font-semibold">APC Select Membership package</a> and assign it to clients.
+</div>
+{% endif %}
+
+<!-- Grant Credit Form -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl shadow-md p-6" id="grant-form">
+            <h2 class="text-lg font-bold text-gray-800 mb-4">Grant Credit</h2>
+            <form method="post" action="{% url 'owner_credits' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="grant">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client *</label>
+                        <select name="client_id" id="grant-client-select" required
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+                            <option value="">— Select client —</option>
+                            {% for c in all_clients %}
+                            <option value="{{ c.id }}">{{ c.user.get_full_name|default:c.user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount ($) *</label>
+                        <input type="number" name="amount" step="0.01" min="0.01" placeholder="40.00" required
+                               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select name="credit_type" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+                            {% for value, label in credit_type_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Expires (optional)</label>
+                        <input type="date" name="expires_at"
+                               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" rows="2" placeholder="e.g. April APC Select credit"
+                                  class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition text-sm">
+                        Grant Credit
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Discount Rules Reference -->
+        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 mt-4 text-xs text-gray-600">
+            <p class="font-bold text-gray-700 mb-2">APC Select Auto-Discounts</p>
+            <ul class="space-y-1">
+                <li>⚽ <strong>Pick-Up sessions:</strong> flat $5 (auto-applied)</li>
+                <li>🏕️ <strong>Camps &amp; Clinics:</strong> 10% off (auto-applied)</li>
+                <li>💳 <strong>Monthly credit:</strong> $40 toward any APC Training package (grant manually below)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Credits History -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-800">Credit History</h2>
+                <span class="text-xs text-gray-400">Last 200 records</span>
+            </div>
+            {% if all_credits %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Client</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Type</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Expires</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Created</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for credit in all_credits %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <span class="font-medium text-gray-800">{{ credit.client.user.get_full_name|default:credit.client.user.username }}</span>
+                                {% if credit.notes %}<div class="text-xs text-gray-400 truncate max-w-[180px]">{{ credit.notes }}</div>{% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-600">{{ credit.get_credit_type_display }}</td>
+                            <td class="py-3 px-4 text-right font-bold text-gray-800">${{ credit.amount }}</td>
+                            <td class="py-3 px-4">
+                                {% if credit.status == 'available' %}
+                                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">Available</span>
+                                {% elif credit.status == 'applied' %}
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">Applied</span>
+                                {% elif credit.status == 'expired' %}
+                                <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">Expired</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">{{ credit.status|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-500 text-xs">{{ credit.expires_at|date:"M d, Y"|default:"—" }}</td>
+                            <td class="py-3 px-4 text-gray-500 text-xs">{{ credit.created_at|date:"M d, Y" }}</td>
+                            <td class="py-3 px-4">
+                                {% if credit.status == 'available' %}
+                                <form method="post" action="{% url 'owner_credits' %}" onsubmit="return confirm('Cancel this credit?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="cancel">
+                                    <input type="hidden" name="credit_id" value="{{ credit.id }}">
+                                    <button type="submit" class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition">Cancel</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="py-12 text-center text-gray-400">No credits on record yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function openGrantForm(clientId, clientName) {
+    document.getElementById('grant-client-select').value = clientId;
+    document.getElementById('grant-form').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

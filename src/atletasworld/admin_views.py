@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from coaches.models import Coach, ScheduleBlock, PlayerAssessment
 from bookings.models import Booking, SessionType
-from clients.models import Client, Player
+from clients.models import Client, Player, ClientCredit, Package, ClientPackage
 from reviews.models import Review
 from django.contrib.auth.models import User
 from django.core.mail import send_mass_mail, send_mail, EmailMessage
@@ -1990,3 +1990,84 @@ def owner_issue_refund(request, payment_id):
         messages.error(request, f'Refund failed: {e.user_message}')
 
     return redirect('owner_payments')
+
+
+# ============================================================================
+# CREDITS MANAGEMENT
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_credits(request):
+    """Manage client credits — view, grant, and apply credits."""
+    from django.utils import timezone as tz
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'grant':
+            client_id = request.POST.get('client_id')
+            amount = request.POST.get('amount', '').strip()
+            credit_type = request.POST.get('credit_type', 'manual')
+            notes = request.POST.get('notes', '')
+            expires_str = request.POST.get('expires_at', '').strip()
+
+            try:
+                client = Client.objects.get(pk=client_id)
+                from decimal import Decimal
+                credit = ClientCredit.objects.create(
+                    client=client,
+                    amount=Decimal(amount),
+                    credit_type=credit_type,
+                    notes=notes,
+                    expires_at=expires_str or None,
+                    created_by=request.user,
+                )
+                messages.success(request, f'${credit.amount} credit granted to {client.user.get_full_name() or client.user.username}.')
+            except Exception as e:
+                messages.error(request, f'Error granting credit: {e}')
+
+        elif action == 'cancel':
+            credit_id = request.POST.get('credit_id')
+            credit = get_object_or_404(ClientCredit, pk=credit_id)
+            if credit.status == 'available':
+                credit.status = 'cancelled'
+                credit.save()
+                messages.success(request, 'Credit cancelled.')
+            else:
+                messages.error(request, 'Only available credits can be cancelled.')
+
+        return redirect('owner_credits')
+
+    # Summary: clients with APC Select packages + credit balances
+    today = tz.now().date()
+    select_members = ClientPackage.objects.filter(
+        package__package_type='select',
+        status='active',
+        expiry_date__gte=today,
+    ).select_related('client__user', 'package').order_by('client__user__first_name')
+
+    # All credits (paginated by most recent)
+    all_credits = ClientCredit.objects.select_related(
+        'client__user', 'source_package__package', 'applied_to__package', 'created_by'
+    ).order_by('-created_at')[:200]
+
+    # Available credit totals per client
+    client_balances = {}
+    for c in ClientCredit.objects.filter(status='available'):
+        if c.is_usable:
+            client_balances[c.client_id] = client_balances.get(c.client_id, 0) + float(c.amount)
+
+    clients_with_credits = Client.objects.filter(
+        credits__status='available'
+    ).distinct().select_related('user')
+
+    context = {
+        'select_members': select_members,
+        'all_credits': all_credits,
+        'client_balances': client_balances,
+        'clients_with_credits': clients_with_credits,
+        'all_clients': Client.objects.select_related('user').order_by('user__first_name'),
+        'credit_type_choices': ClientCredit.CREDIT_TYPE_CHOICES,
+    }
+    return render(request, 'owner/credits.html', context)

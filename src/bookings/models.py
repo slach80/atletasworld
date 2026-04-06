@@ -17,6 +17,7 @@ class SessionType(models.Model):
         ('camp', 'Camp'),
         ('seasonal', 'Seasonal (Package Pre-paid)'),
         ('pickup', 'Pick Up Game'),
+        ('tryout', 'Tryout'),
     ]
 
     name = models.CharField(max_length=100)
