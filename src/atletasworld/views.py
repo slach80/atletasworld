@@ -57,16 +57,19 @@ def programs_view(request):
     """Special Projects & Events page — APC Select with live tryout spot counts."""
     import datetime
 
+    def _tryout_label(d):
+        return d.strftime('%A, %B %-d')  # e.g. "Thursday, May 21"
+
     TRYOUT_SESSIONS = [
-        # (date, label, location, times_display, session_names, is_outdoor)
-        (datetime.date(2026, 5, 21), 'Thursday, May 21', 'Atletas Performance Center',
-         [('2016s', '6:00 PM'), ('2015s', '7:00 PM'), ('2014s', '8:00 PM')], False),
-        (datetime.date(2026, 5, 22), 'Friday, May 22',   'Atletas Performance Center',
-         [('2016s', '6:00 PM'), ('2015s', '7:00 PM'), ('2014s', '8:00 PM')], False),
-        (datetime.date(2026, 5, 23), 'Saturday, May 23', 'Hocker Grove Middle School',
-         [('All Ages', '9:00 AM – 11:00 AM')], True),
-        (datetime.date(2026, 5, 24), 'Sunday, May 24',   'Hocker Grove Middle School',
-         [('All Ages', '9:00 AM – 11:00 AM')], True),
+        # (date, location, slots, is_outdoor)
+        (datetime.date(2026, 5, 21), 'Atletas Performance Center',
+         [('2016s', '6:00 PM', '18:00'), ('2015s', '7:00 PM', '19:00'), ('2014s', '8:00 PM', '20:00')], False),
+        (datetime.date(2026, 5, 22), 'Atletas Performance Center',
+         [('2016s', '6:00 PM', '18:00'), ('2015s', '7:00 PM', '19:00'), ('2014s', '8:00 PM', '20:00')], False),
+        (datetime.date(2026, 5, 23), 'Hocker Grove Middle School',
+         [('All Ages', '9:00 AM – 11:00 AM', '09:00')], True),
+        (datetime.date(2026, 5, 24), 'Hocker Grove Middle School',
+         [('All Ages', '9:00 AM – 11:00 AM', '09:00')], True),
     ]
 
     # Build a map: (date, start_time) -> {spots_remaining, max_participants, session_type_id}
@@ -86,14 +89,9 @@ def programs_view(request):
 
     # Enrich TRYOUT_SESSIONS with spot data
     sessions_enriched = []
-    for date, label, location, slots, is_outdoor in TRYOUT_SESSIONS:
+    for date, location, slots, is_outdoor in TRYOUT_SESSIONS:
         slots_enriched = []
-        for age_label, time_str in slots:
-            # Map display time back to 24h for lookup
-            time_24 = {
-                '6:00 PM': '18:00', '7:00 PM': '19:00', '8:00 PM': '20:00',
-                '9:00 AM – 11:00 AM': '09:00',
-            }.get(time_str, '00:00')
+        for age_label, time_str, time_24 in slots:
             bdata = block_map.get((date, time_24), {})
             st_id = bdata.get('session_type_id')
             slots_enriched.append({
@@ -105,7 +103,7 @@ def programs_view(request):
             })
         sessions_enriched.append({
             'date': date,
-            'label': label,
+            'label': _tryout_label(date),
             'day_num': date.day,
             'location': location,
             'slots': slots_enriched,
