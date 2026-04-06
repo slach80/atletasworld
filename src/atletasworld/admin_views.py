@@ -2263,3 +2263,14 @@ def owner_contact_edit(request, pk):
         'sex_choices': ContactPlayer.SEX_CHOICES,
     }
     return render(request, 'owner/contact_edit.html', context)
+
+
+# ============================================================================
+# OWNER GUIDE
+# ============================================================================
+
+@login_required
+@user_passes_test(is_owner)
+def owner_guide(request):
+    """Owner how-to guide."""
+    return render(request, 'owner/guide.html')

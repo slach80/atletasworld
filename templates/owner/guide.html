@@ -1,0 +1,337 @@
+{% extends 'owner/base.html' %}
+{% block title %}Owner Guide{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-800">Owner Guide</h1>
+    <p class="text-gray-500 mt-1">How to manage every part of Atletas Performance Center</p>
+</div>
+
+<!-- Quick nav -->
+<div class="flex flex-wrap gap-2 mb-8 text-sm">
+    {% for anchor, label in sections %}
+    <a href="#{{ anchor }}" class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-owner hover:text-owner transition">{{ label }}</a>
+    {% endfor %}
+</div>
+
+{% comment %}Sections are defined inline below{% endcomment %}
+
+<!-- ── PAYMENTS / STRIPE ──────────────────────────────────────── -->
+<section id="payments" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">💳</span>
+            <h2 class="text-lg font-bold text-gray-800">Payments & Stripe</h2>
+            <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">Live ✓</span>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">How clients pay</h3>
+                <p>Clients go to <strong>My Portal → Packages</strong> and click <strong>Purchase</strong>. A payment modal opens with Apple Pay, Google Pay, or card. Once paid, the package activates automatically.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Issuing refunds</h3>
+                <p>Owner Portal → <a href="{% url 'owner_payments' %}" class="text-owner hover:underline">Payments</a> → find the payment → click <strong>Refund</strong>. Full or partial refunds are supported.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Viewing revenue</h3>
+                <p>Owner Portal → <a href="{% url 'owner_finances' %}" class="text-owner hover:underline">Finances</a> shows monthly revenue, YTD totals, pending payments, and rental income.</p>
+            </div>
+            <div class="p-3 bg-blue-50 rounded-lg text-blue-800 text-xs">
+                <strong>Stripe keys:</strong> Stored in <code>/var/www/atletasworld/.env</code> on the server. Never share the secret key (<code>rk_live_...</code>) over email or text.
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── EMAIL NOTIFICATIONS ──────────────────────────────────────── -->
+<section id="email" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">📧</span>
+            <h2 class="text-lg font-bold text-gray-800">Email Notifications</h2>
+            <span class="ml-auto px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">Setup required</span>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Sending a notification blast</h3>
+                <p>Owner Portal → <a href="{% url 'owner_notifications' %}" class="text-owner hover:underline">Notify</a> → choose a recipient group → write subject + message → Send.</p>
+                <ul class="mt-2 space-y-1 ml-4 list-disc text-gray-600">
+                    <li><strong>All Clients</strong> — everyone with an APC account</li>
+                    <li><strong>Unregistered Contacts</strong> — past event attendees who haven't signed up yet</li>
+                    <li><strong>Contacts by Source</strong> — e.g. only APC Summer 2025 attendees</li>
+                    <li><strong>Individual Select</strong> — hand-pick specific people</li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Enabling real email delivery</h3>
+                <p>Email currently prints to the server terminal only. To enable delivery, add these lines to <code>/var/www/atletasworld/.env</code> and restart:</p>
+                <pre class="mt-2 p-3 bg-gray-900 text-green-400 rounded-lg text-xs overflow-x-auto">EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=info@atletasperformancecenter.com
+EMAIL_HOST_PASSWORD=xxxx xxxx xxxx xxxx   ← Google App Password
+PRODUCTION_EMAIL_ENABLED=True</pre>
+                <p class="mt-2 text-xs text-gray-500">Generate an App Password at <strong>myaccount.google.com/security</strong> → App Passwords (requires 2-Step Verification to be ON).</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── CLIENTS & CONTACTS ──────────────────────────────────────── -->
+<section id="clients" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">👥</span>
+            <h2 class="text-lg font-bold text-gray-800">Clients & Contacts</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Registered Clients</h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li>→ <a href="{% url 'owner_clients' %}" class="text-owner hover:underline">Clients</a> — view all accounts, approve/reject coach & renter access</li>
+                        <li>→ <a href="{% url 'owner_players' %}" class="text-owner hover:underline">Players</a> — all registered athletes</li>
+                        <li>→ <a href="{% url 'owner_waivers' %}" class="text-owner hover:underline">Waivers</a> — annual liability waiver status per client</li>
+                    </ul>
+                    <div class="mt-3 p-3 bg-yellow-50 rounded-lg text-yellow-800 text-xs">
+                        Coaches and Facility Renters require manual approval before they can access their features. Check <strong>Clients</strong> for pending approvals.
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Imported Contacts</h3>
+                    <p class="text-gray-600 mb-2">Past event attendees (395 parents, 534 players) imported from program registration forms.</p>
+                    <ul class="space-y-2 text-gray-600">
+                        <li>→ <a href="{% url 'owner_contacts' %}" class="text-owner hover:underline">Contacts</a> — browse, search, edit, filter by source</li>
+                        <li>→ Automatically linked to a client account when they register with the same email</li>
+                        <li>→ Use <a href="{% url 'owner_notifications' %}" class="text-owner hover:underline">Notify</a> → Unregistered Contacts to invite them to create an account</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── PACKAGES & CREDITS ──────────────────────────────────────── -->
+<section id="packages" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">📦</span>
+            <h2 class="text-lg font-bold text-gray-800">Packages & Credits</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Managing packages</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ <a href="{% url 'owner_packages' %}" class="text-owner hover:underline">Packages</a> — create, edit, archive, duplicate</li>
+                        <li>→ Set sessions included, validity weeks, price</li>
+                        <li>→ Mark as <strong>Special Event Package</strong> for time-limited programs (camps, clinics)</li>
+                        <li>→ <strong>APC Select Membership</strong> type grants auto-credits + discounts on booking</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">APC Select Credits</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ <a href="{% url 'owner_credits' %}" class="text-owner hover:underline">Credits</a> — view and grant $40/month credits</li>
+                        <li>→ When a client purchases an APC Select package, 6 × $40 credits are auto-created</li>
+                        <li>→ Pick-up sessions: auto-discounted to $5 for Select members</li>
+                        <li>→ Camps & Clinics: 10% off automatically applied at booking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── SESSIONS & SCHEDULE ──────────────────────────────────────── -->
+<section id="sessions" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">📅</span>
+            <h2 class="text-lg font-bold text-gray-800">Sessions & Schedule</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Session Types (Catalog)</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ <a href="{% url 'owner_session_types' %}" class="text-owner hover:underline">Sessions</a> — define what types of sessions are offered</li>
+                        <li>→ Set name, format, duration, price, drop-in price, max participants</li>
+                        <li>→ Toggle <strong>Show in Events</strong> / <strong>Show in Programs</strong> for homepage display</li>
+                        <li>→ Archive to hide without deleting; Restore to bring back</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Coach Schedule</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ <a href="{% url 'owner_coaches' %}" class="text-owner hover:underline">Coaches</a> → Schedule button — view and manage a coach's availability</li>
+                        <li>→ Each slot is a <strong>ScheduleBlock</strong> — date, time, session type, max participants</li>
+                        <li>→ Clients book directly from these blocks in their portal</li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-2">Bookings</h3>
+                <ul class="space-y-1 text-gray-600">
+                    <li>→ <a href="{% url 'owner_bookings' %}" class="text-owner hover:underline">Bookings</a> — full list of all bookings, filterable by status and date</li>
+                    <li>→ Statuses: Pending → Confirmed → Completed / No Show / Cancelled</li>
+                    <li>→ Clients can cancel up to 24 hours before; after that contact the owner</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── FIELD RENTALS ──────────────────────────────────────── -->
+<section id="rentals" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">🏟️</span>
+            <h2 class="text-lg font-bold text-gray-800">Field Rentals</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Managing rental services</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ <a href="{% url 'owner_services' %}" class="text-owner hover:underline">Services</a> — define rentable spaces (Full Field, Partial Field, Room, Gym)</li>
+                        <li>→ Set price per slot and whether approval is required</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Approving rental requests</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ <a href="{% url 'owner_field_slots' %}" class="text-owner hover:underline">Rentals</a> — see pending requests (badge on nav shows count)</li>
+                        <li>→ Approve or Reject each request — client is notified automatically</li>
+                        <li>→ Create rental slots in advance to make them available for booking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── COACHES ──────────────────────────────────────── -->
+<section id="coaches" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">🏋️</span>
+            <h2 class="text-lg font-bold text-gray-800">Coaches</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <ul class="space-y-2 text-gray-600">
+                <li>→ <a href="{% url 'owner_coaches' %}" class="text-owner hover:underline">Coaches</a> — add, edit, deactivate coaches; view session counts per coach</li>
+                <li>→ Each coach has their own portal at <code>/coach-portal/</code> to manage their schedule, players, and assessments</li>
+                <li>→ Schedule button — view a coach's full calendar and add/edit their availability blocks</li>
+                <li>→ Coach accounts are created here (not via self-signup). Set username + temporary password, then share credentials with the coach</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ── WAIVERS ──────────────────────────────────────── -->
+<section id="waivers" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">📋</span>
+            <h2 class="text-lg font-bold text-gray-800">Waivers</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <ul class="space-y-2 text-gray-600">
+                <li>→ <a href="{% url 'owner_waivers' %}" class="text-owner hover:underline">Waivers</a> — see which clients have signed the annual liability waiver and which haven't</li>
+                <li>→ Clients are required to sign before they can book any session</li>
+                <li>→ Waivers reset on January 1 each year — clients sign again in the new calendar year</li>
+                <li>→ Full audit log: name, typed signature, IP address, date/time for each signature</li>
+                <li>→ Coaches and staff are exempt from the waiver requirement</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ── TEAMS ──────────────────────────────────────── -->
+<section id="teams" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">🏆</span>
+            <h2 class="text-lg font-bold text-gray-800">Teams</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <ul class="space-y-2 text-gray-600">
+                <li>→ <a href="{% url 'owner_teams' %}" class="text-owner hover:underline">Teams</a> — view all teams, their coaches, and player rosters</li>
+                <li>→ Teams are created by Team Coach clients from their portal</li>
+                <li>→ Team Coach accounts need approval — check <a href="{% url 'owner_clients' %}" class="text-owner hover:underline">Clients</a> for pending requests</li>
+                <li>→ Team Training packages unlock the team booking flow for team coaches</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ── SERVER / TECHNICAL ──────────────────────────────────────── -->
+<section id="server" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">⚙️</span>
+            <h2 class="text-lg font-bold text-gray-800">Server & Technical</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Server details</h3>
+                    <ul class="space-y-1 text-gray-600 font-mono text-xs">
+                        <li>IP: 3.135.174.227 (AWS EC2, us-east-2c)</li>
+                        <li>App dir: /var/www/atletasworld/</li>
+                        <li>Env file: /var/www/atletasworld/.env</li>
+                        <li>Logs: /var/log/atletasworld/error.log</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Restarting the app</h3>
+                    <pre class="p-3 bg-gray-900 text-green-400 rounded-lg text-xs">ssh -i ~/certs/atletasworld-prod.pem \
+  ubuntu@3.135.174.227
+sudo supervisorctl restart atletasworld</pre>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-2">Deploying updates</h3>
+                <p class="text-gray-600">Push code to <strong>main</strong> branch on GitHub → GitHub Actions runs tests → automatically deploys to the server. No manual steps needed for code changes.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-2">Key environment variables</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-50"><tr>
+                            <th class="text-left p-2 font-semibold text-gray-600">Variable</th>
+                            <th class="text-left p-2 font-semibold text-gray-600">Purpose</th>
+                        </tr></thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr><td class="p-2 font-mono">STRIPE_PUBLIC_KEY</td><td class="p-2 text-gray-500">Stripe publishable key (client-side)</td></tr>
+                            <tr><td class="p-2 font-mono">STRIPE_SECRET_KEY</td><td class="p-2 text-gray-500">Stripe secret/restricted key (server-side)</td></tr>
+                            <tr><td class="p-2 font-mono">STRIPE_WEBHOOK_SECRET</td><td class="p-2 text-gray-500">Verifies webhook calls from Stripe</td></tr>
+                            <tr><td class="p-2 font-mono">EMAIL_BACKEND</td><td class="p-2 text-gray-500">Switch console → smtp to enable real email</td></tr>
+                            <tr><td class="p-2 font-mono">EMAIL_HOST_PASSWORD</td><td class="p-2 text-gray-500">Google App Password for outgoing email</td></tr>
+                            <tr><td class="p-2 font-mono">TAX_RATE</td><td class="p-2 text-gray-500">0.0–1.0 sales tax rate (e.g. 0.0875)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Inject quick-nav section list
+const sections = [
+    ['payments','💳 Payments'],['email','📧 Email'],['clients','👥 Clients & Contacts'],
+    ['packages','📦 Packages'],['sessions','📅 Sessions'],['rentals','🏟️ Rentals'],
+    ['coaches','🏋️ Coaches'],['waivers','📋 Waivers'],['teams','🏆 Teams'],['server','⚙️ Server']
+];
+const nav = document.querySelector('.flex.flex-wrap.gap-2.mb-8');
+if (nav) {
+    nav.innerHTML = sections.map(([a,l]) =>
+        `<a href="#${a}" class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition text-sm">${l}</a>`
+    ).join('');
+}
+</script>
+{% endblock %}

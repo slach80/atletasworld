@@ -100,6 +100,12 @@
                     <!-- Divider -->
                     <span class="text-gray-600">|</span>
 
+                    <!-- Guide -->
+                    <a href="{% url 'owner_guide' %}"
+                       class="px-3 py-2 rounded {% if 'guide' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10 text-gray-400{% endif %} transition text-xs">
+                        Guide
+                    </a>
+
                     <!-- Backend -->
                     <a href="/admin/" class="px-3 py-2 rounded hover:bg-white/10 transition text-gray-400 text-xs">Backend</a>
 
@@ -135,6 +141,7 @@
                 <a href="{% url 'owner_credits' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">💳 Credits</a>
                 <div class="border-t border-gray-700 mt-2 pt-2">
                     <a href="{% url 'owner_notifications' %}" class="block px-3 py-2 rounded hover:bg-white/10">Notify</a>
+                    <a href="{% url 'owner_guide' %}" class="block px-3 py-2 rounded hover:bg-white/10 text-gray-400">Guide</a>
                     <a href="/admin/" class="block px-3 py-2 rounded hover:bg-white/10 text-gray-400">Backend</a>
                     <a href="/accounts/logout/" class="block px-3 py-2 rounded hover:bg-accent/20 text-gray-400">Logout</a>
                 </div>
