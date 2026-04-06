@@ -158,7 +158,51 @@ For each package (e.g. "10-Session Pack", "Monthly Unlimited"):
 
 ---
 
-## Step 6 — Confirm Tax Handling
+## Step 6 — Set Up the Webhook Endpoint
+
+The webhook is what tells the website "a payment was received — activate the client's package." Without it, Stripe takes the money but the website never knows.
+
+### 6a — Create the endpoint in Stripe
+
+1. Stripe Dashboard → **Developers** (top nav) → **Webhooks** (left sidebar)
+2. Make sure you are in **Live mode** (toggle top-left)
+3. Click **Add endpoint** (top right)
+4. **Endpoint URL** — paste exactly:
+   ```
+   https://atletasperformancecenter.com/payments/webhook/
+   ```
+5. Click **+ Select events** and add these 5 events:
+
+   | Event |
+   |---|
+   | `payment_intent.succeeded` |
+   | `payment_intent.payment_failed` |
+   | `customer.subscription.created` |
+   | `customer.subscription.updated` |
+   | `customer.subscription.deleted` |
+
+6. Click **Add endpoint**
+
+### 6b — Copy the Signing Secret
+
+1. Click on the endpoint you just created
+2. Find **Signing secret** → click **Reveal**
+3. Copy the value (starts with `whsec_...`)
+4. Add it to the server `.env` file as `STRIPE_WEBHOOK_SECRET=whsec_...`
+
+> This secret is separate from your API keys. It lets the app verify that webhook calls are genuinely from Stripe.
+
+### 6c — Verify it works
+
+After restarting the app:
+1. Stripe Dashboard → Webhooks → click your endpoint
+2. Click **Send test webhook** → select `payment_intent.succeeded` → Send
+3. Response should show **200 OK** ✅
+4. If you see 400 or 500 → the signing secret in `.env` doesn't match — re-copy it
+
+---
+
+## Step 7 — Confirm Tax Handling
 
 - Do you collect sales tax on training sessions? If yes, what percentage?
 - Do you collect sales tax on facility rentals?
