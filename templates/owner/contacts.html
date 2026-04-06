@@ -77,13 +77,15 @@
                     </div>
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="font-semibold text-gray-800 text-sm">
-                                {% if contact.first_name or contact.last_name %}
-                                    {{ contact.first_name }} {{ contact.last_name }}
-                                {% else %}
-                                    <span class="text-gray-400 italic">Name unknown</span>
-                                {% endif %}
-                            </span>
+                            <!-- Primary label: name if known, else email, else phone -->
+                            {% if contact.first_name or contact.last_name %}
+                            <span class="font-semibold text-gray-800 text-sm">{{ contact.first_name }} {{ contact.last_name }}</span>
+                            {% elif contact.email %}
+                            <span class="font-semibold text-gray-800 text-sm">{{ contact.email }}</span>
+                            {% else %}
+                            <span class="font-semibold text-gray-600 text-sm">{{ contact.phone }}</span>
+                            {% endif %}
+
                             {% if contact.is_linked %}
                             <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-semibold">✓ Account linked</span>
                             {% else %}
@@ -91,10 +93,15 @@
                             {% endif %}
                             <span class="text-xs text-gray-400">{{ contact.get_source_display }}</span>
                         </div>
+                        <!-- Secondary line: show email/phone only if name was shown above -->
+                        {% if contact.first_name or contact.last_name %}
                         <div class="flex flex-wrap gap-3 mt-0.5 text-xs text-gray-500">
                             {% if contact.email %}<span>{{ contact.email }}</span>{% endif %}
                             {% if contact.phone %}<span>{{ contact.phone }}</span>{% endif %}
                         </div>
+                        {% elif contact.email and contact.phone %}
+                        <div class="mt-0.5 text-xs text-gray-500">{{ contact.phone }}</div>
+                        {% endif %}
                     </div>
                 </div>
 
