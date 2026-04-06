@@ -178,8 +178,8 @@
             <input type="hidden" name="max_participants" id="edit-max-participants">
         </form>
 
-        <!-- Week Calendar -->
-        <div class="bg-white rounded-xl shadow-md p-4">
+        <!-- Week Calendar — Desktop (7-col grid) -->
+        <div class="bg-white rounded-xl shadow-md p-4 hidden md:block">
             <div class="grid grid-cols-7 gap-2">
                 {% for day in week_days %}
                 <div class="border rounded-lg p-2 min-h-[180px] {% if day.date == today %}bg-secondary/5 border-secondary{% endif %}">
@@ -216,6 +216,64 @@
             </div>
         </div>
 
+        <!-- Week Calendar — Mobile (vertical day list) -->
+        <div class="bg-white rounded-xl shadow-md p-4 md:hidden">
+            <div class="space-y-3">
+                {% for day in week_days %}
+                <div class="border rounded-lg {% if day.date == today %}border-secondary bg-secondary/5{% endif %}">
+                    <button type="button"
+                            onclick="toggleDaySection(this)"
+                            class="w-full flex items-center justify-between px-4 py-3 text-left">
+                        <div class="flex items-center gap-3">
+                            <div class="text-center min-w-[2.5rem]">
+                                <p class="text-xs text-gray-500 uppercase">{{ day.day_name|slice:":3" }}</p>
+                                <p class="font-bold {% if day.date == today %}text-primary{% endif %}">{{ day.date|date:"j" }}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {% if day.blocks %}
+                                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ day.blocks|length }} slot{{ day.blocks|length|pluralize }}</span>
+                                {% else %}
+                                <span class="text-xs text-gray-300">No slots</span>
+                                {% endif %}
+                                {% if day.date == today %}<span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">Today</span>{% endif %}
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 day-chevron transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    {% if day.blocks %}
+                    <div class="day-section px-4 pb-3 space-y-2 {% if day.date != today %}hidden{% endif %}">
+                        {% for block in day.blocks %}
+                        <div class="relative p-3 rounded-lg text-sm border cursor-pointer select-none transition
+                            {% if block.status == 'booked' %}bg-blue-50 border-blue-200
+                            {% elif block.status == 'available' %}bg-gray-50 border-gray-200
+                            {% else %}bg-gray-100 border-gray-300{% endif %}"
+                            onclick="toggleBlock(this, {{ block.id }})"
+                            data-block-id="{{ block.id }}"
+                            data-booked="{{ block.current_participants }}">
+                            <div class="block-check hidden absolute top-2 right-2 w-5 h-5 bg-secondary rounded-full flex items-center justify-center">
+                                <svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <div class="flex items-start justify-between pr-6">
+                                <div>
+                                    <p class="font-semibold">{{ block.start_time|time:"g:i A" }}</p>
+                                    <p class="text-gray-500 text-xs">{{ block.display_session_type }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-400">{{ block.current_participants }}/{{ block.max_participants }} spots</p>
+                                    {% if block.status == 'booked' %}
+                                    <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Booked</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
         <!-- Legend -->
         <div class="mt-3 flex gap-4 text-xs text-gray-500 px-1">
             <div class="flex items-center gap-1"><span class="w-3 h-3 bg-gray-50 border border-gray-200 rounded"></span> Available</div>
@@ -230,7 +288,7 @@
             <form method="POST" action="{% url 'coaches:bulk_delete_blocks' %}"
                   onsubmit="return confirm('Delete all empty blocks in this date range?')">
                 {% csrf_token %}
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">From</label>
                         <input type="date" name="range_start" required class="w-full px-3 py-2 border rounded-lg text-sm">
@@ -258,7 +316,7 @@
         <!-- Quick Add Single Slot -->
         <div class="bg-white rounded-xl shadow-md p-5 mt-4">
             <h3 class="text-base font-bold mb-3 text-gray-800">+ Quick Add Single Slot</h3>
-            <form method="POST" action="{% url 'coaches:add_schedule_block' %}" class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <form method="POST" action="{% url 'coaches:add_schedule_block' %}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                 {% csrf_token %}
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Date</label>
@@ -425,6 +483,15 @@
     document.getElementById('edit-modal').addEventListener('click', function(e) {
         if (e.target === this) closeEditModal();
     });
+
+    // Mobile day accordion toggle
+    function toggleDaySection(btn) {
+        var section = btn.nextElementSibling;
+        var chevron = btn.querySelector('.day-chevron');
+        if (!section) return;
+        section.classList.toggle('hidden');
+        if (chevron) chevron.classList.toggle('rotate-180');
+    }
     </script>
 </body>
 </html>

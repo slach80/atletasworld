@@ -185,7 +185,7 @@
                               placeholder="Enter your message to the parent..."></textarea>
                 </div>
 
-                <div class="flex space-x-4">
+                <div class="flex flex-col sm:flex-row gap-3">
                     <a href="{% url 'coaches:dashboard' %}" class="flex-1 text-center py-3 border rounded-lg hover:bg-gray-50">Cancel</a>
                     <button type="submit" id="sendBtn" class="flex-1 bg-secondary text-gray-900 py-3 rounded-lg hover:bg-[#b8e000] disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
                         Send Notification
@@ -197,7 +197,7 @@
         <!-- Quick Templates -->
         <div class="bg-white rounded-xl shadow-md p-6 mt-6">
             <h3 class="font-bold text-gray-800 mb-4">Quick Message Templates</h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button type="button" onclick="setTemplate('schedule')" class="p-3 border rounded-lg hover:border-secondary text-left">
                     <p class="font-semibold">Schedule Change</p>
                     <p class="text-xs text-gray-500">Notify about time/date change</p>

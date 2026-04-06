@@ -130,7 +130,7 @@
                     {% for booking in bookings %}
                     <div class="border rounded-lg p-4">
                         <h3 class="font-bold mb-3">{{ booking.player }}</h3>
-                        <div class="grid grid-cols-5 gap-2 mb-3">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-3">
                             <div>
                                 <label class="text-xs text-gray-500">Effort</label>
                                 <select name="effort_{{ booking.id }}" class="w-full px-2 py-1 border rounded text-sm">
