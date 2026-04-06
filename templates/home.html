@@ -256,7 +256,8 @@
                 </a>
             </div>
 
-            <!-- Special Projects & Events (APC Select) -->
+            <!-- Special Projects & Events (APC Select) — hidden until April 10, 2026 -->
+            {% if show_apc_select_card %}
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-bold uppercase tracking-widest text-white/60">New Program</span>
@@ -274,6 +275,7 @@
                     Learn More &amp; Register
                 </a>
             </div>
+            {% endif %}
 
             <!-- Serie A Elite Scouts Class -->
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">

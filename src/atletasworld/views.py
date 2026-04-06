@@ -48,10 +48,12 @@ def home_view(request):
         obj.weekend_start_times_fmt = _fmt_times(obj.weekend_start_times) if obj.weekend_start_times else ''
         obj.pkg_date = obj.linked_packages.filter(event_start_date__isnull=False).first()
 
+    import datetime as dt
     return render(request, 'home.html', {
         'packages': packages,
         'events': events_qs,
         'programs': programs_qs,
+        'show_apc_select_card': dt.date.today() >= dt.date(2026, 4, 10),
     })
 
 
