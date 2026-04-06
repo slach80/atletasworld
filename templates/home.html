@@ -193,47 +193,117 @@
 </section>
 
 <!-- Upcoming Events Banner -->
-{% if events %}
-<section id="events" class="bg-gradient-to-r from-accent to-red-700 text-white py-12">
+<section id="events" class="bg-gradient-to-r from-accent to-red-700 text-white py-14">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-8">
+        <div class="text-center mb-10">
             <span class="inline-block bg-white/20 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">🔥 UPCOMING EVENTS</span>
             <h2 class="text-3xl md:text-4xl font-bold">Don't Miss Out!</h2>
         </div>
-        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {% for event in events %}
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                <div class="flex items-start justify-between mb-4">
-                    <div></div>
-                    {% if event.start_date %}
-                    <div class="text-right">
-                        <div class="text-2xl font-bold">{{ event.start_date|date:"M j" }}</div>
-                        <div class="text-sm text-white/80">{{ event.start_date|date:"l" }}</div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            <!-- Summer Program HS/College -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">Summer Program</span>
+                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">HS / College</span>
+                </div>
+                <h3 class="text-lg font-black mb-2 leading-tight">Summer Program<br>HS / College</h3>
+                <p class="text-white/75 text-sm mb-3 leading-relaxed">Outdoor sessions on Tuesdays and Thursdays.<br>
+                    Mornings @ Hocker Grove Middle School.<br>
+                    Afternoons/Evenings @ Shawnee Mission North HS.</p>
+                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
+                    <div class="flex items-center gap-2"><span>⏱️</span> 90 minutes per session</div>
+                    <div class="flex items-start gap-2">
+                        <span>🕐</span>
+                        <div>
+                            <div><span class="text-white/55 text-xs">Mon–Fri</span> 7:00 AM, 10:30 AM, 6:00 PM</div>
+                            <div><span class="text-white/55 text-xs">Sat–Sun</span> 9:00 AM, 10:30 AM</div>
+                        </div>
                     </div>
-                    {% endif %}
+                    <div class="flex items-center gap-2"><span>📅</span> May 18 – Aug 8, 2026</div>
                 </div>
-                <h3 class="text-xl font-bold mb-2">{{ event.name }}</h3>
-                {% if event.description %}<p class="text-white/80 mb-3 text-sm">{{ event.description|linebreaksbr }}</p>{% endif %}
-                <div class="space-y-1.5 text-sm mb-4">
-                    <div class="flex items-center"><span class="mr-2">⏱️</span> {{ event.duration_minutes }} minutes per session</div>
-                    {% if event.start_times_fmt %}<div class="flex items-start gap-2"><span>🕐</span><div>{% if event.weekend_start_times_fmt %}<div><span class="text-white/60 text-xs">Mon–Fri</span> {{ event.start_times_fmt }}</div><div><span class="text-white/60 text-xs">Sat–Sun</span> {{ event.weekend_start_times_fmt }}</div>{% else %}{{ event.start_times_fmt }}{% endif %}</div></div>{% endif %}
-                    {% if event.pkg_date %}<div class="flex items-center"><span class="mr-2">📅</span> {{ event.pkg_date.event_start_date|date:"M j" }}{% if event.pkg_date.event_start_time %} {{ event.pkg_date.event_start_time|time:"g:i A" }}{% endif %}{% if event.pkg_date.event_end_date %} – {{ event.pkg_date.event_end_date|date:"M j, Y" }}{% if event.pkg_date.event_end_time %} {{ event.pkg_date.event_end_time|time:"g:i A" }}{% endif %}{% endif %}</div>{% endif %}
-                    {% if event.location %}<div class="flex items-center"><span class="mr-2">📍</span> {{ event.location }}</div>{% endif %}
-                    {% if event.min_age or event.max_age %}<div class="flex items-center"><span class="mr-2">🎂</span> Ages {{ event.min_age|default:"any" }}–{{ event.max_age|default:"any" }}</div>{% endif %}
-                    {% if event.end_date and event.end_date != event.start_date %}<div class="flex items-center"><span class="mr-2">📅</span> Ends {{ event.end_date|date:"M j, Y" }}</div>{% endif %}
-                </div>
-                <a href="{% url 'book' %}" class="block text-center bg-white text-accent py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                <a href="{% url 'book' %}" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
                     Reserve Your Spot
                 </a>
             </div>
-            {% endfor %}
+
+            <!-- Summer Program U13 & Younger -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">Summer Program</span>
+                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">U13 &amp; Younger</span>
+                </div>
+                <h3 class="text-lg font-black mb-2 leading-tight">Summer Program<br>U13 &amp; Younger</h3>
+                <p class="text-white/75 text-sm mb-3 leading-relaxed">Outdoor sessions on Tuesdays and Thursdays.<br>
+                    Mornings @ Hocker Grove Middle School.<br>
+                    Afternoons/Evenings @ Shawnee Mission North HS.</p>
+                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
+                    <div class="flex items-center gap-2"><span>⏱️</span> 90 minutes per session</div>
+                    <div class="flex items-start gap-2">
+                        <span>🕐</span>
+                        <div>
+                            <div><span class="text-white/55 text-xs">Mon–Fri</span> 9:00 AM, 4:30 PM, 6:00 PM</div>
+                            <div><span class="text-white/55 text-xs">Sat–Sun</span> 9:00 AM, 10:30 AM</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2"><span>📅</span> May 18 – Aug 8, 2026</div>
+                </div>
+                <a href="{% url 'book' %}" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                    Reserve Your Spot
+                </a>
+            </div>
+
+            <!-- Special Projects & Events (APC Select) -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">New Program</span>
+                    <span class="bg-secondary text-gray-900 text-xs font-black px-2 py-0.5 rounded-full">2026</span>
+                </div>
+                <h3 class="text-lg font-black mb-2 leading-tight">APC Select<br>Tryouts Open</h3>
+                <p class="text-white/75 text-sm mb-3 leading-relaxed">High-performance supplemental program — three elite youth teams training and competing year-round alongside your current club.</p>
+                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
+                    <div class="flex items-center gap-2"><span>⚽</span> Birth years: 2014, 2015, 2016</div>
+                    <div class="flex items-center gap-2"><span>📅</span> Tryouts: May 21–24, 2026</div>
+                    <div class="flex items-center gap-2"><span>💰</span> $100/month · 6-month commitment</div>
+                    <div class="flex items-center gap-2"><span>🎟️</span> Tryouts are FREE</div>
+                </div>
+                <a href="/programs/" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                    Learn More &amp; Register
+                </a>
+            </div>
+
+            <!-- Serie A Elite Scouts Class -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">Weekly Class</span>
+                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">Every Sunday</span>
+                </div>
+                <h3 class="text-lg font-black mb-2 leading-tight">Serie A Elite<br>Scouts Class</h3>
+                <p class="text-white/75 text-sm mb-3 leading-relaxed">Elite development sessions coached at a Serie A scouting standard. Two age groups — 20-player cap per class.</p>
+                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
+                    <div class="flex items-center gap-2"><span>⏱️</span> 90 minutes per session</div>
+                    <div class="flex items-start gap-2">
+                        <span>🕐</span>
+                        <div>
+                            <div><span class="text-white/55 text-xs">U13 (2014–2018)</span> 4:00 PM</div>
+                            <div><span class="text-white/55 text-xs">U19 (2007–2013)</span> 5:30 PM</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2"><span>💰</span> $40 per session</div>
+                </div>
+                <a href="{% url 'book' %}" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                    Reserve Your Spot
+                </a>
+            </div>
+
         </div>
-        <p class="text-center mt-6 text-white/80">
+
+        <p class="text-center mt-8 text-white/80 text-sm">
             <span class="inline-block animate-pulse">⚡</span> Limited spots available — Book now to secure your place!
         </p>
     </div>
 </section>
-{% endif %}
 
 
 <!-- About Section (Their Content) -->
