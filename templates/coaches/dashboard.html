@@ -175,7 +175,7 @@
                         <div>
                             <div class="flex items-center gap-2">
                                 <p class="font-semibold">{{ block.start_time|time:"g:i A" }} - {{ block.end_time|time:"g:i A" }}</p>
-                                {% if starts_soon and block.id in starts_soon %}<span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">{{ starts_soon|get_item:block.id }}m</span>{% endif %}
+                                {% if starts_soon and block.id in starts_soon %}<span class="text-xs font-bold text-secondary bg-primary px-2 py-0.5 rounded-full">Starting soon</span>{% endif %}
                             </div>
                             <p class="text-sm text-gray-500">{{ block.display_session_type }} · {{ block.current_participants }}/{{ block.max_participants }}</p>
                         </div>
