@@ -167,11 +167,36 @@
                                     <input type="radio" name="recipient_group" value="package_specific" class="mr-2" id="packageSpecificRadio">
                                     <span class="text-sm">By Package</span>
                                 </label>
+                                <!-- Contact list options -->
+                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-emerald-50 border border-transparent hover:border-emerald-300 transition">
+                                    <input type="radio" name="recipient_group" value="contacts_all" class="mr-2">
+                                    <span class="text-sm">📇 All Contacts ({{ all_contacts_count }})</span>
+                                </label>
+                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-amber-50 border border-transparent hover:border-amber-300 transition">
+                                    <input type="radio" name="recipient_group" value="contacts_unregistered" class="mr-2">
+                                    <span class="text-sm">📧 Unregistered Contacts ({{ unregistered_contacts_count }})</span>
+                                </label>
+                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-teal-50 border border-transparent hover:border-teal-300 transition">
+                                    <input type="radio" name="recipient_group" value="contacts_by_source" class="mr-2" id="contactSourceRadio">
+                                    <span class="text-sm">🏷️ Contacts by Source</span>
+                                </label>
                                 <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-pink-50 border border-transparent hover:border-pink-300 transition">
                                     <input type="radio" name="recipient_group" value="individual" class="mr-2" id="individualRadio">
                                     <span class="text-sm">Individual Select</span>
                                 </label>
                             </div>
+                        </div>
+
+                        <!-- Contact Source Selector (hidden by default) -->
+                        <div id="contactSourceSelection" class="mb-4 hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Source / Program</label>
+                            <select name="contact_source"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                                <option value="">— Choose a source —</option>
+                                {% for val, label in contact_sources %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <!-- Package Selector (hidden by default) -->
@@ -194,7 +219,7 @@
                         <!-- Individual Selection (hidden by default) -->
                         <div id="individualSelection" class="mb-4 hidden">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Select Individual Recipients</label>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <!-- Clients -->
                                 <div class="border rounded-lg p-3 max-h-48 overflow-y-auto">
                                     <p class="text-sm font-semibold text-gray-600 mb-2">Clients</p>
@@ -218,6 +243,27 @@
                                     {% empty %}
                                     <p class="text-gray-400 text-sm">No coaches available</p>
                                     {% endfor %}
+                                </div>
+                                <!-- Contacts (pre-registration) -->
+                                <div class="border rounded-lg p-3 max-h-48 overflow-y-auto">
+                                    <p class="text-sm font-semibold text-gray-600 mb-2">📇 Contacts ({{ all_contacts_count }})</p>
+                                    <input type="text" placeholder="Filter contacts…" oninput="filterContactList(this)"
+                                           class="w-full mb-2 px-2 py-1 border rounded text-xs focus:ring-1 focus:ring-owner">
+                                    <div id="contact-list-items">
+                                    {% for contact in all_contacts %}
+                                    <label class="contact-item flex items-start text-xs py-1 hover:bg-gray-50 gap-1.5"
+                                           data-name="{{ contact.display_name|lower }} {{ contact.email|lower }}">
+                                        <input type="checkbox" name="individual_emails" value="{{ contact.email }}" class="mt-0.5 mr-1 shrink-0">
+                                        <span>
+                                            {% if contact.first_name or contact.last_name %}
+                                            <strong>{{ contact.first_name }} {{ contact.last_name }}</strong><br>
+                                            {% endif %}
+                                            {{ contact.email }}
+                                            {% if contact.players.count %}<span class="text-gray-400">({{ contact.players.count }} player{{ contact.players.count|pluralize }})</span>{% endif %}
+                                        </span>
+                                    </label>
+                                    {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -318,8 +364,17 @@
             radio.addEventListener('change', function() {
                 document.getElementById('individualSelection').classList.toggle('hidden', this.value !== 'individual');
                 document.getElementById('packageSelection').classList.toggle('hidden', this.value !== 'package_specific');
+                document.getElementById('contactSourceSelection').classList.toggle('hidden', this.value !== 'contacts_by_source');
             });
         });
+
+        // Filter contact list in individual selection
+        function filterContactList(input) {
+            const q = input.value.toLowerCase();
+            document.querySelectorAll('#contact-list-items .contact-item').forEach(el => {
+                el.style.display = (q === '' || el.dataset.name.includes(q)) ? '' : 'none';
+            });
+        }
 
         // Email templates
         const templates = {

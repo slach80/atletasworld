@@ -126,7 +126,7 @@ def owner_dashboard(request):
 @user_passes_test(is_owner)
 def owner_notifications(request):
     """Owner notification center - send emails to different groups."""
-    from clients.models import Package, ClientPackage
+    from clients.models import Package, ClientPackage, ContactParent
     # Get counts for each recipient group
     all_clients = Client.objects.select_related('user').filter(user__email__isnull=False).exclude(user__email='')
     all_coaches = Coach.objects.select_related('user').filter(is_active=True, user__email__isnull=False).exclude(user__email='')
@@ -168,6 +168,18 @@ def owner_notifications(request):
         ).values('client_id').distinct().count()
         packages_with_counts.append((pkg, count))
 
+    # Contact list counts
+    all_contacts     = ContactParent.objects.exclude(email='').order_by('last_name', 'first_name', 'email')
+    unregistered_contacts = all_contacts.filter(client__isnull=True)
+    contact_sources  = ContactParent.SOURCE_CHOICES
+
+    # Per-source counts
+    from django.db.models import Count as DjCount
+    contacts_by_source = {
+        row['source']: row['n']
+        for row in ContactParent.objects.exclude(email='').values('source').annotate(n=DjCount('id'))
+    }
+
     context = {
         'all_clients_count': all_clients.count(),
         'all_coaches_count': all_coaches.count(),
@@ -178,6 +190,12 @@ def owner_notifications(request):
         'packages_with_counts': packages_with_counts,
         'all_clients': all_clients,
         'all_coaches': all_coaches,
+        # contact list
+        'all_contacts': all_contacts,
+        'all_contacts_count': all_contacts.count(),
+        'unregistered_contacts_count': unregistered_contacts.count(),
+        'contact_sources': contact_sources,
+        'contacts_by_source': contacts_by_source,
     }
     return render(request, 'owner/notifications.html', context)
 
@@ -271,6 +289,27 @@ def owner_send_notification(request):
                 id__in=packaged_ids,
                 user__email__isnull=False,
             ).exclude(user__email='').values_list('user__email', flat=True)
+            recipients.update(emails)
+
+    elif recipient_group == 'contacts_all':
+        from clients.models import ContactParent
+        emails = ContactParent.objects.exclude(email='').values_list('email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'contacts_unregistered':
+        from clients.models import ContactParent
+        emails = ContactParent.objects.filter(
+            client__isnull=True
+        ).exclude(email='').values_list('email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'contacts_by_source':
+        from clients.models import ContactParent
+        source_key = request.POST.get('contact_source', '')
+        if source_key:
+            emails = ContactParent.objects.filter(
+                source=source_key
+            ).exclude(email='').values_list('email', flat=True)
             recipients.update(emails)
 
     elif recipient_group == 'individual':
