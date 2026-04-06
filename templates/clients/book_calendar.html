@@ -593,7 +593,7 @@ function renderTypePills(){
     };
     for(const st of sessionTypes){
         const n = st.name;
-        if(n.startsWith('APC Select Tryout'))       groups['APC Select Tryout'].push(st);
+        if(n.startsWith('Tryout'))                    groups['APC Select Tryout'].push(st);
         else if(n.startsWith('Serie A'))             groups['Serie A'].push(st);
         else if(n.toLowerCase().includes('program')) groups['Programs'].push(st);
         else if(['Private Training','Pick-Up Game','Semi-Private','Group Session','Camp','Clinic','Team Training','Seasonal'].some(k=>n.includes(k))) groups['Training'].push(st);
@@ -611,7 +611,6 @@ function renderTypePills(){
         for(const st of types){
             // Shorten long names: strip common prefix within group
             let display = st.name
-                .replace('APC Select Tryout — ', '')
                 .replace('Serie A Elite Scouts — ', 'Serie A ')
                 .replace(' HS/College', ' HS')
                 .replace('Summer Program', 'Summer')
