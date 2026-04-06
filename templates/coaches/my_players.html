@@ -115,98 +115,136 @@
 </script>
 
     <div class="max-w-7xl mx-auto px-4 py-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">My Players</h1>
-            <div class="flex items-center space-x-2">
-                <input type="text" id="search" placeholder="Search players..." 
-                       class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary"
-                       onkeyup="filterPlayers()">
-                <select id="filter-age" onchange="filterPlayers()" class="px-4 py-2 border rounded-lg">
-                    <option value="">All Ages</option>
-                    <option value="U10">U10</option>
-                    <option value="U12">U12</option>
-                    <option value="U14">U14</option>
-                    <option value="U16">U16</option>
-                    <option value="U19">U19</option>
-                </select>
+
+        <!-- Page header -->
+        <div class="mb-5">
+            <h1 class="text-2xl font-bold text-gray-800 leading-tight">My Players</h1>
+            <p class="text-sm text-gray-400 mt-0.5">{{ players|length }} player{{ players|length|pluralize }} trained</p>
+        </div>
+
+        <!-- Search + filter — full width on mobile -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-5">
+            <input type="text" id="search" placeholder="Search by name…"
+                   class="flex-1 px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-secondary focus:outline-none text-sm"
+                   onkeyup="filterPlayers()">
+            <select id="filter-age" onchange="filterPlayers()"
+                    class="sm:w-36 px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-secondary focus:outline-none">
+                <option value="">All Ages</option>
+                <option value="U10">U10</option>
+                <option value="U12">U12</option>
+                <option value="U14">U14</option>
+                <option value="U16">U16</option>
+                <option value="U19">U19</option>
+            </select>
+        </div>
+
+        <!-- Stats — 3 equal columns, compact on mobile -->
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 text-center">
+                <p class="text-2xl font-black text-secondary bg-primary rounded-lg px-2 py-1 inline-block leading-none">{{ players|length }}</p>
+                <p class="text-gray-500 text-xs mt-1.5">Players</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 text-center">
+                <p class="text-2xl font-black text-blue-500">{{ total_sessions }}</p>
+                <p class="text-gray-500 text-xs mt-0.5">Sessions</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 text-center">
+                <p class="text-2xl font-black text-purple-500">{{ assessments_count }}</p>
+                <p class="text-gray-500 text-xs mt-0.5">Assessments</p>
             </div>
         </div>
 
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="inline-block text-3xl font-bold text-secondary bg-primary rounded-xl px-3 py-1.5">{{ players|length }}</p>
-                <p class="text-gray-500 text-sm">Total Players</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-3xl font-bold text-blue-500">{{ total_sessions }}</p>
-                <p class="text-gray-500 text-sm">Total Sessions</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-3xl font-bold text-purple-500">{{ assessments_count }}</p>
-                <p class="text-gray-500 text-sm">Assessments Given</p>
-            </div>
-        </div>
+        <!-- Players list -->
+        <div class="space-y-3" id="players-list">
+            {% for player_data in players %}
+            <div class="player-card bg-white rounded-xl shadow-sm border border-gray-100 hover:border-secondary transition overflow-hidden"
+                 data-name="{{ player_data.player.first_name }} {{ player_data.player.last_name }}"
+                 data-age="{{ player_data.player.age_group }}">
 
-        <!-- Players List -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <div class="space-y-4" id="players-list">
-                {% for player_data in players %}
-                <div class="player-card border rounded-lg p-4 hover:border-secondary transition" 
-                     data-name="{{ player_data.player.first_name }} {{ player_data.player.last_name }}"
-                     data-age="{{ player_data.player.age_group }}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            {% if player_data.player.photo %}
-                            <img src="{{ player_data.player.photo.url }}" class="w-14 h-14 rounded-full object-cover mr-4">
-                            {% else %}
-                            <div class="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center mr-4">
-                                <span class="text-xl font-bold text-gray-400">{{ player_data.player.first_name|first }}{{ player_data.player.last_name|first }}</span>
-                            </div>
+                <!-- Top row: avatar + info -->
+                <div class="flex items-center gap-3 p-4">
+                    {% if player_data.player.photo %}
+                    <img src="{{ player_data.player.photo.url }}" class="w-12 h-12 rounded-full object-cover shrink-0">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center shrink-0">
+                        <span class="text-base font-black text-secondary">{{ player_data.player.first_name|first }}{{ player_data.player.last_name|first }}</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-black text-gray-900 text-base leading-tight truncate">
+                            {{ player_data.player.first_name }} {{ player_data.player.last_name }}
+                        </h3>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                            <span class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-semibold">{{ player_data.player.age_group }}</span>
+                            <span class="text-xs text-gray-500">{{ player_data.player.get_skill_level_display }}</span>
+                            {% if player_data.player.primary_position %}
+                            <span class="text-xs text-gray-400">· {{ player_data.player.get_primary_position_display }}</span>
                             {% endif %}
-                            <div>
-                                <h3 class="font-bold text-gray-900">{{ player_data.player.first_name }} {{ player_data.player.last_name }}</h3>
-                                <div class="flex items-center space-x-2 text-sm text-gray-500">
-                                    <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{{ player_data.player.age_group }}</span>
-                                    <span>{{ player_data.player.get_skill_level_display }}</span>
-                                    {% if player_data.player.primary_position %}
-                                    <span>{{ player_data.player.get_primary_position_display }}</span>
-                                    {% endif %}
-                                </div>
-                                <p class="text-xs text-gray-400 mt-1">Parent: {{ player_data.player.client.user.get_full_name }}</p>
-                            </div>
                         </div>
-                        <div class="text-right">
-                            <div class="flex items-center space-x-4">
-                                <div>
-                                    <p class="text-sm text-gray-500">Sessions</p>
-                                    <p class="font-bold text-primary">{{ player_data.sessions_count }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Avg Rating</p>
-                                    <p class="font-bold {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">
-                                        {{ player_data.avg_rating|floatformat:1 }}/5
-                                    </p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <a href="{% url 'coaches:player_detail' player_data.player.id %}" 
-                                       class="bg-secondary text-gray-900 px-3 py-1 rounded text-sm hover:bg-[#b8e000]">View</a>
-                                    <button onclick="showNotifyModal({{ player_data.player.id }}, '{{ player_data.player.first_name }}')"
-                                            class="bg-purple-500 text-white px-3 py-1 rounded text-sm hover:bg-purple-600">Notify</button>
-                                </div>
-                            </div>
+                        <p class="text-xs text-gray-400 mt-0.5 truncate">{{ player_data.player.client.user.get_full_name }}</p>
+                    </div>
+
+                    <!-- Mini stats — visible on sm+ only, hidden on mobile (shown below) -->
+                    <div class="hidden sm:flex items-center gap-5 shrink-0 text-center">
+                        <div>
+                            <p class="text-xs text-gray-400">Sessions</p>
+                            <p class="font-black text-primary text-lg leading-none">{{ player_data.sessions_count }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400">Avg</p>
+                            <p class="font-black text-lg leading-none {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">
+                                {{ player_data.avg_rating|floatformat:1 }}
+                            </p>
                         </div>
                     </div>
+                </div>
+
+                <!-- Mobile-only stats row -->
+                <div class="sm:hidden flex items-center gap-6 px-4 pb-3 text-center">
+                    <div>
+                        <p class="text-xs text-gray-400">Sessions</p>
+                        <p class="font-black text-primary">{{ player_data.sessions_count }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400">Avg Rating</p>
+                        <p class="font-black {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">
+                            {{ player_data.avg_rating|floatformat:1 }}/5
+                        </p>
+                    </div>
                     {% if player_data.last_session %}
-                    <div class="mt-3 pt-3 border-t text-sm text-gray-500">
-                        Last session: {{ player_data.last_session.scheduled_date|date:"M j, Y" }} - {{ player_data.last_session.session_type.name }}
+                    <div class="ml-auto text-right">
+                        <p class="text-xs text-gray-400">Last session</p>
+                        <p class="text-xs text-gray-600 font-semibold">{{ player_data.last_session.scheduled_date|date:"M j" }}</p>
                     </div>
                     {% endif %}
                 </div>
-                {% empty %}
-                <p class="text-gray-500 text-center py-8">No players have booked sessions with you yet.</p>
-                {% endfor %}
+
+                <!-- Action buttons — full width stacked on mobile, side-by-side on sm+ -->
+                <div class="border-t border-gray-100 p-3 flex flex-col sm:flex-row gap-2">
+                    <a href="{% url 'coaches:player_detail' player_data.player.id %}"
+                       class="flex-1 text-center bg-secondary text-gray-900 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-[#b8e000] transition">
+                        👤 View Profile
+                    </a>
+                    <button onclick="showNotifyModal({{ player_data.player.id }}, '{{ player_data.player.first_name }}')"
+                            class="flex-1 text-center bg-primary text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition">
+                        🔔 Notify Parent
+                    </button>
+                </div>
+
+                {% if player_data.last_session %}
+                <div class="hidden sm:block border-t border-gray-50 px-4 py-2 text-xs text-gray-400">
+                    Last session: <span class="font-medium text-gray-600">{{ player_data.last_session.scheduled_date|date:"M j, Y" }} — {{ player_data.last_session.session_type.name }}</span>
+                </div>
+                {% endif %}
             </div>
+            {% empty %}
+            <div class="bg-white rounded-xl shadow-sm p-10 text-center">
+                <p class="text-4xl mb-3">👥</p>
+                <p class="text-gray-600 font-semibold">No players yet.</p>
+                <p class="text-sm text-gray-400 mt-1">Players will appear here after they book a session with you.</p>
+            </div>
+            {% endfor %}
         </div>
     </div>
 
