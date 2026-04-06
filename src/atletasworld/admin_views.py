@@ -613,9 +613,17 @@ def owner_coaches(request):
     """List all coaches with management options."""
     from django.contrib.auth.models import Group
 
+    today = timezone.now().date()
+    active_client_q = Q(bookings__client__approval_status__in=['approved', 'not_required'])
     coaches = Coach.objects.annotate(
-        total_sessions=Count('schedule_blocks'),
-        upcoming_sessions=Count('schedule_blocks', filter=Q(schedule_blocks__date__gte=timezone.now().date())),
+        today_sessions=Count('bookings', filter=active_client_q & Q(
+            bookings__scheduled_date=today,
+            bookings__status__in=['pending', 'confirmed'],
+        )),
+        upcoming_sessions=Count('bookings', filter=active_client_q & Q(
+            bookings__scheduled_date__gt=today,
+            bookings__status__in=['pending', 'confirmed'],
+        )),
         total_bookings=Count('bookings'),
         total_players=Count('bookings__player', distinct=True)
     ).order_by('-is_active', 'user__first_name')

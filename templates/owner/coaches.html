@@ -19,7 +19,7 @@
             <tr>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coach</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Email</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Upcoming Sessions</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Sessions (Active Clients)</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Total Bookings</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
@@ -44,7 +44,11 @@
                 </td>
                 <td class="py-4 px-6 text-sm text-gray-600">{{ coach.user.email }}</td>
                 <td class="py-4 px-6">
-                    <span class="font-bold {% if coach.upcoming_sessions > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ coach.upcoming_sessions }}</span>
+                    <div class="text-sm leading-tight">
+                        <span class="font-bold {% if coach.today_sessions > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ coach.today_sessions }} today</span>
+                        <span class="text-gray-300 mx-1">/</span>
+                        <span class="font-semibold {% if coach.upcoming_sessions > 0 %}text-gray-700{% else %}text-gray-400{% endif %}">{{ coach.upcoming_sessions }} upcoming</span>
+                    </div>
                 </td>
                 <td class="py-4 px-6 font-semibold">{{ coach.total_bookings }}</td>
                 <td class="py-4 px-6">{{ coach.total_players }}</td>
