@@ -73,21 +73,36 @@ Once your account is active:
 
 **For this website, a Restricted Key needs these permissions:**
 
-| Resource | Permission needed |
+### Under Core
+
+| Resource | Set to |
 |---|---|
-| PaymentIntents | Read + Write |
-| Customers | Read + Write |
-| Charges | Read |
-| Refunds | Write |
-| Subscriptions | Read + Write |
-| Prices | Read |
-| Webhooks | Read |
+| Charges and Refunds | **Write** |
+| Customers | **Write** |
+| Payment Intents | **Write** |
+| Payment Methods | **Read** |
+| Payment Method Domains | **Read** |
+| Products | **Read** |
+| Setup Intents | **Write** |
+| Tokens | **Write** |
+| Files | **Read** |
+| Events | **Read** |
+
+### Under Billing
+
+| Resource | Set to |
+|---|---|
+| Invoices | **Read** |
+| Subscriptions | **Write** |
+| Coupons | **Read** |
+
+> **Everything else → leave as None.**
 
 To create a Restricted Key:
 1. Developers → API keys → **Create restricted key**
-2. Give it a name (e.g. "APC Website")
-3. Enable the permissions in the table above
-4. Click **Create key** → copy the key immediately (shown only once)
+2. Give it a name: `APC Website`
+3. Set the permissions exactly as listed above
+4. Click **Create key** → copy the key immediately (shown only once — cannot be retrieved again)
 
 ---
 
