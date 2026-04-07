@@ -221,6 +221,17 @@
             </div>
         </div>
 
+        <!-- Location -->
+        <div>
+            <div class="filter-label-row">
+                <span class="filter-label">Location</span>
+                <span class="tip" data-tip="Filter sessions by training venue. Options populate from available sessions.">ⓘ</span>
+            </div>
+            <select id="locationSelect" onchange="setLocationFilter(this.value)" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-secondary focus:border-transparent transition">
+                <option value="">Any Location</option>
+            </select>
+        </div>
+
         <!-- Time Range -->
         <div>
             <div class="filter-label-row">
@@ -329,7 +340,7 @@
 
 <script>
 // State
-let slotMap={}, cart=[], packages=[], sessionTypes=[], activeTypes=new Set(), activeCoach='', activeDateFilter='', activeDays=new Set();
+let slotMap={}, cart=[], packages=[], sessionTypes=[], activeTypes=new Set(), activeCoach='', activeDateFilter='', activeDays=new Set(), activeLocation='';
 let timeStart=6, timeEnd=23;
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
@@ -398,6 +409,7 @@ async function loadSlots(){
         }
         document.getElementById('slots-loading').classList.add('hidden');
         document.getElementById('slots-container').classList.remove('hidden');
+        populateLocationFilter();
         renderSlots();
         fitPanels();
     }catch(e){
@@ -413,6 +425,7 @@ function renderSlots(){
     for(const [k,s] of Object.entries(slotMap)){
         if(activeTypes.size && !activeTypes.has(s.calendar_id) && !s.catalog_type_ids.some(id=>activeTypes.has(id))) continue;
         if(activeCoach && String(s.coach_id)!==activeCoach) continue;
+        if(activeLocation && s.location!==activeLocation) continue;
         const d=s.start.split('T')[0];
         const dr=getDateRange(activeDateFilter); if(dr && (d<dr.start||d>dr.end)) continue;
         if(activeDays.size && !activeDays.has(new Date(d+'T12:00:00').getDay())) continue;
@@ -754,19 +767,29 @@ function toggleFilters(){
 }
 // Start expanded — apply highlight on load
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('filter-toggle-btn'); if(b) b.classList.add('f-pill-on'); });
+function populateLocationFilter(){
+    const locs=[...new Set(Object.values(slotMap).map(s=>s.location).filter(Boolean))].sort();
+    const sel=document.getElementById('locationSelect');
+    if(!sel) return;
+    const prev=sel.value;
+    sel.innerHTML='<option value="">Any Location</option>'+locs.map(l=>`<option value="${l}"${l===prev?' selected':''}>${l}</option>`).join('');
+    if(!locs.includes(prev)){ sel.value=''; if(activeLocation){ activeLocation=''; updateFilterBadge(); } }
+}
+function setLocationFilter(v){ activeLocation=v; updateFilterBadge(); renderSlots(); }
 function updateFilterBadge(){
-    const active=activeTypes.size+(activeCoach?1:0)+(activeDateFilter?1:0)+activeDays.size+(timeStart!==6||timeEnd!==23?1:0);
+    const active=activeTypes.size+(activeCoach?1:0)+(activeDateFilter?1:0)+activeDays.size+(timeStart!==6||timeEnd!==23?1:0)+(activeLocation?1:0);
     const badge=document.getElementById('filter-badge');
     const clearBtn=document.getElementById('clear-all-btn');
     if(badge){ badge.textContent=active; badge.classList.toggle('hidden',active===0); badge.classList.toggle('inline-flex',active>0); }
     if(clearBtn) clearBtn.classList.toggle('hidden',active===0);
 }
 function clearAllFilters(){
-    activeTypes.clear(); activeCoach=''; activeDateFilter=''; activeDays.clear(); timeStart=6; timeEnd=23;
+    activeTypes.clear(); activeCoach=''; activeDateFilter=''; activeDays.clear(); timeStart=6; timeEnd=23; activeLocation='';
     document.querySelectorAll('[data-pill]').forEach(p=>p.classList.toggle('f-pill-on',p.dataset.pill===''));
     document.querySelectorAll('[data-date]').forEach(p=>p.classList.toggle('f-pill-on',p.dataset.date===''));
     document.querySelectorAll('[data-dow]').forEach(p=>p.classList.remove('f-pill-on'));
     const cs=document.getElementById('coachSelect'); if(cs) cs.value='';
+    const ls=document.getElementById('locationSelect'); if(ls) ls.value='';
     const ts=document.getElementById('time-start'),te=document.getElementById('time-end');
     if(ts){ts.value=6;} if(te){te.value=23;} onTimeSlider();
     updateFilterBadge(); renderSlots();
