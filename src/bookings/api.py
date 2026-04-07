@@ -556,6 +556,21 @@ class BookingViewSet(viewsets.ModelViewSet):
             if package and _st and not _st.allow_package:
                 package = None  # ignore package — charge drop-in rate
 
+            # If session has specific linked packages, verify client's package is one of them
+            if package and _st and _st.linked_packages.exists():
+                linked_ids = set(_st.linked_packages.values_list('pk', flat=True))
+                if package.package.pk not in linked_ids:
+                    if _st.requires_package:
+                        # Block entirely — must use a linked package
+                        return Response({
+                            'error': f'Your current package does not include "{_st.name}". '
+                                     f'Please purchase one of the required packages to book this session.',
+                            'required_packages': [p.name for p in _st.linked_packages.filter(is_active=True, is_purchasable=True)[:4]],
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        # Optional package — fall back to drop-in pricing
+                        package = None
+
             if package:
                 # Package booking — session deducted, no separate payment
                 booking.use_package(package)

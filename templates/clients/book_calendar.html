@@ -578,7 +578,11 @@ async function confirmBookings(){
                 delete slotMap[slot.key];
             }else{
                 results.push({ok:false,slot,msg:data.error||'Failed'});
-                setItemStatus(i,'err',`❌ ${data.error||'This slot is no longer available.'}`);
+                let errMsg = `❌ ${data.error||'This slot is no longer available.'}`;
+                if(data.required_packages && data.required_packages.length){
+                    errMsg += ` Required: ${data.required_packages.join(', ')}. <a href="{% url 'clients:packages' %}" class="underline font-bold">Buy a Package →</a>`;
+                }
+                setItemStatus(i,'err',errMsg);
             }
         }catch(e){ results.push({ok:false,slot,msg:'Network error'}); setItemStatus(i,'err','❌ Network error — try again'); }
     }
