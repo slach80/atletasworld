@@ -156,22 +156,32 @@
                                 {% if booking.client_package %}
                                 <p class="text-xs text-green-600 mt-1.5">📦 Using: {{ booking.client_package.package.name }}</p>
                                 {% elif booking.session_type.requires_package %}
-                                <div class="mt-2 p-2.5 {% if booking.session_type.drop_in_price %}bg-blue-50 border-blue-200{% else %}bg-amber-50 border-amber-200{% endif %} border rounded-lg text-xs {% if booking.session_type.drop_in_price %}text-blue-800{% else %}text-amber-800{% endif %}">
-                                    {% if booking.session_type.drop_in_price %}
-                                    <p class="font-bold mb-0.5">💡 Drop-in or package</p>
-                                    <p class="mb-1">Booked as drop-in (${{ booking.session_type.get_drop_in_price|floatformat:2 }}). Save with a package:</p>
-                                    {% else %}
-                                    <p class="font-bold mb-0.5">📦 Package required to confirm this session</p>
+                                {% if booking.session_type.drop_in_price %}
+                                <div class="mt-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                                    <p class="font-bold mb-0.5">💳 Payment required to confirm</p>
+                                    <p class="mb-1.5">Pay ${{ booking.session_type.get_drop_in_price|floatformat:2 }} as a drop-in, or purchase a package to save:</p>
+                                    {% with pkgs=booking.session_type.linked_packages.all %}
+                                    {% if pkgs %}
+                                    <p class="mb-1.5">Eligible packages: {% for p in pkgs %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                                     {% endif %}
+                                    {% endwith %}
+                                    <a href="{% url 'clients:packages' %}" class="inline-block px-3 py-1 bg-blue-500 text-white rounded-lg font-bold hover:opacity-90 transition text-xs">
+                                        Purchase Package →
+                                    </a>
+                                </div>
+                                {% else %}
+                                <div class="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                                    <p class="font-bold mb-0.5">📦 Package required to confirm this session</p>
                                     {% with pkgs=booking.session_type.linked_packages.all %}
                                     {% if pkgs %}
                                     <p class="mb-1">Eligible: {% for p in pkgs %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                                     {% endif %}
                                     {% endwith %}
-                                    <a href="{% url 'clients:packages' %}" class="inline-block mt-1 px-3 py-1 {% if booking.session_type.drop_in_price %}bg-blue-500{% else %}bg-amber-500{% endif %} text-white rounded-lg font-bold hover:opacity-90 transition text-xs">
+                                    <a href="{% url 'clients:packages' %}" class="inline-block mt-1 px-3 py-1 bg-amber-500 text-white rounded-lg font-bold hover:opacity-90 transition text-xs">
                                         Purchase a Package →
                                     </a>
                                 </div>
+                                {% endif %}
                                 {% elif booking.payment_status == 'pending' and booking.amount_paid > 0 %}
                                 <p class="text-xs text-orange-600 mt-1.5 font-semibold">💳 Drop-in: ${{ booking.amount_paid|floatformat:2 }} due</p>
                                 {% endif %}
@@ -180,11 +190,17 @@
 
                         <div class="flex items-center gap-2 flex-wrap justify-end">
                             <!-- Status badge -->
-                            {% if booking.payment_status == 'pending' and booking.status == 'pending' and not booking.client_package and booking.session_type.requires_package %}
-                            <span class="px-3 py-1 text-sm font-bold rounded-full bg-amber-100 text-amber-700">
-                                📦 Package Needed
-                            </span>
-                            {% elif booking.payment_status == 'pending' and booking.status == 'pending' and booking.amount_paid > 0 %}
+                            {% if booking.session_type.requires_package and not booking.client_package %}
+                                {% if booking.session_type.drop_in_price %}
+                                <span class="px-3 py-1 text-sm font-bold rounded-full bg-orange-100 text-orange-700 animate-pulse">
+                                    ⏳ Payment Required
+                                </span>
+                                {% else %}
+                                <span class="px-3 py-1 text-sm font-bold rounded-full bg-amber-100 text-amber-700">
+                                    📦 Package Needed
+                                </span>
+                                {% endif %}
+                            {% elif booking.payment_status == 'pending' and booking.amount_paid > 0 %}
                             <span class="px-3 py-1 text-sm font-bold rounded-full bg-orange-100 text-orange-700 animate-pulse">
                                 ⏳ Payment Required
                             </span>
@@ -197,12 +213,19 @@
                             </span>
                             {% endif %}
 
-                            <!-- Pay Now button: only for actual drop-in bookings with a cost -->
-                            {% if stripe_public_key and booking.payment_status == 'pending' and booking.status == 'pending' and booking.amount_paid > 0 and not booking.session_type.requires_package %}
-                            <button onclick="payBooking({{ booking.id }}, '${{ booking.amount_paid|floatformat:2 }}')"
-                                    class="px-4 py-2 bg-primary text-secondary rounded-lg font-bold hover:bg-gray-800 transition text-sm">
-                                💳 Pay ${{ booking.amount_paid|floatformat:2 }}
-                            </button>
+                            <!-- Pay Now button: for pending drop-in payments (with or without package option) -->
+                            {% if stripe_public_key and booking.payment_status == 'pending' and booking.status == 'pending' and not booking.client_package %}
+                                {% if booking.amount_paid > 0 %}
+                                <button onclick="payBooking({{ booking.id }}, '${{ booking.amount_paid|floatformat:2 }}')"
+                                        class="px-4 py-2 bg-primary text-secondary rounded-lg font-bold hover:bg-gray-800 transition text-sm">
+                                    💳 Pay ${{ booking.amount_paid|floatformat:2 }}
+                                </button>
+                                {% elif booking.session_type.requires_package and booking.session_type.drop_in_price %}
+                                <button onclick="payBooking({{ booking.id }}, '${{ booking.session_type.get_drop_in_price|floatformat:2 }}')"
+                                        class="px-4 py-2 bg-primary text-secondary rounded-lg font-bold hover:bg-gray-800 transition text-sm">
+                                    💳 Pay ${{ booking.session_type.get_drop_in_price|floatformat:2 }} Drop-in
+                                </button>
+                                {% endif %}
                             {% endif %}
 
                             {% if booking.status in 'pending,confirmed' %}
