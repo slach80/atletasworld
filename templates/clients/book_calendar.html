@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
     <title>Book a Session - Atletas Performance Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    {% if stripe_public_key %}<script src="https://js.stripe.com/v3/"></script>{% endif %}
     <script>
         tailwind.config = {
             theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } }
@@ -568,19 +569,15 @@ async function confirmBookings(){
         if(confirmed.length) details+=confirmed.map(r=>`<p>✅ ${fmtDateLabel(r.slot.start.split('T')[0])} at ${fmtTime(r.slot.start)} — ${r.slot.session_type_name}</p>`).join('');
         if(pending.length){
             const total=pending.reduce((s,r)=>s+parseFloat(r.amountDue||0),0);
-            const stripeReady='{{ stripe_public_key }}' !== '';
-            const payBtns=pending.map(r=>{
-                const bid=r.bookingId||'';
-                return stripeReady && bid
-                    ? `<button onclick="payBooking(${bid},'$${parseFloat(r.amountDue).toFixed(2)}')" class="mt-1 w-full py-2 bg-primary text-secondary rounded-lg text-xs font-black hover:bg-gray-800 transition">Pay $${parseFloat(r.amountDue).toFixed(2)} Now →</button>`
-                    : `<p class="mt-1 text-yellow-700 text-xs">We will contact you to arrange payment. Sessions are held for 24 hours.</p>`;
-            }).join('');
             details+=`<div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-                <p class="font-semibold mb-1">⏳ ${pending.length} session${pending.length!==1?'s':''} reserved — payment required</p>
+                <p class="font-semibold mb-1">⏳ ${pending.length} session${pending.length!==1?'s':''} reserved — completing payment…</p>
                 ${pending.map(r=>`<p>${fmtDateLabel(r.slot.start.split('T')[0])} at ${fmtTime(r.slot.start)} — $${parseFloat(r.amountDue).toFixed(2)}</p>`).join('')}
                 <p class="mt-2 font-bold">Total due: $${total.toFixed(2)}</p>
-                ${payBtns}
             </div>`;
+            // Auto-open payment modal for first pending booking
+            if(pending[0].bookingId && '{{ stripe_public_key }}'){
+                setTimeout(()=>payBooking(pending[0].bookingId, 'Session — $'+parseFloat(pending[0].amountDue).toFixed(2)), 400);
+            }
         }
         document.getElementById('success-details').innerHTML=details;
         document.getElementById('success-overlay').classList.remove('hidden');
@@ -743,10 +740,11 @@ function getCookie(n){ const v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^
 
 // ── Booking drop-in payment via Stripe ──────────────────────────────────────
 {% if stripe_public_key %}
-const _stripeJs = Stripe('{{ stripe_public_key }}');
+let _stripeJs = null;
 let _bookingElements = null;
 
 async function payBooking(bookingId, label) {
+    if(!_stripeJs) _stripeJs = Stripe('{{ stripe_public_key }}');
     document.getElementById('booking-pay-label').textContent = label;
     document.getElementById('booking-pay-modal').classList.remove('hidden');
     document.getElementById('booking-pay-loading').classList.remove('hidden');
@@ -788,8 +786,11 @@ async function submitBookingPayment() {
         btn.disabled = false; btn.textContent = 'Pay Now';
     } else {
         closeBookingPayModal();
+        // Update success overlay to show confirmed state
+        document.getElementById('success-details').innerHTML =
+            '<p class="text-green-700 font-bold mt-2 text-sm">✅ Payment successful — your session is confirmed!</p>' +
+            '<p class="text-gray-500 text-xs mt-1">You will receive a confirmation shortly.</p>';
         document.getElementById('success-overlay').classList.remove('hidden');
-        document.getElementById('success-details').innerHTML = '<p class="text-green-700 font-semibold mt-2">✅ Payment successful — your session is confirmed!</p>';
     }
 }
 
@@ -806,7 +807,6 @@ function showBookingPayError(msg) {
 </script>
 
 {% if stripe_public_key %}
-<script src="https://js.stripe.com/v3/"></script>
 <!-- Booking payment modal -->
 <div id="booking-pay-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
