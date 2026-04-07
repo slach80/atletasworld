@@ -113,6 +113,10 @@ class ScheduleBlock(models.Model):
                                          help_text="Override default pricing if set")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     notes = models.TextField(blank=True)
+    location_override = models.CharField(
+        max_length=200, blank=True,
+        help_text="Overrides session type location for this block (e.g. outdoor venue)"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property

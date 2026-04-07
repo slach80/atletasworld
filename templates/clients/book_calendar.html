@@ -389,7 +389,7 @@ async function loadSlots(){
         for(const ev of events){
             if((ev.raw?.spots_remaining||0)<=0) continue;
             const k=`${ev.raw.slot_type}_${ev.raw.slot_id}`;
-            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,select_discount:ev.raw.select_discount||false,session_format:ev.raw.session_format||'',allow_package:ev.raw.allow_package!==false,requires_package:ev.raw.requires_package||false,drop_in_available:ev.raw.drop_in_available||false,linked_packages:ev.raw.linked_packages||[],duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
+            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,select_discount:ev.raw.select_discount||false,session_format:ev.raw.session_format||'',allow_package:ev.raw.allow_package!==false,requires_package:ev.raw.requires_package||false,drop_in_available:ev.raw.drop_in_available||false,linked_packages:ev.raw.linked_packages||[],duration:ev.raw.duration,location:ev.raw.location||'',start:ev.start,color:ev.backgroundColor||'#D7FF00'};
         }
         document.getElementById('slots-loading').classList.add('hidden');
         document.getElementById('slots-container').classList.remove('hidden');
@@ -442,6 +442,7 @@ function renderSlots(){
                         <p class="font-semibold text-sm">${time} · ${s.duration} min</p>
                         <p class="text-xs text-gray-500 truncate">${s.session_type_name}</p>
                         <p class="text-xs mt-0.5 ${low?'text-orange-500 font-semibold':'text-gray-400'}">${s.coach_name} · ${s.spots_remaining} spot${s.spots_remaining!==1?'s':''}</p>
+                        ${s.location?`<p class="text-xs text-gray-400 truncate">📍 ${s.location}</p>`:''}
                         ${priceLine}
                     </div>
                 </div>${btn}</div>`;
@@ -502,6 +503,7 @@ function buildCartHtml(){
                     <div>
                         <p class="font-semibold text-sm">${fmtDateLabel(slot.start.split('T')[0])} · ${fmtTime(slot.start)}</p>
                         <p class="text-xs text-gray-500">${slot.session_type_name} · ${slot.coach_name}</p>
+                        ${slot.location?`<p class="text-xs text-gray-400">📍 ${slot.location}</p>`:''}
                         <div class="mt-0.5">${priceTag}</div>
                     </div>
                 </div>

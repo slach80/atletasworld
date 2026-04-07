@@ -257,6 +257,7 @@
                                 <div>
                                     <p class="font-semibold">{{ block.start_time|time:"g:i A" }}</p>
                                     <p class="text-gray-500 text-xs">{{ block.display_session_type }}</p>
+                                    {% if block.location_override %}<p class="text-xs text-gray-400">📍 {{ block.location_override }}</p>{% endif %}
                                 </div>
                                 <div class="text-right">
                                     <p class="text-xs text-gray-400">{{ block.current_participants }}/{{ block.max_participants }} spots</p>
@@ -342,6 +343,11 @@
                         <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Location Override <span class="text-gray-400">(optional)</span></label>
+                    <input type="text" name="location_override" placeholder="e.g. Hocker Grove Middle School"
+                           class="w-full px-3 py-2 border rounded-lg text-sm">
                 </div>
                 <div class="flex items-end">
                     <button type="submit" class="w-full bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000] text-sm font-semibold">Add Slot</button>

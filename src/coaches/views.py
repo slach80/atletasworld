@@ -225,6 +225,7 @@ def add_schedule_block(request):
             end_dt = start_dt + timedelta(minutes=duration)
             end_time = end_dt.time()
 
+            location_override = request.POST.get('location_override', '').strip()
             block = ScheduleBlock.objects.create(
                 coach=coach,
                 date=date,
@@ -233,6 +234,7 @@ def add_schedule_block(request):
                 session_type=session_type,
                 duration_minutes=duration,
                 max_participants=max_participants,
+                location_override=location_override,
             )
             if catalog_ids := request.POST.getlist('catalog_session_type'):
                 block.catalog_session_types.set(

@@ -269,6 +269,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                         for p in (catalog_types[0].linked_packages.filter(is_active=True, is_purchasable=True) if catalog_types else [])
                     ],
                     'duration': dur,
+                    'location': block.location_override or (catalog_types[0].location if catalog_types else ''),
                 }
             })
 
