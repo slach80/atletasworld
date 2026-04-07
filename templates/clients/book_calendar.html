@@ -543,7 +543,7 @@ async function confirmBookings(){
             const data=await res.json();
             if(res.ok){
                 const payReq=data.payment_required;
-                results.push({ok:true,slot,paymentRequired:payReq,amountDue:data.amount_due});
+                results.push({ok:true,slot,paymentRequired:payReq,amountDue:data.amount_due,bookingId:data.id});
                 const label=payReq
                     ?`⏳ Reserved — payment of $${parseFloat(data.amount_due).toFixed(2)} required`
                     :'✅ Confirmed';
@@ -568,11 +568,18 @@ async function confirmBookings(){
         if(confirmed.length) details+=confirmed.map(r=>`<p>✅ ${fmtDateLabel(r.slot.start.split('T')[0])} at ${fmtTime(r.slot.start)} — ${r.slot.session_type_name}</p>`).join('');
         if(pending.length){
             const total=pending.reduce((s,r)=>s+parseFloat(r.amountDue||0),0);
+            const stripeReady='{{ stripe_public_key }}' !== '';
+            const payBtns=pending.map(r=>{
+                const bid=r.bookingId||'';
+                return stripeReady && bid
+                    ? `<button onclick="payBooking(${bid},'$${parseFloat(r.amountDue).toFixed(2)}')" class="mt-1 w-full py-2 bg-primary text-secondary rounded-lg text-xs font-black hover:bg-gray-800 transition">Pay $${parseFloat(r.amountDue).toFixed(2)} Now →</button>`
+                    : `<p class="mt-1 text-yellow-700 text-xs">We will contact you to arrange payment. Sessions are held for 24 hours.</p>`;
+            }).join('');
             details+=`<div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
                 <p class="font-semibold mb-1">⏳ ${pending.length} session${pending.length!==1?'s':''} reserved — payment required</p>
                 ${pending.map(r=>`<p>${fmtDateLabel(r.slot.start.split('T')[0])} at ${fmtTime(r.slot.start)} — $${parseFloat(r.amountDue).toFixed(2)}</p>`).join('')}
                 <p class="mt-2 font-bold">Total due: $${total.toFixed(2)}</p>
-                <p class="mt-1 text-yellow-700">We will contact you to arrange payment. Sessions are held for 24 hours.</p>
+                ${payBtns}
             </div>`;
         }
         document.getElementById('success-details').innerHTML=details;
@@ -733,6 +740,92 @@ function isoDate(d){ return d.toISOString().split('T')[0]; }
 function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
 function fmtDateLabel(ds){ const t=new Date(); t.setHours(0,0,0,0); const tm=new Date(t); tm.setDate(tm.getDate()+1); if(ds===isoDate(t)) return'Today'; if(ds===isoDate(tm)) return'Tomorrow'; return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
 function getCookie(n){ const v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)'); return v?v.pop():''; }
+
+// ── Booking drop-in payment via Stripe ──────────────────────────────────────
+{% if stripe_public_key %}
+const _stripeJs = Stripe('{{ stripe_public_key }}');
+let _bookingElements = null;
+
+async function payBooking(bookingId, label) {
+    document.getElementById('booking-pay-label').textContent = label;
+    document.getElementById('booking-pay-modal').classList.remove('hidden');
+    document.getElementById('booking-pay-loading').classList.remove('hidden');
+    document.getElementById('booking-pay-element').classList.add('hidden');
+    document.getElementById('booking-pay-btn').classList.add('hidden');
+    document.getElementById('booking-pay-error').classList.add('hidden');
+    document.getElementById('booking-pay-btn').dataset.bookingId = bookingId;
+
+    try {
+        const res = await fetch(`/payments/booking/${bookingId}/pay/`, {
+            method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')}
+        });
+        const data = await res.json();
+        if (!res.ok) { showBookingPayError(data.error || 'Could not initialize payment.'); return; }
+
+        _bookingElements = _stripeJs.elements({
+            clientSecret: data.client_secret,
+            appearance: { theme: 'stripe', variables: { colorPrimary: '#1a1a1a', borderRadius: '12px' } }
+        });
+        _bookingElements.create('payment', { layout: 'tabs' }).mount('#booking-pay-element');
+        document.getElementById('booking-pay-loading').classList.add('hidden');
+        document.getElementById('booking-pay-element').classList.remove('hidden');
+        document.getElementById('booking-pay-btn').classList.remove('hidden');
+    } catch(e) {
+        showBookingPayError('Network error — please try again.');
+    }
+}
+
+async function submitBookingPayment() {
+    const btn = document.getElementById('booking-pay-btn');
+    btn.disabled = true; btn.textContent = 'Processing…';
+    const {error} = await _stripeJs.confirmPayment({
+        elements: _bookingElements,
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required'
+    });
+    if (error) {
+        showBookingPayError(error.message);
+        btn.disabled = false; btn.textContent = 'Pay Now';
+    } else {
+        closeBookingPayModal();
+        document.getElementById('success-overlay').classList.remove('hidden');
+        document.getElementById('success-details').innerHTML = '<p class="text-green-700 font-semibold mt-2">✅ Payment successful — your session is confirmed!</p>';
+    }
+}
+
+function closeBookingPayModal() {
+    document.getElementById('booking-pay-modal').classList.add('hidden');
+    if (_bookingElements) { document.getElementById('booking-pay-element').innerHTML = ''; _bookingElements = null; }
+}
+function showBookingPayError(msg) {
+    const el = document.getElementById('booking-pay-error');
+    el.textContent = msg; el.classList.remove('hidden');
+    document.getElementById('booking-pay-loading').classList.add('hidden');
+}
+{% endif %}
 </script>
+
+{% if stripe_public_key %}
+<script src="https://js.stripe.com/v3/"></script>
+<!-- Booking payment modal -->
+<div id="booking-pay-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <h2 class="text-xl font-bold mb-0.5">Complete Payment</h2>
+        <p id="booking-pay-label" class="text-gray-500 text-sm mb-4"></p>
+        <div id="booking-pay-loading" class="py-8 text-center text-gray-400">
+            <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
+            <p class="text-sm">Loading payment options…</p>
+        </div>
+        <div id="booking-pay-element" class="hidden mb-4"></div>
+        <div id="booking-pay-error" class="text-red-600 text-xs mb-3 hidden"></div>
+        <button id="booking-pay-btn" onclick="submitBookingPayment()"
+                class="hidden w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
+            Pay Now
+        </button>
+        <button onclick="closeBookingPayModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+    </div>
+</div>
+{% endif %}
+
 </body>
 </html>

@@ -808,6 +808,7 @@ def booking_page(request):
         'favorite_coach_ids': favorite_coach_ids,
         'has_select_membership': has_select_membership,
         'select_credit_balance': select_credit_balance,
+        'stripe_public_key': __import__('django.conf', fromlist=['settings']).settings.STRIPE_PUBLIC_KEY,
         'available_field_rentals': FieldRentalSlot.objects.filter(
             date__gte=today, date__lte=today + timedelta(days=30), status='available'
         ).order_by('date', 'start_time'),
