@@ -149,6 +149,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'select_discount': is_select_member and apply_select_discount(
                         slot.effective_price, slot.session_type.session_format) is not None,
                     'session_format': slot.session_type.session_format,
+                    'allow_package': slot.session_type.allow_package,
                     'duration': slot.session_type.duration_minutes,
                 }
             })
@@ -222,6 +223,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'price': str(display_price),
                     'select_discount': has_discount,
                     'session_format': sf,
+                    'allow_package': catalog_types[0].allow_package if catalog_types else True,
                     'duration': dur,
                 }
             })
@@ -506,6 +508,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                     amount_due = base_amount
             except Exception:
                 amount_due = Decimal('0')
+
+            # If session type does not allow package use, force drop-in regardless
+            _st = session_type if 'session_type' in dir() and session_type else None
+            if package and _st and not _st.allow_package:
+                package = None  # ignore package — charge drop-in rate
 
             if package:
                 # Package booking — deduct session, confirm immediately

@@ -1172,6 +1172,7 @@ def owner_session_types(request):
                     color=request.POST.get('color', '#2ecc71'),
                     is_active=request.POST.get('is_active') == 'on',
                     requires_package=request.POST.get('requires_package') == 'on',
+                    allow_package=request.POST.get('allow_package') == 'on',
                     show_as_event=request.POST.get('show_as_event') == 'on',
                     show_as_program=request.POST.get('show_as_program') == 'on',
                     start_times=' '.join(t for t in request.POST.getlist('start_times') if t),
@@ -1236,6 +1237,7 @@ def owner_session_type_edit(request, pk):
             session_type.color = request.POST.get('color', '#2ecc71')
             session_type.is_active = request.POST.get('is_active') == 'on'
             session_type.requires_package = request.POST.get('requires_package') == 'on'
+            session_type.allow_package    = request.POST.get('allow_package') == 'on'
             session_type.show_as_event = request.POST.get('show_as_event') == 'on'
             session_type.show_as_program = request.POST.get('show_as_program') == 'on'
             session_type.start_times = ' '.join(t for t in request.POST.getlist('start_times') if t)

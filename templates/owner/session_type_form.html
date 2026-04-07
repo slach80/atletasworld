@@ -209,7 +209,18 @@
                 <label class="flex items-center space-x-2 cursor-pointer mb-3">
                     <input type="checkbox" name="requires_package" {% if session_type.requires_package %}checked{% endif %}
                            class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
-                    <span class="text-sm text-gray-700">Requires active package to book</span>
+                    <div>
+                        <span class="text-sm text-gray-700 font-medium">Requires active package to book</span>
+                        <p class="text-xs text-gray-400">Clients without a package cannot book this session type</p>
+                    </div>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer mb-3">
+                    <input type="checkbox" name="allow_package" {% if session_type.allow_package or not editing %}checked{% endif %}
+                           class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
+                    <div>
+                        <span class="text-sm text-gray-700 font-medium">Allow package sessions to be used</span>
+                        <p class="text-xs text-gray-400">Uncheck for drop-in only sessions (e.g. Private Training) — always charged per session even with an active package</p>
+                    </div>
                 </label>
                 <label class="flex items-center space-x-2 cursor-pointer mb-3">
                     <input type="checkbox" name="is_active" {% if session_type.is_active %}checked{% endif %}

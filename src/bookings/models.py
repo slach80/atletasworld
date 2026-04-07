@@ -32,6 +32,11 @@ class SessionType(models.Model):
     color = models.CharField(max_length=7, default='#2ecc71', help_text="Hex color for calendar display")
     is_active = models.BooleanField(default=True)
     requires_package = models.BooleanField(default=False, help_text="Requires active package to book")
+    allow_package    = models.BooleanField(
+        default=True,
+        help_text="Allow package sessions to be used for this session type. "
+                  "Uncheck for drop-in only sessions (e.g. Private Training) where each booking is always charged individually."
+    )
     linked_packages = models.ManyToManyField(
         'clients.Package', blank=True, related_name='session_types',
         help_text="Packages that include access to this seasonal session"

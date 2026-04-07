@@ -388,7 +388,7 @@ async function loadSlots(){
         for(const ev of events){
             if((ev.raw?.spots_remaining||0)<=0) continue;
             const k=`${ev.raw.slot_type}_${ev.raw.slot_id}`;
-            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,select_discount:ev.raw.select_discount||false,session_format:ev.raw.session_format||'',duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
+            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,select_discount:ev.raw.select_discount||false,session_format:ev.raw.session_format||'',allow_package:ev.raw.allow_package!==false,duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
         }
         document.getElementById('slots-loading').classList.add('hidden');
         document.getElementById('slots-container').classList.remove('hidden');
@@ -479,15 +479,19 @@ function cartTotalDue(){
 function buildCartHtml(){
     if(!cart.length) return`<div class="text-center py-10 text-gray-400"><p class="text-4xl mb-2">🛒</p><p class="text-sm font-semibold text-gray-500">Cart is empty</p><p class="text-xs mt-1">Tap <strong>+ Add</strong> on a session to get started.</p></div>`;
     const pkg=packages.find(p=>p.can_book);
-    const after=sessionsLeft-cart.length;
-    const over=hasPackage&&after<0;
-    const totalDue=pkg?0:cartTotalDue();
-    const paymentNeeded=!pkg&&totalDue>0;
+    // For total/payment: drop-in-only slots always count toward payment even with a package
+    const dropInTotal=cart.reduce((s,{slot})=>{ const p=parseFloat(slot.price||0); return s+(!slot.allow_package&&p>0?p:0); },0);
+    const packageSlots=cart.filter(({slot})=>slot.allow_package);
+    const after=sessionsLeft-packageSlots.length;
+    const over=hasPackage&&pkg&&after<0;
+    const totalDue=pkg?(dropInTotal):(dropInTotal+cart.filter(({slot})=>slot.allow_package).reduce((s,{slot})=>s+parseFloat(slot.price||0),0)+cart.filter(({slot})=>!slot.allow_package).reduce((s,{slot})=>s+parseFloat(slot.price||0),0));
+    const paymentNeeded=totalDue>0;
     let html='<div class="space-y-3 mb-4">';
     cart.forEach((item,i)=>{
         const {slot}=item;
         const price=parseFloat(slot.price||0);
-        const priceTag=pkg?'<span class="text-xs text-green-600 font-semibold">📦 Package</span>'
+        const usesPkg=pkg&&slot.allow_package;
+        const priceTag=usesPkg?'<span class="text-xs text-green-600 font-semibold">📦 Package</span>'
             :price>0?`<span class="text-xs font-semibold text-primary">$${price.toFixed(2)}</span>`
             :'<span class="text-xs text-gray-400">Free</span>';
         html+=`<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
@@ -533,7 +537,9 @@ async function confirmBookings(){
     for(let i=0;i<cart.length;i++){
         const {slot,notes}=cart[i];
         try{
-            const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:pkg?pkg.id:null,notes:notes||''})});
+            // Only pass package_id if this session type allows package use
+            const usePackage = pkg && slot.allow_package;
+            const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:usePackage?pkg.id:null,notes:notes||''})});
             const data=await res.json();
             if(res.ok){
                 const payReq=data.payment_required;
