@@ -161,13 +161,33 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <!-- Payment status badge -->
+                            {% if booking.payment_status == 'pending' and booking.status == 'pending' and booking.amount_paid > 0 %}
+                            <span class="px-3 py-1 text-sm font-bold rounded-full bg-orange-100 text-orange-700 animate-pulse">
+                                ⏳ Payment Required
+                            </span>
+                            {% else %}
                             <span class="px-3 py-1 text-sm font-medium rounded-full
                                 {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
                                 {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800
                                 {% else %}bg-gray-100 text-gray-800{% endif %}">
                                 {{ booking.get_status_display }}
                             </span>
+                            {% endif %}
+
+                            <!-- Pay Now button for unpaid drop-in bookings -->
+                            {% if stripe_public_key and booking.payment_status == 'pending' and booking.status == 'pending' and booking.amount_paid > 0 %}
+                            <button onclick="payBooking({{ booking.id }}, '${{ booking.amount_paid|floatformat:2 }}')"
+                                    class="px-4 py-2 bg-primary text-secondary rounded-lg font-bold hover:bg-gray-800 transition text-sm">
+                                💳 Pay ${{ booking.amount_paid|floatformat:2 }}
+                            </button>
+                            {% elif stripe_public_key and booking.payment_status == 'pending' and booking.status == 'pending' and booking.session_type %}
+                            <button onclick="payBooking({{ booking.id }}, '${{ booking.session_type.get_drop_in_price|floatformat:2 }}')"
+                                    class="px-4 py-2 bg-primary text-secondary rounded-lg font-bold hover:bg-gray-800 transition text-sm">
+                                💳 Pay ${{ booking.session_type.get_drop_in_price|floatformat:2 }}
+                            </button>
+                            {% endif %}
 
                             {% if booking.status in 'pending,confirmed' %}
                             <form method="POST" action="{% url 'clients:booking_cancel' booking.id %}" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
@@ -228,5 +248,107 @@
         </div>
         {% endif %}
     </div>
+
+{% if stripe_public_key %}
+<script src="https://js.stripe.com/v3/"></script>
+
+<!-- Booking payment modal -->
+<div id="booking-pay-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <h2 class="text-xl font-bold mb-0.5">Complete Payment</h2>
+        <p id="booking-pay-label" class="text-gray-500 text-sm mb-4"></p>
+        <div id="booking-pay-loading" class="py-8 text-center text-gray-400">
+            <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
+            <p class="text-sm">Loading payment options…</p>
+        </div>
+        <div id="booking-pay-element" class="hidden mb-4"></div>
+        <div id="booking-pay-error" class="text-red-600 text-xs mb-3 hidden"></div>
+        <button id="booking-pay-btn" onclick="submitBookingPayment()"
+                class="hidden w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
+            Pay Now
+        </button>
+        <button onclick="closeBookingPayModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+    </div>
+</div>
+
+<div id="booking-pay-success" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div class="text-5xl mb-3">✅</div>
+        <h2 class="text-xl font-bold mb-2">Payment Successful!</h2>
+        <p class="text-gray-500 text-sm mb-5">Your session is confirmed.</p>
+        <button onclick="location.reload()" class="block w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">Done</button>
+    </div>
+</div>
+
+<script>
+let _stripeJs = null;
+let _bookingElements = null;
+
+async function payBooking(bookingId, label) {
+    if (!_stripeJs) _stripeJs = Stripe('{{ stripe_public_key }}');
+    document.getElementById('booking-pay-label').textContent = 'Session — ' + label;
+    document.getElementById('booking-pay-modal').classList.remove('hidden');
+    document.getElementById('booking-pay-loading').classList.remove('hidden');
+    document.getElementById('booking-pay-element').classList.add('hidden');
+    document.getElementById('booking-pay-btn').classList.add('hidden');
+    document.getElementById('booking-pay-error').classList.add('hidden');
+    document.getElementById('booking-pay-btn').dataset.bookingId = bookingId;
+
+    try {
+        const res = await fetch(`/payments/booking/${bookingId}/pay/`, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')}
+        });
+        const data = await res.json();
+        if (!res.ok) { showPayError(data.error || 'Could not initialize payment.'); return; }
+
+        _bookingElements = _stripeJs.elements({
+            clientSecret: data.client_secret,
+            appearance: { theme: 'stripe', variables: { colorPrimary: '#1a1a1a', borderRadius: '12px' } }
+        });
+        _bookingElements.create('payment', { layout: 'tabs' }).mount('#booking-pay-element');
+        document.getElementById('booking-pay-loading').classList.add('hidden');
+        document.getElementById('booking-pay-element').classList.remove('hidden');
+        document.getElementById('booking-pay-btn').classList.remove('hidden');
+    } catch(e) {
+        showPayError('Network error — please try again.');
+    }
+}
+
+async function submitBookingPayment() {
+    const btn = document.getElementById('booking-pay-btn');
+    btn.disabled = true; btn.textContent = 'Processing…';
+    const {error} = await _stripeJs.confirmPayment({
+        elements: _bookingElements,
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required'
+    });
+    if (error) {
+        showPayError(error.message);
+        btn.disabled = false; btn.textContent = 'Pay Now';
+    } else {
+        closeBookingPayModal();
+        document.getElementById('booking-pay-success').classList.remove('hidden');
+    }
+}
+
+function closeBookingPayModal() {
+    document.getElementById('booking-pay-modal').classList.add('hidden');
+    if (_bookingElements) { document.getElementById('booking-pay-element').innerHTML = ''; _bookingElements = null; }
+}
+
+function showPayError(msg) {
+    const el = document.getElementById('booking-pay-error');
+    el.textContent = msg; el.classList.remove('hidden');
+    document.getElementById('booking-pay-loading').classList.add('hidden');
+}
+
+function getCookie(n) {
+    const v = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+}
+</script>
+{% endif %}
+
 </body>
 </html>

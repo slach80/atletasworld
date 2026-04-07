@@ -398,10 +398,12 @@ def bookings_list(request):
         scheduled_date__lt=timezone.now().date()
     ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')
 
+    from django.conf import settings as django_settings
     context = {
         'client': client,
         'upcoming_bookings': upcoming_bookings,
         'past_bookings': past_bookings,
+        'stripe_public_key': django_settings.STRIPE_PUBLIC_KEY,
     }
     return render(request, 'clients/bookings.html', context)
 
