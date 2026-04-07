@@ -61,9 +61,10 @@ def owner_dashboard(request):
         scheduled_date__gte=(month_start - timedelta(days=1)).replace(day=1),
         scheduled_date__lt=month_start
     ))
-    pending_payments   = Booking.objects.filter(
+    pending_payments_qs = Booking.objects.filter(
         payment_status='pending', status__in=['pending', 'confirmed']
-    ).aggregate(t=Sum('amount_paid'))['t'] or 0
+    ).select_related('client__user', 'player', 'session_type', 'coach__user').order_by('scheduled_date')
+    pending_payments = pending_payments_qs.aggregate(t=Sum('amount_paid'))['t'] or 0
     rental_revenue_month = FieldRentalSlot.objects.filter(
         status='booked',
         date__gte=month_start, date__lte=today
@@ -111,6 +112,7 @@ def owner_dashboard(request):
         'revenue_ytd': revenue_ytd,
         'revenue_last_month': revenue_last_month,
         'pending_payments': pending_payments,
+        'pending_payments_list': pending_payments_qs[:20],
         'rental_revenue_month': rental_revenue_month,
         'recent_transactions': recent_transactions,
         # Lists

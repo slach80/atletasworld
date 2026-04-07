@@ -389,7 +389,7 @@ async function loadSlots(){
         for(const ev of events){
             if((ev.raw?.spots_remaining||0)<=0) continue;
             const k=`${ev.raw.slot_type}_${ev.raw.slot_id}`;
-            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,select_discount:ev.raw.select_discount||false,session_format:ev.raw.session_format||'',allow_package:ev.raw.allow_package!==false,duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
+            slotMap[k]={key:k,slot_id:ev.raw.slot_id,slot_type:ev.raw.slot_type,coach_id:ev.raw.coach_id,coach_name:ev.raw.coach_name,session_type_name:ev.raw.session_type_name,catalog_type_ids:ev.raw.catalog_type_ids||[],calendar_id:ev.calendarId,spots_remaining:ev.raw.spots_remaining,price:ev.raw.price,select_discount:ev.raw.select_discount||false,session_format:ev.raw.session_format||'',allow_package:ev.raw.allow_package!==false,requires_package:ev.raw.requires_package||false,linked_packages:ev.raw.linked_packages||[],duration:ev.raw.duration,start:ev.start,color:ev.backgroundColor||'#D7FF00'};
         }
         document.getElementById('slots-loading').classList.add('hidden');
         document.getElementById('slots-container').classList.remove('hidden');
@@ -517,6 +517,30 @@ function buildCartHtml(){
     const pkgSlotCount=cart.filter(({slot})=>slot.allow_package).length;
     if(hasPackage&&pkg&&pkgSlotCount>0) html+=`<div class="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 mb-3 text-xs"><span class="text-gray-500">Package sessions remaining after booking</span><span class="font-bold ${after<0?'text-red-600':after<=2?'text-orange-500':'text-primary'}">${after}</span></div>`;
     if(over) html+=`<div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">⚠️ Not enough package sessions — need ${Math.abs(after)} more. <a href="{% url 'clients:packages' %}" class="underline font-bold">Upgrade</a></div>`;
+    // Package suggestion: session has linked packages but client doesn't have one
+    if(!hasPackage){
+        const slotsWithPkgs=cart.filter(({slot})=>slot.linked_packages&&slot.linked_packages.length>0);
+        if(slotsWithPkgs.length>0){
+            const allPkgs=[...new Map(slotsWithPkgs.flatMap(({slot})=>slot.linked_packages).map(p=>[p.id,p])).values()];
+            const hasRequired=slotsWithPkgs.some(({slot})=>slot.requires_package);
+            if(hasRequired){
+                html+=`<div class="mb-3 p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-800">
+                    <p class="font-bold mb-1">📦 Package required for this session</p>
+                    <p class="mb-2">This session type requires an active package. Purchase one of the following to book:</p>
+                    <div class="space-y-1">${allPkgs.map(p=>`<div class="flex justify-between"><span class="font-medium">${p.name}</span><span>$${p.price}</span></div>`).join('')}</div>
+                    <a href="{% url 'clients:packages' %}" class="mt-2 block text-center py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 transition">Buy a Package →</a>
+                </div>`;
+            } else {
+                const dropin=parseFloat(slotsWithPkgs[0].slot.price||0);
+                const cheapestPkg=allPkgs.sort((a,b)=>parseFloat(a.price)-parseFloat(b.price))[0];
+                html+=`<div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
+                    <p class="font-bold mb-1">💡 Save with a package</p>
+                    <p class="mb-2">You're paying $${dropin.toFixed(2)}/session drop-in. A <strong>${cheapestPkg.name}</strong> package ($${cheapestPkg.price}) includes this session type.</p>
+                    <a href="{% url 'clients:packages' %}" class="block text-center py-1.5 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition">View Packages</a>
+                </div>`;
+            }
+        }
+    }
     // Pay-now total
     if(paymentNeeded) html+=`<div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm">
         <div class="flex justify-between font-bold"><span>Total due</span><span>$${totalDue.toFixed(2)}</span></div>

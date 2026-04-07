@@ -79,6 +79,30 @@
         </div>
     </div>
 
+    {% if pending_payments_list %}
+    <div class="mb-5 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-bold text-yellow-800">⏳ Awaiting Payment ({{ pending_payments_list|length }})</h3>
+            <a href="{% url 'owner_bookings' %}" class="text-xs text-yellow-700 hover:underline">View all →</a>
+        </div>
+        <div class="space-y-1.5">
+            {% for bk in pending_payments_list %}
+            <div class="flex items-center justify-between py-1.5 px-2 bg-white rounded-lg text-xs border border-yellow-100">
+                <div class="min-w-0">
+                    <span class="font-semibold text-gray-800">{{ bk.player.first_name|default:bk.client.user.first_name }} {{ bk.player.last_name|default:'' }}</span>
+                    <span class="text-gray-400 mx-1">·</span>
+                    <span class="text-gray-500 truncate">{{ bk.session_type.name|default:"Session" }}</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 ml-2">
+                    <span class="font-bold text-yellow-700">${{ bk.amount_paid|floatformat:2 }}</span>
+                    <span class="text-gray-400">{{ bk.scheduled_date|date:"M j" }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {% if recent_transactions %}
     <h3 class="text-sm font-semibold text-gray-600 mb-3">Recent Transactions</h3>
     <div class="space-y-2">

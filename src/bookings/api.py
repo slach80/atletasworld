@@ -49,6 +49,38 @@ def get_client_select_membership(user):
     ).exists()
 
 
+def _notify_pending_payment(booking, amount_due):
+    """Notify coach and owners when a drop-in booking is pending payment."""
+    try:
+        from clients.models import Client, Notification
+        from django.contrib.auth.models import User
+        player_name = str(booking.player) if booking.player else booking.client.user.get_full_name()
+        session_name = booking.session_type.name if booking.session_type else 'Session'
+        date_str = booking.scheduled_date.strftime('%b %-d') if booking.scheduled_date else ''
+        msg = (f"{player_name} reserved {session_name} on {date_str} "
+               f"— awaiting payment of ${amount_due:.2f}. Session held for 24 hours.")
+        # Coach notification
+        if booking.coach and hasattr(booking.coach, 'user'):
+            if hasattr(booking.coach.user, 'client'):
+                Notification.objects.create(
+                    client=booking.coach.user.client,
+                    notification_type='promotional',
+                    title=f'Pending Payment: {player_name}',
+                    message=msg, method='in_app',
+                )
+        # Owner notification
+        for owner in User.objects.filter(groups__name='Owner'):
+            if hasattr(owner, 'client'):
+                Notification.objects.create(
+                    client=owner.client,
+                    notification_type='promotional',
+                    title=f'Pending Payment: {session_name} — ${amount_due:.2f}',
+                    message=msg, method='in_app',
+                )
+    except Exception:
+        pass  # never block a booking due to notification failure
+
+
 def is_team_coach(user):
     """Team coaches/managers see team session types; regular parents don't."""
     if hasattr(user, 'coach'):
@@ -150,6 +182,11 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                         slot.effective_price, slot.session_type.session_format) is not None,
                     'session_format': slot.session_type.session_format,
                     'allow_package': slot.session_type.allow_package,
+                    'requires_package': slot.session_type.requires_package,
+                    'linked_packages': [
+                        {'id': p.pk, 'name': p.name, 'price': str(p.price)}
+                        for p in slot.session_type.linked_packages.filter(is_active=True, is_purchasable=True)
+                    ],
                     'duration': slot.session_type.duration_minutes,
                 }
             })
@@ -224,6 +261,11 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'select_discount': has_discount,
                     'session_format': sf,
                     'allow_package': catalog_types[0].allow_package if catalog_types else True,
+                    'requires_package': catalog_types[0].requires_package if catalog_types else False,
+                    'linked_packages': [
+                        {'id': p.pk, 'name': p.name, 'price': str(p.price)}
+                        for p in (catalog_types[0].linked_packages.filter(is_active=True, is_purchasable=True) if catalog_types else [])
+                    ],
                     'duration': dur,
                 }
             })
@@ -522,8 +564,11 @@ class BookingViewSet(viewsets.ModelViewSet):
             elif amount_due and amount_due > 0:
                 # Pay-now booking with a cost — hold as pending until payment received
                 booking.payment_status = 'pending'
+                booking.amount_paid = amount_due
                 booking.save()
                 payment_required = True
+                # Notify coach and owner about pending payment booking
+                _notify_pending_payment(booking, amount_due)
             else:
                 # Free session (price = $0) — confirm directly
                 booking.confirm()
