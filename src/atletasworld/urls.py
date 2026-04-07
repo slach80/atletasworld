@@ -174,8 +174,8 @@ urlpatterns = [
     path('programs/', programs_view, name='programs'),
 
     # Coach public profiles - static templates for main coaches (must be before dynamic route)
-    path('coach/mirko/', TemplateView.as_view(template_name='coach_mirko.html'), name='coach_mirko'),
-    path('coach/roger/', TemplateView.as_view(template_name='coach_roger.html'), name='coach_roger'),
+    # coach/mirko/ and coach/roger/ both served by dynamic coach_public_profile view
+    # Static templates (coach_mirko.html, coach_roger.html) kept as archive
 
     # Coach public profiles (dynamic based on slug - fallback for other coaches)
     path('coach/<slug:slug>/', coach_public_profile, name='coach_public_profile'),
