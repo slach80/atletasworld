@@ -1389,7 +1389,7 @@ def owner_teams(request):
     from django.db.models import Count, Q
 
     teams = Team.objects.filter(is_active=True).annotate(
-        player_count=Count('players', filter=Q(players__is_active=True)),
+        active_player_count=Count('players', filter=Q(players__is_active=True)),
         coach_count=Count('coaches')
     ).order_by('age_group', 'name')
 
