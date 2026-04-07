@@ -485,6 +485,18 @@ class BookingViewSet(viewsets.ModelViewSet):
                     return Response({'error': 'This slot is no longer available'},
                                   status=status.HTTP_400_BAD_REQUEST)
 
+                # Prevent duplicate: same player already has a booking at this date/time
+                if player_id and Booking.objects.filter(
+                    player_id=player_id,
+                    scheduled_date=block.date,
+                    scheduled_time=block.start_time,
+                    status__in=['pending', 'confirmed'],
+                ).exists():
+                    return Response(
+                        {'error': 'This player already has a booking for this session.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 # Use first catalog session type if set, otherwise find by format
                 catalog_types = list(block.catalog_session_types.all())
                 session_type = catalog_types[0] if catalog_types else SessionType.objects.filter(
@@ -518,6 +530,17 @@ class BookingViewSet(viewsets.ModelViewSet):
                 if not slot.is_available:
                     return Response({'error': 'This slot is no longer available'},
                                   status=status.HTTP_400_BAD_REQUEST)
+
+                if player_id and Booking.objects.filter(
+                    player_id=player_id,
+                    scheduled_date=slot.date,
+                    scheduled_time=slot.start_time,
+                    status__in=['pending', 'confirmed'],
+                ).exists():
+                    return Response(
+                        {'error': 'This player already has a booking for this session.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 booking = Booking.objects.create(
                     client=client,
