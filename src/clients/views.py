@@ -164,6 +164,17 @@ def profile(request):
                 self_player.is_active   = True
                 self_player.save()
 
+        # Server-side required field validation
+        missing = []
+        if not request.user.first_name: missing.append('First name')
+        if not request.user.last_name:  missing.append('Last name')
+        if not request.POST.get('phone', '').strip(): missing.append('Phone number')
+        if not request.POST.get('emergency_contact', '').strip(): missing.append('Emergency contact name')
+        if not request.POST.get('emergency_phone', '').strip(): missing.append('Emergency contact phone')
+        if missing:
+            messages.error(request, f'Required fields missing: {", ".join(missing)}')
+            return redirect('clients:profile')
+
         messages.success(request, 'Profile updated successfully!')
         return redirect('clients:profile')
 
@@ -694,9 +705,20 @@ def booking_page(request):
         or hasattr(request.user, 'coach')
     )
     current_waiver = get_current_waiver(client)
-    if not is_exempt and not current_waiver:
-        messages.warning(request, 'Please sign the annual waiver before booking a session.')
-        return redirect('clients:profile')
+    # Profile completeness gate — must have name, phone, emergency contact + waiver
+    if not is_exempt:
+        missing = []
+        if not request.user.first_name or not request.user.last_name:
+            missing.append('your name')
+        if not client.phone:
+            missing.append('phone number')
+        if not client.emergency_contact:
+            missing.append('emergency contact')
+        if not current_waiver:
+            missing.append('annual waiver')
+        if missing:
+            messages.warning(request, f'Please complete your profile before booking — missing: {", ".join(missing)}.')
+            return redirect('clients:profile')
 
     booking_prefs, _ = BookingPreference.objects.get_or_create(client=client)
 
