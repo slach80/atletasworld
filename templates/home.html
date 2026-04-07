@@ -357,7 +357,7 @@
             {% for prog in programs %}
             <div class="card-hover bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 {% cycle 'border-secondary' 'border-accent' 'border-primary' %}">
                 <div class="h-48 bg-gradient-to-br {% cycle 'from-secondary to-green-600' 'from-accent to-orange-500' 'from-primary to-gray-700' %} flex items-center justify-center">
-                    <span class="text-7xl">{% if prog.session_format == 'team' %}👥{% elif prog.session_format == 'clinic' %}🏆{% elif prog.session_format == 'camp' %}⛺{% elif prog.session_format == 'seasonal' %}{% if prog.start_date %}{% if prog.start_date.month >= 5 and prog.start_date.month <= 8 %}☀️{% elif prog.start_date.month >= 3 and prog.start_date.month <= 4 %}🌸{% elif prog.start_date.month >= 9 and prog.start_date.month <= 11 %}🍂{% else %}❄️{% endif %}{% else %}🗓️{% endif %}{% elif prog.session_format == 'pickup' %}⚽{% elif prog.session_format == 'private' %}🎯{% else %}⚽{% endif %}</span>
+                    <span class="text-7xl">{% if prog.session_format == 'team' %}👥{% elif prog.session_format == 'clinic' %}🏆{% elif prog.session_format == 'camp' %}⛺{% elif prog.session_format == 'seasonal' %}{% if prog.start_date %}{% if prog.start_date.month >= 5 and prog.start_date.month <= 8 %}☀️{% elif prog.start_date.month >= 2 and prog.start_date.month <= 4 %}🌸{% elif prog.start_date.month == 9 or prog.start_date.month == 10 %}🍂{% else %}❄️{% endif %}{% else %}🗓️{% endif %}{% elif prog.session_format == 'pickup' %}⚽{% elif prog.session_format == 'private' %}🎯{% else %}⚽{% endif %}</span>
                 </div>
                 <div class="p-8">
                     <div class="flex justify-between items-start mb-4">
