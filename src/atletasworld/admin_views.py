@@ -1212,6 +1212,8 @@ def owner_session_types(request):
         'format_choices': SessionType.SESSION_FORMAT_CHOICES,
         'days_of_week_choices': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         'packages': Package.objects.filter(is_active=True).order_by('name'),
+        'archived_linked_packages': [],
+        'linked_package_ids': [],
     }
     return render(request, 'owner/session_types.html', context)
 
@@ -1260,11 +1262,19 @@ def owner_session_type_edit(request, pk):
             messages.error(request, f'Error: {str(e)}')
 
     from clients.models import Package as Pkg
+    linked_ids = list(session_type.linked_packages.values_list('pk', flat=True))
+    # Purchasable active packages shown in selector
+    purchasable_pkgs = Pkg.objects.filter(is_active=True, is_purchasable=True).order_by('name')
+    # Also show active-but-not-purchasable (e.g. spring packages) in selector — clients may still hold them
+    active_pkgs = Pkg.objects.filter(is_active=True).order_by('name')
+    # Archived packages already linked → shown as read-only (preserve link)
+    archived_linked = Pkg.objects.filter(pk__in=linked_ids, is_active=False)
     context = {
         'session_type': session_type,
         'format_choices': SessionType.SESSION_FORMAT_CHOICES,
-        'packages': Pkg.objects.filter(is_active=True).order_by('name'),
-        'linked_package_ids': list(session_type.linked_packages.values_list('pk', flat=True)),
+        'packages': active_pkgs,
+        'archived_linked_packages': archived_linked,
+        'linked_package_ids': linked_ids,
         'days_of_week_choices': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     }
     return render(request, 'owner/session_type_form.html', context)
