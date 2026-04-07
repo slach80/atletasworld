@@ -371,6 +371,7 @@
                                             Coach: {{ booking.coach }}
                                             {% if booking.player %}| Player: {{ booking.player }}{% endif %}
                                         </p>
+                                        {% if booking.session_type.location %}<p class="text-xs text-gray-400 mt-0.5">📍 {{ booking.session_type.location }}</p>{% endif %}
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2">

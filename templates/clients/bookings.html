@@ -152,6 +152,7 @@
                                 <div class="flex items-center mt-2 text-sm text-gray-500 flex-wrap gap-x-4">
                                     <span>Coach: {{ booking.coach }}</span>
                                     {% if booking.player %}<span>Player: {{ booking.player }}</span>{% endif %}
+                                    {% if booking.session_type.location %}<span>📍 {{ booking.session_type.location }}</span>{% endif %}
                                 </div>
                                 {% if booking.client_package %}
                                 <p class="text-xs text-green-600 mt-1.5">📦 Using: {{ booking.client_package.package.name }}</p>
