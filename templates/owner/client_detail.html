@@ -198,6 +198,7 @@
             <thead class="text-gray-500 border-b">
                 <tr>
                     <th class="text-left py-2 px-4">Player</th>
+                    <th class="text-left py-2 px-4">Session</th>
                     <th class="text-left py-2 px-4">Coach</th>
                     <th class="text-left py-2 px-4">Date</th>
                     <th class="text-left py-2 px-4">Time</th>
@@ -208,6 +209,7 @@
                 {% for booking in recent_bookings %}
                 <tr class="border-b border-gray-100">
                     <td class="py-2 px-4">{% if booking.player %}{{ booking.player.first_name }}{% else %}-{% endif %}</td>
+                    <td class="py-2 px-4">{{ booking.session_type.name|default:"-" }}</td>
                     <td class="py-2 px-4">{{ booking.coach.user.first_name }}</td>
                     <td class="py-2 px-4">{{ booking.scheduled_date|date:"M j" }}</td>
                     <td class="py-2 px-4">{{ booking.scheduled_time|time:"g:i A" }}</td>
