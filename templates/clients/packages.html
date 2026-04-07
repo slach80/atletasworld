@@ -264,7 +264,7 @@
                                 ✓ Already a Member
                             </div>
                             {% elif stripe_public_key %}
-                            <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }})"
+                            <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }}, [{% for p in players %}{'id':{{ p.pk }},'name':'{{ p.first_name|escapejs }} {{ p.last_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}])"
                                     class="w-full py-3 bg-primary text-secondary rounded-xl font-black hover:bg-gray-800 transition text-sm uppercase tracking-wide">
                                 Join APC Select — ${{ package.price }}/mo
                             </button>
@@ -334,7 +334,7 @@
 
                     <!-- CTA -->
                     {% if stripe_public_key %}
-                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }})"
+                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }}, [{% for p in players %}{'id':{{ p.pk }},'name':'{{ p.first_name|escapejs }} {{ p.last_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}])"
                             class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
                         Purchase — ${{ package.price }}
                     </button>
@@ -386,7 +386,7 @@
                         {% endif %}
                     </ul>
                     {% if stripe_public_key %}
-                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }})"
+                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }}, [{% for p in players %}{'id':{{ p.pk }},'name':'{{ p.first_name|escapejs }} {{ p.last_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}])"
                             class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
                         Purchase — ${{ package.price }}
                     </button>
@@ -458,6 +458,20 @@
             <p class="text-sm">Loading payment options…</p>
         </div>
 
+        <!-- Player selection (shown when multiple players, for sibling discount) -->
+        <div id="player-select-row" class="hidden mb-3">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Who is this package for?</label>
+            <select id="pkg-player-select" onchange="reinitPayment()"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:border-transparent">
+                <option value="">Select player…</option>
+            </select>
+        </div>
+
+        <!-- Sibling discount badge -->
+        <div id="sibling-discount-badge" class="hidden mb-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-800 font-semibold">
+            👨‍👩‍👧 Sibling discount applied — 50% off!
+        </div>
+
         <!-- Promo code -->
         <div id="promo-row" class="hidden mb-3">
             <div class="flex gap-2">
@@ -517,12 +531,14 @@ let paymentElements = null;   // stripe.elements() instance, created per payment
 let currentPackageId = null;
 let currentPackagePrice = 0;
 let activePromoCode = '';
+let currentPlayerList = [];
 
 // Step 1: user taps "Buy Now" → show modal + init payment
-async function buyPackage(id, name, price) {
+async function buyPackage(id, name, price, playerList) {
     currentPackageId = id;
     currentPackagePrice = parseFloat(price);
     activePromoCode = '';
+    currentPlayerList = playerList || [];
     document.getElementById('payment-package-name').textContent = name;
     document.getElementById('payment-modal').classList.remove('hidden');
     // Reset promo fields
@@ -532,6 +548,17 @@ async function buyPackage(id, name, price) {
     if (promoResult) { promoResult.classList.add('hidden'); promoResult.textContent = ''; }
     const creditCheck = document.getElementById('apply-credit-check');
     if (creditCheck) creditCheck.checked = false;
+    // Show player select if multiple players
+    const psr = document.getElementById('player-select-row');
+    const psel = document.getElementById('pkg-player-select');
+    if (psr && psel && currentPlayerList.length > 1) {
+        psel.innerHTML = '<option value="">Select player…</option>' +
+            currentPlayerList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        psr.classList.remove('hidden');
+    } else if (psr) {
+        psr.classList.add('hidden');
+    }
+    document.getElementById('sibling-discount-badge')?.classList.add('hidden');
     await initPackagePayment(id, price);
 }
 
@@ -551,6 +578,8 @@ async function initPackagePayment(id, price) {
     if (activePromoCode) formData.append('promo_code', activePromoCode);
     const creditCheck = document.getElementById('apply-credit-check');
     if (creditCheck && creditCheck.checked) formData.append('apply_credit', '1');
+    const psel = document.getElementById('pkg-player-select');
+    if (psel && psel.value) formData.append('player_id', psel.value);
 
     try {
         const res = await fetch(`/portal/packages/${id}/pay/`, {
@@ -561,9 +590,13 @@ async function initPackagePayment(id, price) {
         const data = await res.json();
         if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
 
-        // Show promo/credit rows after first successful init
+        // Sibling discount badge
+        const sibBadge = document.getElementById('sibling-discount-badge');
+        if (sibBadge) sibBadge.classList.toggle('hidden', !data.sibling_discount);
+
+        // Show promo/credit rows (hide promo when sibling discount applies)
         const promoRow = document.getElementById('promo-row');
-        if (promoRow) promoRow.classList.remove('hidden');
+        if (promoRow) promoRow.classList.toggle('hidden', !!data.sibling_discount);
         const creditRow = document.getElementById('credit-row');
         if (creditRow) creditRow.classList.remove('hidden');
 

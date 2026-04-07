@@ -62,11 +62,27 @@ def create_package_payment_intent(request, package_id):
 
     subtotal = package.price
 
+    # --- Player selection (for sibling discount detection) ---
+    player_id_str = request.POST.get('player_id') or None
+    player_id_int = int(player_id_str) if player_id_str and player_id_str.isdigit() else None
+
+    # --- Sibling discount: same exact package already active for a different player ---
+    sibling_discount_amount = Decimal('0.00')
+    sibling_discount_found  = False
+    if player_id_int:
+        sibling_has_package = client.packages.filter(
+            package=package,
+            status='active',
+        ).exclude(player_id=player_id_int).exists()
+        if sibling_has_package:
+            sibling_discount_amount = (subtotal * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+            sibling_discount_found = True
+
     # --- Promo code ---
     promo_code_str  = request.POST.get('promo_code', '').strip().upper()
     discount_code   = None
     discount_amount = Decimal('0.00')
-    if promo_code_str:
+    if promo_code_str and not sibling_discount_found:
         try:
             dc = DiscountCode.objects.get(code=promo_code_str, is_active=True)
             ok, _ = dc.is_valid_now()
@@ -94,7 +110,13 @@ def create_package_payment_intent(request, package_id):
                 credit_applied += use_amount
                 remaining -= use_amount
 
-    final_amount = max(subtotal - discount_amount - credit_applied, Decimal('0.00'))
+    # Sibling discount takes precedence over promo code (use whichever is larger)
+    effective_discount = max(discount_amount, sibling_discount_amount)
+    if sibling_discount_found:
+        discount_amount = sibling_discount_amount  # use sibling for tracking
+        discount_code   = None                     # don't double-record promo
+
+    final_amount = max(subtotal - effective_discount - credit_applied, Decimal('0.00'))
     amount_cents = max(int(final_amount * 100), 50)  # Stripe minimum $0.50
 
     try:
@@ -107,9 +129,10 @@ def create_package_payment_intent(request, package_id):
                 'type': 'package_purchase',
                 'package_id': str(package.pk),
                 'client_id': str(client.pk),
-                'discount_code': promo_code_str,
-                'discount_amount': str(discount_amount),
+                'discount_code': promo_code_str if not sibling_discount_found else 'SIBLING-AUTO',
+                'discount_amount': str(effective_discount),
                 'credit_applied': str(credit_applied),
+                'sibling_discount': '1' if sibling_discount_found else '0',
             },
             description=f'Package: {package.name}',
         )
@@ -123,12 +146,34 @@ def create_package_payment_intent(request, package_id):
             status='pending',
         )
 
-        # Track pending promo use — finalised by webhook on payment success
-        if discount_code and discount_amount > 0:
+        # Track pending discount use — finalised by webhook on payment success
+        if sibling_discount_found and sibling_discount_amount > 0:
+            sibling_dc, _ = DiscountCode.objects.get_or_create(
+                code='SIBLING-AUTO',
+                defaults={
+                    'description': 'Automatic sibling discount (50% off same package)',
+                    'discount_type': 'percent',
+                    'value': Decimal('50.00'),
+                    'scope': 'all',
+                    'max_uses': None,
+                    'max_uses_per_client': 99,
+                    'is_active': True,
+                }
+            )
+            DiscountCodeUse.objects.create(
+                code=sibling_dc,
+                client=client,
+                discount_amount=sibling_discount_amount,
+                original_amount=subtotal,
+                final_amount=final_amount,
+                status='pending',
+                stripe_payment_intent_id=intent.id,
+            )
+        elif discount_code and effective_discount > 0:
             DiscountCodeUse.objects.create(
                 code=discount_code,
                 client=client,
-                discount_amount=discount_amount,
+                discount_amount=effective_discount,
                 original_amount=subtotal,
                 final_amount=final_amount,
                 status='pending',
@@ -139,8 +184,9 @@ def create_package_payment_intent(request, package_id):
             'client_secret': intent.client_secret,
             'amount': str(final_amount),
             'original_amount': str(subtotal),
-            'discount_amount': str(discount_amount),
+            'discount_amount': str(effective_discount),
             'credit_applied': str(credit_applied),
+            'sibling_discount': sibling_discount_found,
             'package_name': package.name,
         })
 

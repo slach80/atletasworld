@@ -619,10 +619,37 @@ class BookingViewSet(viewsets.ModelViewSet):
                         # Optional package — fall back to drop-in pricing
                         package = None
 
-            # Apply promo code discount to drop-in amount (not stacked with package)
+            # Sibling discount: another player under same client already booked this slot?
+            # Only applies to group-format sessions, not private/semi-private.
+            GROUP_FORMATS = {'group', 'clinic', 'camp', 'seasonal', 'pickup', 'team'}
+            sibling_session_discount = Decimal('0.00')
+            sibling_session_found = False
+            if not package and amount_due and amount_due > 0 and player_id and sf in GROUP_FORMATS:
+                try:
+                    if slot_type == 'schedule_block':
+                        sibling_booked = Booking.objects.filter(
+                            client=client,
+                            scheduled_date=block.date,
+                            scheduled_time=block.start_time,
+                            status__in=['pending', 'confirmed'],
+                        ).exclude(player_id=player_id).exists()
+                    else:
+                        sibling_booked = Booking.objects.filter(
+                            client=client,
+                            availability_slot=slot,
+                            status__in=['pending', 'confirmed'],
+                        ).exclude(player_id=player_id).exists()
+                    if sibling_booked:
+                        sibling_session_discount = (amount_due * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+                        amount_due = max(amount_due - sibling_session_discount, Decimal('0.00'))
+                        sibling_session_found = True
+                except Exception:
+                    pass  # never block a booking due to sibling detection failure
+
+            # Apply promo code discount to drop-in amount (not stacked with sibling discount)
             discount_code_obj = None
             promo_discount = Decimal('0.00')
-            if promo_code_str and not package and amount_due and amount_due > 0:
+            if promo_code_str and not package and amount_due and amount_due > 0 and not sibling_session_found:
                 try:
                     from clients.models import DiscountCode
                     dc = DiscountCode.objects.get(code=promo_code_str, is_active=True)
@@ -653,6 +680,30 @@ class BookingViewSet(viewsets.ModelViewSet):
                 booking.amount_paid = amount_due
                 booking.save()
                 payment_required = True
+                # Track sibling discount use — finalised by webhook on payment success
+                if sibling_session_found and sibling_session_discount > 0:
+                    from clients.models import DiscountCode, DiscountCodeUse
+                    sibling_dc, _ = DiscountCode.objects.get_or_create(
+                        code='SIBLING-AUTO',
+                        defaults={
+                            'description': 'Automatic sibling discount (50% off group sessions)',
+                            'discount_type': 'percent',
+                            'value': Decimal('50.00'),
+                            'scope': 'all',
+                            'max_uses': None,
+                            'max_uses_per_client': 99,
+                            'is_active': True,
+                        }
+                    )
+                    DiscountCodeUse.objects.create(
+                        code=sibling_dc,
+                        client=client,
+                        discount_amount=sibling_session_discount,
+                        original_amount=amount_due + sibling_session_discount,
+                        final_amount=amount_due,
+                        status='pending',
+                        applied_to_booking=booking,
+                    )
                 # Track pending promo use — finalised by webhook on payment success
                 if discount_code_obj and promo_discount > 0:
                     from clients.models import DiscountCodeUse
@@ -679,6 +730,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'payment_required': payment_required,
                 'amount_due': str(amount_due),
                 'discount_applied': str(promo_discount),
+                'sibling_discount': str(sibling_session_discount),
                 'booking_status': booking.status,
                 'message': 'Booking created successfully',
                 'booking': {
