@@ -507,7 +507,7 @@ function buildCartHtml(){
                 </div>
                 <button onclick="removeFromCartByKey('${slot.key}')" class="text-gray-300 hover:text-red-500 transition text-xl leading-none ml-2">&times;</button>
             </div>
-            <div id="cis-${i}" class="mt-1"></div>
+            <div id="cis-${i}" class="mt-1">${item.error?`<div class="p-2 mt-1 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">${item.error}</div>`:''}</div>
             <details class="mt-2.5"><summary class="text-xs text-gray-400 cursor-pointer select-none hover:text-gray-600">+ Add note (optional)</summary>
             <textarea onchange="cart[${i}].notes=this.value" placeholder="Any special requests…" class="mt-2 w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-secondary resize-none" rows="2"></textarea></details>
         </div>`;
@@ -577,19 +577,23 @@ async function confirmBookings(){
                 existingBookings.push({date:slot.start.split('T')[0],time:slot.start.split('T')[1].substring(0,5)});
                 delete slotMap[slot.key];
             }else{
-                results.push({ok:false,slot,msg:data.error||'Failed'});
-                let errMsg = `❌ ${data.error||'This slot is no longer available.'}`;
+                let errMsg = data.error || 'This slot is no longer available.';
                 if(data.required_packages && data.required_packages.length){
-                    errMsg += ` Required: ${data.required_packages.join(', ')}. <a href="{% url 'clients:packages' %}" class="underline font-bold">Buy a Package →</a>`;
+                    errMsg += ` Purchase one of: <strong>${data.required_packages.join(', ')}</strong>. <a href="{% url 'clients:packages' %}" class="underline font-bold">Buy a Package →</a>`;
                 }
-                setItemStatus(i,'err',errMsg);
+                cart[i].error = errMsg;  // persist error through re-renders
+                results.push({ok:false,slot,msg:errMsg});
             }
         }catch(e){ results.push({ok:false,slot,msg:'Network error'}); setItemStatus(i,'err','❌ Network error — try again'); }
     }
     await loadPackages();
     const failedKeys=results.filter(r=>!r.ok).map(r=>r.slot.key);
-    cart=cart.filter(c=>failedKeys.includes(c.key));
-    updateCartBadge(); renderSlots();
+    // Keep failed items in cart (with error shown), remove only succeeded ones
+    cart=cart.filter(c=>failedKeys.includes(c.key)||results.some(r=>r.ok&&r.slot.key===c.key));
+    // Actually: remove succeeded, keep failed
+    const succeededKeys=results.filter(r=>r.ok).map(r=>r.slot.key);
+    cart=cart.filter(c=>!succeededKeys.includes(c.key)||c.error);
+    updateCartBadge(); renderSlots(); renderCart();  // re-render shows persistent errors
     const successes=results.filter(r=>r.ok);
     if(successes.length){
         const confirmed=successes.filter(r=>!r.paymentRequired);
