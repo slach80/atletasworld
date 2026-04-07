@@ -152,7 +152,7 @@
                                 <div class="flex items-center mt-2 text-sm text-gray-500 flex-wrap gap-x-4">
                                     <span>Coach: {{ booking.coach }}</span>
                                     {% if booking.player %}<span>Player: {{ booking.player }}</span>{% endif %}
-                                    {% if booking.session_type.location %}<span>📍 {{ booking.session_type.location }}</span>{% endif %}
+                                    {% if booking.session_type.location %}<a href="https://www.google.com/maps/search/?api=1&query={{ booking.session_type.location|urlencode }}" target="_blank" rel="noopener noreferrer" class="hover:text-secondary transition">📍 {{ booking.session_type.location }}</a>{% endif %}
                                 </div>
                                 {% if booking.client_package %}
                                 <p class="text-xs text-green-600 mt-1.5">📦 Using: {{ booking.client_package.package.name }}</p>

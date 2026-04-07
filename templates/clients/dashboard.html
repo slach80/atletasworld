@@ -371,7 +371,7 @@
                                             Coach: {{ booking.coach }}
                                             {% if booking.player %}| Player: {{ booking.player }}{% endif %}
                                         </p>
-                                        {% if booking.session_type.location %}<p class="text-xs text-gray-400 mt-0.5">📍 {{ booking.session_type.location }}</p>{% endif %}
+                                        {% if booking.session_type.location %}<p class="text-xs mt-0.5"><a href="https://www.google.com/maps/search/?api=1&query={{ booking.session_type.location|urlencode }}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-secondary transition">📍 {{ booking.session_type.location }}</a></p>{% endif %}
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2">
