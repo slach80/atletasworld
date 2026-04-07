@@ -380,6 +380,11 @@ async function loadPackages(){
         if(packages.length){ sessionsLeft=packages[0].sessions_remaining; const el=document.getElementById('sessions-remaining-display'); if(el) el.textContent=sessionsLeft; }
     }catch(e){ console.error('Pkg:',e); }
 }
+// Returns true if pkg covers this slot (no linked_packages restriction, or pkg is one of them)
+function pkgCoversSlot(pkg, slot){
+    if(!slot.linked_packages||!slot.linked_packages.length) return true;
+    return slot.linked_packages.some(p=>p.id===pkg.package_id);
+}
 async function loadSlots(){
     const t=new Date(); t.setHours(0,0,0,0);
     const e=new Date(t); e.setDate(e.getDate()+90);
@@ -481,19 +486,27 @@ function cartTotalDue(){
 function buildCartHtml(){
     if(!cart.length) return`<div class="text-center py-10 text-gray-400"><p class="text-4xl mb-2">🛒</p><p class="text-sm font-semibold text-gray-500">Cart is empty</p><p class="text-xs mt-1">Tap <strong>+ Add</strong> on a session to get started.</p></div>`;
     const pkg=packages.find(p=>p.can_book);
-    // For total/payment: drop-in-only slots always count toward payment even with a package
-    const dropInTotal=cart.reduce((s,{slot})=>{ const p=parseFloat(slot.price||0); return s+(!slot.allow_package&&p>0?p:0); },0);
-    const packageSlots=cart.filter(({slot})=>slot.allow_package);
-    const after=sessionsLeft-packageSlots.length;
+    // For total/payment: explicit drop-in slots (allow_package=false) always charge
+    const dropInForced=cart.reduce((s,{slot})=>{ const p=parseFloat(slot.price||0); return s+(!slot.allow_package&&p>0?p:0); },0);
+    // Incompatible: user has a package but it doesn't cover this slot — charge drop-in if available
+    const incompatDropIn=pkg?cart.reduce((s,{slot})=>{ const p=parseFloat(slot.price||0); return s+(slot.allow_package&&!pkgCoversSlot(pkg,slot)&&slot.drop_in_available&&p>0?p:0); },0):0;
+    // Compatible package slots (pkg covers this slot)
+    const compatPkgSlots=cart.filter(({slot})=>slot.allow_package&&(!pkg||pkgCoversSlot(pkg,slot)));
+    const after=sessionsLeft-compatPkgSlots.length;
     const over=hasPackage&&pkg&&after<0;
-    const totalDue=pkg?(dropInTotal):(dropInTotal+cart.filter(({slot})=>slot.allow_package).reduce((s,{slot})=>s+parseFloat(slot.price||0),0)+cart.filter(({slot})=>!slot.allow_package).reduce((s,{slot})=>s+parseFloat(slot.price||0),0));
+    const totalDue=pkg?(dropInForced+incompatDropIn):(dropInForced+cart.filter(({slot})=>slot.allow_package).reduce((s,{slot})=>s+parseFloat(slot.price||0),0)+cart.filter(({slot})=>!slot.allow_package).reduce((s,{slot})=>s+parseFloat(slot.price||0),0));
     const paymentNeeded=totalDue>0;
+    // Any incompat slot with requires_package but no drop_in blocks booking entirely
+    const incompatBlocked=pkg?cart.some(({slot})=>slot.requires_package&&slot.allow_package&&!pkgCoversSlot(pkg,slot)&&!slot.drop_in_available):false;
     let html='<div class="space-y-3 mb-4">';
     cart.forEach((item,i)=>{
         const {slot}=item;
         const price=parseFloat(slot.price||0);
-        const usesPkg=pkg&&slot.allow_package;
+        const usesPkg=pkg&&slot.allow_package&&pkgCoversSlot(pkg,slot);
+        const pkgIncompat=pkg&&slot.allow_package&&!pkgCoversSlot(pkg,slot)&&slot.requires_package;
         const priceTag=usesPkg?'<span class="text-xs text-green-600 font-semibold">📦 Package</span>'
+            :pkgIncompat&&slot.drop_in_available?`<span class="text-xs font-semibold text-orange-600">💳 $${price.toFixed(2)} drop-in</span>`
+            :pkgIncompat?'<span class="text-xs font-semibold text-red-600">📦 Wrong package</span>'
             :price>0?`<span class="text-xs font-semibold text-primary">$${price.toFixed(2)}</span>`
             :'<span class="text-xs text-gray-400">Free</span>';
         html+=`<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
@@ -515,10 +528,36 @@ function buildCartHtml(){
         </div>`;
     });
     html+='</div>';
-    // Package summary — only show if there are package-eligible slots
-    const pkgSlotCount=cart.filter(({slot})=>slot.allow_package).length;
-    if(hasPackage&&pkg&&pkgSlotCount>0) html+=`<div class="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 mb-3 text-xs"><span class="text-gray-500">Package sessions remaining after booking</span><span class="font-bold ${after<0?'text-red-600':after<=2?'text-orange-500':'text-primary'}">${after}</span></div>`;
+    // Package summary — only show compatible package slots
+    if(hasPackage&&pkg&&compatPkgSlots.length>0) html+=`<div class="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 mb-3 text-xs"><span class="text-gray-500">Package sessions remaining after booking</span><span class="font-bold ${after<0?'text-red-600':after<=2?'text-orange-500':'text-primary'}">${after}</span></div>`;
     if(over) html+=`<div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">⚠️ Not enough package sessions — need ${Math.abs(after)} more. <a href="{% url 'clients:packages' %}" class="underline font-bold">Upgrade</a></div>`;
+    // Incompatible package warning — user has a pkg but it doesn't cover some slots
+    if(hasPackage&&pkg){
+        const incompatRequired=cart.filter(({slot})=>slot.requires_package&&slot.allow_package&&!pkgCoversSlot(pkg,slot));
+        if(incompatRequired.length>0){
+            const withDropIn=incompatRequired.filter(({slot})=>slot.drop_in_available);
+            const withoutDropIn=incompatRequired.filter(({slot})=>!slot.drop_in_available);
+            if(withDropIn.length>0){
+                const dropInAmt=withDropIn.reduce((s,{slot})=>s+parseFloat(slot.price||0),0);
+                const allPkgs=[...new Map(withDropIn.flatMap(({slot})=>slot.linked_packages).map(p=>[p.id,p])).values()];
+                html+=`<div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
+                    <p class="font-bold mb-1">💳 Drop-in payment required</p>
+                    <p class="mb-1.5">Your current package doesn't cover this session. Pay $${dropInAmt.toFixed(2)} as a drop-in, or purchase a compatible package:</p>
+                    <div class="space-y-1 mb-2">${allPkgs.map(p=>`<div class="flex justify-between"><span class="font-medium">${p.name}</span><span>$${p.price}</span></div>`).join('')}</div>
+                    <a href="{% url 'clients:packages' %}" class="block text-center py-1.5 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition">View Packages</a>
+                </div>`;
+            }
+            if(withoutDropIn.length>0){
+                const allPkgs=[...new Map(withoutDropIn.flatMap(({slot})=>slot.linked_packages).map(p=>[p.id,p])).values()];
+                html+=`<div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+                    <p class="font-bold mb-1">📦 Wrong package for this session</p>
+                    <p class="mb-1.5">Your current package doesn't include this session. Purchase one of:</p>
+                    <div class="space-y-1 mb-2">${allPkgs.map(p=>`<div class="flex justify-between"><span class="font-medium">${p.name}</span><span>$${p.price}</span></div>`).join('')}</div>
+                    <a href="{% url 'clients:packages' %}" class="block text-center py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition">Buy a Package →</a>
+                </div>`;
+            }
+        }
+    }
     // Package suggestion: session has linked packages but client doesn't have one
     if(!hasPackage){
         const slotsWithPkgs=cart.filter(({slot})=>slot.linked_packages&&slot.linked_packages.length>0);
@@ -562,7 +601,7 @@ function buildCartHtml(){
     </div>`;
     else if(!hasPackage&&totalDue===0) html+=`<div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700">✓ Free session — no payment required.</div>`;
     // Confirm button
-    const canGo=(pkg&&!over)||(!pkg&&!over);
+    const canGo=!over&&!incompatBlocked;
     const btnLabel=paymentNeeded?`Reserve ${cart.length} Session${cart.length!==1?'s':''} — Pay $${totalDue.toFixed(2)}`:`Confirm ${cart.length} Booking${cart.length!==1?'s':''}`;
     html+=`<button id="confirm-btn" onclick="confirmBookings()" ${canGo?'':'disabled'} class="w-full py-3.5 rounded-xl font-bold text-sm transition ${canGo?'bg-secondary text-gray-900 hover:bg-[#b8e000] active:scale-95':'bg-gray-100 text-gray-400 cursor-not-allowed'}">${btnLabel}</button>`;
     return html;
@@ -577,8 +616,8 @@ async function confirmBookings(){
     for(let i=0;i<cart.length;i++){
         const {slot,notes}=cart[i];
         try{
-            // Only pass package_id if this session type allows package use
-            const usePackage = pkg && slot.allow_package;
+            // Only pass package_id if this session type allows package use AND pkg covers this slot
+            const usePackage = pkg && slot.allow_package && pkgCoversSlot(pkg, slot);
             const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:usePackage?pkg.id:null,notes:notes||''})});
             const data=await res.json();
             if(res.ok){

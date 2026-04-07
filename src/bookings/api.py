@@ -602,12 +602,18 @@ class BookingViewSet(viewsets.ModelViewSet):
                 linked_ids = set(_st.linked_packages.values_list('pk', flat=True))
                 if package.package.pk not in linked_ids:
                     if _st.requires_package:
-                        # Block entirely — must use a linked package
-                        return Response({
-                            'error': f'Your current package does not include "{_st.name}". '
-                                     f'Please purchase one of the required packages to book this session.',
-                            'required_packages': [p.name for p in _st.linked_packages.filter(is_active=True, is_purchasable=True)[:4]],
-                        }, status=status.HTTP_400_BAD_REQUEST)
+                        has_drop_in = _st.drop_in_price is not None and _st.drop_in_price > 0
+                        if has_drop_in:
+                            # Incompatible package but drop-in allowed — charge drop-in
+                            package = None  # amount_due already set to get_drop_in_price() above
+                        else:
+                            # No drop-in — block entirely
+                            booking.delete()
+                            return Response({
+                                'error': f'Your current package does not include "{_st.name}". '
+                                         f'Please purchase one of the required packages to book this session.',
+                                'required_packages': [p.name for p in _st.linked_packages.filter(is_active=True, is_purchasable=True)[:4]],
+                            }, status=status.HTTP_400_BAD_REQUEST)
                     else:
                         # Optional package — fall back to drop-in pricing
                         package = None
@@ -726,6 +732,7 @@ class ClientPackageViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_queryset()
         data = [{
             'id': pkg.id,
+            'package_id': pkg.package_id,
             'package_name': pkg.package.name,
             'sessions_remaining': pkg.sessions_remaining,
             'sessions_used': pkg.sessions_used,
