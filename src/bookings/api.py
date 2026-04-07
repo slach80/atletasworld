@@ -183,6 +183,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'session_format': slot.session_type.session_format,
                     'allow_package': slot.session_type.allow_package,
                     'requires_package': slot.session_type.requires_package,
+                    'drop_in_available': slot.session_type.drop_in_price is not None and slot.session_type.drop_in_price > 0,
                     'linked_packages': [
                         {'id': p.pk, 'name': p.name, 'price': str(p.price)}
                         for p in slot.session_type.linked_packages.filter(is_active=True, is_purchasable=True)
@@ -262,6 +263,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'session_format': sf,
                     'allow_package': catalog_types[0].allow_package if catalog_types else True,
                     'requires_package': catalog_types[0].requires_package if catalog_types else False,
+                    'drop_in_available': (catalog_types[0].drop_in_price is not None and catalog_types[0].drop_in_price > 0) if catalog_types else False,
                     'linked_packages': [
                         {'id': p.pk, 'name': p.name, 'price': str(p.price)}
                         for p in (catalog_types[0].linked_packages.filter(is_active=True, is_purchasable=True) if catalog_types else [])
@@ -578,6 +580,21 @@ class BookingViewSet(viewsets.ModelViewSet):
             _st = session_type if 'session_type' in dir() and session_type else None
             if package and _st and not _st.allow_package:
                 package = None  # ignore package — charge drop-in rate
+
+            # requires_package enforcement:
+            # If requires_package=True and no package provided:
+            #   - drop_in_price set  → allow as drop-in at that price
+            #   - drop_in_price null → block entirely (package required)
+            if not package and _st and _st.requires_package:
+                has_drop_in = _st.drop_in_price is not None and _st.drop_in_price > 0
+                if not has_drop_in:
+                    booking.delete()  # clean up the just-created booking
+                    linked = [p.name for p in _st.linked_packages.filter(is_active=True, is_purchasable=True)[:4]]
+                    return Response({
+                        'error': f'A package is required to book "{_st.name}". Drop-in is not available for this session.',
+                        'required_packages': linked,
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                # drop_in_price is set — allow, amount_due already calculated from drop_in_price
 
             # If session has specific linked packages, verify client's package is one of them
             if package and _st and _st.linked_packages.exists():
