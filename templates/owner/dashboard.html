@@ -23,29 +23,81 @@
     </div>
 </div>
 
-<!-- ── Key Stats (8 cards) ──────────────────────────────────────────────────── -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <a href="{% url 'owner_coaches' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-owner hover:shadow-md transition">
-        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Coaches</p>
-        <p class="text-3xl font-bold text-owner mt-1">{{ total_coaches }}</p>
+<!-- ── Key Stats ──────────────────────────────────────────────────── -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <a href="{% url 'owner_coaches' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-owner transition">
+        <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Coaches</p>
+        <p class="text-3xl font-black text-owner mt-1">{{ total_coaches }}</p>
         <p class="text-xs text-gray-400 mt-0.5">active</p>
     </a>
-    <a href="{% url 'owner_clients' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-blue-500 hover:shadow-md transition">
-        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Clients</p>
-        <p class="text-3xl font-bold text-blue-500 mt-1">{{ total_clients }}</p>
+    <a href="{% url 'owner_clients' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-400 transition">
+        <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Clients</p>
+        <p class="text-3xl font-black text-blue-500 mt-1">{{ total_clients }}</p>
         <p class="text-xs text-gray-400 mt-0.5">{{ total_players }} players</p>
     </a>
-    <a href="{% url 'owner_bookings' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-orange-500 hover:shadow-md transition">
-        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Today's Bookings</p>
-        <p class="text-3xl font-bold text-orange-500 mt-1">{{ todays_bookings }}</p>
-        <p class="text-xs text-gray-400 mt-0.5">{{ total_sessions_today }} sessions scheduled</p>
+    <a href="{% url 'owner_bookings' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-orange-400 transition">
+        <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Today</p>
+        <p class="text-3xl font-black text-orange-500 mt-1">{{ todays_bookings }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">{{ total_sessions_today }} sessions</p>
     </a>
-    <a href="{% url 'owner_bookings' %}" class="bg-white rounded-xl shadow p-4 border-l-4 border-cyan-500 hover:shadow-md transition">
-        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Upcoming</p>
-        <p class="text-3xl font-bold text-cyan-500 mt-1">{{ pending_bookings }}</p>
-        <p class="text-xs text-gray-400 mt-0.5">confirmed / pending</p>
+    <a href="{% url 'owner_field_slots' %}" class="bg-white rounded-xl shadow-sm border {% if rentals_pending %}border-yellow-300 bg-yellow-50{% else %}border-gray-100{% endif %} p-4 hover:shadow-md transition">
+        <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Rentals</p>
+        <p class="text-3xl font-black {% if rentals_pending %}text-yellow-600{% else %}text-teal-500{% endif %} mt-1">{{ rentals_upcoming }}</p>
+        <p class="text-xs {% if rentals_pending %}text-yellow-600 font-semibold{% else %}text-gray-400{% endif %} mt-0.5">
+            {% if rentals_pending %}{{ rentals_pending }} need approval{% else %}upcoming booked{% endif %}
+        </p>
+    </a>
+    <a href="{% url 'owner_waivers' %}" class="bg-white rounded-xl shadow-sm border {% if waiver_unsigned_count %}border-red-200 bg-red-50{% else %}border-gray-100{% endif %} p-4 hover:shadow-md transition">
+        <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Waivers {{ current_year }}</p>
+        <p class="text-3xl font-black {% if waiver_unsigned_count %}text-red-500{% else %}text-green-500{% endif %} mt-1">{{ waiver_signed_count }}</p>
+        <p class="text-xs {% if waiver_unsigned_count %}text-red-500 font-semibold{% else %}text-gray-400{% endif %} mt-0.5">
+            {% if waiver_unsigned_count %}{{ waiver_unsigned_count }} unsigned{% else %}all signed ✓{% endif %}
+        </p>
+    </a>
+    <a href="{% url 'owner_packages' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-purple-400 transition">
+        <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Packages</p>
+        <p class="text-3xl font-black text-purple-500 mt-1">{{ active_packages_count }}</p>
+        <p class="text-xs {% if packages_exhausted %}text-orange-500 font-semibold{% else %}text-gray-400{% endif %} mt-0.5">
+            {% if packages_exhausted %}{{ packages_exhausted }} exhausted{% else %}active{% endif %}
+        </p>
     </a>
 </div>
+
+<!-- ── Alert row ──────────────────────────────────────────────────────────── -->
+{% if rentals_pending or waiver_unsigned_count or expiring_soon_packages or contacts_unregistered or pending_approvals %}
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    {% if rentals_pending %}
+    <a href="{% url 'owner_field_slots' %}" class="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl hover:bg-yellow-100 transition">
+        <span class="text-2xl">🏟️</span>
+        <div><p class="text-sm font-bold text-yellow-800">{{ rentals_pending }} Rental Request{{ rentals_pending|pluralize }}</p><p class="text-xs text-yellow-600">Awaiting approval</p></div>
+    </a>
+    {% endif %}
+    {% if waiver_unsigned_count %}
+    <a href="{% url 'owner_waivers' %}" class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition">
+        <span class="text-2xl">📋</span>
+        <div><p class="text-sm font-bold text-red-700">{{ waiver_unsigned_count }} Unsigned Waiver{{ waiver_unsigned_count|pluralize }}</p><p class="text-xs text-red-500">Cannot book without signing</p></div>
+    </a>
+    {% endif %}
+    {% if expiring_soon_packages %}
+    <a href="{% url 'owner_clients' %}" class="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-xl hover:bg-orange-100 transition">
+        <span class="text-2xl">📦</span>
+        <div><p class="text-sm font-bold text-orange-700">{{ expiring_soon_packages|length }} Package{{ expiring_soon_packages|length|pluralize }} Expiring</p><p class="text-xs text-orange-500">Within 7 days</p></div>
+    </a>
+    {% endif %}
+    {% if pending_approvals %}
+    <a href="{% url 'owner_clients' %}" class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition">
+        <span class="text-2xl">⏳</span>
+        <div><p class="text-sm font-bold text-blue-700">{{ pending_approvals }} Pending Approval{{ pending_approvals|pluralize }}</p><p class="text-xs text-blue-500">Coach / renter accounts</p></div>
+    </a>
+    {% endif %}
+    {% if contacts_unregistered %}
+    <a href="{% url 'owner_contacts' %}" class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition">
+        <span class="text-2xl">📇</span>
+        <div><p class="text-sm font-bold text-gray-700">{{ contacts_unregistered }} Unregistered Contact{{ contacts_unregistered|pluralize }}</p><p class="text-xs text-gray-500">Invite to create account</p></div>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
 
 <!-- ── Financial Overview ──────────────────────────────────────────────────── -->
 <div class="bg-white rounded-xl shadow-md p-6 mb-6">
@@ -227,24 +279,84 @@
     {% endif %}
 </div>
 
-<!-- Pending Assessments -->
-{% if players_pending_assessment %}
-<div class="bg-white rounded-xl shadow-md p-6">
-    <h2 class="text-lg font-bold text-gray-800 mb-4">⚠️ Pending Assessments</h2>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {% for booking in players_pending_assessment %}
-        <div class="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
-            <div class="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center text-xs font-bold text-yellow-800">
-                {{ booking.player.first_name.0 }}{{ booking.player.last_name.0 }}
-            </div>
-            <div>
-                <p class="font-semibold text-gray-800">{{ booking.player.first_name }} {{ booking.player.last_name }}</p>
-                <p class="text-xs text-gray-500">{{ booking.coach.user.first_name }} · {{ booking.scheduled_date|date:"M j, Y" }}</p>
-            </div>
+<!-- ── Bottom monitoring row ─────────────────────────────────────────────── -->
+<div class="grid lg:grid-cols-3 gap-6 mb-6">
+
+    <!-- Packages Expiring Soon -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-gray-700 flex items-center gap-2">📦 Expiring Packages</h2>
+            <a href="{% url 'owner_clients' %}" class="text-xs text-owner hover:underline">All →</a>
         </div>
-        {% endfor %}
+        {% if expiring_soon_packages %}
+        <div class="space-y-2">
+            {% for cp in expiring_soon_packages %}
+            <div class="flex items-center justify-between text-xs p-2 bg-orange-50 rounded-lg border border-orange-100">
+                <div>
+                    <p class="font-semibold text-gray-800">{{ cp.client.user.get_full_name|default:cp.client.user.username }}</p>
+                    <p class="text-gray-500">{{ cp.package.name }}</p>
+                </div>
+                <div class="text-right shrink-0 ml-2">
+                    <p class="font-bold text-orange-600">{{ cp.expiry_date|date:"M j" }}</p>
+                    <p class="text-gray-400">{{ cp.sessions_remaining }} left</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-4">No packages expiring this week.</p>
+        {% endif %}
     </div>
+
+    <!-- Today's Rentals -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-gray-700 flex items-center gap-2">🏟️ Today's Rentals</h2>
+            <a href="{% url 'owner_field_slots' %}" class="text-xs text-owner hover:underline">Manage →</a>
+        </div>
+        {% if rentals_today %}
+        <div class="space-y-2">
+            {% for slot in rentals_today %}
+            <div class="flex items-center justify-between text-xs p-2 {% if slot.status == 'pending_approval' %}bg-yellow-50 border-yellow-100{% else %}bg-teal-50 border-teal-100{% endif %} rounded-lg border">
+                <div>
+                    <p class="font-semibold text-gray-800">{{ slot.service.name|default:"Rental" }}</p>
+                    <p class="text-gray-500">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}</p>
+                </div>
+                <span class="px-2 py-0.5 rounded-full font-semibold {% if slot.status == 'pending_approval' %}bg-yellow-200 text-yellow-800{% else %}bg-teal-200 text-teal-800{% endif %}">
+                    {{ slot.get_status_display }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-4">No rentals today.</p>
+        {% endif %}
+    </div>
+
+    <!-- Pending Assessments -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-gray-700 flex items-center gap-2">⚠️ Pending Assessments</h2>
+        </div>
+        {% if players_pending_assessment %}
+        <div class="space-y-2">
+            {% for booking in players_pending_assessment %}
+            <div class="flex items-center gap-3 p-2 bg-yellow-50 border border-yellow-100 rounded-lg text-xs">
+                <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-secondary font-black text-xs shrink-0">
+                    {{ booking.player.first_name.0 }}{{ booking.player.last_name.0 }}
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">{{ booking.player.first_name }} {{ booking.player.last_name }}</p>
+                    <p class="text-gray-400">{{ booking.coach.user.first_name }} · {{ booking.scheduled_date|date:"M j" }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-4">All sessions assessed ✓</p>
+        {% endif %}
+    </div>
+
 </div>
-{% endif %}
 
 {% endblock %}

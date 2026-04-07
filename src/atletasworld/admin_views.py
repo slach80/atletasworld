@@ -96,6 +96,47 @@ def owner_dashboard(request):
         scheduled_date__gte=today - timedelta(days=14)
     ).exclude(assessments__isnull=False).select_related('player', 'coach__user')[:10]
 
+    # ── Rentals ────────────────────────────────────────────────────────────────
+    rentals_pending  = FieldRentalSlot.objects.filter(status='pending_approval').count()
+    rentals_upcoming = FieldRentalSlot.objects.filter(
+        status='booked', date__gte=today
+    ).count()
+    rentals_today = FieldRentalSlot.objects.filter(
+        date=today, status__in=['booked','pending_approval']
+    ).select_related('service').order_by('start_time')[:5]
+
+    # ── Waivers ────────────────────────────────────────────────────────────────
+    from clients.models import ClientWaiver
+    current_year = today.year
+    waiver_signed_count = ClientWaiver.objects.filter(
+        valid_year=current_year,
+        waiver_version=ClientWaiver.WAIVER_VERSION,
+    ).values('client_id').distinct().count()
+    waiver_unsigned_count = _client_qs.filter(
+        user__groups__name='Client'
+    ).exclude(
+        waivers__valid_year=current_year,
+        waivers__waiver_version=ClientWaiver.WAIVER_VERSION,
+    ).count()
+
+    # ── Active Packages ────────────────────────────────────────────────────────
+    from clients.models import ClientPackage
+    active_packages_count  = ClientPackage.objects.filter(
+        status='active', expiry_date__gte=today
+    ).count()
+    expiring_soon_packages = ClientPackage.objects.filter(
+        status='active',
+        expiry_date__gte=today,
+        expiry_date__lte=today + timedelta(days=7)
+    ).select_related('client__user', 'package').order_by('expiry_date')[:8]
+    packages_exhausted = ClientPackage.objects.filter(
+        status='exhausted', expiry_date__gte=today
+    ).count()
+
+    # ── Contacts ───────────────────────────────────────────────────────────────
+    from clients.models import ContactParent
+    contacts_unregistered = ContactParent.objects.filter(client__isnull=True).count()
+
     context = {
         'today': today,
         # Core counts
@@ -115,6 +156,20 @@ def owner_dashboard(request):
         'pending_payments_list': pending_payments_qs[:20],
         'rental_revenue_month': rental_revenue_month,
         'recent_transactions': recent_transactions,
+        # Rentals
+        'rentals_pending': rentals_pending,
+        'rentals_upcoming': rentals_upcoming,
+        'rentals_today': rentals_today,
+        # Waivers
+        'waiver_signed_count': waiver_signed_count,
+        'waiver_unsigned_count': waiver_unsigned_count,
+        'current_year': current_year,
+        # Packages
+        'active_packages_count': active_packages_count,
+        'expiring_soon_packages': expiring_soon_packages,
+        'packages_exhausted': packages_exhausted,
+        # Contacts
+        'contacts_unregistered': contacts_unregistered,
         # Lists
         'coaches': coaches,
         'todays_schedule': todays_schedule,
