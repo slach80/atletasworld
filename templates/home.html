@@ -202,80 +202,30 @@
             <h2 class="text-3xl md:text-4xl font-bold">Don't Miss Out!</h2>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="grid sm:grid-cols-1 md:grid-cols-{% if show_apc_select_card %}3{% else %}2{% endif %} lg:grid-cols-{% if show_apc_select_card %}3{% else %}2{% endif %} gap-5 max-w-4xl mx-auto">
 
-            <!-- Summer Program HS/College -->
+            <!-- Summer Program — consolidated -->
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">Summer Program</span>
-                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">HS / College</span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">Outdoor Program</span>
+                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">May 18 – Aug 8</span>
                 </div>
-                <h3 class="text-lg font-black mb-2 leading-tight">Summer Program<br>HS / College</h3>
-                <p class="text-white/75 text-sm mb-3 leading-relaxed">Outdoor sessions on Tuesdays and Thursdays.<br>
-                    Mornings @ Hocker Grove Middle School.<br>
-                    Afternoons/Evenings @ Shawnee Mission North HS.</p>
-                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
-                    <div class="flex items-center gap-2"><span>⏱️</span> 90 minutes per session</div>
-                    <div class="flex items-start gap-2">
-                        <span>🕐</span>
-                        <div>
-                            <div><span class="text-white/55 text-xs">Mon–Fri</span> 7:00 AM, 10:30 AM, 6:00 PM</div>
-                            <div><span class="text-white/55 text-xs">Sat–Sun</span> 9:00 AM, 10:30 AM</div>
-                        </div>
+                <h3 class="text-xl font-black mb-1 leading-tight">Summer Program</h3>
+                <p class="text-white/65 text-xs mb-4">Tue &amp; Thu · Package required</p>
+                <div class="space-y-2 text-sm flex-1 mb-4">
+                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">U13 &amp; Younger</span>
+                        <span class="text-white/70 text-xs">9AM · 4:30PM · 6PM</span>
                     </div>
-                    <div class="flex items-center gap-2"><span>📅</span> May 18 – Aug 8, 2026</div>
-                </div>
-                <a href="{% url 'book' %}" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
-                    Reserve Your Spot
-                </a>
-            </div>
-
-            <!-- Summer Program U13 & Younger -->
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">Summer Program</span>
-                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">U13 &amp; Younger</span>
-                </div>
-                <h3 class="text-lg font-black mb-2 leading-tight">Summer Program<br>U13 &amp; Younger</h3>
-                <p class="text-white/75 text-sm mb-3 leading-relaxed">Outdoor sessions on Tuesdays and Thursdays.<br>
-                    Mornings @ Hocker Grove Middle School.<br>
-                    Afternoons/Evenings @ Shawnee Mission North HS.</p>
-                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
-                    <div class="flex items-center gap-2"><span>⏱️</span> 90 minutes per session</div>
-                    <div class="flex items-start gap-2">
-                        <span>🕐</span>
-                        <div>
-                            <div><span class="text-white/55 text-xs">Mon–Fri</span> 9:00 AM, 4:30 PM, 6:00 PM</div>
-                            <div><span class="text-white/55 text-xs">Sat–Sun</span> 9:00 AM, 10:30 AM</div>
-                        </div>
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">HS / College</span>
+                        <span class="text-white/70 text-xs">7AM · 10:30AM · 6PM</span>
                     </div>
-                    <div class="flex items-center gap-2"><span>📅</span> May 18 – Aug 8, 2026</div>
                 </div>
-                <a href="{% url 'book' %}" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
-                    Reserve Your Spot
+                <a href="{% url 'clients:packages' %}" class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                    Purchase Package →
                 </a>
             </div>
-
-            <!-- Special Projects & Events (APC Select) — hidden until April 10, 2026 -->
-            {% if show_apc_select_card %}
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">New Program</span>
-                    <span class="bg-secondary text-gray-900 text-xs font-black px-2 py-0.5 rounded-full">2026</span>
-                </div>
-                <h3 class="text-lg font-black mb-2 leading-tight">APC Select<br>Tryouts Open</h3>
-                <p class="text-white/75 text-sm mb-3 leading-relaxed">High-performance supplemental program — three elite youth teams training and competing year-round alongside your current club.</p>
-                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
-                    <div class="flex items-center gap-2"><span>⚽</span> Birth years: 2014, 2015, 2016</div>
-                    <div class="flex items-center gap-2"><span>📅</span> Tryouts: May 21–24, 2026</div>
-                    <div class="flex items-center gap-2"><span>💰</span> $100/month · 6-month commitment</div>
-                    <div class="flex items-center gap-2"><span>🎟️</span> Tryouts are FREE</div>
-                </div>
-                <a href="/programs/" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
-                    Learn More &amp; Register
-                </a>
-            </div>
-            {% endif %}
 
             <!-- Serie A Elite Scouts Class -->
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
@@ -283,23 +233,47 @@
                     <span class="text-xs font-bold uppercase tracking-widest text-white/60">Weekly Class</span>
                     <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">Every Sunday</span>
                 </div>
-                <h3 class="text-lg font-black mb-2 leading-tight">Serie A Elite<br>Scouts Class</h3>
-                <p class="text-white/75 text-sm mb-3 leading-relaxed">Elite development sessions coached at a Serie A scouting standard. Two age groups — 20-player cap per class.</p>
-                <div class="space-y-1.5 text-sm text-white/90 mb-4 flex-1">
-                    <div class="flex items-center gap-2"><span>⏱️</span> 90 minutes per session</div>
-                    <div class="flex items-start gap-2">
-                        <span>🕐</span>
-                        <div>
-                            <div><span class="text-white/55 text-xs">U13 (2014–2018)</span> 4:00 PM</div>
-                            <div><span class="text-white/55 text-xs">U19 (2007–2013)</span> 5:30 PM</div>
-                        </div>
+                <h3 class="text-xl font-black mb-1 leading-tight">Serie A Elite Scouts</h3>
+                <p class="text-white/65 text-xs mb-4">$40/session · 90 min · 20-player cap</p>
+                <div class="space-y-2 text-sm flex-1 mb-4">
+                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">U13 (2014–2018)</span>
+                        <span class="text-white/70 text-xs">4:00 PM</span>
                     </div>
-                    <div class="flex items-center gap-2"><span>💰</span> $40 per session</div>
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">U19 (2007–2013)</span>
+                        <span class="text-white/70 text-xs">5:30 PM</span>
+                    </div>
                 </div>
-                <a href="{% url 'book' %}" class="block text-center bg-white text-red-600 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
-                    Reserve Your Spot
+                <a href="/programs/" class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                    Learn More &amp; Book →
                 </a>
             </div>
+
+            <!-- APC Select — hidden until April 10, 2026 -->
+            {% if show_apc_select_card %}
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">New · 2026</span>
+                    <span class="bg-secondary text-gray-900 text-xs font-black px-2 py-0.5 rounded-full">Tryouts FREE</span>
+                </div>
+                <h3 class="text-xl font-black mb-1 leading-tight">APC Select</h3>
+                <p class="text-white/65 text-xs mb-4">$100/mo · 6-month commitment · Kits included</p>
+                <div class="space-y-2 text-sm flex-1 mb-4">
+                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Birth Years</span>
+                        <span class="text-white/70 text-xs">2014 · 2015 · 2016</span>
+                    </div>
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Tryouts</span>
+                        <span class="text-white/70 text-xs">May 21–24, 2026</span>
+                    </div>
+                </div>
+                <a href="/programs/" class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                    Learn More &amp; Register →
+                </a>
+            </div>
+            {% endif %}
 
         </div>
 
