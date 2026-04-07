@@ -716,12 +716,25 @@ def owner_coach_add(request):
             coach = Coach.objects.create(
                 user=user,
                 slug=request.POST.get('slug', username),
+                tagline=request.POST.get('tagline', '')[:200],
                 bio=request.POST.get('bio', ''),
+                full_bio=request.POST.get('full_bio', ''),
                 specializations=request.POST.get('specializations', ''),
+                certifications=request.POST.get('certifications', ''),
+                experience_years=int(request.POST.get('experience_years', 0) or 0),
+                coaching_philosophy=request.POST.get('coaching_philosophy', ''),
+                achievements=request.POST.get('achievements', ''),
+                instagram_url=request.POST.get('instagram_url', ''),
+                facebook_url=request.POST.get('facebook_url', ''),
+                twitter_url=request.POST.get('twitter_url', ''),
+                linkedin_url=request.POST.get('linkedin_url', ''),
                 hourly_rate=request.POST.get('hourly_rate', 0),
                 is_active=request.POST.get('is_active') == 'on',
                 profile_enabled=request.POST.get('profile_enabled') == 'on',
             )
+            if 'photo' in request.FILES:
+                coach.photo = request.FILES['photo']
+                coach.save(update_fields=['photo'])
 
             messages.success(request, f'Coach "{first_name} {last_name}" created successfully!')
             return redirect('owner_coaches')
@@ -769,13 +782,30 @@ def owner_coach_edit(request, pk):
             coach.user.email = request.POST.get('email')
             coach.user.save()
 
-            # Update coach profile
-            coach.slug = request.POST.get('slug', coach.user.username)
-            coach.bio = request.POST.get('bio', '')
-            coach.specializations = request.POST.get('specializations', '')
-            coach.hourly_rate = request.POST.get('hourly_rate', 0)
-            coach.is_active = request.POST.get('is_active') == 'on'
-            coach.profile_enabled = request.POST.get('profile_enabled') == 'on'
+            # Update coach profile — keep in sync with coach portal edit_profile
+            coach.slug             = request.POST.get('slug', coach.user.username)
+            coach.tagline          = request.POST.get('tagline', '')[:200]
+            coach.bio              = request.POST.get('bio', '')
+            coach.full_bio         = request.POST.get('full_bio', '')
+            coach.specializations  = request.POST.get('specializations', '')
+            coach.certifications   = request.POST.get('certifications', '')
+            coach.experience_years = int(request.POST.get('experience_years', 0) or 0)
+            coach.coaching_philosophy = request.POST.get('coaching_philosophy', '')
+            coach.achievements     = request.POST.get('achievements', '')
+            coach.hourly_rate      = request.POST.get('hourly_rate', 0)
+            coach.instagram_url    = request.POST.get('instagram_url', '')
+            coach.facebook_url     = request.POST.get('facebook_url', '')
+            coach.twitter_url      = request.POST.get('twitter_url', '')
+            coach.linkedin_url     = request.POST.get('linkedin_url', '')
+            coach.is_active        = request.POST.get('is_active') == 'on'
+            coach.profile_enabled  = request.POST.get('profile_enabled') == 'on'
+
+            # Photo upload
+            if 'photo' in request.FILES:
+                coach.photo = request.FILES['photo']
+            elif request.POST.get('clear_photo'):
+                coach.photo = None
+
             coach.save()
 
             messages.success(request, f'Coach "{coach.user.first_name}" updated successfully!')
