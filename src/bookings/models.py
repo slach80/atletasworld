@@ -315,7 +315,9 @@ class Booking(models.Model):
     @property
     def scheduled_datetime(self):
         from datetime import datetime
-        return datetime.combine(self.scheduled_date, self.scheduled_time)
+        from django.utils import timezone as tz
+        naive = datetime.combine(self.scheduled_date, self.scheduled_time)
+        return tz.make_aware(naive)
 
     @property
     def can_cancel(self):

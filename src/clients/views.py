@@ -426,7 +426,9 @@ def booking_cancel(request, booking_id):
     client, created = Client.objects.get_or_create(user=request.user)
     booking = get_object_or_404(Booking, id=booking_id, client=client)
 
-    if booking.can_cancel or booking.status in ['pending', 'confirmed']:
+    # Unpaid pending bookings are always cancellable (no 24h restriction)
+    is_unpaid_pending = booking.status == 'pending' and booking.payment_status == 'pending'
+    if is_unpaid_pending or booking.can_cancel or booking.status in ['pending', 'confirmed']:
         try:
             booking.cancel(reason='client_request', cancelled_by=request.user)
             messages.success(request, 'Booking has been cancelled.')
