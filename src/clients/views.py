@@ -415,19 +415,29 @@ def booking_cancel(request, booking_id):
     client, created = Client.objects.get_or_create(user=request.user)
     booking = get_object_or_404(Booking, id=booking_id, client=client)
 
-    if booking.status in ['pending', 'confirmed']:
-        booking.status = 'cancelled'
-        booking.save()
-
-        # Restore session to package if applicable
-        if booking.client_package:
-            booking.client_package.sessions_remaining += 1
-            booking.client_package.sessions_used -= 1
-            if booking.client_package.status == 'exhausted':
-                booking.client_package.status = 'active'
-            booking.client_package.save()
-
-        messages.success(request, 'Booking has been cancelled.')
+    if booking.can_cancel or booking.status in ['pending', 'confirmed']:
+        try:
+            booking.cancel(reason='client_request', cancelled_by=request.user)
+            messages.success(request, 'Booking has been cancelled.')
+        except Exception:
+            # Fallback: manual cancel + ScheduleBlock cleanup
+            booking.status = 'cancelled'
+            booking.save()
+            from coaches.models import ScheduleBlock
+            try:
+                block = ScheduleBlock.objects.get(
+                    coach=booking.coach,
+                    date=booking.scheduled_date,
+                    start_time=booking.scheduled_time,
+                )
+                if block.current_participants > 0:
+                    block.current_participants -= 1
+                    if block.status == 'booked':
+                        block.status = 'available'
+                    block.save()
+            except ScheduleBlock.DoesNotExist:
+                pass
+            messages.success(request, 'Booking has been cancelled.')
     else:
         messages.error(request, 'This booking cannot be cancelled.')
 
