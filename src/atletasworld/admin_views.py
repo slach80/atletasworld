@@ -53,6 +53,14 @@ def owner_dashboard(request):
         return qs.aggregate(t=Sum('amount_paid'))['t'] or 0
 
     paid_qs = Booking.objects.filter(payment_status='paid')
+
+    def _pkg_rev(qs):
+        return qs.aggregate(t=Sum('package__price'))['t'] or 0
+
+    def _rental_rev(qs):
+        return qs.aggregate(t=Sum('amount_paid'))['t'] or 0
+
+    # Session drop-in revenue
     revenue_this_month = _rev(paid_qs.filter(scheduled_date__gte=month_start,
                                              scheduled_date__lte=today))
     revenue_ytd        = _rev(paid_qs.filter(scheduled_date__gte=year_start,
@@ -61,6 +69,25 @@ def owner_dashboard(request):
         scheduled_date__gte=(month_start - timedelta(days=1)).replace(day=1),
         scheduled_date__lt=month_start
     ))
+
+    # Add package purchase revenue
+    pkg_qs = ClientPackage.objects.exclude(status='cancelled')
+    revenue_this_month += _pkg_rev(pkg_qs.filter(purchase_date__gte=month_start,
+                                                  purchase_date__lte=today))
+    revenue_ytd        += _pkg_rev(pkg_qs.filter(purchase_date__gte=year_start,
+                                                  purchase_date__lte=today))
+    last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+    revenue_last_month += _pkg_rev(pkg_qs.filter(purchase_date__gte=last_month_start,
+                                                  purchase_date__lt=month_start))
+
+    # Add facility rental revenue
+    rental_qs = FieldRentalSlot.objects.filter(payment_status='paid')
+    revenue_this_month += _rental_rev(rental_qs.filter(approved_at__gte=month_start,
+                                                        approved_at__lte=today))
+    revenue_ytd        += _rental_rev(rental_qs.filter(approved_at__gte=year_start,
+                                                        approved_at__lte=today))
+    revenue_last_month += _rental_rev(rental_qs.filter(approved_at__gte=last_month_start,
+                                                        approved_at__lt=month_start))
     pending_payments_qs = Booking.objects.filter(
         payment_status='pending', status__in=['pending', 'confirmed']
     ).select_related('client__user', 'player', 'session_type', 'coach__user').order_by('scheduled_date')
