@@ -455,6 +455,7 @@ def owner_package_add(request):
                 sessions_included=request.POST.get('sessions_included', 0),
                 validity_weeks=request.POST.get('validity_weeks', 4),
                 is_active=request.POST.get('is_active') == 'on',
+                is_purchasable=request.POST.get('is_purchasable') == 'on',
                 is_special=request.POST.get('is_special') == 'on',
                 max_participants=request.POST.get('max_participants', 0),
                 age_group=request.POST.get('age_group', ''),
@@ -492,8 +493,9 @@ def owner_package_edit(request, pk):
             package.price = request.POST.get('price')
             package.sessions_included = request.POST.get('sessions_included', 0)
             package.validity_weeks = request.POST.get('validity_weeks', 4)
-            package.is_active = request.POST.get('is_active') == 'on'
-            package.is_special = request.POST.get('is_special') == 'on'
+            package.is_active      = request.POST.get('is_active') == 'on'
+            package.is_purchasable = request.POST.get('is_purchasable') == 'on'
+            package.is_special     = request.POST.get('is_special') == 'on'
             package.max_participants = request.POST.get('max_participants', 0)
             package.age_group = request.POST.get('age_group', '')
             package.event_start_date = request.POST.get('event_start_date') or None

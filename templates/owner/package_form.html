@@ -50,18 +50,30 @@
                           placeholder="Optional description...">{{ package.description|default:'' }}</textarea>
             </div>
 
-            <div class="col-span-2 flex space-x-6">
+            <div class="col-span-2 flex flex-wrap gap-6">
                 <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" name="is_active" {% if package.is_active or not editing %}checked{% endif %}
                            class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
-                    <span class="text-sm text-gray-700">Active (available for purchase)</span>
+                    <div>
+                        <span class="text-sm text-gray-700 font-medium">Active</span>
+                        <p class="text-xs text-gray-400">Existing client packages remain valid</p>
+                    </div>
+                </label>
+
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="is_purchasable" {% if package.is_purchasable or not editing %}checked{% endif %}
+                           class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
+                    <div>
+                        <span class="text-sm text-gray-700 font-medium">Open for Purchase</span>
+                        <p class="text-xs text-gray-400">Uncheck to hide from new buyers while keeping existing packages active</p>
+                    </div>
                 </label>
 
                 <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" name="is_special" id="is_special" {% if package.is_special %}checked{% endif %}
                            class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner"
                            onchange="toggleSpecialFields()">
-                    <span class="text-sm text-gray-700">Special Event Package</span>
+                    <span class="text-sm text-gray-700 font-medium">Special Event Package</span>
                 </label>
             </div>
 

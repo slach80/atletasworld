@@ -354,12 +354,12 @@ def packages_list(request):
     )
 
     # Separate select membership from regular packages
-    select_packages = Package.objects.filter(is_active=True, package_type='select').order_by('price')
+    select_packages = Package.objects.filter(is_active=True, is_purchasable=True, package_type='select').order_by('price')
     available_packages = Package.objects.filter(
-        is_active=True, is_special=False
+        is_active=True, is_purchasable=True, is_special=False
     ).exclude(package_type__in=['team', 'select']).order_by('price')
     special_packages = Package.objects.filter(
-        is_active=True, is_special=True
+        is_active=True, is_purchasable=True, is_special=True
     ).order_by('event_start_date')
 
     has_select_membership = active_packages.filter(package__package_type='select').exists()
@@ -721,13 +721,13 @@ def booking_page(request):
 
     # Available packages for purchase (if no active package) - exclude special and team
     regular_packages = Package.objects.filter(
-        is_active=True,
+        is_active=True, is_purchasable=True,
         is_special=False
     ).exclude(package_type='team').order_by('price')
 
     # Special event packages (always shown)
     special_packages = Package.objects.filter(
-        is_active=True,
+        is_active=True, is_purchasable=True,
         is_special=True,
         event_end_date__gte=today
     ).order_by('event_start_date')

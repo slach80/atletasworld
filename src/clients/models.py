@@ -187,7 +187,11 @@ class Package(models.Model):
                                         help_text="Stripe Price ID for recurring packages (price_xxx)")
     sessions_included = models.IntegerField(help_text="Number of sessions included, 0 for unlimited")
     validity_weeks = models.IntegerField(help_text="How many weeks the package is valid")
-    is_active = models.BooleanField(default=True)
+    is_active      = models.BooleanField(default=True)
+    is_purchasable = models.BooleanField(
+        default=True,
+        help_text='Uncheck to hide from new purchases while keeping existing client packages active'
+    )
 
     # Special package fields
     is_special = models.BooleanField(default=False, help_text="Mark as special event package")
