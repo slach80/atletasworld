@@ -797,6 +797,8 @@ def owner_coach_edit(request, pk):
             coach.facebook_url     = request.POST.get('facebook_url', '')
             coach.twitter_url      = request.POST.get('twitter_url', '')
             coach.linkedin_url     = request.POST.get('linkedin_url', '')
+            coach.youtube_url      = request.POST.get('youtube_url', '')
+            coach.personal_website = request.POST.get('personal_website', '')
             coach.is_active        = request.POST.get('is_active') == 'on'
             coach.profile_enabled  = request.POST.get('profile_enabled') == 'on'
 
@@ -805,6 +807,14 @@ def owner_coach_edit(request, pk):
                 coach.photo = request.FILES['photo']
             elif request.POST.get('clear_photo'):
                 coach.photo = None
+
+            # Gallery images
+            for i in (1, 2, 3):
+                key = f'gallery_image_{i}'
+                if key in request.FILES:
+                    setattr(coach, key, request.FILES[key])
+                elif request.POST.get(f'clear_gallery_{i}'):
+                    setattr(coach, key, None)
 
             coach.save()
 
