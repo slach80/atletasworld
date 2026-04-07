@@ -53,20 +53,63 @@ def create_package_payment_intent(request, package_id):
     if not settings.STRIPE_SECRET_KEY:
         return JsonResponse({'error': 'Payments not yet configured.'}, status=503)
 
+    from decimal import Decimal
+    from clients.models import DiscountCode, DiscountCodeUse
+
     package = get_object_or_404(Package, pk=package_id, is_active=True)
     client, _ = Client.objects.get_or_create(user=request.user)
     s = _stripe()
 
+    subtotal = package.price
+
+    # --- Promo code ---
+    promo_code_str  = request.POST.get('promo_code', '').strip().upper()
+    discount_code   = None
+    discount_amount = Decimal('0.00')
+    if promo_code_str:
+        try:
+            dc = DiscountCode.objects.get(code=promo_code_str, is_active=True)
+            ok, _ = dc.is_valid_now()
+            if ok and dc.scope in ('all', 'packages'):
+                if dc.specific_packages.exists() and not dc.specific_packages.filter(pk=package.pk).exists():
+                    pass  # code not valid for this specific package
+                elif dc.min_purchase_amount and subtotal < dc.min_purchase_amount:
+                    pass  # minimum not met
+                else:
+                    client_uses = dc.uses.filter(client=client, status='applied').count()
+                    if client_uses < dc.max_uses_per_client:
+                        discount_amount = dc.compute_discount(subtotal)
+                        discount_code = dc
+        except DiscountCode.DoesNotExist:
+            pass
+
+    # --- APC Select credit ---
+    credit_applied  = Decimal('0.00')
+    apply_credit    = request.POST.get('apply_credit') == '1'
+    if apply_credit:
+        remaining = subtotal - discount_amount
+        for credit in client.credits.filter(status='available').order_by('expires_at'):
+            if credit.is_usable and remaining > 0:
+                use_amount = min(credit.amount, remaining)
+                credit_applied += use_amount
+                remaining -= use_amount
+
+    final_amount = max(subtotal - discount_amount - credit_applied, Decimal('0.00'))
+    amount_cents = max(int(final_amount * 100), 50)  # Stripe minimum $0.50
+
     try:
         customer_id = _get_or_create_stripe_customer(client)
         intent = s.PaymentIntent.create(
-            amount=int(package.price * 100),  # cents
+            amount=amount_cents,
             currency='usd',
             customer=customer_id,
             metadata={
                 'type': 'package_purchase',
                 'package_id': str(package.pk),
                 'client_id': str(client.pk),
+                'discount_code': promo_code_str,
+                'discount_amount': str(discount_amount),
+                'credit_applied': str(credit_applied),
             },
             description=f'Package: {package.name}',
         )
@@ -74,15 +117,30 @@ def create_package_payment_intent(request, package_id):
         # Pending Payment record — confirmed by webhook
         Payment.objects.create(
             client=client,
-            amount=package.price,
+            amount=final_amount,
             stripe_payment_intent_id=intent.id,
             description=f'Package: {package.name}',
             status='pending',
         )
 
+        # Track pending promo use — finalised by webhook on payment success
+        if discount_code and discount_amount > 0:
+            DiscountCodeUse.objects.create(
+                code=discount_code,
+                client=client,
+                discount_amount=discount_amount,
+                original_amount=subtotal,
+                final_amount=final_amount,
+                status='pending',
+                stripe_payment_intent_id=intent.id,
+            )
+
         return JsonResponse({
             'client_secret': intent.client_secret,
-            'amount': str(package.price),
+            'amount': str(final_amount),
+            'original_amount': str(subtotal),
+            'discount_amount': str(discount_amount),
+            'credit_applied': str(credit_applied),
             'package_name': package.name,
         })
 
@@ -208,6 +266,7 @@ def _handle_payment_succeeded(intent):
             client_id=metadata.get('client_id'),
             package_id=metadata.get('package_id'),
             payment_intent_id=intent['id'],
+            metadata=metadata,
         )
 
     elif payment_type == 'facility_rental':
@@ -224,9 +283,10 @@ def _handle_payment_succeeded(intent):
         )
 
 
-def _activate_package(client_id, package_id, payment_intent_id):
+def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
     """Create an active ClientPackage after successful payment."""
     from datetime import date, timedelta
+    from decimal import Decimal
     try:
         client  = Client.objects.get(pk=client_id)
         package = Package.objects.get(pk=package_id)
@@ -245,10 +305,33 @@ def _activate_package(client_id, package_id, payment_intent_id):
     )
     logger.info('ClientPackage #%s activated for %s — %s', cp.pk, client, package.name)
 
+    # Finalize pending DiscountCodeUse for this PaymentIntent
+    from clients.models import DiscountCodeUse
+    DiscountCodeUse.objects.filter(
+        stripe_payment_intent_id=payment_intent_id, status='pending'
+    ).update(status='applied', applied_to_package=cp)
+
+    # Finalize APC Select credits that were applied during checkout
+    if metadata:
+        credit_applied_str = metadata.get('credit_applied', '0')
+        try:
+            remaining = Decimal(credit_applied_str)
+        except Exception:
+            remaining = Decimal('0')
+        if remaining > 0:
+            from clients.models import ClientCredit
+            for credit in client.credits.filter(status='available').order_by('expires_at'):
+                if credit.is_usable and remaining > 0:
+                    use_amount = min(credit.amount, remaining)
+                    credit.status = 'applied'
+                    credit.applied_to = cp
+                    credit.applied_at = timezone.now()
+                    credit.save(update_fields=['status', 'applied_to', 'applied_at'])
+                    remaining -= use_amount
+
     # APC Select: auto-grant 6×$40 monthly credits (staggered, one per month)
     if package.package_type == 'select':
         from clients.models import ClientCredit
-        from decimal import Decimal
         for month in range(1, 7):
             credit_date = date.today() + timedelta(weeks=4 * month)
             ClientCredit.objects.create(
@@ -379,5 +462,10 @@ def _confirm_booking_paid(booking_id, payment_intent_id, amount):
         booking.save(update_fields=['payment_status', 'amount_paid'])
         booking.confirm()
         logger.info('Booking #%s confirmed after payment %s', booking_id, payment_intent_id)
+        # Finalize any pending discount code use for this booking
+        from clients.models import DiscountCodeUse
+        DiscountCodeUse.objects.filter(
+            applied_to_booking=booking, status='pending'
+        ).update(status='applied')
     except Booking.DoesNotExist:
         logger.warning('_confirm_booking_paid: booking %s not found or already paid', booking_id)

@@ -458,6 +458,37 @@
             <p class="text-sm">Loading payment options…</p>
         </div>
 
+        <!-- Promo code -->
+        <div id="promo-row" class="hidden mb-3">
+            <div class="flex gap-2">
+                <input type="text" id="promo-input" placeholder="Promo code"
+                       oninput="this.value=this.value.toUpperCase()"
+                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm uppercase focus:ring-2 focus:ring-secondary focus:border-transparent">
+                <button type="button" onclick="applyPromoCode()"
+                        class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition">Apply</button>
+            </div>
+            <div id="promo-result" class="text-xs mt-1 hidden"></div>
+        </div>
+
+        <!-- APC Select credit -->
+        {% if has_select_membership and select_credit_balance > 0 %}
+        <div id="credit-row" class="hidden mb-3 p-3 bg-green-50 border border-green-200 rounded-xl">
+            <label class="flex items-center gap-2 cursor-pointer text-sm text-green-800">
+                <input type="checkbox" id="apply-credit-check" onchange="reinitPayment()"
+                       class="rounded border-green-300 text-green-600 focus:ring-green-400">
+                <span>Apply <strong>${{ select_credit_balance|floatformat:2 }}</strong> APC Select credit</span>
+            </label>
+        </div>
+        {% endif %}
+
+        <!-- Price breakdown (shown when discount/credit applied) -->
+        <div id="price-breakdown" class="hidden mb-3 p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs space-y-1">
+            <div class="flex justify-between text-gray-500"><span>Subtotal</span><span id="breakdown-subtotal"></span></div>
+            <div id="breakdown-discount-row" class="hidden flex justify-between text-green-600"><span id="breakdown-discount-label">Promo code</span><span id="breakdown-discount"></span></div>
+            <div id="breakdown-credit-row" class="hidden flex justify-between text-green-600"><span>APC Select credit</span><span id="breakdown-credit"></span></div>
+            <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200"><span>Total</span><span id="breakdown-total"></span></div>
+        </div>
+
         <!-- Payment Element (Apple Pay / Google Pay / Card) -->
         <div id="payment-element" class="hidden mb-4"></div>
         <div id="payment-errors" class="text-red-600 text-xs mb-3 hidden"></div>
@@ -484,27 +515,83 @@
 const stripeJs = Stripe('{{ stripe_public_key }}');
 let paymentElements = null;   // stripe.elements() instance, created per payment
 let currentPackageId = null;
+let currentPackagePrice = 0;
+let activePromoCode = '';
 
-// Step 1: user taps "Buy Now" → create PaymentIntent → mount Payment Element
+// Step 1: user taps "Buy Now" → show modal + init payment
 async function buyPackage(id, name, price) {
     currentPackageId = id;
+    currentPackagePrice = parseFloat(price);
+    activePromoCode = '';
     document.getElementById('payment-package-name').textContent = name;
-    document.getElementById('pay-amount').textContent = '$' + parseFloat(price).toFixed(2);
+    document.getElementById('payment-modal').classList.remove('hidden');
+    // Reset promo fields
+    const promoInput = document.getElementById('promo-input');
+    const promoResult = document.getElementById('promo-result');
+    if (promoInput) { promoInput.value = ''; }
+    if (promoResult) { promoResult.classList.add('hidden'); promoResult.textContent = ''; }
+    const creditCheck = document.getElementById('apply-credit-check');
+    if (creditCheck) creditCheck.checked = false;
+    await initPackagePayment(id, price);
+}
+
+async function reinitPayment() {
+    if (currentPackageId) await initPackagePayment(currentPackageId, currentPackagePrice);
+}
+
+async function initPackagePayment(id, price) {
     document.getElementById('payment-loading').classList.remove('hidden');
     document.getElementById('payment-element').classList.add('hidden');
     document.getElementById('pay-btn').classList.add('hidden');
     document.getElementById('payment-errors').classList.add('hidden');
-    document.getElementById('payment-modal').classList.remove('hidden');
+    // Destroy previous element if any
+    if (paymentElements) { document.getElementById('payment-element').innerHTML = ''; paymentElements = null; }
+
+    const formData = new FormData();
+    if (activePromoCode) formData.append('promo_code', activePromoCode);
+    const creditCheck = document.getElementById('apply-credit-check');
+    if (creditCheck && creditCheck.checked) formData.append('apply_credit', '1');
 
     try {
         const res = await fetch(`/portal/packages/${id}/pay/`, {
             method: 'POST',
             headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: formData,
         });
         const data = await res.json();
         if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
 
-        // Create Elements with clientSecret — this enables Apple Pay / Google Pay detection
+        // Show promo/credit rows after first successful init
+        const promoRow = document.getElementById('promo-row');
+        if (promoRow) promoRow.classList.remove('hidden');
+        const creditRow = document.getElementById('credit-row');
+        if (creditRow) creditRow.classList.remove('hidden');
+
+        // Price breakdown
+        const discountAmt = parseFloat(data.discount_amount || 0);
+        const creditAmt   = parseFloat(data.credit_applied || 0);
+        const finalAmt    = parseFloat(data.amount);
+        const origAmt     = parseFloat(data.original_amount || price);
+        document.getElementById('pay-amount').textContent = '$' + finalAmt.toFixed(2);
+        if (discountAmt > 0 || creditAmt > 0) {
+            document.getElementById('breakdown-subtotal').textContent = '$' + origAmt.toFixed(2);
+            const discRow = document.getElementById('breakdown-discount-row');
+            if (discountAmt > 0 && discRow) {
+                discRow.classList.remove('hidden');
+                document.getElementById('breakdown-discount').textContent = '-$' + discountAmt.toFixed(2);
+            }
+            const credRow = document.getElementById('breakdown-credit-row');
+            if (creditAmt > 0 && credRow) {
+                credRow.classList.remove('hidden');
+                document.getElementById('breakdown-credit').textContent = '-$' + creditAmt.toFixed(2);
+            }
+            document.getElementById('breakdown-total').textContent = '$' + finalAmt.toFixed(2);
+            document.getElementById('price-breakdown').classList.remove('hidden');
+        } else {
+            document.getElementById('price-breakdown').classList.add('hidden');
+        }
+
+        // Create Elements with clientSecret
         paymentElements = stripeJs.elements({
             clientSecret: data.client_secret,
             appearance: {
@@ -516,10 +603,7 @@ async function buyPackage(id, name, price) {
                 },
             },
         });
-
-        const paymentElement = paymentElements.create('payment', {
-            layout: 'tabs',   // shows Apple Pay / Google Pay as tabs if available
-        });
+        const paymentElement = paymentElements.create('payment', { layout: 'tabs' });
         paymentElement.mount('#payment-element');
 
         document.getElementById('payment-loading').classList.add('hidden');
@@ -528,6 +612,32 @@ async function buyPackage(id, name, price) {
 
     } catch(e) {
         showError('Network error — please try again.');
+    }
+}
+
+async function applyPromoCode() {
+    const code = (document.getElementById('promo-input')?.value || '').trim().toUpperCase();
+    const resultEl = document.getElementById('promo-result');
+    if (!resultEl) return;
+    if (!code) { resultEl.textContent = 'Please enter a code.'; resultEl.className = 'text-xs mt-1 text-red-600'; resultEl.classList.remove('hidden'); return; }
+
+    const res = await fetch('/portal/api/discount/validate/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ code, context: 'package', amount: String(currentPackagePrice), target_id: currentPackageId }),
+    });
+    const data = await res.json();
+    resultEl.classList.remove('hidden');
+    if (data.valid) {
+        resultEl.className = 'text-xs mt-1 text-green-700 font-semibold';
+        resultEl.textContent = '✓ ' + data.message;
+        activePromoCode = code;
+        await initPackagePayment(currentPackageId, currentPackagePrice);
+    } else {
+        resultEl.className = 'text-xs mt-1 text-red-600';
+        resultEl.textContent = data.error;
+        activePromoCode = '';
+        await initPackagePayment(currentPackageId, currentPackagePrice);
     }
 }
 

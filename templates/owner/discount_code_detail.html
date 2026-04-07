@@ -1,0 +1,98 @@
+{% extends 'owner/base.html' %}
+{% block title %}{{ code.code }} — Usage Log{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+    <a href="{% url 'owner_discount_codes' %}" class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800 font-mono">{{ code.code }}</h1>
+        <p class="text-sm text-gray-500">
+            {% if code.discount_type == 'percent' %}{{ code.value }}% off{% else %}-${{ code.value }}{% endif %}
+            · {{ code.get_scope_display }}
+            {% if code.description %}· {{ code.description }}{% endif %}
+        </p>
+    </div>
+    <span class="ml-auto px-3 py-1 rounded-full text-sm font-semibold {% if code.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+        {% if code.is_active %}Active{% else %}Inactive{% endif %}
+    </span>
+</div>
+
+<!-- Stats row -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <p class="text-2xl font-bold text-indigo-600">{{ code.use_count }}</p>
+        <p class="text-xs text-gray-500 mt-0.5">Times Used</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <p class="text-2xl font-bold text-green-600">${{ uses|length|default:0 }}</p>
+        <p class="text-xs text-gray-500 mt-0.5">Total Saved</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <p class="text-2xl font-bold text-gray-800">
+            {% if code.max_uses %}{{ code.max_uses }}{% else %}∞{% endif %}
+        </p>
+        <p class="text-xs text-gray-500 mt-0.5">Max Uses</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <p class="text-2xl font-bold text-gray-800">
+            {% if code.valid_until %}{{ code.valid_until|date:"M d" }}{% else %}—{% endif %}
+        </p>
+        <p class="text-xs text-gray-500 mt-0.5">Expires</p>
+    </div>
+</div>
+
+<!-- Usage log -->
+<div class="bg-white rounded-xl shadow-md p-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">Usage Log</h2>
+    {% if uses %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Client</th>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Applied To</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Original</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Discount</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Final</th>
+                    <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for use in uses %}
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 font-semibold text-gray-800">{{ use.client.user.get_full_name|default:use.client.user.email }}</td>
+                    <td class="py-3 px-4 text-gray-600">{{ use.used_at|date:"M d, Y" }}</td>
+                    <td class="py-3 px-4 text-gray-600 text-xs">
+                        {% if use.applied_to_package %}📦 {{ use.applied_to_package.package.name }}
+                        {% elif use.applied_to_booking %}📅 {{ use.applied_to_booking.session_type.name|default:"Session" }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="py-3 px-4 text-right text-gray-500">${{ use.original_amount|floatformat:2 }}</td>
+                    <td class="py-3 px-4 text-right text-green-600 font-semibold">-${{ use.discount_amount|floatformat:2 }}</td>
+                    <td class="py-3 px-4 text-right font-bold text-gray-900">${{ use.final_amount|floatformat:2 }}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold
+                            {% if use.status == 'applied' %}bg-green-100 text-green-700
+                            {% elif use.status == 'pending' %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-gray-100 text-gray-500{% endif %}">
+                            {{ use.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-10 text-gray-400">
+        <p class="text-3xl mb-2">📭</p>
+        <p class="font-semibold text-gray-500">No uses yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

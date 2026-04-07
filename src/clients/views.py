@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver
+from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver, DiscountCode
 from bookings.models import Booking, Program
 from coaches.models import PlayerAssessment, Coach, ScheduleBlock
 
@@ -1512,3 +1512,79 @@ def field_rental_available_json(request):
         status='available'
     ).values('id', 'date', 'start_time', 'end_time', 'price', 'title', 'duration_minutes')
     return JsonResponse({'slots': list(slots)}, json_dumps_params={'default': str})
+
+
+@login_required
+@require_POST
+def discount_validate(request):
+    """
+    AJAX: validate a promo code and return discount details.
+    POST JSON: { code, context ("package"|"session"), amount, target_id (optional) }
+    """
+    import json
+    from decimal import Decimal
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'valid': False, 'error': 'Invalid request.'}, status=400)
+
+    code_str  = body.get('code', '').strip().upper()
+    context   = body.get('context', 'package')
+    target_id = body.get('target_id')
+    try:
+        subtotal = Decimal(str(body.get('amount', '0')))
+    except Exception:
+        return JsonResponse({'valid': False, 'error': 'Invalid amount.'}, status=400)
+
+    if not code_str:
+        return JsonResponse({'valid': False, 'error': 'Please enter a promo code.'})
+
+    try:
+        dc = DiscountCode.objects.get(code=code_str)
+    except DiscountCode.DoesNotExist:
+        return JsonResponse({'valid': False, 'error': 'Invalid promo code.'})
+
+    ok, err = dc.is_valid_now()
+    if not ok:
+        return JsonResponse({'valid': False, 'error': err})
+
+    if dc.scope == 'packages' and context != 'package':
+        return JsonResponse({'valid': False, 'error': 'This code is only valid for package purchases.'})
+    if dc.scope == 'sessions' and context != 'session':
+        return JsonResponse({'valid': False, 'error': 'This code is only valid for drop-in sessions.'})
+
+    if target_id:
+        if context == 'package' and dc.specific_packages.exists():
+            if not dc.specific_packages.filter(pk=target_id).exists():
+                return JsonResponse({'valid': False, 'error': 'This code does not apply to this package.'})
+        if context == 'session' and dc.specific_session_types.exists():
+            if not dc.specific_session_types.filter(pk=target_id).exists():
+                return JsonResponse({'valid': False, 'error': 'This code does not apply to this session type.'})
+
+    if dc.min_purchase_amount and subtotal < dc.min_purchase_amount:
+        return JsonResponse({
+            'valid': False,
+            'error': f'Minimum purchase of ${dc.min_purchase_amount} required.',
+        })
+
+    client, _ = Client.objects.get_or_create(user=request.user)
+    client_uses = dc.uses.filter(client=client, status='applied').count()
+    if client_uses >= dc.max_uses_per_client:
+        return JsonResponse({'valid': False, 'error': 'You have already used this code.'})
+
+    discount_amount = dc.compute_discount(subtotal)
+    final_amount    = subtotal - discount_amount
+
+    msg = (f'{dc.value}% off applied' if dc.discount_type == 'percent'
+           else f'${discount_amount} off applied')
+
+    return JsonResponse({
+        'valid': True,
+        'code': dc.code,
+        'discount_type': dc.discount_type,
+        'value': str(dc.value),
+        'discount_amount': str(discount_amount),
+        'final_amount': str(final_amount),
+        'message': msg,
+    })

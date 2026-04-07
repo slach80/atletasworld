@@ -2,11 +2,17 @@
 {% block title %}Credits Management{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-start mb-6">
+<div class="flex justify-between items-start mb-4">
     <div>
-        <h1 class="text-2xl font-bold text-gray-800">Credits Management</h1>
-        <p class="text-gray-500">Manage APC Select monthly credits and manual grants. Active credits reduce the cost of APC Training package purchases.</p>
+        <h1 class="text-2xl font-bold text-gray-800">Credits &amp; Discounts</h1>
+        <p class="text-gray-500">Manage APC Select credits, manual grants, and promotional discount codes.</p>
     </div>
+</div>
+
+<!-- Tab bar -->
+<div class="flex space-x-1 mb-6 bg-white rounded-xl shadow-sm p-1 inline-flex">
+    <a href="{% url 'owner_credits' %}" class="px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white">Credits</a>
+    <a href="{% url 'owner_discount_codes' %}" class="px-5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:bg-gray-50 transition">Discount Codes</a>
 </div>
 
 <!-- APC Select Members Summary -->

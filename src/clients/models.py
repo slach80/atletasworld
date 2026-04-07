@@ -971,6 +971,106 @@ class ClientCredit(models.Model):
         ]
 
 
+class DiscountCode(models.Model):
+    """Promotional discount codes redeemable by clients at checkout."""
+    DISCOUNT_TYPE_CHOICES = [
+        ('percent', 'Percentage Off'),
+        ('fixed',   'Fixed Dollar Amount'),
+    ]
+    SCOPE_CHOICES = [
+        ('all',      'All Purchases'),
+        ('packages', 'Packages Only'),
+        ('sessions', 'Sessions (Drop-in) Only'),
+    ]
+
+    code                = models.CharField(max_length=30, unique=True, db_index=True)
+    description         = models.CharField(max_length=200, blank=True)
+    discount_type       = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES)
+    value               = models.DecimalField(max_digits=8, decimal_places=2,
+                              help_text='Percentage (0–100) or fixed dollar amount')
+    scope               = models.CharField(max_length=10, choices=SCOPE_CHOICES, default='all')
+    specific_packages   = models.ManyToManyField(
+                              'Package', blank=True, related_name='discount_codes',
+                              help_text='Leave empty to apply to all packages within scope')
+    specific_session_types = models.ManyToManyField(
+                              'bookings.SessionType', blank=True, related_name='discount_codes',
+                              help_text='Leave empty to apply to all session types within scope')
+    max_uses            = models.IntegerField(null=True, blank=True,
+                              help_text='Total redemption limit. Leave blank for unlimited.')
+    max_uses_per_client = models.IntegerField(default=1)
+    min_purchase_amount = models.DecimalField(max_digits=8, decimal_places=2,
+                              null=True, blank=True,
+                              help_text='Minimum purchase amount required to use this code')
+    valid_from          = models.DateField(null=True, blank=True)
+    valid_until         = models.DateField(null=True, blank=True)
+    is_active           = models.BooleanField(default=True)
+    created_by          = models.ForeignKey('auth.User', on_delete=models.SET_NULL,
+                              null=True, blank=True, related_name='created_discount_codes')
+    created_at          = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        val = f'{self.value}%' if self.discount_type == 'percent' else f'${self.value}'
+        return f'{self.code} ({val} off)'
+
+    @property
+    def use_count(self):
+        return self.uses.filter(status='applied').count()
+
+    def is_valid_now(self):
+        from django.utils import timezone
+        today = timezone.now().date()
+        if not self.is_active:
+            return False, 'Code is inactive.'
+        if self.valid_from and today < self.valid_from:
+            return False, 'Code is not yet valid.'
+        if self.valid_until and today > self.valid_until:
+            return False, 'Code has expired.'
+        if self.max_uses is not None and self.use_count >= self.max_uses:
+            return False, 'Code has reached its usage limit.'
+        return True, ''
+
+    def compute_discount(self, subtotal):
+        """Return Decimal discount amount for the given subtotal."""
+        from decimal import Decimal
+        if self.discount_type == 'percent':
+            return (subtotal * self.value / Decimal('100')).quantize(Decimal('0.01'))
+        return min(self.value, subtotal)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class DiscountCodeUse(models.Model):
+    """Records each redemption of a DiscountCode."""
+    STATUS_CHOICES = [
+        ('pending',   'Pending'),    # validated, payment not yet confirmed
+        ('applied',   'Applied'),    # payment confirmed
+        ('cancelled', 'Cancelled'),
+    ]
+
+    code                     = models.ForeignKey(DiscountCode, on_delete=models.PROTECT,
+                                   related_name='uses')
+    client                   = models.ForeignKey('Client', on_delete=models.CASCADE,
+                                   related_name='discount_uses')
+    discount_amount          = models.DecimalField(max_digits=8, decimal_places=2)
+    original_amount          = models.DecimalField(max_digits=8, decimal_places=2)
+    final_amount             = models.DecimalField(max_digits=8, decimal_places=2)
+    status                   = models.CharField(max_length=15, choices=STATUS_CHOICES,
+                                   default='pending')
+    applied_to_package       = models.ForeignKey('ClientPackage', on_delete=models.SET_NULL,
+                                   null=True, blank=True, related_name='discount_uses')
+    applied_to_booking       = models.ForeignKey('bookings.Booking', on_delete=models.SET_NULL,
+                                   null=True, blank=True, related_name='discount_uses')
+    stripe_payment_intent_id = models.CharField(max_length=100, blank=True)
+    used_at                  = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.code.code} — {self.client} saved ${self.discount_amount}'
+
+    class Meta:
+        ordering = ['-used_at']
+
+
 class ClientWaiver(models.Model):
     """
     Digital waiver signature for Atletas Performance Center liability release.

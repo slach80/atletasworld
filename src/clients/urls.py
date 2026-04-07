@@ -60,6 +60,7 @@ urlpatterns = [
     path('field-rental/<int:slot_id>/request/', views.field_rental_request, name='field_rental_request'),
     path('field-rental/<int:slot_id>/cancel/', views.field_rental_cancel, name='field_rental_cancel'),
     path('api/field-rental/available/', views.field_rental_available_json, name='field_rental_available'),
+    path('api/discount/validate/', views.discount_validate, name='discount_validate'),
 
     # Assessments
     path('assessments/', views.assessments_view, name='assessments'),

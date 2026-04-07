@@ -463,6 +463,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             slot_type = data.get('slot_type', 'availability_slot')
             player_id = data.get('player_id')
             package_id = data.get('package_id')
+            promo_code_str = data.get('promo_code', '').strip().upper()
 
             # Check package if provided
             package = None
@@ -618,6 +619,28 @@ class BookingViewSet(viewsets.ModelViewSet):
                         # Optional package — fall back to drop-in pricing
                         package = None
 
+            # Apply promo code discount to drop-in amount (not stacked with package)
+            discount_code_obj = None
+            promo_discount = Decimal('0.00')
+            if promo_code_str and not package and amount_due and amount_due > 0:
+                try:
+                    from clients.models import DiscountCode
+                    dc = DiscountCode.objects.get(code=promo_code_str, is_active=True)
+                    ok, _ = dc.is_valid_now()
+                    if ok and dc.scope in ('all', 'sessions'):
+                        if _st and dc.specific_session_types.exists() and not dc.specific_session_types.filter(pk=_st.pk).exists():
+                            pass  # code not valid for this session type
+                        elif dc.min_purchase_amount and amount_due < dc.min_purchase_amount:
+                            pass  # minimum not met
+                        else:
+                            client_uses = dc.uses.filter(client=client, status='applied').count()
+                            if client_uses < dc.max_uses_per_client:
+                                promo_discount = dc.compute_discount(amount_due)
+                                amount_due = max(amount_due - promo_discount, Decimal('0.00'))
+                                discount_code_obj = dc
+                except Exception:
+                    pass  # never block a booking due to promo code failure
+
             if package:
                 # Package booking — session deducted, no separate payment
                 booking.use_package(package)
@@ -630,6 +653,18 @@ class BookingViewSet(viewsets.ModelViewSet):
                 booking.amount_paid = amount_due
                 booking.save()
                 payment_required = True
+                # Track pending promo use — finalised by webhook on payment success
+                if discount_code_obj and promo_discount > 0:
+                    from clients.models import DiscountCodeUse
+                    DiscountCodeUse.objects.create(
+                        code=discount_code_obj,
+                        client=client,
+                        discount_amount=promo_discount,
+                        original_amount=amount_due + promo_discount,
+                        final_amount=amount_due,
+                        status='pending',
+                        applied_to_booking=booking,
+                    )
                 # Notify coach and owner about pending payment booking
                 _notify_pending_payment(booking, amount_due)
             else:
@@ -643,6 +678,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'id': booking.id,
                 'payment_required': payment_required,
                 'amount_due': str(amount_due),
+                'discount_applied': str(promo_discount),
                 'booking_status': booking.status,
                 'message': 'Booking created successfully',
                 'booking': {

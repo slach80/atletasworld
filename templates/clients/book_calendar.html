@@ -341,6 +341,7 @@
 <script>
 // State
 let slotMap={}, cart=[], packages=[], sessionTypes=[], activeTypes=new Set(), activeCoach='', activeDateFilter='', activeDays=new Set(), activeLocation='';
+let cartPromoCode='', cartPromoDiscount=0;
 let timeStart=6, timeEnd=23;
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
@@ -607,15 +608,34 @@ function buildCartHtml(){
             }
         }
     }
+    // Promo code row (only when payment is due)
+    if(paymentNeeded){
+        const promoResultText = cartPromoCode && cartPromoDiscount>0
+            ? `<p class="text-xs text-green-700 font-semibold mt-1">✓ ${cartPromoCode} applied — -$${cartPromoDiscount.toFixed(2)} off</p>` : '';
+        html+=`<div class="mb-2">
+            <div class="flex gap-2">
+                <input id="cart-promo" type="text" placeholder="Promo code" value="${cartPromoCode}"
+                       oninput="this.value=this.value.toUpperCase()"
+                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs uppercase focus:ring-2 focus:ring-secondary focus:border-transparent">
+                <button onclick="applyCartPromo()" type="button"
+                        class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-200 transition">Apply</button>
+            </div>
+            ${promoResultText}
+            <div id="cart-promo-error" class="text-xs text-red-600 mt-1 hidden"></div>
+        </div>`;
+    }
+    // Adjust totalDue for applied promo
+    const displayTotal = Math.max(totalDue - cartPromoDiscount, 0);
     // Pay-now total
     if(paymentNeeded) html+=`<div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm">
-        <div class="flex justify-between font-bold"><span>Total due</span><span>$${totalDue.toFixed(2)}</span></div>
+        <div class="flex justify-between font-bold"><span>Total due</span><span>$${displayTotal.toFixed(2)}</span></div>
+        ${cartPromoDiscount>0?`<p class="text-xs text-green-600 mt-0.5">Promo code applied: -$${cartPromoDiscount.toFixed(2)}</p>`:''}
         <p class="text-xs text-gray-500 mt-1">💳 Secure online payment — you'll be prompted to pay after confirming.</p>
     </div>`;
     else if(!hasPackage&&totalDue===0) html+=`<div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700">✓ Free session — no payment required.</div>`;
     // Confirm button
     const canGo=!over&&!incompatBlocked;
-    const btnLabel=paymentNeeded?`Reserve ${cart.length} Session${cart.length!==1?'s':''} — Pay $${totalDue.toFixed(2)}`:`Confirm ${cart.length} Booking${cart.length!==1?'s':''}`;
+    const btnLabel=paymentNeeded?`Reserve ${cart.length} Session${cart.length!==1?'s':''} — Pay $${displayTotal.toFixed(2)}`:`Confirm ${cart.length} Booking${cart.length!==1?'s':''}`;
     html+=`<button id="confirm-btn" onclick="confirmBookings()" ${canGo?'':'disabled'} class="w-full py-3.5 rounded-xl font-bold text-sm transition ${canGo?'bg-secondary text-gray-900 hover:bg-[#b8e000] active:scale-95':'bg-gray-100 text-gray-400 cursor-not-allowed'}">${btnLabel}</button>`;
     return html;
 }
@@ -631,7 +651,7 @@ async function confirmBookings(){
         try{
             // Only pass package_id if this session type allows package use AND pkg covers this slot
             const usePackage = pkg && slot.allow_package && pkgCoversSlot(pkg, slot);
-            const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:usePackage?pkg.id:null,notes:notes||''})});
+            const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:usePackage?pkg.id:null,promo_code:cartPromoCode||'',notes:notes||''})});
             const data=await res.json();
             if(res.ok){
                 const payReq=data.payment_required;
@@ -688,7 +708,7 @@ function setItemStatus(i,type,msg){
 }
 function closeSuccess(){
     document.getElementById('success-overlay').classList.add('hidden');
-    cart=[]; updateCartBadge(); renderSlots(); renderCart(); switchTab('slots');
+    cart=[]; cartPromoCode=''; cartPromoDiscount=0; updateCartBadge(); renderSlots(); renderCart(); switchTab('slots');
 }
 
 function renderTypePills(){
@@ -776,6 +796,34 @@ function populateLocationFilter(){
     if(!locs.includes(prev)){ sel.value=''; if(activeLocation){ activeLocation=''; updateFilterBadge(); } }
 }
 function setLocationFilter(v){ activeLocation=v; updateFilterBadge(); renderSlots(); }
+async function applyCartPromo(){
+    const code=(document.getElementById('cart-promo')?.value||'').trim().toUpperCase();
+    const errEl=document.getElementById('cart-promo-error');
+    if(!code){ cartPromoCode=''; cartPromoDiscount=0; renderCart(); return; }
+    // Compute total drop-in amount for validation
+    const pkg=packages.find(p=>p.can_book);
+    const dropInAmt=cart.reduce((s,{slot})=>{
+        const p=parseFloat(slot.price||0);
+        if(!slot.allow_package&&p>0) return s+p;
+        if(pkg&&slot.allow_package&&!pkgCoversSlot(pkg,slot)&&slot.drop_in_available&&p>0) return s+p;
+        return s;
+    },0);
+    const res=await fetch('/portal/api/discount/validate/',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+        body:JSON.stringify({code,context:'session',amount:String(dropInAmt||0)}),
+    });
+    const data=await res.json();
+    if(data.valid){
+        cartPromoCode=code;
+        cartPromoDiscount=parseFloat(data.discount_amount);
+        if(errEl){ errEl.classList.add('hidden'); }
+    } else {
+        cartPromoCode=''; cartPromoDiscount=0;
+        if(errEl){ errEl.textContent=data.error; errEl.classList.remove('hidden'); }
+    }
+    renderCart();
+}
 function updateFilterBadge(){
     const active=activeTypes.size+(activeCoach?1:0)+(activeDateFilter?1:0)+activeDays.size+(timeStart!==6||timeEnd!==23?1:0)+(activeLocation?1:0);
     const badge=document.getElementById('filter-badge');

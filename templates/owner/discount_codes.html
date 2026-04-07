@@ -1,0 +1,273 @@
+{% extends 'owner/base.html' %}
+{% block title %}Discount Codes{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-start mb-4">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Credits &amp; Discounts</h1>
+        <p class="text-gray-500">Create and manage promotional discount codes for packages and sessions.</p>
+    </div>
+</div>
+
+<!-- Tab bar -->
+<div class="flex space-x-1 mb-6 bg-white rounded-xl shadow-sm p-1 inline-flex">
+    <a href="{% url 'owner_credits' %}" class="px-5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:bg-gray-50 transition">Credits</a>
+    <a href="{% url 'owner_discount_codes' %}" class="px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white">Discount Codes</a>
+</div>
+
+{% if messages %}
+<div class="mb-4 space-y-2">
+    {% for message in messages %}
+    <div class="p-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-green-50 text-green-800{% else %}bg-red-50 text-red-800{% endif %}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Create form -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4" id="form-title">➕ New Discount Code</h2>
+        <form method="POST" id="discount-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="form-action" value="create">
+            <input type="hidden" name="code_id" id="form-code-id" value="">
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Code *</label>
+                    <input type="text" name="code" id="field-code" required maxlength="30"
+                           placeholder="e.g. SUMMER25"
+                           oninput="this.value=this.value.toUpperCase()"
+                           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 uppercase">
+                    <p class="text-xs text-gray-400 mt-0.5">Uppercase, no spaces (auto-converted)</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+                    <input type="text" name="description" id="field-description" maxlength="200"
+                           placeholder="e.g. Summer 2026 promotion"
+                           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Type *</label>
+                        <select name="discount_type" id="field-discount-type" required
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                            <option value="percent">% Off</option>
+                            <option value="fixed">$ Off</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Value *</label>
+                        <input type="number" name="value" id="field-value" required min="0.01" step="0.01"
+                               placeholder="e.g. 25"
+                               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Applies To</label>
+                    <select name="scope" id="field-scope"
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                        <option value="all">All Purchases</option>
+                        <option value="packages">Packages Only</option>
+                        <option value="sessions">Sessions (Drop-in) Only</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Specific Packages
+                        <span class="font-normal text-gray-400">(leave empty = all)</span>
+                    </label>
+                    <select name="specific_packages" id="field-packages" multiple
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-300" style="height:80px">
+                        {% for pkg in all_packages %}
+                        <option value="{{ pkg.pk }}">{{ pkg.name }} (${{ pkg.price }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Specific Session Types
+                        <span class="font-normal text-gray-400">(leave empty = all)</span>
+                    </label>
+                    <select name="specific_session_types" id="field-session-types" multiple
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-300" style="height:80px">
+                        {% for st in all_session_types %}
+                        <option value="{{ st.pk }}">{{ st.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Max Uses Total</label>
+                        <input type="number" name="max_uses" id="field-max-uses" min="1" placeholder="Unlimited"
+                               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Per Client</label>
+                        <input type="number" name="max_uses_per_client" id="field-max-per-client" min="1" value="1"
+                               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Min Purchase ($)</label>
+                    <input type="number" name="min_purchase_amount" id="field-min-purchase" min="0" step="0.01"
+                           placeholder="No minimum"
+                           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Valid From</label>
+                        <input type="date" name="valid_from" id="field-valid-from"
+                               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Valid Until</label>
+                        <input type="date" name="valid_until" id="field-valid-until"
+                               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button type="submit"
+                            class="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm hover:bg-indigo-700 transition">
+                        Save Code
+                    </button>
+                    <button type="button" onclick="resetForm()"
+                            class="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Codes table -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4">All Codes ({{ codes|length }})</h2>
+
+            {% if codes %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
+                            <th class="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Discount</th>
+                            <th class="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Scope</th>
+                            <th class="text-center py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Uses</th>
+                            <th class="text-center py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Expires</th>
+                            <th class="text-center py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Active</th>
+                            <th class="text-right py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for dc in codes %}
+                        <tr class="hover:bg-gray-50 {% if not dc.is_active %}opacity-50{% endif %}">
+                            <td class="py-3 px-3">
+                                <p class="font-bold font-mono text-gray-900">{{ dc.code }}</p>
+                                {% if dc.description %}<p class="text-xs text-gray-400">{{ dc.description }}</p>{% endif %}
+                            </td>
+                            <td class="py-3 px-3 font-semibold text-indigo-700">
+                                {% if dc.discount_type == 'percent' %}{{ dc.value }}% off{% else %}-${{ dc.value }}{% endif %}
+                            </td>
+                            <td class="py-3 px-3 text-gray-600 text-xs">
+                                {{ dc.get_scope_display }}
+                                {% if dc.specific_packages.exists %}
+                                <p class="text-gray-400">{{ dc.specific_packages.count }} pkg(s)</p>
+                                {% endif %}
+                                {% if dc.specific_session_types.exists %}
+                                <p class="text-gray-400">{{ dc.specific_session_types.count }} type(s)</p>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <a href="{% url 'owner_discount_code_detail' dc.pk %}"
+                                   class="text-indigo-600 font-semibold hover:underline">
+                                    {{ dc.use_count }}{% if dc.max_uses %}/{{ dc.max_uses }}{% endif %}
+                                </a>
+                            </td>
+                            <td class="py-3 px-3 text-center text-xs text-gray-500">
+                                {% if dc.valid_until %}{{ dc.valid_until|date:"M d, Y" }}{% else %}—{% endif %}
+                            </td>
+                            <td class="py-3 px-3 text-center">
+                                <form method="POST" class="inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="toggle">
+                                    <input type="hidden" name="code_id" value="{{ dc.pk }}">
+                                    <button type="submit"
+                                            class="px-2 py-0.5 rounded-full text-xs font-semibold {% if dc.is_active %}bg-green-100 text-green-700 hover:bg-green-200{% else %}bg-gray-100 text-gray-500 hover:bg-gray-200{% endif %} transition">
+                                        {% if dc.is_active %}On{% else %}Off{% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="py-3 px-3 text-right">
+                                <button onclick="editCode({{ dc.pk }}, '{{ dc.code }}', '{{ dc.description|escapejs }}', '{{ dc.discount_type }}', '{{ dc.value }}', '{{ dc.scope }}', '{{ dc.max_uses|default:'' }}', '{{ dc.max_uses_per_client }}', '{{ dc.min_purchase_amount|default:'' }}', '{{ dc.valid_from|date:"Y-m-d" }}', '{{ dc.valid_until|date:"Y-m-d" }}')"
+                                        class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold mr-2">Edit</button>
+                                <form method="POST" class="inline" onsubmit="return confirm('Delete {{ dc.code }}?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="code_id" value="{{ dc.pk }}">
+                                    <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-semibold">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12 text-gray-400">
+                <p class="text-4xl mb-2">🏷️</p>
+                <p class="font-semibold text-gray-500">No discount codes yet</p>
+                <p class="text-sm mt-1">Create your first code using the form.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- APC Select auto-discounts info card -->
+        <div class="mt-4 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <h3 class="font-bold text-indigo-900 mb-2">⭐ APC Select Auto-Discounts</h3>
+            <p class="text-xs text-indigo-700 mb-2">These discounts are automatically applied for active APC Select members — no code needed:</p>
+            <ul class="text-xs text-indigo-800 space-y-1">
+                <li>⚽ <strong>Pick-Up sessions</strong>: flat $5 (auto-applied)</li>
+                <li>🏕️ <strong>Camps &amp; Clinics</strong>: 10% off (auto-applied)</li>
+                <li>💳 <strong>Monthly credit</strong>: $40 toward any APC Training package (granted monthly, applied at checkout)</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function editCode(pk, code, desc, type, value, scope, maxUses, maxPerClient, minPurchase, validFrom, validUntil) {
+    document.getElementById('form-title').textContent = '✏️ Edit: ' + code;
+    document.getElementById('form-action').value = 'edit';
+    document.getElementById('form-code-id').value = pk;
+    document.getElementById('field-code').value = code;
+    document.getElementById('field-code').readOnly = true;
+    document.getElementById('field-description').value = desc;
+    document.getElementById('field-discount-type').value = type;
+    document.getElementById('field-value').value = value;
+    document.getElementById('field-scope').value = scope;
+    document.getElementById('field-max-uses').value = maxUses;
+    document.getElementById('field-max-per-client').value = maxPerClient;
+    document.getElementById('field-min-purchase').value = minPurchase;
+    document.getElementById('field-valid-from').value = validFrom;
+    document.getElementById('field-valid-until').value = validUntil;
+    document.getElementById('discount-form').scrollIntoView({behavior:'smooth'});
+}
+function resetForm() {
+    document.getElementById('form-title').textContent = '➕ New Discount Code';
+    document.getElementById('form-action').value = 'create';
+    document.getElementById('form-code-id').value = '';
+    document.getElementById('discount-form').reset();
+    document.getElementById('field-code').readOnly = false;
+}
+</script>
+{% endblock %}

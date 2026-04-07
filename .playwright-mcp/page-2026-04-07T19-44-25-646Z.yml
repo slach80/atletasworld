@@ -1,0 +1,311 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Atletas Performance Center" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Atletas Performance Center" [ref=e7]
+        - generic [ref=e8]: Owner Portal
+      - generic [ref=e9]:
+        - link "Dashboard" [ref=e10] [cursor=pointer]:
+          - /url: /owner-portal/
+        - button "People" [ref=e12] [cursor=pointer]:
+          - text: People
+          - img [ref=e13]
+        - button "Operations" [ref=e16] [cursor=pointer]:
+          - text: Operations
+          - img [ref=e17]
+        - button "Catalog" [ref=e20] [cursor=pointer]:
+          - text: Catalog
+          - img [ref=e21]
+        - link "Notify" [ref=e23] [cursor=pointer]:
+          - /url: /owner-portal/notifications/
+        - generic [ref=e24]: "|"
+        - link "Guide" [ref=e25] [cursor=pointer]:
+          - /url: /owner-portal/guide/
+        - link "Backend" [ref=e26] [cursor=pointer]:
+          - /url: /admin/
+        - link "Logout" [ref=e27] [cursor=pointer]:
+          - /url: /accounts/logout/
+  - generic [ref=e28]:
+    - generic [ref=e29]:
+      - heading "Session Types" [level=1] [ref=e30]
+      - paragraph [ref=e31]: Manage types of training sessions offered, including clinics and camps
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - heading "Add Session Type" [level=2] [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: Name *
+            - textbox "e.g., Private Training" [ref=e38]
+          - generic [ref=e39]:
+            - generic [ref=e40]: Format *
+            - combobox [ref=e41]:
+              - option "Private (1-on-1)" [selected]
+              - option "Semi-Private (2-3 players)"
+              - option "Group Session"
+              - option "Team Training"
+              - option "Clinic"
+              - option "Camp"
+              - option "Seasonal (Package Pre-paid)"
+              - option "Pick Up Game"
+              - option "Tryout"
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - generic [ref=e44]: Duration (min)
+              - spinbutton [ref=e45]: "60"
+            - generic [ref=e46]:
+              - generic [ref=e47]: Price ($) *
+              - spinbutton [ref=e48]
+          - generic [ref=e49]:
+            - generic [ref=e50]: Max Participants
+            - spinbutton [ref=e51]: "1"
+          - generic [ref=e52]:
+            - generic [ref=e53]: Calendar Color
+            - textbox [ref=e54] [cursor=pointer]: "#2ecc71"
+          - generic [ref=e55]:
+            - generic [ref=e56]: Location
+            - textbox "e.g., APC Indoor Facility, Main Field" [ref=e57]
+          - generic [ref=e58]:
+            - generic [ref=e59]: Age Group
+            - textbox "e.g., U13-U15, All ages, Adults" [ref=e60]
+          - generic [ref=e61]:
+            - generic [ref=e62]: Days of Week & Start Times
+            - generic [ref=e63]:
+              - paragraph [ref=e64]: Weekdays — Mon to Fri
+              - generic [ref=e65]:
+                - generic [ref=e66] [cursor=pointer]:
+                  - checkbox "Mon" [ref=e67]
+                  - text: Mon
+                - generic [ref=e68] [cursor=pointer]:
+                  - checkbox "Tue" [ref=e69]
+                  - text: Tue
+                - generic [ref=e70] [cursor=pointer]:
+                  - checkbox "Wed" [ref=e71]
+                  - text: Wed
+                - generic [ref=e72] [cursor=pointer]:
+                  - checkbox "Thu" [ref=e73]
+                  - text: Thu
+                - generic [ref=e74] [cursor=pointer]:
+                  - checkbox "Fri" [ref=e75]
+                  - text: Fri
+              - paragraph [ref=e76]: Start Times
+              - generic [ref=e78]:
+                - textbox [ref=e79]
+                - button "✕" [ref=e80] [cursor=pointer]
+              - button "+ Add" [ref=e81] [cursor=pointer]
+            - generic [ref=e82]:
+              - paragraph [ref=e83]: Weekends — Sat & Sun
+              - generic [ref=e84]:
+                - generic [ref=e85] [cursor=pointer]:
+                  - checkbox "Sat" [ref=e86]
+                  - text: Sat
+                - generic [ref=e87] [cursor=pointer]:
+                  - checkbox "Sun" [ref=e88]
+                  - text: Sun
+              - paragraph [ref=e89]: Start Times — leave empty to use weekday times
+              - paragraph [ref=e91]: No weekend times set.
+              - button "+ Add" [ref=e92] [cursor=pointer]
+          - generic [ref=e93]:
+            - generic [ref=e94]: Description
+            - textbox "Optional..." [ref=e95]
+          - generic [ref=e96] [cursor=pointer]:
+            - checkbox "Requires active package to book" [ref=e97]
+            - generic [ref=e98]: Requires active package to book
+          - generic [ref=e99]:
+            - paragraph [ref=e100]: Homepage Display
+            - generic [ref=e101] [cursor=pointer]:
+              - checkbox "🔥 Show in Upcoming Events" [ref=e102]
+              - generic [ref=e103]:
+                - text: 🔥 Show in
+                - strong [ref=e104]: Upcoming Events
+            - generic [ref=e105] [cursor=pointer]:
+              - checkbox "📋 Show in Training Programs" [ref=e106]
+              - generic [ref=e107]:
+                - text: 📋 Show in
+                - strong [ref=e108]: Training Programs
+          - generic [ref=e109] [cursor=pointer]:
+            - checkbox "Active" [checked] [ref=e110]
+            - generic [ref=e111]: Active
+          - button "Add Session Type" [ref=e112] [cursor=pointer]
+      - generic [ref=e113]:
+        - heading "Existing Session Types" [level=2] [ref=e114]
+        - generic [ref=e115]:
+          - generic [ref=e117]:
+            - generic [ref=e120]:
+              - generic [ref=e121]: Captains SC - Speed & Agility
+              - generic [ref=e122]:
+                - generic [ref=e123]: Team Training
+                - generic [ref=e124]: 60 min · $20.00
+                - generic [ref=e125]: Max 40 · 0 bookings
+            - generic [ref=e126]:
+              - generic [ref=e127]: Active
+              - button "Actions" [ref=e129] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e130]
+          - generic [ref=e133]:
+            - generic [ref=e136]:
+              - generic [ref=e137]: Legends Academy Tech & Performance
+              - generic [ref=e138]:
+                - generic [ref=e139]: Team Training
+                - generic [ref=e140]: 60 min · $25.00
+                - generic [ref=e141]: Max 40 · 0 bookings
+            - generic [ref=e142]:
+              - generic [ref=e143]: Active
+              - button "Actions" [ref=e145] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e146]
+          - generic [ref=e149]:
+            - generic [ref=e152]:
+              - generic [ref=e153]: Pick-Up Game
+              - generic [ref=e154]:
+                - generic [ref=e155]: Pick Up Game
+                - generic [ref=e156]: 120 min · $10.00
+                - generic [ref=e157]: Max 40 · 0 bookings
+                - generic [ref=e158]: 📋 Program
+              - generic [ref=e159]:
+                - generic [ref=e160]: 🎂 All Ages
+                - generic [ref=e161]:
+                  - generic [ref=e162]: Mon–Fri
+                  - generic [ref=e163]: 🕐 13:00 15:00
+                - generic [ref=e164]: "Sat–Sun: same as weekday"
+            - generic [ref=e165]:
+              - generic [ref=e166]: Active
+              - button "Actions" [ref=e168] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e169]
+          - generic [ref=e172]:
+            - generic [ref=e175]:
+              - generic [ref=e176]: Private Training
+              - generic [ref=e177]:
+                - generic [ref=e178]: Private (1-on-1)
+                - generic [ref=e179]: 60 min · $90.00
+                - generic [ref=e180]: Max 1 · 5 bookings
+            - generic [ref=e181]:
+              - generic [ref=e182]: Active
+              - button "Actions" [ref=e184] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e185]
+          - generic [ref=e188]:
+            - generic [ref=e191]:
+              - generic [ref=e192]: Serie A Elite Scouts — U13
+              - generic [ref=e193]:
+                - generic [ref=e194]: Group Session
+                - generic [ref=e195]: 90 min · $40.00
+                - generic [ref=e196]: Max 20 · 0 bookings
+                - generic [ref=e197]: 📋 Program
+              - generic [ref=e198]:
+                - generic [ref=e199]: 📍 Atletas Performance Center
+                - generic [ref=e200]: 🎂 U13 (Born 2014–2018)
+                - generic [ref=e201]:
+                  - generic [ref=e202]: Mon–Fri
+                  - generic [ref=e203]: 🕐 16:00
+                - generic [ref=e204]:
+                  - generic [ref=e205]: Sat–Sun
+                  - generic [ref=e206]: 🕐 16:00
+            - generic [ref=e207]:
+              - generic [ref=e208]: Active
+              - button "Actions" [ref=e210] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e211]
+          - generic [ref=e214]:
+            - generic [ref=e217]:
+              - generic [ref=e218]: Serie A Elite Scouts — U19
+              - generic [ref=e219]:
+                - generic [ref=e220]: Group Session
+                - generic [ref=e221]: 90 min · $40.00
+                - generic [ref=e222]: Max 20 · 0 bookings
+                - generic [ref=e223]: 📋 Program
+              - generic [ref=e224]:
+                - generic [ref=e225]: 📍 Atletas Performance Center
+                - generic [ref=e226]: 🎂 U19 (Born 2007–2013)
+                - generic [ref=e227]:
+                  - generic [ref=e228]: Mon–Fri
+                  - generic [ref=e229]: 🕐 17:30
+                - generic [ref=e230]:
+                  - generic [ref=e231]: Sat–Sun
+                  - generic [ref=e232]: 🕐 17:30
+            - generic [ref=e233]:
+              - generic [ref=e234]: Active
+              - button "Actions" [ref=e236] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e237]
+          - generic [ref=e240]:
+            - generic [ref=e243]:
+              - generic [ref=e244]: Spring Program
+              - generic [ref=e245]:
+                - generic [ref=e246]: Seasonal (Package Pre-paid)
+                - generic [ref=e247]: 60 min · $0.00
+                - generic [ref=e248]: Max 100 · 14 bookings
+                - generic [ref=e249]: Package required
+              - generic [ref=e250]:
+                - generic [ref=e251]: 📍 APC Indoor Facility
+                - generic [ref=e252]:
+                  - generic [ref=e253]: Mon–Fri
+                  - generic [ref=e254]: 🕐 16:30 17:30 18:30
+                - generic [ref=e255]:
+                  - generic [ref=e256]: Sat–Sun
+                  - generic [ref=e257]: 🕐 10:00 11:00 12:00
+              - generic [ref=e258]: 📦 Basic 4 Spring - $160.00, Basic 8 Spring - $280.00, Elite 24 Spring - $600.00, Unlimited Spring - $1000.00
+            - generic [ref=e259]:
+              - generic [ref=e260]: Active
+              - button "Actions" [ref=e262] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e263]
+          - generic [ref=e266]:
+            - generic [ref=e269]:
+              - generic [ref=e270]: Summer Program HS/College
+              - generic [ref=e271]:
+                - generic [ref=e272]: Seasonal (Package Pre-paid)
+                - generic [ref=e273]: 90 min · $0.00
+                - generic [ref=e274]: Max 500 · 8 bookings
+                - generic [ref=e275]: Package required
+                - generic [ref=e276]: 🔥 Event
+                - generic [ref=e277]: 📋 Program
+              - generic [ref=e278]:
+                - generic [ref=e279]: 📍 APC Indoor Facility
+                - generic [ref=e280]: 🎂 U14-HS and College
+                - generic [ref=e281]:
+                  - generic [ref=e282]: Mon–Fri
+                  - generic [ref=e283]: 🕐 07:00 10:30 18:00
+                - generic [ref=e284]:
+                  - generic [ref=e285]: Sat–Sun
+                  - generic [ref=e286]: 🕐 09:00 10:30
+              - generic [ref=e287]: 📦 Basic 4 Summer - $160.00, Basic 8 Summer - $280.00, Elite 24 Summer - $480.00, Unlimited Summer - $1000.00
+            - generic [ref=e288]:
+              - generic [ref=e289]: Active
+              - button "Actions" [ref=e291] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e292]
+          - generic [ref=e295]:
+            - generic [ref=e298]:
+              - generic [ref=e299]: Summer Program U13 & Younger
+              - generic [ref=e300]:
+                - generic [ref=e301]: Seasonal (Package Pre-paid)
+                - generic [ref=e302]: 90 min · $0.00
+                - generic [ref=e303]: Max 500 · 0 bookings
+                - generic [ref=e304]: Package required
+                - generic [ref=e305]: 🔥 Event
+                - generic [ref=e306]: 📋 Program
+              - generic [ref=e307]:
+                - generic [ref=e308]: 📍 APC Indoor Facility
+                - generic [ref=e309]: 🎂 U13 & Younger
+                - generic [ref=e310]:
+                  - generic [ref=e311]: Mon–Fri
+                  - generic [ref=e312]: 🕐 09:00 16:30 18:00
+                - generic [ref=e313]:
+                  - generic [ref=e314]: Sat–Sun
+                  - generic [ref=e315]: 🕐 09:00 10:30
+              - generic [ref=e316]: 📦 Basic 4 Summer - $160.00, Basic 8 Summer - $280.00, Elite 24 Summer - $480.00, Unlimited Summer - $1000.00
+            - generic [ref=e317]:
+              - generic [ref=e318]: Active
+              - button "Actions" [ref=e320] [cursor=pointer]:
+                - text: Actions
+                - img [ref=e321]
+    - group [ref=e324]:
+      - generic "📦 Archived Session Types 5" [ref=e325] [cursor=pointer]:
+        - generic [ref=e326]:
+          - generic [ref=e327]: 📦
+          - heading "Archived Session Types" [level=2] [ref=e328]
+          - generic [ref=e329]: "5"
+        - img [ref=e330]
