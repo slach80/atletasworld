@@ -557,10 +557,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                 package = None  # ignore package — charge drop-in rate
 
             if package:
-                # Package booking — deduct session, confirm immediately
+                # Package booking — session deducted, no separate payment
                 booking.use_package(package)
                 booking.confirm()
                 payment_required = False
+                # payment_status is set to 'package' by use_package()
             elif amount_due and amount_due > 0:
                 # Pay-now booking with a cost — hold as pending until payment received
                 booking.payment_status = 'pending'
@@ -570,7 +571,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                 # Notify coach and owner about pending payment booking
                 _notify_pending_payment(booking, amount_due)
             else:
-                # Free session (price = $0) — confirm directly
+                # Free session (price = $0) — confirm directly, mark payment n/a
+                booking.payment_status = 'paid'  # free = no payment needed
+                booking.save(update_fields=['payment_status'])
                 booking.confirm()
                 payment_required = False
 
