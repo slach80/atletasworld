@@ -513,13 +513,14 @@ function buildCartHtml(){
         </div>`;
     });
     html+='</div>';
-    // Package summary
-    if(hasPackage&&pkg) html+=`<div class="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 mb-3 text-xs"><span class="text-gray-500">Sessions remaining after booking</span><span class="font-bold ${after<0?'text-red-600':after<=2?'text-orange-500':'text-primary'}">${after}</span></div>`;
+    // Package summary — only show if there are package-eligible slots
+    const pkgSlotCount=cart.filter(({slot})=>slot.allow_package).length;
+    if(hasPackage&&pkg&&pkgSlotCount>0) html+=`<div class="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 mb-3 text-xs"><span class="text-gray-500">Package sessions remaining after booking</span><span class="font-bold ${after<0?'text-red-600':after<=2?'text-orange-500':'text-primary'}">${after}</span></div>`;
     if(over) html+=`<div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">⚠️ Not enough package sessions — need ${Math.abs(after)} more. <a href="{% url 'clients:packages' %}" class="underline font-bold">Upgrade</a></div>`;
     // Pay-now total
     if(paymentNeeded) html+=`<div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm">
         <div class="flex justify-between font-bold"><span>Total due</span><span>$${totalDue.toFixed(2)}</span></div>
-        <p class="text-xs text-gray-500 mt-1">Payment is required to confirm your reservation. You will be contacted to complete payment.</p>
+        <p class="text-xs text-gray-500 mt-1">💳 Secure online payment — you'll be prompted to pay after confirming.</p>
     </div>`;
     else if(!hasPackage&&totalDue===0) html+=`<div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700">✓ Free session — no payment required.</div>`;
     // Confirm button
