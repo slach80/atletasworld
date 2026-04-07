@@ -2137,7 +2137,14 @@ def owner_waivers(request):
     today = timezone.now()
     current_year = today.year
 
-    all_clients = Client.objects.select_related('user').order_by('user__first_name')
+    # Only track waivers for Client group members — exclude coaches, owners, staff
+    all_clients = Client.objects.select_related('user').filter(
+        user__groups__name='Client',
+        user__is_staff=False,
+        user__is_superuser=False,
+    ).exclude(
+        user__groups__name__in=['Owner', 'Coach']
+    ).distinct().order_by('user__first_name')
 
     signed_ids = set(
         ClientWaiver.objects.filter(
