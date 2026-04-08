@@ -3,15 +3,13 @@
 /* Bilgen only for large display headings (h1, h2) */
 h1, .brand-heading {
     font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif !important;
-    font-size: clamp(1.75rem, 5vw, 3rem) !important;
-    line-height: 1.5 !important;
+    line-height: 1.4 !important;
     letter-spacing: 0.02em;
 }
 h2 {
     font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif !important;
-    font-size: clamp(1.5rem, 4vw, 2.25rem) !important;
     line-height: 1.4 !important;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
 }
 /* h3–h6: Archivo Condensed only — Bilgen overlaps badly at small/wrapped sizes */
 h3, h4, h5, h6 {
