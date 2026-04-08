@@ -15,7 +15,7 @@ class SessionType(models.Model):
         ('team', 'Team Training'),
         ('clinic', 'Clinic'),
         ('camp', 'Camp'),
-        ('seasonal', 'Seasonal (Package Pre-paid)'),
+        ('seasonal', 'Seasonal Package'),
         ('pickup', 'Pick Up Game'),
         ('tryout', 'Tryout'),
     ]
