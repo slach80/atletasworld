@@ -425,23 +425,68 @@ def owner_send_notification(request):
                     if inline_image_data:
                         html_message = f'<img src="cid:{inline_image_cid}" style="max-width: 100%; height: auto; margin: 20px 0;"><br><br>' + html_message
 
-                    # Wrap in basic HTML template
-                    html_content = f'''
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            {html_message}
-                        </div>
-                    </body>
-                    </html>
-                    '''
+                    # Wrap in branded APC email template
+                    site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+                    html_content = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333333; background-color: #f5f5f5; margin: 0; padding: 0; }}
+    .email-wrapper {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; }}
+    .email-header {{ background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); padding: 30px; text-align: center; }}
+    .email-header img {{ max-height: 60px; width: auto; }}
+    .email-header h1 {{ color: #ffffff; margin: 12px 0 0 0; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }}
+    .email-body {{ padding: 40px 30px; }}
+    .email-body p {{ margin: 0 0 15px 0; color: #555555; }}
+    .divider {{ border: none; border-top: 1px solid #eeeeee; margin: 30px 0; }}
+    .signature {{ font-size: 14px; color: #444444; }}
+    .signature strong {{ color: #1a1a1a; font-size: 15px; }}
+    .signature .title {{ color: #888888; font-size: 13px; margin: 2px 0; }}
+    .signature .contact {{ color: #888888; font-size: 13px; margin: 2px 0; }}
+    .signature .contact a {{ color: #D7FF00; text-decoration: none; }}
+    .signature-bar {{ width: 40px; height: 3px; background-color: #D7FF00; margin: 10px 0; }}
+    .email-footer {{ background-color: #1a1a1a; padding: 25px 30px; text-align: center; }}
+    .email-footer p {{ color: #888888; font-size: 12px; margin: 4px 0; }}
+    .email-footer a {{ color: #D7FF00; text-decoration: none; }}
+    .footer-logo {{ color: #ffffff; font-size: 15px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; }}
+    @media only screen and (max-width: 600px) {{
+        .email-body {{ padding: 25px 20px; }}
+        .email-header {{ padding: 20px; }}
+    }}
+</style>
+</head>
+<body>
+<div class="email-wrapper">
+    <div class="email-header">
+        <img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" onerror="this.style.display='none'">
+        <h1>Atletas Performance Center</h1>
+    </div>
+    <div class="email-body">
+        {html_message}
+        <hr class="divider">
+        <div class="signature">
+            <div class="signature-bar"></div>
+            <strong>Atletas Performance Center</strong><br>
+            <div class="title">Professional Soccer Training</div>
+            <div class="contact">📧 <a href="mailto:info@atletasperformancecenter.com">info@atletasperformancecenter.com</a></div>
+            <div class="contact">🌐 <a href="{site_url}">{site_url.replace("https://", "")}</a></div>
+        </div>
+    </div>
+    <div class="email-footer">
+        <div class="footer-logo">APC</div>
+        <p>
+            <a href="https://www.instagram.com/atletasworld/" target="_blank">Instagram</a> &nbsp;|&nbsp;
+            <a href="https://www.facebook.com/atletasworld/" target="_blank">Facebook</a>
+        </p>
+        <p style="margin-top: 12px; font-size: 11px; color: #555555;">
+            &copy; 2026 Atletas Performance Center. All rights reserved.
+        </p>
+    </div>
+</div>
+</body>
+</html>'''
 
                     # Create email with HTML
                     email_msg = EmailMessage(
@@ -467,9 +512,11 @@ def owner_send_notification(request):
                     email_msg.send(fail_silently=False)
                 else:
                     # Plain text email with attachments
+                    site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+                    text_signature = f"\n\n--\nAtletas Performance Center\nProfessional Soccer Training\ninfo@atletasperformancecenter.com\n{site_url}"
                     email_msg = EmailMessage(
                         subject=subject,
-                        body=message,
+                        body=message + text_signature,
                         from_email=from_email,
                         to=[email_addr],
                     )
