@@ -1275,7 +1275,7 @@ def owner_player_detail(request, pk):
     bookings = Booking.objects.filter(player=player).select_related('coach__user', 'session_type').order_by('-scheduled_date')[:30]
     from clients.models import ClientPackage
     packages = ClientPackage.objects.filter(client=player.client).select_related('package').order_by('-purchase_date')
-    assessments = PlayerAssessment.objects.filter(player=player).select_related('coach__user').order_by('-created_at')[:10]
+    assessments = PlayerAssessment.objects.filter(player=player).select_related('coach__user').order_by('-assessment_date')[:10]
     context = {
         'player': player,
         'bookings': bookings,

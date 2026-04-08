@@ -182,7 +182,7 @@
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="font-semibold text-gray-800 text-sm">{{ a.coach.user.get_full_name }}</p>
-                            <p class="text-xs text-gray-400">{{ a.created_at|date:"M d, Y" }}</p>
+                            <p class="text-xs text-gray-400">{{ a.assessment_date|date:"M d, Y" }}</p>
                         </div>
                         {% if a.overall_rating %}
                         <span class="text-sm font-bold text-indigo-700">{{ a.overall_rating }}/10</span>
