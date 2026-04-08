@@ -1,0 +1,145 @@
+/* Bilgen Demo — web font declarations */
+
+/* Thin — 100 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-Thin.otf') format('opentype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-ThinRight.otf') format('opentype');
+    font-weight: 100;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* ExtraLight — 200 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-ExtraLight.otf') format('opentype');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-ExtraLightRight.otf') format('opentype');
+    font-weight: 200;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Light — 300 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-LightRight.otf') format('opentype');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Regular — 400 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-Right.otf') format('opentype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Medium — 500 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-MediumRight.otf') format('opentype');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* SemiBold — 600 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-SemiBold.otf') format('opentype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-SemiBoldRight.otf') format('opentype');
+    font-weight: 600;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Bold — 700 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-BoldRight.otf') format('opentype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Black — 800 (matches existing h1 font-weight: 800) */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-Black.otf') format('opentype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-BlackRight.otf') format('opentype');
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* ExtraBold — 900 */
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-ExtraBold.otf') format('opentype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bilgen';
+    src: url('../fonts/bilgen/BilgenDemo-ExtraBoldRight.otf') format('opentype');
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
+}
