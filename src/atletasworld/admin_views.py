@@ -445,7 +445,7 @@ def owner_send_notification(request):
     .signature strong {{ color: #1a1a1a; font-size: 15px; }}
     .signature .title {{ color: #888888; font-size: 13px; margin: 2px 0; }}
     .signature .contact {{ color: #888888; font-size: 13px; margin: 2px 0; }}
-    .signature .contact a {{ color: #D7FF00; text-decoration: none; }}
+    .signature .contact a {{ color: #1a1a1a; text-decoration: none; }}
     .signature-bar {{ width: 40px; height: 3px; background-color: #D7FF00; margin: 10px 0; }}
     .email-footer {{ background-color: #1a1a1a; padding: 25px 30px; text-align: center; }}
     .email-footer p {{ color: #888888; font-size: 12px; margin: 4px 0; }}
