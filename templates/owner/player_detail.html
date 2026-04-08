@@ -102,7 +102,7 @@
                             <td class="py-2 px-3 font-medium text-gray-800">{{ cp.package.name }}</td>
                             <td class="py-2 px-3 text-center text-gray-600">
                                 {% if cp.package.sessions_included > 0 %}
-                                {{ cp.sessions_used }}/{{ cp.package.sessions_included }}
+                                {{ cp.sessions_used }} used · {{ cp.sessions_remaining }} left
                                 {% else %}∞{% endif %}
                             </td>
                             <td class="py-2 px-3 text-center">
@@ -188,7 +188,7 @@
                         <span class="text-sm font-bold text-indigo-700">{{ a.overall_rating }}/10</span>
                         {% endif %}
                     </div>
-                    {% if a.notes %}<p class="text-sm text-gray-600 mt-1">{{ a.notes|truncatechars:200 }}</p>{% endif %}
+                    {% if a.coach_notes %}<p class="text-sm text-gray-600 mt-1">{{ a.coach_notes|truncatechars:200 }}</p>{% endif %}
                 </div>
                 {% endfor %}
             </div>
