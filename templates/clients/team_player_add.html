@@ -22,7 +22,7 @@
     <div class="bg-white rounded-xl shadow-md overflow-hidden">
         <div class="border-b border-gray-200">
             <nav class="flex">
-                <button onclick="switchTab('existing')" id="tab-existing" class="flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-secondary">
+                <button onclick="switchTab('existing')" id="tab-existing" class="flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-gray-900">
                     <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
@@ -161,11 +161,11 @@
 function switchTab(tab) {
     // Update button styles
     document.getElementById('tab-existing').className = tab === 'existing' 
-        ? 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-secondary'
+        ? 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-gray-900'
         : 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
     
     document.getElementById('tab-new').className = tab === 'new'
-        ? 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-secondary'
+        ? 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-secondary text-gray-900'
         : 'flex-1 py-4 px-6 text-center font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
     
     // Show/hide content
