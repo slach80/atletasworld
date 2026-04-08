@@ -2329,9 +2329,13 @@ def owner_discount_codes(request):
 
         return redirect('owner_discount_codes')
 
-    codes = DiscountCode.objects.prefetch_related('uses', 'specific_packages', 'specific_session_types').order_by('-created_at')
+    _AUTO_CODES = ['SIBLING-AUTO']
+    codes = DiscountCode.objects.exclude(code__in=_AUTO_CODES)\
+        .prefetch_related('uses', 'specific_packages', 'specific_session_types').order_by('-created_at')
+    sibling_dc = DiscountCode.objects.filter(code='SIBLING-AUTO').first()
     context = {
         'codes': codes,
+        'sibling_dc': sibling_dc,
         'all_packages': Package.objects.filter(is_active=True).order_by('price'),
         'all_session_types': SessionType.objects.filter(is_active=True).order_by('name'),
     }

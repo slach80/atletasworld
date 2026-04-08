@@ -148,10 +148,12 @@
         </form>
     </div>
 
-    <!-- Codes table -->
-    <div class="lg:col-span-2">
+    <!-- Right column -->
+    <div class="lg:col-span-2 space-y-6">
+
+        <!-- Promo Codes table -->
         <div class="bg-white rounded-xl shadow-md p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">All Codes ({{ codes|length }})</h2>
+            <h2 class="text-lg font-bold text-gray-800 mb-4">🏷️ Promo Codes ({{ codes|length }})</h2>
 
             {% if codes %}
             <div class="overflow-x-auto">
@@ -224,22 +226,100 @@
             {% else %}
             <div class="text-center py-12 text-gray-400">
                 <p class="text-4xl mb-2">🏷️</p>
-                <p class="font-semibold text-gray-500">No discount codes yet</p>
+                <p class="font-semibold text-gray-500">No promo codes yet</p>
                 <p class="text-sm mt-1">Create your first code using the form.</p>
             </div>
             {% endif %}
         </div>
 
-        <!-- APC Select auto-discounts info card -->
-        <div class="mt-4 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-            <h3 class="font-bold text-indigo-900 mb-2">⭐ APC Select Auto-Discounts</h3>
-            <p class="text-xs text-indigo-700 mb-2">These discounts are automatically applied for active APC Select members — no code needed:</p>
-            <ul class="text-xs text-indigo-800 space-y-1">
-                <li>⚽ <strong>Pick-Up sessions</strong>: flat $5 (auto-applied)</li>
-                <li>🏕️ <strong>Camps &amp; Clinics</strong>: 10% off (auto-applied)</li>
-                <li>💳 <strong>Monthly credit</strong>: $40 toward any APC Training package (granted monthly, applied at checkout)</li>
-            </ul>
+        <!-- Auto Discounts section -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">🤖 Auto Discounts</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Applied automatically by the system — no code entry required</p>
+                </div>
+                <span class="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">Always On</span>
+            </div>
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Discount</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Applies To</th>
+                        <th class="text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Times Used</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">Trigger</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+
+                    <!-- Sibling discount — live data -->
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4">
+                            <p class="font-bold font-mono text-gray-900">SIBLING-AUTO</p>
+                            <p class="text-xs text-gray-400">Automatic sibling discount</p>
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-indigo-700">50% off</td>
+                        <td class="py-3 px-4 text-xs text-gray-600">Same package or group session slot booked by sibling</td>
+                        <td class="py-3 px-4 text-center">
+                            {% if sibling_dc %}
+                            <a href="{% url 'owner_discount_code_detail' sibling_dc.pk %}"
+                               class="text-indigo-600 font-semibold hover:underline">{{ sibling_dc.use_count }}</a>
+                            {% else %}
+                            <span class="text-gray-400">0</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">2nd player same slot/package</span>
+                        </td>
+                    </tr>
+
+                    <!-- APC Select: Pick-Up flat $5 -->
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4">
+                            <p class="font-semibold text-gray-800">APC Select — Pick-Up</p>
+                            <p class="text-xs text-gray-400">Members only</p>
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-indigo-700">-$5.00</td>
+                        <td class="py-3 px-4 text-xs text-gray-600">Pick-Up sessions (drop-in)</td>
+                        <td class="py-3 px-4 text-center text-gray-400 text-xs">—</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-xs rounded-full font-medium">Active APC Select membership</span>
+                        </td>
+                    </tr>
+
+                    <!-- APC Select: Camps & Clinics 10% -->
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4">
+                            <p class="font-semibold text-gray-800">APC Select — Camps &amp; Clinics</p>
+                            <p class="text-xs text-gray-400">Members only</p>
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-indigo-700">10% off</td>
+                        <td class="py-3 px-4 text-xs text-gray-600">Camp &amp; Clinic sessions (drop-in)</td>
+                        <td class="py-3 px-4 text-center text-gray-400 text-xs">—</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-xs rounded-full font-medium">Active APC Select membership</span>
+                        </td>
+                    </tr>
+
+                    <!-- APC Select: $40 monthly credit -->
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4">
+                            <p class="font-semibold text-gray-800">APC Select — Monthly Credit</p>
+                            <p class="text-xs text-gray-400">Members only</p>
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-indigo-700">$40 credit</td>
+                        <td class="py-3 px-4 text-xs text-gray-600">Any APC Training package</td>
+                        <td class="py-3 px-4 text-center text-gray-400 text-xs">—</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-xs rounded-full font-medium">Granted monthly, applied at checkout</span>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
         </div>
+
     </div>
 
 </div>
