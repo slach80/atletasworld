@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from coaches.models import Coach, ScheduleBlock, PlayerAssessment
 from bookings.models import Booking, SessionType
-from clients.models import Client, Player, ClientCredit, Package, ClientPackage, ClientWaiver, get_current_waiver
+from clients.models import Client, Player, ClientCredit, Package, ClientPackage, ClientWaiver, FieldRentalSlot, get_current_waiver
 from reviews.models import Review
 from django.contrib.auth.models import User
 from django.core.mail import send_mass_mail, send_mail, EmailMessage
@@ -29,7 +29,6 @@ def is_owner(user):
 @user_passes_test(is_owner)
 def owner_dashboard(request):
     """Owner dashboard with overview across all entities."""
-    from clients.models import FieldRentalSlot
     today = timezone.now().date()
     month_start = today.replace(day=1)
     year_start  = today.replace(month=1, day=1)
@@ -147,7 +146,6 @@ def owner_dashboard(request):
     ).count()
 
     # ── Active Packages ────────────────────────────────────────────────────────
-    from clients.models import ClientPackage
     active_packages_count  = ClientPackage.objects.filter(
         status='active', expiry_date__gte=today
     ).count()
