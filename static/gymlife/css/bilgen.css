@@ -1,5 +1,11 @@
 /* Bilgen Demo — web font declarations */
 
+/* Global heading spacing for Bilgen — prevents line/letter overlap */
+h1, h2, h3, h4, h5, h6, .brand-heading {
+    line-height: 1.15 !important;
+    letter-spacing: 0.02em;
+}
+
 /* Thin — 100 */
 @font-face {
     font-family: 'Bilgen';
