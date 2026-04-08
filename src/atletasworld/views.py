@@ -69,10 +69,10 @@ def programs_view(request):
         (datetime.date(2026, 5, 21), 'Atletas Performance Center',
          [('2016s', '6:00 PM', '18:00'), ('2015s', '7:00 PM', '19:00'), ('2014s', '8:00 PM', '20:00')], False),
         (datetime.date(2026, 5, 22), 'Atletas Performance Center',
-         [('2016s', '6:00 PM', '18:00'), ('2015s', '7:00 PM', '19:00'), ('2014s', '8:00 PM', '20:00')], False),
+         [('2016s', '7:00 PM', '19:00'), ('2015s', '8:00 PM', '20:00'), ('2014s', '9:00 PM', '21:00')], False),
         (datetime.date(2026, 5, 23), 'Hocker Grove Middle School',
          [('All Ages', '9:00 AM – 11:00 AM', '09:00')], True),
-        (datetime.date(2026, 5, 24), 'Hocker Grove Middle School',
+        (datetime.date(2026, 5, 24), 'Indian Woods Middle School',
          [('All Ages', '9:00 AM – 11:00 AM', '09:00')], True),
     ]
 
