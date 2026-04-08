@@ -153,11 +153,11 @@
         {% if players %}
         <div class="space-y-3">
             {% for player in players %}
-            <div class="p-3 bg-gray-50 rounded-lg">
-                <div class="font-semibold">{{ player.first_name }} {{ player.last_name }}</div>
+            <a href="{% url 'owner_player_detail' player.pk %}" class="block p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition">
+                <div class="font-semibold text-indigo-700 hover:underline">{{ player.first_name }} {{ player.last_name }}</div>
                 <div class="text-sm text-gray-500">{{ player.age_group }} | {{ player.get_skill_level_display }}</div>
                 {% if player.soccer_club %}<div class="text-xs text-gray-400">{{ player.soccer_club }}</div>{% endif %}
-            </div>
+            </a>
             {% endfor %}
         </div>
         {% else %}

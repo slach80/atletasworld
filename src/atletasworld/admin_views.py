@@ -1267,6 +1267,24 @@ def owner_players(request):
     return render(request, 'owner/players.html', context)
 
 
+@login_required
+@user_passes_test(is_owner)
+def owner_player_detail(request, pk):
+    """View a single player's profile, bookings, packages, and assessments."""
+    player = get_object_or_404(Player.objects.select_related('client__user', 'team'), pk=pk)
+    bookings = Booking.objects.filter(player=player).select_related('coach__user', 'session_type').order_by('-scheduled_date')[:30]
+    from clients.models import ClientPackage
+    packages = ClientPackage.objects.filter(client=player.client).select_related('package').order_by('-purchased_at')
+    assessments = PlayerAssessment.objects.filter(player=player).select_related('coach__user').order_by('-created_at')[:10]
+    context = {
+        'player': player,
+        'bookings': bookings,
+        'packages': packages,
+        'assessments': assessments,
+    }
+    return render(request, 'owner/player_detail.html', context)
+
+
 # ============================================================================
 # SESSION TYPE MANAGEMENT
 # ============================================================================
