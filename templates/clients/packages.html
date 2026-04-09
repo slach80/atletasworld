@@ -496,7 +496,7 @@
         <!-- Player selection (shown when multiple players, for sibling discount) -->
         <div id="player-select-row" class="hidden mb-3">
             <label class="block text-xs font-semibold text-gray-600 mb-1">Who is this package for?</label>
-            <select id="pkg-player-select" onchange="reinitPayment()"
+            <select id="pkg-player-select" onchange="reinitPayment(); this.style.borderColor=''; const lbl=this.closest('[id=player-select-row]')?.querySelector('label'); if(lbl){lbl.style.color='';lbl.textContent='Who is this package for?';}"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:border-transparent">
                 <option value="">Select player…</option>
             </select>
@@ -721,6 +721,17 @@ function closePaymentModal() {
 // Step 2: user clicks Pay → confirm via Payment Element (handles all methods)
 async function submitPayment() {
     if (!paymentElements) return;
+    // Require player selection when multiple players exist
+    const psel = document.getElementById('pkg-player-select');
+    const psr = document.getElementById('player-select-row');
+    if (psr && !psr.classList.contains('hidden') && psel && !psel.value) {
+        psel.focus();
+        psel.style.borderColor = '#ef4444';
+        psel.title = 'Please select which player this package is for';
+        const label = psr.querySelector('label');
+        if (label) { label.style.color = '#ef4444'; label.textContent = '⚠️ Who is this package for? (required)'; }
+        return;
+    }
     const btn = document.getElementById('pay-btn');
     btn.disabled = true;
     btn.textContent = 'Processing…';
