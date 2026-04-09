@@ -66,7 +66,7 @@ def create_package_payment_intent(request, package_id):
     player_id_str = request.POST.get('player_id') or None
     player_id_int = int(player_id_str) if player_id_str and player_id_str.isdigit() else None
 
-    # --- Sibling discount: same exact package already active for a different player ---
+    # --- Sibling discount: same exact package already active for another player ---
     sibling_discount_amount = Decimal('0.00')
     sibling_discount_found  = False
     if player_id_int:
@@ -74,9 +74,15 @@ def create_package_payment_intent(request, package_id):
             package=package,
             status='active',
         ).exclude(player_id=player_id_int).exists()
-        if sibling_has_package:
-            sibling_discount_amount = (subtotal * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
-            sibling_discount_found = True
+    else:
+        # No player selected — sibling discount if client already has same package active
+        sibling_has_package = client.packages.filter(
+            package=package,
+            status='active',
+        ).exists()
+    if sibling_has_package:
+        sibling_discount_amount = (subtotal * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+        sibling_discount_found = True
 
     # --- Promo code ---
     promo_code_str  = request.POST.get('promo_code', '').strip().upper()
@@ -345,7 +351,7 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
         package=package,
         status='active',
         start_date=date.today(),
-        expiry_date=date.today() + timedelta(weeks=package.validity_weeks),
+        expiry_date=package.event_end_date if package.event_end_date else date.today() + timedelta(weeks=package.validity_weeks),
         sessions_remaining=package.sessions_included,
         stripe_payment_id=payment_intent_id,
     )
