@@ -188,16 +188,21 @@
         <!-- Player -->
         <div>
             <div class="filter-label-row">
-                <span class="filter-label">Player</span>
-                <span class="tip" data-tip="Select which player you are booking sessions for. Each booking is assigned to one player.">ⓘ</span>
+                <span class="filter-label">Player(s)</span>
+                <span class="tip" data-tip="Select one or more players. Each selected player will be booked for every session in your cart.">ⓘ</span>
             </div>
-            <select id="playerSelect" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-secondary focus:border-transparent transition">
+            <div id="playerCheckboxes" class="flex flex-col gap-1.5 px-1">
                 {% for player in players %}
-                <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
+                <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+                    <input type="checkbox" class="player-check accent-yellow-400 w-4 h-4 rounded"
+                           value="{{ player.id }}" {% if forloop.first %}checked{% endif %}
+                           onchange="updateCartBadge(); renderCart();">
+                    <span class="text-gray-700">{{ player.first_name }} <span class="text-gray-400">{{ player.last_name }}</span></span>
+                </label>
                 {% empty %}
-                <option value="">No players — add one first</option>
+                <span class="text-sm text-gray-400">No players — add one first</span>
                 {% endfor %}
-            </select>
+            </div>
         </div>
 
         <!-- Coach -->
@@ -668,49 +673,61 @@ function buildCartHtml(){
         <p class="text-xs text-gray-500 mt-1">💳 Secure online payment — you'll be prompted to pay after confirming.</p>
     </div>`;
     else if(!hasPackage&&totalDue===0) html+=`<div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700">✓ Free session — no payment required.</div>`;
-    // Confirm button
+    // Confirm button — account for multiple players
+    const selectedPlayerCount = getSelectedPlayerIds ? getSelectedPlayerIds().length : 1;
+    const totalBookings = cart.length * (selectedPlayerCount || 1);
     const canGo=!over&&!incompatBlocked;
-    const btnLabel=paymentNeeded?`Reserve ${cart.length} Session${cart.length!==1?'s':''} — Pay $${displayTotal.toFixed(2)}`:`Confirm ${cart.length} Booking${cart.length!==1?'s':''}`;
+    const playerSuffix = selectedPlayerCount > 1 ? ` × ${selectedPlayerCount} players` : '';
+    const btnLabel=paymentNeeded?`Reserve ${cart.length} Session${cart.length!==1?'s':''}${playerSuffix} — Pay $${displayTotal.toFixed(2)}`:`Confirm ${totalBookings} Booking${totalBookings!==1?'s':''}${playerSuffix}`;
     html+=`<button id="confirm-btn" onclick="confirmBookings()" ${canGo?'':'disabled'} class="w-full py-3.5 rounded-xl font-bold text-sm transition ${canGo?'bg-secondary text-gray-900 hover:bg-[#b8e000] active:scale-95':'bg-gray-100 text-gray-400 cursor-not-allowed'}">${btnLabel}</button>`;
     return html;
 }
 
+function getSelectedPlayerIds(){
+    return [...document.querySelectorAll('.player-check:checked')].map(el=>el.value).filter(Boolean);
+}
+
 async function confirmBookings(){
     if(!cart.length) return;
+    const playerIds = getSelectedPlayerIds();
+    if(!playerIds.length){ alert('Please select at least one player.'); return; }
     document.querySelectorAll('#confirm-btn').forEach(b=>{ b.disabled=true; b.innerHTML='<span style="display:inline-block;width:1rem;height:1rem;border:2px solid #ccc;border-top-color:#1a1a1a;border-radius:50%;animation:spin .7s linear infinite;margin-right:.4rem;vertical-align:middle"></span>Booking…'; });
-    const playerId=document.getElementById('playerSelect').value;
     const pkg=packages.find(p=>p.can_book);
     const results=[];
     for(let i=0;i<cart.length;i++){
         const {slot,notes}=cart[i];
-        try{
-            // Only pass package_id if this session type allows package use AND pkg covers this slot
-            const usePackage = pkg && slot.allow_package && pkgCoversSlot(pkg, slot);
-            const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:usePackage?pkg.id:null,promo_code:cartPromoCode||'',notes:notes||''})});
-            const data=await res.json();
-            if(res.ok){
-                const payReq=data.payment_required;
-                results.push({ok:true,slot,paymentRequired:payReq,amountDue:data.amount_due,bookingId:data.id,siblingDiscount:parseFloat(data.sibling_discount||0)});
-                const label=payReq
-                    ?`⏳ Reserved — payment of $${parseFloat(data.amount_due).toFixed(2)} required`
-                    :'✅ Confirmed';
-                setItemStatus(i, payReq?'pay':'ok', label);
-                // Sibling discount badge
-                if(parseFloat(data.sibling_discount||0)>0){
-                    const cis=document.getElementById(`cis-${i}`);
-                    if(cis) cis.insertAdjacentHTML('beforeend',`<p class="text-xs text-indigo-600 font-semibold mt-1">👨‍👩‍👧 Sibling discount applied — 50% off!</p>`);
+        for(const playerId of playerIds){
+            try{
+                // Only pass package_id if this session type allows package use AND pkg covers this slot
+                const usePackage = pkg && slot.allow_package && pkgCoversSlot(pkg, slot);
+                const res=await fetch('/api/bookings/bookings/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({slot_id:slot.slot_id,slot_type:slot.slot_type,player_id:playerId,package_id:usePackage?pkg.id:null,promo_code:cartPromoCode||'',notes:notes||''})});
+                const data=await res.json();
+                if(res.ok){
+                    const payReq=data.payment_required;
+                    const sibDiscount=parseFloat(data.sibling_discount||0);
+                    results.push({ok:true,slot,playerId,paymentRequired:payReq,amountDue:data.amount_due,bookingId:data.id,siblingDiscount:sibDiscount});
+                    // Sibling discount badge on cart item
+                    if(sibDiscount>0){
+                        const cis=document.getElementById(`cis-${i}`);
+                        if(cis) cis.insertAdjacentHTML('beforeend',`<p class="text-xs text-indigo-600 font-semibold mt-1">👨‍👩‍👧 Sibling discount applied — 50% off!</p>`);
+                    }
+                    existingBookings.push({date:slot.start.split('T')[0],time:slot.start.split('T')[1].substring(0,5)});
+                }else{
+                    let errMsg = data.error || 'This slot is no longer available.';
+                    if(data.required_packages && data.required_packages.length){
+                        errMsg += ` Purchase one of: <strong>${data.required_packages.join(', ')}</strong>. <a href="{% url 'clients:packages' %}" class="underline font-bold">Buy a Package →</a>`;
+                    }
+                    results.push({ok:false,slot,playerId,msg:errMsg});
                 }
-                existingBookings.push({date:slot.start.split('T')[0],time:slot.start.split('T')[1].substring(0,5)});
-                delete slotMap[slot.key];
-            }else{
-                let errMsg = data.error || 'This slot is no longer available.';
-                if(data.required_packages && data.required_packages.length){
-                    errMsg += ` Purchase one of: <strong>${data.required_packages.join(', ')}</strong>. <a href="{% url 'clients:packages' %}" class="underline font-bold">Buy a Package →</a>`;
-                }
-                cart[i].error = errMsg;  // persist error through re-renders
-                results.push({ok:false,slot,msg:errMsg});
-            }
-        }catch(e){ results.push({ok:false,slot,msg:'Network error'}); setItemStatus(i,'err','❌ Network error — try again'); }
+            }catch(e){ results.push({ok:false,slot,playerId,msg:'Network error'}); }
+        }
+        // Mark cart item status based on all player results for this slot
+        const slotResults = results.filter(r=>r.slot.key===slot.key);
+        const allOk = slotResults.length && slotResults.every(r=>r.ok);
+        const anyPay = slotResults.some(r=>r.ok&&r.paymentRequired);
+        const anyFail = slotResults.some(r=>!r.ok);
+        if(allOk){ setItemStatus(i, anyPay?'pay':'ok', anyPay?`⏳ Reserved — payment required`:`✅ Confirmed (${slotResults.length} player${slotResults.length>1?'s':''})`); delete slotMap[slot.key]; }
+        else if(anyFail){ const firstErr=slotResults.find(r=>!r.ok); cart[i].error=firstErr.msg; setItemStatus(i,'err',`❌ ${firstErr.msg}`); }
     }
     await loadPackages();
     const failedKeys=results.filter(r=>!r.ok).map(r=>r.slot.key);
