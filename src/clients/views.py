@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.db.models import Sum, Q
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
@@ -384,9 +385,11 @@ def packages_list(request):
     ).order_by('event_start_date')
 
     has_select_membership = active_packages.filter(package__package_type='select').exists()
-    select_credit_balance = sum(
-        c.amount for c in client.credits.filter(status='available') if c.is_usable
-    ) if has_select_membership else 0
+    select_credit_balance = client.credits.filter(
+        status='available'
+    ).filter(
+        Q(expires_at__isnull=True) | Q(expires_at__gte=today)
+    ).aggregate(total=Sum('amount'))['total'] or 0 if has_select_membership else 0
 
     from django.conf import settings as django_settings
     context = {
@@ -817,10 +820,11 @@ def booking_page(request):
         status='active',
         expiry_date__gte=today,
     ).exists()
-    select_credit_balance = sum(
-        c.amount for c in client.credits.filter(status='available')
-        if c.is_usable
-    ) if has_select_membership else 0
+    select_credit_balance = client.credits.filter(
+        status='available'
+    ).filter(
+        Q(expires_at__isnull=True) | Q(expires_at__gte=today)
+    ).aggregate(total=Sum('amount'))['total'] or 0 if has_select_membership else 0
 
     # Get favorite coach IDs for template
     favorite_coach_ids = list(booking_prefs.favorite_coaches.values_list('id', flat=True))

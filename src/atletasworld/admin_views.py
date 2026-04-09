@@ -1583,11 +1583,17 @@ def owner_team_bookings(request, team_id):
     if date_to:
         bookings = bookings.filter(scheduled_date__lte=date_to)
 
-    # Calculate summary stats
-    total_bookings = bookings.count()
-    completed_bookings = bookings.filter(status='completed').count()
-    upcoming_bookings = bookings.filter(scheduled_date__gte=today, status__in=['pending', 'confirmed']).count()
-    cancelled_bookings = bookings.filter(status='cancelled').count()
+    # Calculate summary stats — single aggregate instead of 4 count queries
+    booking_stats = bookings.aggregate(
+        total_bookings=Count('id'),
+        completed_bookings=Count('id', filter=Q(status='completed')),
+        upcoming_bookings=Count('id', filter=Q(scheduled_date__gte=today, status__in=['pending', 'confirmed'])),
+        cancelled_bookings=Count('id', filter=Q(status='cancelled')),
+    )
+    total_bookings     = booking_stats['total_bookings'] or 0
+    completed_bookings = booking_stats['completed_bookings'] or 0
+    upcoming_bookings  = booking_stats['upcoming_bookings'] or 0
+    cancelled_bookings = booking_stats['cancelled_bookings'] or 0
 
     context = {
         'team': team,
@@ -1729,10 +1735,11 @@ def owner_field_slots(request):
         'status_filter': status_filter,
         'today': today,
         'statuses': [('available', 'Available'), ('pending_approval', 'Pending'), ('booked', 'Booked'), ('cancelled', 'Cancelled')],
-        'available_count': FieldRentalSlot.objects.filter(status='available', date__gte=today).count(),
-        'pending_count':   FieldRentalSlot.objects.filter(status='pending_approval').count(),
-        'booked_month':    FieldRentalSlot.objects.filter(
-            status='booked', date__month=today.month, date__year=today.year).count(),
+        **FieldRentalSlot.objects.aggregate(
+            available_count=Count('id', filter=Q(status='available', date__gte=today)),
+            pending_count=Count('id', filter=Q(status='pending_approval')),
+            booked_month=Count('id', filter=Q(status='booked', date__month=today.month, date__year=today.year)),
+        ),
         'revenue_month':   revenue,
         'services':             RentalService.objects.filter(is_active=True).order_by('service_type', 'name'),
         'all_services':         RentalService.objects.all().order_by('service_type', 'name'),
@@ -2280,11 +2287,14 @@ def owner_credits(request):
         'client__user', 'source_package__package', 'applied_to__package', 'created_by'
     ).order_by('-created_at')[:200]
 
-    # Available credit totals per client
-    client_balances = {}
-    for c in ClientCredit.objects.filter(status='available'):
-        if c.is_usable:
-            client_balances[c.client_id] = client_balances.get(c.client_id, 0) + float(c.amount)
+    # Available credit totals per client — DB aggregate instead of Python loop
+    client_balances = dict(
+        ClientCredit.objects.filter(
+            status='available'
+        ).filter(
+            Q(expires_at__isnull=True) | Q(expires_at__gte=timezone.now().date())
+        ).values('client_id').annotate(total=Sum('amount')).values_list('client_id', 'total')
+    )
 
     clients_with_credits = Client.objects.filter(
         credits__status='available'
