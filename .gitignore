@@ -59,3 +59,5 @@ demo_credentials.json
 docs/clients/*.csv
 docs/clients/*.xlsx
 docs/clients/*.pdf
+.playwright-mcp/
+*.png
