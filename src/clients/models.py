@@ -323,6 +323,7 @@ class ClientPackage(models.Model):
             models.Index(fields=['client', 'status']),
             models.Index(fields=['client', 'expiry_date']),
             models.Index(fields=['status', 'expiry_date']),
+            models.Index(fields=['purchase_date']),
         ]
 
 
@@ -904,6 +905,7 @@ class FieldRentalSlot(models.Model):
         indexes = [
             models.Index(fields=['date', 'status']),
             models.Index(fields=['status', 'date']),
+            models.Index(fields=['approved_at']),
         ]
 
 

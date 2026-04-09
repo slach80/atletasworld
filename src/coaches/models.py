@@ -160,6 +160,7 @@ class ScheduleBlock(models.Model):
             models.Index(fields=['coach', 'status']),
             models.Index(fields=['date', 'status']),
             models.Index(fields=['status', 'current_participants']),
+            models.Index(fields=['date', 'start_time']),
         ]
 
 
