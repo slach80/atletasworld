@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
@@ -274,6 +275,9 @@ def player_add(request):
             player.photo = request.FILES['photo']
             player.save()
         messages.success(request, f'{player.first_name} has been added!')
+        next_url = request.POST.get('next') or request.GET.get('next', '')
+        if next_url and next_url.startswith('/'):
+            return redirect(next_url)
         return redirect('clients:players')
 
     context = {
@@ -281,6 +285,7 @@ def player_add(request):
         'positions': Player.POSITION_CHOICES,
         'genders': Player.GENDER_CHOICES,
         'grades': Player.GRADE_CHOICES,
+        'next': request.GET.get('next', ''),
     }
     return render(request, 'clients/player_form.html', context)
 
@@ -353,6 +358,11 @@ def package_subscribe(request, package_id):
 def packages_list(request):
     """List all packages for the client."""
     client, created = Client.objects.get_or_create(user=request.user)
+
+    # Require at least one player before purchasing
+    if not client.players.filter(is_active=True).exists():
+        messages.info(request, 'Please add a player before purchasing a package.')
+        return redirect(f"{reverse('clients:player_add')}?next={reverse('clients:packages')}")
 
     active_packages = client.packages.filter(
         status='active',
@@ -721,6 +731,11 @@ def booking_page(request):
         if missing:
             messages.warning(request, f'Please complete your profile before booking — missing: {", ".join(missing)}.')
             return redirect('clients:profile')
+
+        # Require at least one player before booking
+        if not client.players.filter(is_active=True).exists():
+            messages.info(request, 'Please add a player before booking a session.')
+            return redirect(f"{reverse('clients:player_add')}?next={reverse('clients:book')}")
 
     booking_prefs, _ = BookingPreference.objects.get_or_create(client=client)
 

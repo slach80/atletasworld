@@ -153,8 +153,14 @@
         <div class="bg-white rounded-xl shadow-md p-8">
             <h1 class="text-2xl font-bold text-gray-800 mb-6">{% if player %}Edit Player{% else %}Add New Player{% endif %}</h1>
 
+            {% if next %}
+            <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+                ➡️ Add a player first — you'll be taken back to complete your purchase.
+            </div>
+            {% endif %}
             <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
                 <!-- Photo Upload -->
                 <div class="flex items-center space-x-6">
