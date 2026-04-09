@@ -80,10 +80,34 @@ def owner_dashboard(request):
         date__gte=month_start, date__lte=today
     ).aggregate(t=Sum('service__price'))['t'] or 0
 
-    # Recent paid transactions
-    recent_transactions = Booking.objects.filter(
-        payment_status='paid'
+    # Recent paid transactions — drop-ins + package purchases
+    _raw_bookings = Booking.objects.filter(
+        payment_status='paid', amount_paid__gt=0
     ).select_related('client__user', 'player', 'session_type').order_by('-updated_at')[:8]
+    _raw_packages = ClientPackage.objects.exclude(
+        status='cancelled'
+    ).select_related('client__user', 'package', 'player').order_by('-purchase_date')[:8]
+    _transactions = []
+    for bk in _raw_bookings:
+        _transactions.append({
+            'name': (f"{bk.player.first_name} {bk.player.last_name}".strip()
+                     if bk.player else bk.client.user.get_full_name()),
+            'label': bk.session_type.name if bk.session_type else 'Session',
+            'amount': bk.amount_paid,
+            'date': bk.updated_at.date(),
+            'type': 'dropin',
+        })
+    for cp in _raw_packages:
+        _transactions.append({
+            'name': (f"{cp.player.first_name} {cp.player.last_name}".strip()
+                     if cp.player else cp.client.user.get_full_name()),
+            'label': cp.package.name,
+            'amount': cp.package.price,
+            'date': cp.purchase_date.date(),
+            'type': 'package',
+        })
+    _transactions.sort(key=lambda x: x['date'], reverse=True)
+    recent_transactions = _transactions[:8]
 
     # ── Coaches ────────────────────────────────────────────────────────────────
     coaches = Coach.objects.filter(is_active=True).annotate(
