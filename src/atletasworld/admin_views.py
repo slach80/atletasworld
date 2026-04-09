@@ -878,24 +878,14 @@ def owner_coach_edit(request, pk):
     coach = get_object_or_404(Coach, pk=pk)
     today = timezone.now().date()
 
-    # Check for outstanding activities
-    upcoming_bookings = Booking.objects.filter(
-        coach=coach,
-        scheduled_date__gte=today,
-        status__in=['pending', 'confirmed']
-    ).count()
-
-    upcoming_sessions = ScheduleBlock.objects.filter(
-        coach=coach,
-        date__gte=today,
-        status='available'
-    ).count()
-
-    pending_assessments = Booking.objects.filter(
-        coach=coach,
-        status='completed',
-        scheduled_date__gte=today - timedelta(days=7)
-    ).exclude(assessments__isnull=False).count()
+    # Check for outstanding activities — 2 queries instead of 3
+    booking_counts = Booking.objects.filter(coach=coach).aggregate(
+        upcoming=Count('id', filter=Q(scheduled_date__gte=today, status__in=['pending', 'confirmed'])),
+        pending_assess=Count('id', filter=Q(status='completed', scheduled_date__gte=today - timedelta(days=7)) & ~Q(assessments__isnull=False)),
+    )
+    upcoming_bookings    = booking_counts['upcoming'] or 0
+    pending_assessments  = booking_counts['pending_assess'] or 0
+    upcoming_sessions    = ScheduleBlock.objects.filter(coach=coach, date__gte=today, status='available').count()
 
     has_outstanding = upcoming_bookings > 0 or upcoming_sessions > 0 or pending_assessments > 0
 
