@@ -487,7 +487,7 @@ def send_booking_confirmation_task(self, booking_id):
         raise self.retry(exc=e, countdown=60)
 
 
-@shared_task(bind=True, max_retries=0)
+@shared_task(bind=True, max_retries=0, ignore_result=True)
 def send_bulk_email_task(self, recipients, subject, message, from_email,
                          send_as_html=False, broadcast_id=None):
     """
