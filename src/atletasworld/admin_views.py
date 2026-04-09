@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Sum, Avg, Q, Case, When, Value, DecimalField
 from datetime import timedelta
 
 from coaches.models import Coach, ScheduleBlock, PlayerAssessment
@@ -48,45 +48,29 @@ def owner_dashboard(request):
                                                    scheduled_date__gte=today).count()
 
     # ── Financial ──────────────────────────────────────────────────────────────
-    def _rev(qs):
-        return qs.aggregate(t=Sum('amount_paid'))['t'] or 0
-
-    paid_qs = Booking.objects.filter(payment_status='paid')
-
-    def _pkg_rev(qs):
-        return qs.aggregate(t=Sum('package__price'))['t'] or 0
-
-    def _rental_rev(qs):
-        return qs.aggregate(t=Sum('amount_paid'))['t'] or 0
-
-    # Session drop-in revenue
-    revenue_this_month = _rev(paid_qs.filter(scheduled_date__gte=month_start,
-                                             scheduled_date__lte=today))
-    revenue_ytd        = _rev(paid_qs.filter(scheduled_date__gte=year_start,
-                                             scheduled_date__lte=today))
-    revenue_last_month = _rev(paid_qs.filter(
-        scheduled_date__gte=(month_start - timedelta(days=1)).replace(day=1),
-        scheduled_date__lt=month_start
-    ))
-
-    # Add package purchase revenue
-    pkg_qs = ClientPackage.objects.exclude(status='cancelled')
-    revenue_this_month += _pkg_rev(pkg_qs.filter(purchase_date__gte=month_start,
-                                                  purchase_date__lte=today))
-    revenue_ytd        += _pkg_rev(pkg_qs.filter(purchase_date__gte=year_start,
-                                                  purchase_date__lte=today))
     last_month_start = (month_start - timedelta(days=1)).replace(day=1)
-    revenue_last_month += _pkg_rev(pkg_qs.filter(purchase_date__gte=last_month_start,
-                                                  purchase_date__lt=month_start))
 
-    # Add facility rental revenue
-    rental_qs = FieldRentalSlot.objects.filter(payment_status='paid')
-    revenue_this_month += _rental_rev(rental_qs.filter(approved_at__gte=month_start,
-                                                        approved_at__lte=today))
-    revenue_ytd        += _rental_rev(rental_qs.filter(approved_at__gte=year_start,
-                                                        approved_at__lte=today))
-    revenue_last_month += _rental_rev(rental_qs.filter(approved_at__gte=last_month_start,
-                                                        approved_at__lt=month_start))
+    # 1 query: all booking drop-in revenue periods via conditional Sum
+    booking_rev = Booking.objects.filter(payment_status='paid').aggregate(
+        this_month=Sum(Case(When(scheduled_date__gte=month_start, scheduled_date__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
+        ytd=       Sum(Case(When(scheduled_date__gte=year_start,  scheduled_date__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
+        last_month=Sum(Case(When(scheduled_date__gte=last_month_start, scheduled_date__lt=month_start, then='amount_paid'), default=Value(0), output_field=DecimalField())),
+    )
+    # 1 query: all package revenue periods
+    pkg_rev = ClientPackage.objects.exclude(status='cancelled').aggregate(
+        this_month=Sum(Case(When(purchase_date__gte=month_start, purchase_date__lte=today,   then='package__price'), default=Value(0), output_field=DecimalField())),
+        ytd=       Sum(Case(When(purchase_date__gte=year_start,  purchase_date__lte=today,   then='package__price'), default=Value(0), output_field=DecimalField())),
+        last_month=Sum(Case(When(purchase_date__gte=last_month_start, purchase_date__lt=month_start, then='package__price'), default=Value(0), output_field=DecimalField())),
+    )
+    # 1 query: all rental revenue periods
+    rental_rev = FieldRentalSlot.objects.filter(payment_status='paid').aggregate(
+        this_month=Sum(Case(When(approved_at__gte=month_start, approved_at__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
+        ytd=       Sum(Case(When(approved_at__gte=year_start,  approved_at__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
+        last_month=Sum(Case(When(approved_at__gte=last_month_start, approved_at__lt=month_start, then='amount_paid'), default=Value(0), output_field=DecimalField())),
+    )
+    revenue_this_month = (booking_rev['this_month'] or 0) + (pkg_rev['this_month'] or 0) + (rental_rev['this_month'] or 0)
+    revenue_ytd        = (booking_rev['ytd']        or 0) + (pkg_rev['ytd']        or 0) + (rental_rev['ytd']        or 0)
+    revenue_last_month = (booking_rev['last_month'] or 0) + (pkg_rev['last_month'] or 0) + (rental_rev['last_month'] or 0)
     pending_payments_qs = Booking.objects.filter(
         payment_status='pending', status__in=['pending', 'confirmed']
     ).select_related('client__user', 'player', 'session_type', 'coach__user').order_by('scheduled_date')

@@ -530,36 +530,42 @@ def todays_sessions(request):
     coach = request.coach
     today = timezone.now().date()
 
+    import datetime as dt
+    from collections import defaultdict
+
+    # Single query for blocks + prefetch M2M catalog_session_types
     blocks = ScheduleBlock.objects.filter(
         coach=coach,
         date=today
-    ).order_by('start_time')
+    ).order_by('start_time').prefetch_related('catalog_session_types')
+
+    # Single query for ALL today's bookings, grouped by start_time in Python
+    all_bookings = Booking.objects.filter(
+        coach=coach,
+        scheduled_date=today,
+        status__in=['pending', 'confirmed']
+    ).select_related('player', 'client')
+    bookings_by_time = defaultdict(list)
+    for b in all_bookings:
+        bookings_by_time[b.scheduled_time].append(b)
 
     now_dt = timezone.now()
     blocks_with_players = []
     for block in blocks:
-        bookings = Booking.objects.filter(
-            coach=coach,
-            scheduled_date=today,
-            scheduled_time=block.start_time,
-            status__in=['pending', 'confirmed']
-        ).select_related('player', 'client')
-
         # Minutes until start
-        import datetime as dt
         block_dt = dt.datetime.combine(today, block.start_time)
         block_dt = timezone.make_aware(block_dt) if timezone.is_naive(block_dt) else block_dt
         mins_until = int((block_dt - now_dt).total_seconds() / 60)
 
-        # Location from catalog session type if available
+        # Location from prefetched catalog_session_types (no extra query)
         location = ''
-        catalog_types = list(block.catalog_session_types.all())
+        catalog_types = block.catalog_session_types.all()
         if catalog_types and catalog_types[0].location:
             location = catalog_types[0].location
 
         blocks_with_players.append({
             'block': block,
-            'bookings': bookings,
+            'bookings': bookings_by_time[block.start_time],
             'mins_until': mins_until,
             'location': location,
         })
@@ -632,11 +638,12 @@ def assessments_list(request):
     # Order and limit
     assessments = assessments.order_by('-assessment_date')[:50]
 
-    # Get unique players for filter dropdown
-    player_ids = PlayerAssessment.objects.filter(coach=coach).values_list('player_id', flat=True).distinct()
+    # Get unique players for filter dropdown — single subquery, no separate player_ids fetch
     from clients.models import Player
     from django.db.models import Avg
-    players = Player.objects.filter(id__in=player_ids).order_by('first_name')
+    players = Player.objects.filter(
+        id__in=PlayerAssessment.objects.filter(coach=coach).values('player_id')
+    ).order_by('first_name')
 
     # Calculate player averages for training decision support
     player_averages = PlayerAssessment.objects.filter(
@@ -741,7 +748,7 @@ def quick_assess_session(request, block_id):
     coach = request.coach
     block = get_object_or_404(ScheduleBlock, id=block_id, coach=coach)
 
-    # Get all completed bookings for this block
+    # Get all completed bookings for this block — prefetch notification prefs to avoid N+1
     bookings = Booking.objects.filter(
         coach=coach,
         scheduled_date=block.date,
@@ -749,7 +756,7 @@ def quick_assess_session(request, block_id):
         status='completed'
     ).exclude(
         assessments__isnull=False
-    ).select_related('player', 'client')
+    ).select_related('player', 'client').prefetch_related('client__notification_preferences')
 
     if request.method == 'POST':
         training_type = request.POST.get('training_type', 'mixed')
