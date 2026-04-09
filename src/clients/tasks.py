@@ -493,8 +493,10 @@ def send_bulk_email_task(self, recipients, subject, message, from_email,
     """
     Send bulk email to a list of recipients.
     Dispatched by owner_send_notification view; updates EmailBroadcast log when done.
+    Uses a single persistent SMTP connection to avoid Gmail rate-limiting.
     """
-    from django.core.mail import EmailMessage
+    import re
+    from django.core.mail import EmailMessage, get_connection
     from .models import EmailBroadcast
 
     sent_count = 0
@@ -502,11 +504,10 @@ def send_bulk_email_task(self, recipients, subject, message, from_email,
 
     site_url = settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'https://atletasperformancecenter.com'
 
-    for email_addr in recipients:
-        try:
-            if send_as_html:
-                html_message = message.replace('\n', '<br>')
-                html_content = f'''<!DOCTYPE html>
+    # Build body once — it's identical for every recipient
+    if send_as_html:
+        html_message = message.replace('\n', '<br>')
+        body = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -562,22 +563,53 @@ def send_bulk_email_task(self, recipients, subject, message, from_email,
 </div>
 </body>
 </html>'''
-                email_msg = EmailMessage(subject=subject, body=html_content,
-                                        from_email=from_email, to=[email_addr])
-                email_msg.content_subtype = 'html'
-            else:
-                text_signature = (
-                    f"\n\n--\nAtletas Performance Center\nProfessional Soccer Training\n"
-                    f"info@atletasperformancecenter.com\n{site_url}"
-                )
-                email_msg = EmailMessage(subject=subject, body=message + text_signature,
-                                        from_email=from_email, to=[email_addr])
+    else:
+        body = message + (
+            f"\n\n--\nAtletas Performance Center\nProfessional Soccer Training\n"
+            f"info@atletasperformancecenter.com\n{site_url}"
+        )
 
-            email_msg.send(fail_silently=False)
-            sent_count += 1
-        except Exception as e:
-            failed_count += 1
-            logger.error(f"send_bulk_email_task: failed to send to {email_addr}: {e}")
+    # Reuse one SMTP connection for all recipients to avoid Gmail rate-limiting
+    connection = get_connection()
+    try:
+        connection.open()
+    except Exception as e:
+        logger.error(f"send_bulk_email_task: failed to open SMTP connection: {e}")
+        if broadcast_id:
+            EmailBroadcast.objects.filter(id=broadcast_id).update(
+                sent_count=0, failed_count=len(recipients))
+        return f"Sent 0, failed {len(recipients)} (SMTP connection failed)"
+
+    try:
+        for email_addr in recipients:
+            # Skip malformed addresses (commas, spaces, missing domain dot)
+            if not re.match(r'^[^@\s,]+@[^@\s,]+\.[^@\s,]+$', email_addr):
+                failed_count += 1
+                logger.warning(f"send_bulk_email_task: skipping malformed address: {email_addr!r}")
+                continue
+
+            try:
+                email_msg = EmailMessage(subject=subject, body=body,
+                                         from_email=from_email, to=[email_addr],
+                                         connection=connection)
+                if send_as_html:
+                    email_msg.content_subtype = 'html'
+                email_msg.send(fail_silently=False)
+                sent_count += 1
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"send_bulk_email_task: failed to send to {email_addr}: {e}")
+                # Reopen connection in case it was dropped
+                try:
+                    connection.close()
+                    connection.open()
+                except Exception:
+                    pass
+    finally:
+        try:
+            connection.close()
+        except Exception:
+            pass
 
     if broadcast_id:
         try:
