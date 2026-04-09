@@ -208,7 +208,7 @@ def owner_dashboard(request):
 @user_passes_test(is_owner)
 def owner_notifications(request):
     """Owner notification center - send emails to different groups."""
-    from clients.models import Package, ClientPackage, ContactParent
+    from clients.models import Package, ClientPackage, ContactParent, EmailBroadcast
     # Get counts for each recipient group
     all_clients = Client.objects.select_related('user').filter(user__email__isnull=False).exclude(user__email='')
     all_coaches = Coach.objects.select_related('user').filter(is_active=True, user__email__isnull=False).exclude(user__email='')
@@ -278,6 +278,7 @@ def owner_notifications(request):
         'unregistered_contacts_count': unregistered_contacts.count(),
         'contact_sources': contact_sources,
         'contacts_by_source': contacts_by_source,
+        'recent_broadcasts': EmailBroadcast.objects.order_by('-created_at')[:10],
     }
     return render(request, 'owner/notifications.html', context)
 
@@ -287,6 +288,9 @@ def owner_notifications(request):
 @require_POST
 def owner_send_notification(request):
     """Send notifications to selected recipients with optional attachments and images."""
+    import logging
+    logger = logging.getLogger(__name__)
+
     recipient_group = request.POST.get('recipient_group', '')
     subject = request.POST.get('subject', '').strip()
     message = request.POST.get('message', '').strip()
@@ -301,69 +305,55 @@ def owner_send_notification(request):
         messages.error(request, 'Please provide both subject and message.')
         return redirect('owner_notifications')
 
-    # Collect recipient emails based on group
-    recipients = set()
-    today = timezone.now().date()
+    try:
+        # Collect recipient emails based on group
+        recipients = set()
+        today = timezone.now().date()
 
-    if recipient_group == 'all_clients':
-        emails = Client.objects.filter(
-            user__email__isnull=False
-        ).exclude(user__email='').values_list('user__email', flat=True)
-        recipients.update(emails)
+        if recipient_group == 'all_clients':
+            emails = Client.objects.filter(
+                user__email__isnull=False
+            ).exclude(user__email='').values_list('user__email', flat=True)
+            recipients.update(emails)
 
-    elif recipient_group == 'all_coaches':
-        emails = Coach.objects.filter(
-            is_active=True,
-            user__email__isnull=False
-        ).exclude(user__email='').values_list('user__email', flat=True)
-        recipients.update(emails)
+        elif recipient_group == 'all_coaches':
+            emails = Coach.objects.filter(
+                is_active=True,
+                user__email__isnull=False
+            ).exclude(user__email='').values_list('user__email', flat=True)
+            recipients.update(emails)
 
-    elif recipient_group == 'everyone':
-        emails = User.objects.filter(
-            is_active=True,
-            email__isnull=False
-        ).exclude(email='').values_list('email', flat=True)
-        recipients.update(emails)
+        elif recipient_group == 'everyone':
+            emails = User.objects.filter(
+                is_active=True,
+                email__isnull=False
+            ).exclude(email='').values_list('email', flat=True)
+            recipients.update(emails)
 
-    elif recipient_group == 'active_clients':
-        active_client_ids = Booking.objects.filter(
-            scheduled_date__gte=today - timedelta(days=30)
-        ).values_list('client_id', flat=True).distinct()
-        emails = Client.objects.filter(
-            id__in=active_client_ids,
-            user__email__isnull=False
-        ).exclude(user__email='').values_list('user__email', flat=True)
-        recipients.update(emails)
+        elif recipient_group == 'active_clients':
+            active_client_ids = Booking.objects.filter(
+                scheduled_date__gte=today - timedelta(days=30)
+            ).values_list('client_id', flat=True).distinct()
+            emails = Client.objects.filter(
+                id__in=active_client_ids,
+                user__email__isnull=False
+            ).exclude(user__email='').values_list('user__email', flat=True)
+            recipients.update(emails)
 
-    elif recipient_group == 'clients_this_week':
-        weekly_client_ids = Booking.objects.filter(
-            scheduled_date__gte=today,
-            scheduled_date__lte=today + timedelta(days=7)
-        ).values_list('client_id', flat=True).distinct()
-        emails = Client.objects.filter(
-            id__in=weekly_client_ids,
-            user__email__isnull=False
-        ).exclude(user__email='').values_list('user__email', flat=True)
-        recipients.update(emails)
+        elif recipient_group == 'clients_this_week':
+            weekly_client_ids = Booking.objects.filter(
+                scheduled_date__gte=today,
+                scheduled_date__lte=today + timedelta(days=7)
+            ).values_list('client_id', flat=True).distinct()
+            emails = Client.objects.filter(
+                id__in=weekly_client_ids,
+                user__email__isnull=False
+            ).exclude(user__email='').values_list('user__email', flat=True)
+            recipients.update(emails)
 
-    elif recipient_group == 'packaged_clients':
-        from clients.models import ClientPackage
-        packaged_ids = ClientPackage.objects.filter(
-            status='active',
-            expiry_date__gte=today,
-        ).values_list('client_id', flat=True).distinct()
-        emails = Client.objects.filter(
-            id__in=packaged_ids,
-            user__email__isnull=False,
-        ).exclude(user__email='').values_list('user__email', flat=True)
-        recipients.update(emails)
-
-    elif recipient_group == 'package_specific':
-        from clients.models import ClientPackage
-        package_id = request.POST.get('package_id')
-        if package_id:
+        elif recipient_group == 'packaged_clients':
+            from clients.models import ClientPackage
             packaged_ids = ClientPackage.objects.filter(
-                package_id=package_id,
                 status='active',
                 expiry_date__gte=today,
             ).values_list('client_id', flat=True).distinct()
@@ -373,61 +363,139 @@ def owner_send_notification(request):
             ).exclude(user__email='').values_list('user__email', flat=True)
             recipients.update(emails)
 
-    elif recipient_group == 'contacts_all':
-        from clients.models import ContactParent
-        emails = ContactParent.objects.exclude(email='').values_list('email', flat=True)
-        recipients.update(emails)
+        elif recipient_group == 'package_specific':
+            from clients.models import ClientPackage
+            package_id = request.POST.get('package_id')
+            if package_id:
+                packaged_ids = ClientPackage.objects.filter(
+                    package_id=package_id,
+                    status='active',
+                    expiry_date__gte=today,
+                ).values_list('client_id', flat=True).distinct()
+                emails = Client.objects.filter(
+                    id__in=packaged_ids,
+                    user__email__isnull=False,
+                ).exclude(user__email='').values_list('user__email', flat=True)
+                recipients.update(emails)
 
-    elif recipient_group == 'contacts_unregistered':
-        from clients.models import ContactParent
-        emails = ContactParent.objects.filter(
-            client__isnull=True
-        ).exclude(email='').values_list('email', flat=True)
-        recipients.update(emails)
+        elif recipient_group == 'contacts_all':
+            from clients.models import ContactParent
+            emails = ContactParent.objects.exclude(email='').values_list('email', flat=True)
+            recipients.update(emails)
 
-    elif recipient_group == 'contacts_by_source':
-        from clients.models import ContactParent
-        source_key = request.POST.get('contact_source', '')
-        if source_key:
+        elif recipient_group == 'contacts_unregistered':
+            from clients.models import ContactParent
             emails = ContactParent.objects.filter(
-                source=source_key
+                client__isnull=True
             ).exclude(email='').values_list('email', flat=True)
             recipients.update(emails)
 
-    elif recipient_group == 'individual':
-        recipients.update(individual_emails)
+        elif recipient_group == 'contacts_by_source':
+            from clients.models import ContactParent
+            source_key = request.POST.get('contact_source', '')
+            if source_key:
+                emails = ContactParent.objects.filter(
+                    source=source_key
+                ).exclude(email='').values_list('email', flat=True)
+                recipients.update(emails)
 
-    if not recipients:
-        messages.error(request, 'No recipients found for the selected group.')
-        return redirect('owner_notifications')
+        elif recipient_group == 'individual':
+            recipients.update(individual_emails)
 
-    # Send emails
-    try:
+        if not recipients:
+            messages.error(request, 'No recipients found for the selected group.')
+            return redirect('owner_notifications')
+
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@atletasperformancecenter.com')
-        sent_count = 0
-        failed_count = 0
 
-        # Read inline image data if provided
-        inline_image_data = None
-        inline_image_cid = None
-        if inline_image:
-            inline_image_data = inline_image.read()
-            inline_image_cid = 'inline_image'
-            inline_image.seek(0)  # Reset for potential reuse
+        # If attachments/inline images are included, send synchronously (files can't go to Celery)
+        if attachments or inline_image:
+            sent_count = 0
+            failed_count = 0
+            inline_image_data = None
+            inline_image_cid = None
+            if inline_image:
+                inline_image_data = inline_image.read()
+                inline_image_cid = 'inline_image'
 
-        for email_addr in recipients:
-            try:
-                if send_as_html or inline_image:
-                    # Convert message to HTML (preserve line breaks)
-                    html_message = message.replace('\n', '<br>')
+            site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+            for email_addr in recipients:
+                try:
+                    if send_as_html or inline_image:
+                        html_message = message.replace('\n', '<br>')
+                        if inline_image_data:
+                            html_message = f'<img src="cid:{inline_image_cid}" style="max-width:100%;height:auto;margin:20px 0"><br><br>' + html_message
+                        html_content = _build_html_email(html_message, site_url)
+                        email_msg = EmailMessage(subject=subject, body=html_content,
+                                                 from_email=from_email, to=[email_addr])
+                        email_msg.content_subtype = 'html'
+                        if inline_image_data:
+                            mime_image = MIMEImage(inline_image_data)
+                            mime_image.add_header('Content-ID', f'<{inline_image_cid}>')
+                            mime_image.add_header('Content-Disposition', 'inline', filename=inline_image.name)
+                            email_msg.attach(mime_image)
+                        for att in attachments:
+                            att.seek(0)
+                            email_msg.attach(att.name, att.read(), att.content_type)
+                    else:
+                        text_sig = (f"\n\n--\nAtletas Performance Center\nProfessional Soccer Training\n"
+                                    f"info@atletasperformancecenter.com\n{site_url}")
+                        email_msg = EmailMessage(subject=subject, body=message + text_sig,
+                                                 from_email=from_email, to=[email_addr])
+                        for att in attachments:
+                            att.seek(0)
+                            email_msg.attach(att.name, att.read(), att.content_type)
+                    email_msg.send(fail_silently=False)
+                    sent_count += 1
+                except Exception as e:
+                    failed_count += 1
+                    logger.error(f'owner_send_notification sync send to {email_addr}: {e}')
 
-                    # Add inline image placeholder if image provided
-                    if inline_image_data:
-                        html_message = f'<img src="cid:{inline_image_cid}" style="max-width: 100%; height: auto; margin: 20px 0;"><br><br>' + html_message
+            from clients.models import EmailBroadcast
+            EmailBroadcast.objects.create(
+                recipient_group=recipient_group,
+                subject=subject,
+                sent_count=sent_count,
+                failed_count=failed_count,
+                recipient_emails=','.join(recipients),
+                sent_by=request.user,
+            )
+            if failed_count > 0:
+                messages.warning(request, f'Sent {sent_count} emails. {failed_count} failed.')
+            else:
+                messages.success(request, f'Successfully sent {sent_count} emails!')
 
-                    # Wrap in branded APC email template
-                    site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
-                    html_content = f'''<!DOCTYPE html>
+        else:
+            # No attachments — dispatch to Celery (or sync if Celery disabled)
+            from clients.models import EmailBroadcast
+            from clients.tasks import send_bulk_email_task, run_task
+            broadcast = EmailBroadcast.objects.create(
+                recipient_group=recipient_group,
+                subject=subject,
+                recipient_emails=','.join(recipients),
+                sent_by=request.user,
+            )
+            run_task(send_bulk_email_task,
+                     recipients=list(recipients),
+                     subject=subject,
+                     message=message,
+                     from_email=from_email,
+                     send_as_html=send_as_html,
+                     broadcast_id=broadcast.id)
+            messages.success(request,
+                f'Sending to {len(recipients)} recipient(s). '
+                'Check "Recent Sends" below for delivery results.')
+
+    except Exception as e:
+        logger.error(f'owner_send_notification error: {e}', exc_info=True)
+        messages.error(request, f'Error preparing email: {str(e)}')
+
+    return redirect('owner_notifications')
+
+
+def _build_html_email(html_message, site_url):
+    """Return branded APC HTML email string."""
+    return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -487,60 +555,6 @@ def owner_send_notification(request):
 </div>
 </body>
 </html>'''
-
-                    # Create email with HTML
-                    email_msg = EmailMessage(
-                        subject=subject,
-                        body=html_content,
-                        from_email=from_email,
-                        to=[email_addr],
-                    )
-                    email_msg.content_subtype = 'html'
-
-                    # Add inline image
-                    if inline_image_data:
-                        mime_image = MIMEImage(inline_image_data)
-                        mime_image.add_header('Content-ID', f'<{inline_image_cid}>')
-                        mime_image.add_header('Content-Disposition', 'inline', filename=inline_image.name)
-                        email_msg.attach(mime_image)
-
-                    # Add attachments
-                    for attachment in attachments:
-                        attachment.seek(0)  # Reset file pointer
-                        email_msg.attach(attachment.name, attachment.read(), attachment.content_type)
-
-                    email_msg.send(fail_silently=False)
-                else:
-                    # Plain text email with attachments
-                    site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
-                    text_signature = f"\n\n--\nAtletas Performance Center\nProfessional Soccer Training\ninfo@atletasperformancecenter.com\n{site_url}"
-                    email_msg = EmailMessage(
-                        subject=subject,
-                        body=message + text_signature,
-                        from_email=from_email,
-                        to=[email_addr],
-                    )
-
-                    # Add attachments
-                    for attachment in attachments:
-                        attachment.seek(0)  # Reset file pointer
-                        email_msg.attach(attachment.name, attachment.read(), attachment.content_type)
-
-                    email_msg.send(fail_silently=False)
-
-                sent_count += 1
-            except Exception as e:
-                failed_count += 1
-
-        if failed_count > 0:
-            messages.warning(request, f'Sent {sent_count} emails. {failed_count} failed.')
-        else:
-            messages.success(request, f'Successfully sent {sent_count} emails!')
-
-    except Exception as e:
-        messages.error(request, f'Error sending emails: {str(e)}')
-
-    return redirect('owner_notifications')
 
 
 # ============================================================================

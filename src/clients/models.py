@@ -1229,3 +1229,22 @@ class ContactPlayer(models.Model):
         indexes  = [
             models.Index(fields=['parent', 'birth_year']),
         ]
+
+
+class EmailBroadcast(models.Model):
+    """Log of bulk email sends from the owner notification center."""
+    recipient_group  = models.CharField(max_length=50)
+    subject          = models.CharField(max_length=255)
+    sent_count       = models.IntegerField(default=0)
+    failed_count     = models.IntegerField(default=0)
+    recipient_emails = models.TextField(blank=True)  # comma-separated, for audit
+    sent_by          = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.subject} → {self.recipient_group} ({self.sent_count} sent)'
