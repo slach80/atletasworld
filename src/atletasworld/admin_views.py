@@ -166,6 +166,14 @@ def owner_dashboard(request):
         status='exhausted', expiry_date__gte=today
     ).count()
 
+    # ── Stripe ─────────────────────────────────────────────────────────────────
+    from payments.models import Payment
+    stripe_confirmed = Payment.objects.filter(status='succeeded').aggregate(
+        t=Sum('amount'))['t'] or 0
+    stripe_count = Payment.objects.filter(status='succeeded').count()
+    stripe_live = bool(settings.STRIPE_SECRET_KEY and
+                       settings.STRIPE_SECRET_KEY.startswith(('sk_live', 'rk_live')))
+
     # ── Contacts ───────────────────────────────────────────────────────────────
     from clients.models import ContactParent
     contacts_unregistered = ContactParent.objects.filter(client__isnull=True).count()
@@ -201,6 +209,10 @@ def owner_dashboard(request):
         'active_packages_count': active_packages_count,
         'expiring_soon_packages': expiring_soon_packages,
         'packages_exhausted': packages_exhausted,
+        # Stripe
+        'stripe_live': stripe_live,
+        'stripe_count': stripe_count,
+        'stripe_confirmed': stripe_confirmed,
         # Contacts
         'contacts_unregistered': contacts_unregistered,
         # Lists

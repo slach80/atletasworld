@@ -131,6 +131,28 @@
         </div>
     </div>
 
+    <!-- Stripe status bar -->
+    <div class="flex items-center justify-between px-4 py-3 {% if stripe_live %}bg-green-50 border border-green-200{% else %}bg-yellow-50 border border-yellow-200{% endif %} rounded-xl mb-1">
+        <div class="flex items-center gap-2">
+            <span class="text-base">💳</span>
+            <span class="text-sm font-semibold {% if stripe_live %}text-green-800{% else %}text-yellow-800{% endif %}">Stripe Payments</span>
+            {% if stripe_live %}
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">● Live</span>
+            {% else %}
+                <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">⚠ Test / Not configured</span>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+            {% if stripe_count > 0 %}
+            <span class="text-gray-500">Confirmed: <span class="font-semibold text-gray-800">{{ stripe_count }}</span></span>
+            <span class="text-gray-500">Revenue: <span class="font-semibold text-gray-800">${{ stripe_confirmed|floatformat:2 }}</span></span>
+            {% else %}
+            <span class="text-gray-400 text-xs">No confirmed payments yet</span>
+            {% endif %}
+            <a href="{% url 'owner_payments' %}" class="text-xs {% if stripe_live %}text-green-700{% else %}text-yellow-700{% endif %} hover:underline">View →</a>
+        </div>
+    </div>
+
     {% if pending_payments_list %}
     <div class="mb-5 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
         <div class="flex items-center justify-between mb-2">
