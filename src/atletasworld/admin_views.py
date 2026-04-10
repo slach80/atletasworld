@@ -318,103 +318,57 @@ def owner_send_notification(request):
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@atletasperformancecenter.com')
 
     try:
-        # If attachments/inline images are included, must send synchronously (files can't go to Celery).
-        # Build recipient list only for this path.
-        if attachments or inline_image:
-            recipients = _resolve_recipient_emails(
-                recipient_group,
-                package_id=request.POST.get('package_id', ''),
-                contact_source=request.POST.get('contact_source', ''),
-                individual_emails=individual_emails,
-            )
-            if not recipients:
-                messages.error(request, 'No recipients found for the selected group.')
-                return redirect('owner_notifications')
+        if recipient_group == 'individual' and not individual_emails:
+            messages.error(request, 'No recipients specified for individual send.')
+            return redirect('owner_notifications')
 
-            sent_count = 0
-            failed_count = 0
-            inline_image_data = None
-            inline_image_cid = None
-            if inline_image:
-                inline_image_data = inline_image.read()
-                inline_image_cid = 'inline_image'
+        # Save uploaded files to disk so Celery can read them after the HTTP request ends.
+        import uuid, os
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'email_attachments')
+        os.makedirs(upload_dir, exist_ok=True)
 
-            site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
-            for email_addr in recipients:
-                try:
-                    if send_as_html or inline_image:
-                        html_message = message.replace('\n', '<br>')
-                        if inline_image_data:
-                            html_message = f'<img src="cid:{inline_image_cid}" style="max-width:100%;height:auto;margin:20px 0"><br><br>' + html_message
-                        html_content = _build_html_email(html_message, site_url)
-                        email_msg = EmailMessage(subject=subject, body=html_content,
-                                                 from_email=from_email, to=[email_addr])
-                        email_msg.content_subtype = 'html'
-                        if inline_image_data:
-                            mime_image = MIMEImage(inline_image_data)
-                            mime_image.add_header('Content-ID', f'<{inline_image_cid}>')
-                            mime_image.add_header('Content-Disposition', 'inline', filename=inline_image.name)
-                            email_msg.attach(mime_image)
-                        for att in attachments:
-                            att.seek(0)
-                            email_msg.attach(att.name, att.read(), att.content_type)
-                    else:
-                        text_sig = (f"\n\n--\nAtletas Performance Center\nProfessional Soccer Training\n"
-                                    f"info@atletasperformancecenter.com\n{site_url}")
-                        email_msg = EmailMessage(subject=subject, body=message + text_sig,
-                                                 from_email=from_email, to=[email_addr])
-                        for att in attachments:
-                            att.seek(0)
-                            email_msg.attach(att.name, att.read(), att.content_type)
-                    email_msg.send(fail_silently=False)
-                    sent_count += 1
-                except Exception as e:
-                    failed_count += 1
-                    logger.error(f'owner_send_notification sync send to {email_addr}: {e}')
+        saved_attachments = []
+        for att in attachments:
+            safe_name = f"{uuid.uuid4().hex}_{att.name}"
+            save_path = os.path.join(upload_dir, safe_name)
+            with open(save_path, 'wb') as fh:
+                for chunk in att.chunks():
+                    fh.write(chunk)
+            saved_attachments.append({'path': save_path, 'name': att.name, 'content_type': att.content_type})
 
-            from clients.models import EmailBroadcast
-            EmailBroadcast.objects.create(
-                recipient_group=recipient_group,
-                subject=subject,
-                sent_count=sent_count,
-                failed_count=failed_count,
-                recipient_emails=','.join(recipients),
-                sent_by=request.user,
-            )
-            if failed_count > 0:
-                messages.warning(request, f'Sent {sent_count} emails. {failed_count} failed.')
-            else:
-                messages.success(request, f'Successfully sent {sent_count} emails!')
+        saved_inline_image = None
+        if inline_image:
+            safe_name = f"{uuid.uuid4().hex}_{inline_image.name}"
+            save_path = os.path.join(upload_dir, safe_name)
+            with open(save_path, 'wb') as fh:
+                for chunk in inline_image.chunks():
+                    fh.write(chunk)
+            saved_inline_image = {'path': save_path, 'name': inline_image.name, 'content_type': inline_image.content_type}
 
-        else:
-            # No attachments — dispatch to Celery (runs sync if Celery disabled).
-            # Do NOT resolve the full recipient list here; the task handles that so the
-            # view returns immediately and never hits the Gunicorn/Nginx timeout.
-            if recipient_group == 'individual' and not individual_emails:
-                messages.error(request, 'No recipients specified for individual send.')
-                return redirect('owner_notifications')
-
-            from clients.models import EmailBroadcast
-            from clients.tasks import send_bulk_email_task, run_task
-            broadcast = EmailBroadcast.objects.create(
-                recipient_group=recipient_group,
-                subject=subject,
-                sent_by=request.user,
-            )
-            run_task(send_bulk_email_task,
-                     broadcast_id=broadcast.id,
-                     recipient_group=recipient_group,
-                     subject=subject,
-                     message=message,
-                     from_email=from_email,
-                     send_as_html=send_as_html,
-                     extra_params={
-                         'package_id': request.POST.get('package_id', ''),
-                         'contact_source': request.POST.get('contact_source', ''),
-                         'individual_emails': list(individual_emails),
-                     })
-            messages.success(request,
-                'Email queued for sending. Check "Recent Sends" below for delivery results.')
+        # Always dispatch to Celery — never block the HTTP request on email sends.
+        from clients.models import EmailBroadcast
+        from clients.tasks import send_bulk_email_task, run_task
+        broadcast = EmailBroadcast.objects.create(
+            recipient_group=recipient_group,
+            subject=subject,
+            sent_by=request.user,
+        )
+        run_task(send_bulk_email_task,
+                 broadcast_id=broadcast.id,
+                 recipient_group=recipient_group,
+                 subject=subject,
+                 message=message,
+                 from_email=from_email,
+                 send_as_html=send_as_html,
+                 extra_params={
+                     'package_id': request.POST.get('package_id', ''),
+                     'contact_source': request.POST.get('contact_source', ''),
+                     'individual_emails': list(individual_emails),
+                     'attachments': saved_attachments,
+                     'inline_image': saved_inline_image,
+                 })
+        messages.success(request,
+            'Email queued for sending. Check "Recent Sends" below for delivery results.')
 
     except Exception as e:
         logger.error(f'owner_send_notification error: {e}', exc_info=True)

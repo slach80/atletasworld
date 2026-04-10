@@ -8,6 +8,7 @@ from celery import shared_task
 from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta
+from email.mime.image import MIMEImage
 import logging
 
 logger = logging.getLogger(__name__)
@@ -598,6 +599,26 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
             f"info@atletasperformancecenter.com\n{site_url}"
         )
 
+    # Load attachment file data from disk (saved by the view before dispatching to Celery)
+    extra = extra_params or {}
+    attachment_files = []   # list of (name, data, content_type)
+    inline_image_file = None  # (name, data, content_type)
+
+    for att_info in extra.get('attachments') or []:
+        try:
+            with open(att_info['path'], 'rb') as fh:
+                attachment_files.append((att_info['name'], fh.read(), att_info['content_type']))
+        except Exception as e:
+            logger.warning(f"send_bulk_email_task: could not read attachment {att_info.get('path')}: {e}")
+
+    img_info = extra.get('inline_image')
+    if img_info:
+        try:
+            with open(img_info['path'], 'rb') as fh:
+                inline_image_file = (img_info['name'], fh.read(), img_info['content_type'])
+        except Exception as e:
+            logger.warning(f"send_bulk_email_task: could not read inline_image {img_info.get('path')}: {e}")
+
     # Reuse one SMTP connection for all recipients to avoid Gmail rate-limiting
     connection = get_connection()
     try:
@@ -618,11 +639,34 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
                 continue
 
             try:
-                email_msg = EmailMessage(subject=subject, body=body,
-                                         from_email=from_email, to=[email_addr],
-                                         connection=connection)
-                if send_as_html:
+                if inline_image_file or (send_as_html and attachment_files):
+                    # HTML email with inline image or HTML + attachments
+                    this_body = body
+                    if inline_image_file:
+                        img_name, img_data, img_ctype = inline_image_file
+                        img_tag = '<img src="cid:inline_image" style="max-width:100%;height:auto;margin:20px 0"><br><br>'
+                        # Inject image tag before body content
+                        this_body = this_body.replace('<div class="email-body">', f'<div class="email-body">{img_tag}', 1)
+                    email_msg = EmailMessage(subject=subject, body=this_body,
+                                             from_email=from_email, to=[email_addr],
+                                             connection=connection)
                     email_msg.content_subtype = 'html'
+                    if inline_image_file:
+                        img_name, img_data, img_ctype = inline_image_file
+                        mime_image = MIMEImage(img_data)
+                        mime_image.add_header('Content-ID', '<inline_image>')
+                        mime_image.add_header('Content-Disposition', 'inline', filename=img_name)
+                        email_msg.attach(mime_image)
+                    for att_name, att_data, att_ctype in attachment_files:
+                        email_msg.attach(att_name, att_data, att_ctype)
+                else:
+                    email_msg = EmailMessage(subject=subject, body=body,
+                                             from_email=from_email, to=[email_addr],
+                                             connection=connection)
+                    if send_as_html:
+                        email_msg.content_subtype = 'html'
+                    for att_name, att_data, att_ctype in attachment_files:
+                        email_msg.attach(att_name, att_data, att_ctype)
                 email_msg.send(fail_silently=False)
                 sent_count += 1
             except Exception as e:
@@ -637,6 +681,19 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
     finally:
         try:
             connection.close()
+        except Exception:
+            pass
+
+    # Clean up temp files saved by the view
+    import os
+    for att_info in extra.get('attachments') or []:
+        try:
+            os.unlink(att_info['path'])
+        except Exception:
+            pass
+    if img_info:
+        try:
+            os.unlink(img_info['path'])
         except Exception:
             pass
 
