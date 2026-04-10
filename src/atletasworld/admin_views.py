@@ -2164,7 +2164,7 @@ def owner_finances(request):
         # Stripe
         'stripe_confirmed':   stripe_confirmed,
         'stripe_count':       stripe_count,
-        'stripe_live':        bool(settings.STRIPE_SECRET_KEY and settings.STRIPE_SECRET_KEY.startswith('sk_live')),
+        'stripe_live':        bool(settings.STRIPE_SECRET_KEY and settings.STRIPE_SECRET_KEY.startswith(('sk_live', 'rk_live'))),
         # Trend
         'monthly_trend':    monthly_trend,
         'max_total':        max_total,
@@ -2192,7 +2192,7 @@ def owner_payments(request):
     payments = Payment.objects.select_related('client__user').order_by('-created_at')[:100]
     context = {
         'payments': payments,
-        'stripe_live': bool(settings.STRIPE_SECRET_KEY and settings.STRIPE_SECRET_KEY.startswith('sk_live')),
+        'stripe_live': bool(settings.STRIPE_SECRET_KEY and settings.STRIPE_SECRET_KEY.startswith(('sk_live', 'rk_live'))),
     }
     return render(request, 'owner/payments.html', context)
 

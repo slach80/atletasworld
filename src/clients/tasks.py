@@ -732,7 +732,7 @@ def check_stripe_health():
 
     if not key:
         issues.append('STRIPE_SECRET_KEY is not set.')
-    elif not key.startswith('sk_live'):
+    elif not key.startswith(('sk_live', 'rk_live')):
         issues.append(f'Stripe key is in TEST mode (starts with "{key[:10]}…"). Switch to a live key for real payments.')
 
     if key:
