@@ -219,14 +219,19 @@ function toggleDrop(btn) {
         // Use fixed positioning so the dropdown escapes overflow:hidden table wrappers
         var rect = btn.getBoundingClientRect();
         var menuW = 176; // w-44 in Tailwind
-        // Right-align with button, but clamp so it never leaves the viewport
+        // Right-align with button, but clamp so it never leaves the viewport horizontally
         var left = rect.right - menuW;
         left = Math.max(8, Math.min(left, window.innerWidth - menuW - 8));
         menu.style.position = 'fixed';
-        menu.style.top = (rect.bottom + 4) + 'px';
         menu.style.left = left + 'px';
         menu.style.right = 'auto';
+        menu.style.top = (rect.bottom + 4) + 'px'; // tentative — flip after measuring
         menu.style.display = 'block';
+        // Flip upward if the menu would go off the bottom of the viewport
+        var menuH = menu.offsetHeight;
+        if (rect.bottom + 4 + menuH > window.innerHeight - 8) {
+            menu.style.top = Math.max(8, rect.top - menuH - 4) + 'px';
+        }
         function closeOnOutside(e) {
             if (!menu.contains(e.target) && e.target !== btn) {
                 menu.style.display = 'none';

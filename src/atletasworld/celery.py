@@ -59,6 +59,13 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=2, minute=0, day_of_week=0),
         'options': {'queue': 'maintenance'},
     },
+
+    # Stripe health check - Every day at 7 AM
+    'stripe-health-check': {
+        'task': 'clients.tasks.check_stripe_health',
+        'schedule': crontab(hour=7, minute=0),
+        'options': {'queue': 'notifications'},
+    },
 }
 
 # Task routing
