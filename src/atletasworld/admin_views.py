@@ -305,9 +305,11 @@ def owner_send_notification(request):
     individual_emails = request.POST.getlist('individual_emails')
     send_as_html = request.POST.get('send_as_html') == 'on'
 
-    # Handle file uploads
-    attachments = request.FILES.getlist('attachments')
+    # Handle file uploads — filter out zero-byte entries (mobile browsers often submit empty file fields)
+    attachments = [f for f in request.FILES.getlist('attachments') if f.size > 0]
     inline_image = request.FILES.get('inline_image')
+    if inline_image and inline_image.size == 0:
+        inline_image = None
 
     if not subject or not message:
         messages.error(request, 'Please provide both subject and message.')
