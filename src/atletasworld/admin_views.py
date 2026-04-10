@@ -313,111 +313,22 @@ def owner_send_notification(request):
         messages.error(request, 'Please provide both subject and message.')
         return redirect('owner_notifications')
 
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@atletasperformancecenter.com')
+
     try:
-        # Collect recipient emails based on group
-        recipients = set()
-        today = timezone.now().date()
-
-        if recipient_group == 'all_clients':
-            emails = Client.objects.filter(
-                user__email__isnull=False
-            ).exclude(user__email='').values_list('user__email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'all_coaches':
-            emails = Coach.objects.filter(
-                is_active=True,
-                user__email__isnull=False
-            ).exclude(user__email='').values_list('user__email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'everyone':
-            emails = User.objects.filter(
-                is_active=True,
-                email__isnull=False
-            ).exclude(email='').values_list('email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'active_clients':
-            active_client_ids = Booking.objects.filter(
-                scheduled_date__gte=today - timedelta(days=30)
-            ).values_list('client_id', flat=True).distinct()
-            emails = Client.objects.filter(
-                id__in=active_client_ids,
-                user__email__isnull=False
-            ).exclude(user__email='').values_list('user__email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'clients_this_week':
-            weekly_client_ids = Booking.objects.filter(
-                scheduled_date__gte=today,
-                scheduled_date__lte=today + timedelta(days=7)
-            ).values_list('client_id', flat=True).distinct()
-            emails = Client.objects.filter(
-                id__in=weekly_client_ids,
-                user__email__isnull=False
-            ).exclude(user__email='').values_list('user__email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'packaged_clients':
-            from clients.models import ClientPackage
-            packaged_ids = ClientPackage.objects.filter(
-                status='active',
-                expiry_date__gte=today,
-            ).values_list('client_id', flat=True).distinct()
-            emails = Client.objects.filter(
-                id__in=packaged_ids,
-                user__email__isnull=False,
-            ).exclude(user__email='').values_list('user__email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'package_specific':
-            from clients.models import ClientPackage
-            package_id = request.POST.get('package_id')
-            if package_id:
-                packaged_ids = ClientPackage.objects.filter(
-                    package_id=package_id,
-                    status='active',
-                    expiry_date__gte=today,
-                ).values_list('client_id', flat=True).distinct()
-                emails = Client.objects.filter(
-                    id__in=packaged_ids,
-                    user__email__isnull=False,
-                ).exclude(user__email='').values_list('user__email', flat=True)
-                recipients.update(emails)
-
-        elif recipient_group == 'contacts_all':
-            from clients.models import ContactParent
-            emails = ContactParent.objects.exclude(email='').values_list('email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'contacts_unregistered':
-            from clients.models import ContactParent
-            emails = ContactParent.objects.filter(
-                client__isnull=True
-            ).exclude(email='').values_list('email', flat=True)
-            recipients.update(emails)
-
-        elif recipient_group == 'contacts_by_source':
-            from clients.models import ContactParent
-            source_key = request.POST.get('contact_source', '')
-            if source_key:
-                emails = ContactParent.objects.filter(
-                    source=source_key
-                ).exclude(email='').values_list('email', flat=True)
-                recipients.update(emails)
-
-        elif recipient_group == 'individual':
-            recipients.update(individual_emails)
-
-        if not recipients:
-            messages.error(request, 'No recipients found for the selected group.')
-            return redirect('owner_notifications')
-
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@atletasperformancecenter.com')
-
-        # If attachments/inline images are included, send synchronously (files can't go to Celery)
+        # If attachments/inline images are included, must send synchronously (files can't go to Celery).
+        # Build recipient list only for this path.
         if attachments or inline_image:
+            recipients = _resolve_recipient_emails(
+                recipient_group,
+                package_id=request.POST.get('package_id', ''),
+                contact_source=request.POST.get('contact_source', ''),
+                individual_emails=individual_emails,
+            )
+            if not recipients:
+                messages.error(request, 'No recipients found for the selected group.')
+                return redirect('owner_notifications')
+
             sent_count = 0
             failed_count = 0
             inline_image_data = None
@@ -474,31 +385,140 @@ def owner_send_notification(request):
                 messages.success(request, f'Successfully sent {sent_count} emails!')
 
         else:
-            # No attachments — dispatch to Celery (or sync if Celery disabled)
+            # No attachments — dispatch to Celery (runs sync if Celery disabled).
+            # Do NOT resolve the full recipient list here; the task handles that so the
+            # view returns immediately and never hits the Gunicorn/Nginx timeout.
+            if recipient_group == 'individual' and not individual_emails:
+                messages.error(request, 'No recipients specified for individual send.')
+                return redirect('owner_notifications')
+
             from clients.models import EmailBroadcast
             from clients.tasks import send_bulk_email_task, run_task
             broadcast = EmailBroadcast.objects.create(
                 recipient_group=recipient_group,
                 subject=subject,
-                recipient_emails=','.join(recipients),
                 sent_by=request.user,
             )
             run_task(send_bulk_email_task,
-                     recipients=list(recipients),
+                     broadcast_id=broadcast.id,
+                     recipient_group=recipient_group,
                      subject=subject,
                      message=message,
                      from_email=from_email,
                      send_as_html=send_as_html,
-                     broadcast_id=broadcast.id)
+                     extra_params={
+                         'package_id': request.POST.get('package_id', ''),
+                         'contact_source': request.POST.get('contact_source', ''),
+                         'individual_emails': list(individual_emails),
+                     })
             messages.success(request,
-                f'Sending to {len(recipients)} recipient(s). '
-                'Check "Recent Sends" below for delivery results.')
+                'Email queued for sending. Check "Recent Sends" below for delivery results.')
 
     except Exception as e:
         logger.error(f'owner_send_notification error: {e}', exc_info=True)
         messages.error(request, f'Error preparing email: {str(e)}')
 
     return redirect('owner_notifications')
+
+
+def _resolve_recipient_emails(recipient_group, package_id='', contact_source='', individual_emails=None):
+    """Resolve a recipient group name to a set of email addresses."""
+    from bookings.models import Booking
+    recipients = set()
+    today = timezone.now().date()
+
+    if recipient_group == 'all_clients':
+        emails = Client.objects.filter(
+            user__email__isnull=False
+        ).exclude(user__email='').values_list('user__email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'all_coaches':
+        emails = Coach.objects.filter(
+            is_active=True,
+            user__email__isnull=False
+        ).exclude(user__email='').values_list('user__email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'everyone':
+        emails = User.objects.filter(
+            is_active=True,
+            email__isnull=False
+        ).exclude(email='').values_list('email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'active_clients':
+        active_client_ids = Booking.objects.filter(
+            scheduled_date__gte=today - timedelta(days=30)
+        ).values_list('client_id', flat=True).distinct()
+        emails = Client.objects.filter(
+            id__in=active_client_ids,
+            user__email__isnull=False
+        ).exclude(user__email='').values_list('user__email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'clients_this_week':
+        weekly_client_ids = Booking.objects.filter(
+            scheduled_date__gte=today,
+            scheduled_date__lte=today + timedelta(days=7)
+        ).values_list('client_id', flat=True).distinct()
+        emails = Client.objects.filter(
+            id__in=weekly_client_ids,
+            user__email__isnull=False
+        ).exclude(user__email='').values_list('user__email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'packaged_clients':
+        from clients.models import ClientPackage
+        packaged_ids = ClientPackage.objects.filter(
+            status='active',
+            expiry_date__gte=today,
+        ).values_list('client_id', flat=True).distinct()
+        emails = Client.objects.filter(
+            id__in=packaged_ids,
+            user__email__isnull=False,
+        ).exclude(user__email='').values_list('user__email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'package_specific':
+        from clients.models import ClientPackage
+        if package_id:
+            packaged_ids = ClientPackage.objects.filter(
+                package_id=package_id,
+                status='active',
+                expiry_date__gte=today,
+            ).values_list('client_id', flat=True).distinct()
+            emails = Client.objects.filter(
+                id__in=packaged_ids,
+                user__email__isnull=False,
+            ).exclude(user__email='').values_list('user__email', flat=True)
+            recipients.update(emails)
+
+    elif recipient_group == 'contacts_all':
+        from clients.models import ContactParent
+        emails = ContactParent.objects.exclude(email='').values_list('email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'contacts_unregistered':
+        from clients.models import ContactParent
+        emails = ContactParent.objects.filter(
+            client__isnull=True
+        ).exclude(email='').values_list('email', flat=True)
+        recipients.update(emails)
+
+    elif recipient_group == 'contacts_by_source':
+        from clients.models import ContactParent
+        if contact_source:
+            emails = ContactParent.objects.filter(
+                source=contact_source
+            ).exclude(email='').values_list('email', flat=True)
+            recipients.update(emails)
+
+    elif recipient_group == 'individual':
+        if individual_emails:
+            recipients.update(individual_emails)
+
+    return recipients
 
 
 def _build_html_email(html_message, site_url):

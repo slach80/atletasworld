@@ -488,16 +488,45 @@ def send_booking_confirmation_task(self, booking_id):
 
 
 @shared_task(bind=True, max_retries=0, ignore_result=True)
-def send_bulk_email_task(self, recipients, subject, message, from_email,
-                         send_as_html=False, broadcast_id=None):
+def send_bulk_email_task(self, recipients=None, subject='', message='', from_email='',
+                         send_as_html=False, broadcast_id=None,
+                         recipient_group='', extra_params=None):
     """
-    Send bulk email to a list of recipients.
-    Dispatched by owner_send_notification view; updates EmailBroadcast log when done.
+    Send bulk email. Two calling modes:
+      1. recipients=[...] — explicit list (used by attachment/sync path)
+      2. recipient_group='contacts_all' + extra_params={...} — task resolves the list
+         (used by the async no-attachment path; keeps the view instant)
+    Updates EmailBroadcast log when done.
     Uses a single persistent SMTP connection to avoid Gmail rate-limiting.
     """
     import re
     from django.core.mail import EmailMessage, get_connection
     from .models import EmailBroadcast
+
+    # Resolve recipient list from group if not provided directly
+    if recipients is None:
+        from atletasworld.admin_views import _resolve_recipient_emails
+        extra = extra_params or {}
+        resolved = _resolve_recipient_emails(
+            recipient_group,
+            package_id=extra.get('package_id', ''),
+            contact_source=extra.get('contact_source', ''),
+            individual_emails=extra.get('individual_emails') or [],
+        )
+        recipients = list(resolved)
+        if broadcast_id:
+            try:
+                EmailBroadcast.objects.filter(id=broadcast_id).update(
+                    recipient_emails=','.join(recipients)
+                )
+            except Exception as e:
+                logger.warning(f"send_bulk_email_task: could not update recipient_emails: {e}")
+
+    if not recipients:
+        logger.warning(f"send_bulk_email_task: no recipients for group '{recipient_group}'")
+        if broadcast_id:
+            EmailBroadcast.objects.filter(id=broadcast_id).update(sent_count=0, failed_count=0)
+        return "No recipients"
 
     sent_count = 0
     failed_count = 0
