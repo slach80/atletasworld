@@ -66,6 +66,13 @@
         .btn-3d { box-shadow: 0 5px 0 #000, 0 6px 6px rgba(0,0,0,.4); transform: translateY(-2px); transition: box-shadow .1s, transform .1s; }
         .btn-3d:hover { box-shadow: 0 6px 0 #000, 0 7px 8px rgba(0,0,0,.45); transform: translateY(-3px); }
         .btn-3d:active { box-shadow: 0 1px 0 #000, 0 2px 3px rgba(0,0,0,.3); transform: translateY(3px); }
+        /* yellow 3d: darker yellow shadow */
+        .btn-3d-y { box-shadow: 0 5px 0 #7a8800, 0 6px 8px rgba(0,0,0,.35); transform: translateY(-2px); transition: box-shadow .1s, transform .1s; }
+        .btn-3d-y:hover { box-shadow: 0 6px 0 #7a8800, 0 7px 10px rgba(0,0,0,.4); transform: translateY(-3px); }
+        .btn-3d-y:active { box-shadow: 0 1px 0 #7a8800, 0 2px 3px rgba(0,0,0,.25); transform: translateY(3px); }
+        /* ✓ Added state: always dark text regardless of dark mode */
+        .btn-added { background:#D7FF00; color:#1a1a1a!important; border:1.5px solid #a8c200; }
+        .btn-added:hover { background:#ffcdd2; color:#c62828!important; border-color:#ef9a9a; }
 
         /* Dark mode */
         html.dark body{background-color:#0f172a!important;color:#e2e8f0!important}
@@ -126,7 +133,7 @@
                         <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">🔔 Notifications</a>
                     </div>
                 </div>
-                <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full hover:bg-[#b8e000] transition font-semibold ml-2">Book Session</a>
+                <a href="{% url 'clients:book' %}" class="btn-3d-y bg-accent text-gray-900 px-4 py-2 rounded-full font-semibold ml-2">Book Session</a>
                 <span class="text-gray-500 mx-1">|</span>
                 <button onclick="toggleClientDark()" id="client-dark-btn" title="Toggle dark mode" class="px-2 py-1.5 rounded hover:bg-white/10 transition text-gray-300 hover:text-accent text-base">🌙</button>
                 <a href="/accounts/logout/" class="px-3 py-2 text-gray-300 hover:text-accent transition text-xs">Logout</a>
@@ -149,7 +156,7 @@
             <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📦 Packages</a>
             <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👤 My Profile</a>
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🔔 Notifications</a>
-            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full hover:bg-[#b8e000] font-semibold text-center">Book Session</a>
+            <a href="{% url 'clients:book' %}" class="btn-3d-y block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full font-semibold text-center">Book Session</a>
             <hr class="my-1 border-gray-700">
             <a href="/accounts/logout/" class="block px-3 py-2 text-gray-300 hover:text-accent rounded">Logout</a>
         </div>
@@ -498,8 +505,8 @@ function renderSlots(){
             const priceLine=`<span class="text-[11px] ${s.select_discount?'text-green-600 font-bold':'text-gray-400'}">${priceLabel}${discountBadge}</span>`;
             let btn;
             if(booked) btn=`<span class="shrink-0 px-3 py-1.5 text-xs text-gray-300 border border-gray-200 rounded-full">Booked</span>`;
-            else if(inCart) btn=`<button onclick="removeFromCartByKey('${s.key}')" class="shrink-0 px-3 py-1.5 text-xs rounded-full font-semibold bg-secondary/20 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-secondary/40 transition" title="Remove">✓ Added</button>`;
-            else btn=`<button onclick="addToCart('${s.key}')" class="shrink-0 px-4 py-1.5 text-xs bg-secondary text-gray-900 rounded-full font-bold hover:bg-[#b8e000] active:scale-95 transition">+ Add</button>`;
+            else if(inCart) btn=`<button onclick="removeFromCartByKey('${s.key}')" class="btn-added btn-3d-y shrink-0 px-3 py-1.5 text-xs rounded-full font-semibold" title="Remove">✓ Added</button>`;
+            else btn=`<button onclick="addToCart('${s.key}')" class="btn-3d-y shrink-0 px-4 py-1.5 text-xs bg-secondary text-gray-900 rounded-full font-bold">+ Add</button>`;
             html+=`<div class="flex items-center justify-between p-3.5 bg-white rounded-xl border shadow-sm transition ${inCart?'border-secondary/50 bg-secondary/5':'border-gray-100 hover:border-secondary/30'}">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="shrink-0 w-1 h-12 rounded-full" style="background:${s.color}"></div>
