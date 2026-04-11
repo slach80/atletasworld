@@ -61,7 +61,7 @@ jobs:
 
       # ── Upload Bandit report as artifact ───────────────────────────
       - name: Upload scan report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: security-scan-${{ github.sha }}
