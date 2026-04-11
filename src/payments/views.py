@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
 
+from django.utils import timezone
 from clients.models import Client, Package, ClientPackage
 from payments.models import Payment
 
@@ -337,7 +338,7 @@ def _handle_payment_succeeded(intent):
 
 def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
     """Create an active ClientPackage after successful payment."""
-    from datetime import date, timedelta
+    from datetime import timedelta
     from decimal import Decimal
     try:
         client  = Client.objects.get(pk=client_id)
@@ -350,8 +351,8 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
         client=client,
         package=package,
         status='active',
-        start_date=date.today(),
-        expiry_date=package.event_end_date if package.event_end_date else date.today() + timedelta(weeks=package.validity_weeks),
+        start_date=timezone.localdate(),
+        expiry_date=package.event_end_date if package.event_end_date else timezone.localdate() + timedelta(weeks=package.validity_weeks),
         sessions_remaining=package.sessions_included,
         stripe_payment_id=payment_intent_id,
     )
@@ -385,7 +386,7 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
     if package.package_type == 'select':
         from clients.models import ClientCredit
         for month in range(1, 7):
-            credit_date = date.today() + timedelta(weeks=4 * month)
+            credit_date = timezone.localdate() + timedelta(weeks=4 * month)
             ClientCredit.objects.create(
                 client=client,
                 amount=Decimal('40.00'),
@@ -421,7 +422,7 @@ def _handle_payment_failed(intent):
 
 def _handle_subscription_renewed(invoice):
     """Monthly subscription renewed → extend ClientPackage expiry."""
-    from datetime import date, timedelta
+    from datetime import timedelta
     subscription_id = invoice.get('subscription')
     if not subscription_id:
         return
@@ -429,7 +430,7 @@ def _handle_subscription_renewed(invoice):
         stripe_subscription_id=subscription_id, status='active'
     ).first()
     if cp:
-        cp.expiry_date = date.today() + timedelta(weeks=4)
+        cp.expiry_date = timezone.localdate() + timedelta(weeks=4)
         cp.save(update_fields=['expiry_date'])
         logger.info('Subscription renewed: ClientPackage #%s extended to %s', cp.pk, cp.expiry_date)
 

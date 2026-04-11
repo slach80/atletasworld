@@ -289,9 +289,8 @@ class ClientPackage(models.Model):
             remaining_value = price_per_session * self.sessions_remaining
         else:
             # For unlimited, prorate by time remaining
-            from datetime import date
             total_days = (self.expiry_date - self.start_date).days
-            remaining_days = (self.expiry_date - date.today()).days
+            remaining_days = (self.expiry_date - timezone.localdate()).days
             if remaining_days > 0 and total_days > 0:
                 remaining_value = (self.package.price * remaining_days) / total_days
             else:

@@ -2,6 +2,7 @@ import os
 from django.shortcuts import render
 from django.http import FileResponse, HttpResponse
 from django.conf import settings
+from django.utils import timezone
 from clients.models import Package
 from bookings.models import SessionType
 from coaches.models import ScheduleBlock
@@ -53,7 +54,7 @@ def home_view(request):
         'packages': packages,
         'events': events_qs,
         'programs': programs_qs,
-        'show_apc_select_card': dt.date.today() >= dt.date(2026, 4, 10),
+        'show_apc_select_card': timezone.localdate() >= dt.date(2026, 4, 10),
     })
 
 
