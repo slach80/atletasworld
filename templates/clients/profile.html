@@ -123,6 +123,7 @@
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🔔 Notifications</a>
             <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full hover:bg-[#b8e000] font-semibold text-center">Book Session</a>
             <hr class="my-1 border-gray-700">
+            <button onclick="toggleClientDark()" class="w-full text-left px-3 py-2 text-gray-300 hover:text-accent rounded" id="mobile-dark-btn">🌙 Dark Mode</button>
             <a href="/accounts/logout/" class="block px-3 py-2 text-gray-300 hover:text-accent rounded">Logout</a>
         </div>
     </div>
@@ -134,6 +135,32 @@
         document.getElementById('client-mobile-menu').classList.toggle('hidden');
     });
 })();
+
+function toggleClientDark(){
+    const on = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('apc-dark', on ? '1' : '0');
+    updateDarkUI(on);
+}
+function updateDarkUI(on){
+    const navBtn = document.getElementById('client-dark-btn');
+    if(navBtn) navBtn.textContent = on ? '☀️' : '🌙';
+    const mobileBtn = document.getElementById('mobile-dark-btn');
+    if(mobileBtn) mobileBtn.textContent = (on ? '☀️' : '🌙') + ' Dark Mode';
+    const icon = document.getElementById('dark-icon');
+    if(icon) icon.textContent = on ? '☀️' : '🌙';
+    const label = document.getElementById('dark-label');
+    if(label) label.textContent = on ? 'Dark Mode' : 'Dark Mode';
+    const sub = document.getElementById('dark-sub');
+    if(sub) sub.textContent = on ? 'Currently: Dark' : 'Currently: Light';
+    const thumb = document.getElementById('dark-toggle-thumb');
+    const toggleBtn = document.getElementById('dark-toggle-btn');
+    if(thumb) thumb.style.transform = on ? 'translateX(1.5rem)' : 'translateX(0)';
+    if(toggleBtn) toggleBtn.style.background = on ? '#D7FF00' : '#e5e7eb';
+}
+// Init on load
+document.addEventListener('DOMContentLoaded', function(){
+    updateDarkUI(localStorage.getItem('apc-dark') === '1');
+});
 </script>
 
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -313,67 +340,6 @@
                     </div>
                 </div>
 
-                <!-- Booking Preferences -->
-                <div class="border-t pt-6">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Booking Preferences</h2>
-                    <p class="text-sm text-gray-500 mb-4">Set your preferred coaches and times to streamline booking.</p>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Favorite Coaches</label>
-                        <div class="flex flex-wrap gap-2">
-                            {% for coach in coaches %}
-                            <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition {% if coach in booking_prefs.favorite_coaches.all %}bg-secondary/10 border-secondary{% endif %}">
-                                <input type="checkbox" name="favorite_coaches" value="{{ coach.id }}"
-                                       {% if coach in booking_prefs.favorite_coaches.all %}checked{% endif %}
-                                       class="mr-2 text-secondary rounded">
-                                <span class="text-sm">{{ coach.user.first_name }}</span>
-                            </label>
-                            {% empty %}
-                            <p class="text-gray-400 text-sm">No coaches available</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Days</label>
-                        <div class="flex flex-wrap gap-2">
-                            {% for value, label in day_choices %}
-                            <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition {% if value in booking_prefs.preferred_days %}bg-secondary/10 border-secondary{% endif %}">
-                                <input type="checkbox" name="preferred_days" value="{{ value }}"
-                                       {% if value in booking_prefs.preferred_days %}checked{% endif %}
-                                       class="mr-2 text-secondary rounded">
-                                <span class="text-sm">{{ label }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Time Slots</label>
-                        <div class="flex flex-wrap gap-2">
-                            {% for value, label in time_slot_choices %}
-                            <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition {% if value in booking_prefs.preferred_time_slots %}bg-secondary/10 border-secondary{% endif %}">
-                                <input type="checkbox" name="preferred_time_slots" value="{{ value }}"
-                                       {% if value in booking_prefs.preferred_time_slots %}checked{% endif %}
-                                       class="mr-2 text-secondary rounded">
-                                <span class="text-sm">{{ label }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" name="auto_filter" {% if booking_prefs.auto_filter %}checked{% endif %}
-                                   class="mr-3 w-5 h-5 text-secondary rounded">
-                            <div>
-                                <span class="font-medium text-blue-800">Auto-filter sessions</span>
-                                <p class="text-sm text-blue-600">Automatically show only sessions matching your preferences on the booking page.</p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
                 <div class="flex justify-end space-x-4 pt-4">
                     <a href="{% url 'clients:dashboard' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
                         Cancel
@@ -383,6 +349,30 @@
                     </button>
                 </div>
             </form>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- DISPLAY PREFERENCES -->
+        <!-- ============================================================ -->
+        <div class="bg-white rounded-xl shadow-md p-8 mt-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-1">Display</h2>
+            <p class="text-sm text-gray-500 mb-6">Appearance settings saved to this device.</p>
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <span id="dark-icon" class="text-2xl">🌙</span>
+                    <div>
+                        <p class="font-semibold text-gray-800" id="dark-label">Dark Mode</p>
+                        <p class="text-xs text-gray-500" id="dark-sub">Currently: Light</p>
+                    </div>
+                </div>
+                <button onclick="toggleClientDark()" id="dark-toggle-btn"
+                        class="relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-300 focus:outline-none"
+                        style="width:3.25rem;background:#e5e7eb;">
+                    <span id="dark-toggle-thumb"
+                          class="inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-300"
+                          style="margin-left:3px;"></span>
+                </button>
+            </div>
         </div>
 
         <!-- ============================================================ -->
