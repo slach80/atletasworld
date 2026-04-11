@@ -14,7 +14,7 @@ _EXEMPT_PREFIXES = (
 _CSP = (
     "default-src 'self'; "
     "script-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net js.stripe.com; "
-    "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.tailwindcss.com; "
+    "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.tailwindcss.com cdn.jsdelivr.net; "
     "font-src 'self' fonts.gstatic.com data:; "
     "img-src 'self' data: blob: *.stripe.com; "
     "frame-src js.stripe.com *.stripe.com; "
