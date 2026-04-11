@@ -186,6 +186,29 @@
         {% if assessments %}
         <!-- Performance Summary with Radar Chart -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Radar Chart -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                    <h2 class="text-lg font-bold text-gray-800">Performance Profile</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="radarViewSelect" class="px-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-secondary focus:outline-none" onchange="updateRadarChart()">
+                            <option value="latest">Latest Assessment</option>
+                            <option value="overall">Overall Average</option>
+                            <option value="last3">Last 3 Sessions</option>
+                            <option value="last5">Last 5 Sessions</option>
+                            <option value="compare">Compare Latest vs Avg</option>
+                            {% for a in assessments %}
+                            <option value="session-{{ forloop.counter0 }}">{{ a.assessment_date|date:"M d, Y" }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="relative" style="height: 280px;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div id="radarLegend" class="text-center text-xs text-gray-500 mt-2"></div>
+            </div>
+
             <!-- Average Stats Summary -->
             <div class="bg-white rounded-xl shadow-md p-6">
                 <h2 class="text-lg font-bold text-gray-800 mb-4">Performance Averages</h2>
@@ -215,29 +238,6 @@
                         <p class="text-xs text-gray-500 mt-1">Goals</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Radar Chart -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                    <h2 class="text-lg font-bold text-gray-800">Performance Profile</h2>
-                    <div class="flex flex-wrap gap-2">
-                        <select id="radarViewSelect" class="px-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-secondary focus:outline-none" onchange="updateRadarChart()">
-                            <option value="latest">Latest Assessment</option>
-                            <option value="overall">Overall Average</option>
-                            <option value="last3">Last 3 Sessions</option>
-                            <option value="last5">Last 5 Sessions</option>
-                            <option value="compare">Compare Latest vs Avg</option>
-                            {% for a in assessments %}
-                            <option value="session-{{ forloop.counter0 }}">{{ a.assessment_date|date:"M d, Y" }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="relative" style="height: 280px;">
-                    <canvas id="radarChart"></canvas>
-                </div>
-                <div id="radarLegend" class="text-center text-xs text-gray-500 mt-2"></div>
             </div>
         </div>
 
