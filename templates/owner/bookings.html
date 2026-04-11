@@ -63,6 +63,7 @@
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Client</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coach</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Session</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Package</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date/Time</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Payment</th>
@@ -83,6 +84,14 @@
                 <td class="py-4 px-6 text-sm text-gray-600">{{ booking.client.user.first_name }} {{ booking.client.user.last_name }}</td>
                 <td class="py-4 px-6 text-sm text-gray-600">{{ booking.coach.user.first_name }}</td>
                 <td class="py-4 px-6 text-sm">{% if booking.session_type %}{{ booking.session_type.name }}{% else %}-{% endif %}</td>
+                <td class="py-4 px-6 text-sm">
+                    {% if booking.client_package %}
+                    <div class="font-medium text-gray-700">{{ booking.client_package.package.name }}</div>
+                    <div class="text-xs text-gray-400">{{ booking.client_package.package.get_package_type_display }}</div>
+                    {% else %}
+                    <span class="text-gray-400">—</span>
+                    {% endif %}
+                </td>
                 <td class="py-4 px-6">
                     <div class="text-sm font-semibold">{{ booking.scheduled_date|date:"M j, Y" }}</div>
                     <div class="text-xs text-gray-500">{{ booking.scheduled_time|time:"g:i A" }}</div>
@@ -109,7 +118,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="py-8 text-center text-gray-500">No bookings found.</td>
+                <td colspan="9" class="py-8 text-center text-gray-500">No bookings found.</td>
             </tr>
             {% endfor %}
         </tbody>
