@@ -63,6 +63,9 @@
         .dual-range-input::-moz-range-thumb { width:22px; height:22px; border-radius:50%; background:#D7FF00; border:2.5px solid #1a1a1a; cursor:pointer; pointer-events:auto; }
         @keyframes strobe { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
         .hint-strobe { animation: strobe 1.8s ease-in-out infinite; }
+        .btn-3d { box-shadow: 0 5px 0 #000, 0 6px 6px rgba(0,0,0,.4); transform: translateY(-2px); transition: box-shadow .1s, transform .1s; }
+        .btn-3d:hover { box-shadow: 0 6px 0 #000, 0 7px 8px rgba(0,0,0,.45); transform: translateY(-3px); }
+        .btn-3d:active { box-shadow: 0 1px 0 #000, 0 2px 3px rgba(0,0,0,.3); transform: translateY(3px); }
 
         /* Dark mode */
         html.dark body{background-color:#0f172a!important;color:#e2e8f0!important}
@@ -174,7 +177,7 @@
     <!-- Header row: toggle left, clear-all right -->
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
         <!-- Left: toggle collapse — styled as f-pill, highlights yellow when expanded -->
-        <button id="filter-toggle-btn" onclick="toggleFilters()" class="f-pill flex items-center gap-2 !bg-gray-800 !border-gray-600 !text-gray-200 hover:!border-secondary hover:!text-secondary">
+        <button id="filter-toggle-btn" onclick="toggleFilters()" class="f-pill btn-3d flex items-center gap-2 !bg-gray-700 !border-gray-500 !text-gray-100 hover:!border-secondary hover:!text-secondary">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
             <span>Filters</span>
             <span id="filter-toggle-hint" class="hint-strobe text-xs font-bold text-secondary hidden">· tap to collapse</span>
