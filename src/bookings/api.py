@@ -500,8 +500,12 @@ class BookingViewSet(viewsets.ModelViewSet):
                     return Response({'error': 'Package not found'}, status=status.HTTP_404_NOT_FOUND)
 
             if slot_type == 'schedule_block':
-                # Book against a ScheduleBlock (coach portal schedule)
-                block = ScheduleBlock.objects.get(pk=slot_id)
+                # Book against a ScheduleBlock — only fetch publicly available slots
+                try:
+                    block = ScheduleBlock.objects.get(pk=slot_id, status='available')
+                except ScheduleBlock.DoesNotExist:
+                    return Response({'error': 'This slot is no longer available'},
+                                    status=status.HTTP_400_BAD_REQUEST)
                 if not block.is_available:
                     return Response({'error': 'This slot is no longer available'},
                                   status=status.HTTP_400_BAD_REQUEST)
@@ -546,8 +550,14 @@ class BookingViewSet(viewsets.ModelViewSet):
                 session_name = session_type.name if session_type else SCHEDULE_BLOCK_CALENDARS.get(block.session_type, {}).get('name', 'Training Session')
 
             else:
-                # Book against an AvailabilitySlot
-                slot = AvailabilitySlot.objects.get(pk=slot_id)
+                # Book against an AvailabilitySlot — only fetch publicly available slots
+                try:
+                    slot = AvailabilitySlot.objects.get(
+                        pk=slot_id, status__in=['available', 'partially_booked']
+                    )
+                except AvailabilitySlot.DoesNotExist:
+                    return Response({'error': 'This slot is no longer available'},
+                                    status=status.HTTP_400_BAD_REQUEST)
                 if not slot.is_available:
                     return Response({'error': 'This slot is no longer available'},
                                   status=status.HTTP_400_BAD_REQUEST)
