@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import datetime, timedelta
 from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver, DiscountCode
 from bookings.models import Booking, Program
@@ -736,23 +737,27 @@ def booking_page(request):
             return redirect('clients:profile')
 
         # Require at least one player before booking
-        if not client.players.filter(is_active=True).exists():
+        # Fetch players once — reuse for guard check and context
+        players = list(client.players.filter(is_active=True))
+        if not players:
             messages.info(request, 'Please add a player before booking a session.')
             return redirect(f"{reverse('clients:player_add')}?next={reverse('clients:book')}")
+    else:
+        players = list(client.players.filter(is_active=True))
 
     booking_prefs, _ = BookingPreference.objects.get_or_create(client=client)
 
-    # Clean up expired reservations
-    SessionReservation.cleanup_expired()
+    # Throttle cleanup to once every 5 minutes to avoid a full table scan on every load
+    _cleanup_key = 'session_reservation_cleanup'
+    if not cache.get(_cleanup_key):
+        SessionReservation.cleanup_expired()
+        cache.set(_cleanup_key, True, 300)
 
     # Get client's active package
     active_package = client.packages.filter(
         status='active',
         expiry_date__gte=timezone.now().date()
     ).first()
-
-    # Get players
-    players = client.players.filter(is_active=True)
 
     # Get coaches
     coaches = Coach.objects.filter(is_active=True)

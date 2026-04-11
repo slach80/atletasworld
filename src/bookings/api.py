@@ -9,13 +9,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 from .models import SessionType, AvailabilitySlot, Booking
 from coaches.models import Coach, ScheduleBlock
-from clients.models import Client, ClientPackage
+from clients.models import Client, ClientPackage, Package
 
 SCHEDULE_BLOCK_CALENDARS = {
     'private': {'id': 'sb_private', 'name': 'Private Training', 'color': '#1a1a1a'},
@@ -152,6 +152,13 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
         if coach_id:
             queryset = queryset.filter(coach_id=coach_id)
 
+        # Eliminate N+1: fetch session_type + coach in one query,
+        # prefetch linked_packages filtered once for all slots.
+        _pkg_qs = Package.objects.filter(is_active=True, is_purchasable=True).only('id', 'name', 'price')
+        queryset = queryset.select_related('session_type', 'coach').prefetch_related(
+            Prefetch('session_type__linked_packages', queryset=_pkg_qs)
+        )
+
         # Format for Toast UI Calendar
         events = []
         for slot in queryset:
@@ -186,7 +193,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'drop_in_available': slot.session_type.drop_in_price is not None and slot.session_type.drop_in_price > 0,
                     'linked_packages': [
                         {'id': p.pk, 'name': p.name, 'price': str(p.price)}
-                        for p in slot.session_type.linked_packages.filter(is_active=True, is_purchasable=True)
+                        for p in slot.session_type.linked_packages.all()
                     ],
                     'duration': slot.session_type.duration_minutes,
                 }
@@ -195,7 +202,12 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
         # Also include ScheduleBlock records (coach portal schedule)
         sb_queryset = ScheduleBlock.objects.filter(
             status='available'
-        ).select_related('coach').prefetch_related('catalog_session_types')
+        ).select_related('coach').prefetch_related(
+            Prefetch('catalog_session_types',
+                     queryset=SessionType.objects.prefetch_related(
+                         Prefetch('linked_packages', queryset=_pkg_qs)
+                     ))
+        )
         if start_date:
             sb_queryset = sb_queryset.filter(date__gte=start_date)
         if end_date:
@@ -266,7 +278,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'drop_in_available': (catalog_types[0].drop_in_price is not None and catalog_types[0].drop_in_price > 0) if catalog_types else False,
                     'linked_packages': [
                         {'id': p.pk, 'name': p.name, 'price': str(p.price)}
-                        for p in (catalog_types[0].linked_packages.filter(is_active=True, is_purchasable=True) if catalog_types else [])
+                        for p in (catalog_types[0].linked_packages.all() if catalog_types else [])
                     ],
                     'duration': dur,
                     'location': block.location_override or (catalog_types[0].location if catalog_types else ''),
@@ -812,7 +824,9 @@ class ClientPackageViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if hasattr(user, 'client'):
-            return ClientPackage.objects.filter(client=user.client, status='active')
+            return ClientPackage.objects.filter(
+                client=user.client, status='active'
+            ).select_related('package')
         return ClientPackage.objects.none()
 
     def list(self, request):
@@ -829,9 +843,10 @@ class ClientPackageViewSet(viewsets.ReadOnlyModelViewSet):
             'can_book': pkg.sessions_remaining > 0 and pkg.is_valid,
         } for pkg in queryset]
 
-        # Add upgrade options
-        from clients.models import Package
-        available_packages = Package.objects.filter(is_active=True).order_by('price')
+        # Add upgrade options (purchasable, non-team, non-special only)
+        available_packages = Package.objects.filter(
+            is_active=True, is_purchasable=True, is_special=False
+        ).exclude(package_type='team').only('id', 'name', 'price', 'sessions_included').order_by('price')
         upgrades = [{
             'id': pkg.id,
             'name': pkg.name,
