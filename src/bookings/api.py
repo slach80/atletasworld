@@ -15,7 +15,7 @@ from decimal import Decimal
 
 from .models import SessionType, AvailabilitySlot, Booking
 from coaches.models import Coach, ScheduleBlock
-from clients.models import Client, ClientPackage, Package
+from clients.models import Client, ClientPackage, Package, Player
 
 SCHEDULE_BLOCK_CALENDARS = {
     'private': {'id': 'sb_private', 'name': 'Private Training', 'color': '#1a1a1a'},
@@ -476,6 +476,11 @@ class BookingViewSet(viewsets.ModelViewSet):
             player_id = data.get('player_id')
             package_id = data.get('package_id')
             promo_code_str = data.get('promo_code', '').strip().upper()
+
+            # Verify player belongs to authenticated client
+            if player_id:
+                if not Player.objects.filter(pk=player_id, client=client, is_active=True).exists():
+                    return Response({'error': 'Player not found'}, status=status.HTTP_404_NOT_FOUND)
 
             # Check package if provided
             package = None

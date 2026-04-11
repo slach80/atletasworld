@@ -262,12 +262,8 @@ def payments_webhook(request):
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
 
     if not settings.STRIPE_WEBHOOK_SECRET:
-        # Dev mode: accept without signature verification
-        import json
-        try:
-            event = json.loads(payload)
-        except Exception:
-            return HttpResponse(status=400)
+        logger.error('STRIPE_WEBHOOK_SECRET not configured — rejecting webhook')
+        return HttpResponse(status=400)
     else:
         try:
             event = stripe.Webhook.construct_event(
