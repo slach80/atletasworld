@@ -165,6 +165,17 @@
 <script>
 (function(){
     document.getElementById('mobile-nav-btn').addEventListener('click',function(){document.getElementById('mobile-nav-menu').classList.toggle('hidden');});
+
+    // Dark mode toggle
+    window.toggleClientDark = function(){
+        const on = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('apc-dark', on ? '1' : '0');
+        const btn = document.getElementById('client-dark-btn');
+        if(btn) btn.textContent = on ? '☀️' : '🌙';
+    };
+    // Set correct icon on load
+    (function(){ const btn=document.getElementById('client-dark-btn'); if(btn && localStorage.getItem('apc-dark')==='1') btn.textContent='☀️'; })();
+
     // Tooltip tap-to-toggle on mobile
     document.addEventListener('click',function(e){
         if(e.target.classList.contains('tip')){
@@ -514,7 +525,7 @@ function renderSlots(){
                         <p class="font-semibold text-sm">${time} · ${s.duration} min</p>
                         <p class="text-xs text-gray-500 truncate">${s.session_type_name}</p>
                         <p class="text-xs mt-0.5 ${low?'text-orange-500 font-semibold':'text-gray-400'}">${s.coach_name} · ${s.spots_remaining} spot${s.spots_remaining!==1?'s':''}</p>
-                        ${s.location?`<p class="text-xs truncate"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.location)}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${s.location}</a></p>`:''}
+                        ${s.location?`<p class="text-xs truncate"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationMapQuery(s.location))}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${s.location}</a></p>`:''}
                         ${priceLine}
                     </div>
                 </div>${btn}</div>`;
@@ -583,7 +594,7 @@ function buildCartHtml(){
                     <div>
                         <p class="font-semibold text-sm">${fmtDateLabel(slot.start.split('T')[0])} · ${fmtTime(slot.start)}</p>
                         <p class="text-xs text-gray-500">${slot.session_type_name} · ${slot.coach_name}</p>
-                        ${slot.location?`<p class="text-xs"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(slot.location)}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${slot.location}</a></p>`:''}
+                        ${slot.location?`<p class="text-xs"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationMapQuery(slot.location))}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${slot.location}</a></p>`:''}
                         <div class="mt-0.5">${priceTag}</div>
                     </div>
                 </div>
@@ -977,6 +988,12 @@ function isoDate(d){ return d.toISOString().split('T')[0]; }
 function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
 function fmtDateLabel(ds){ const t=new Date(); t.setHours(0,0,0,0); const tm=new Date(t); tm.setDate(tm.getDate()+1); if(ds===isoDate(t)) return'Today'; if(ds===isoDate(tm)) return'Tomorrow'; return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
 function getCookie(n){ const v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)'); return v?v.pop():''; }
+function locationMapQuery(loc){
+    if(!loc) return '';
+    const l=loc.toLowerCase();
+    if(l.includes('apc')||l.includes('atletas')) return '11301 W 88th St, Overland Park, KS 66214';
+    return loc;
+}
 
 // ── Booking drop-in payment via Stripe ──────────────────────────────────────
 {% if stripe_public_key %}
