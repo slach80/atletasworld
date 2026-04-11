@@ -263,7 +263,7 @@ class ClientPackage(models.Model):
         """Check if package is still valid for booking."""
         if self.status != 'active':
             return False
-        if self.expiry_date < timezone.now().date():
+        if self.expiry_date < timezone.localdate():
             return False
         if self.package.sessions_included > 0 and self.sessions_remaining <= 0:
             return False
@@ -961,7 +961,7 @@ class ClientCredit(models.Model):
         from django.utils import timezone
         if self.status != 'available':
             return False
-        if self.expires_at and self.expires_at < timezone.now().date():
+        if self.expires_at and self.expires_at < timezone.localdate():
             return False
         return True
 
@@ -1020,7 +1020,7 @@ class DiscountCode(models.Model):
 
     def is_valid_now(self):
         from django.utils import timezone
-        today = timezone.now().date()
+        today = timezone.localdate()
         if not self.is_active:
             return False, 'Code is inactive.'
         if self.valid_from and today < self.valid_from:

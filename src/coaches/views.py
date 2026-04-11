@@ -38,7 +38,7 @@ def coach_required(view_func):
 def dashboard(request):
     """Coach dashboard with overview."""
     coach = request.coach
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Today's sessions — blocks with at least one booking
     todays_blocks = ScheduleBlock.objects.filter(
@@ -140,7 +140,7 @@ def dashboard(request):
 def schedule(request):
     """View and manage schedule."""
     coach = request.coach
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Get date range from query params
     start_date = request.GET.get('start', today.isoformat())
@@ -528,7 +528,7 @@ def update_attendance(request, attendance_id):
 def todays_sessions(request):
     """Quick view of today's sessions grouped by time block."""
     coach = request.coach
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     import datetime as dt
     from collections import defaultdict
@@ -582,7 +582,7 @@ def todays_sessions(request):
 def assessments_list(request):
     """List sessions needing assessment with search and filter."""
     coach = request.coach
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Get completed bookings without assessments (last 14 days)
     pending = Booking.objects.filter(

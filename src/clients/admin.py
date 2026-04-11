@@ -161,7 +161,7 @@ class NotificationTemplateAdmin(admin.ModelAdmin):
             if filters.get('has_active_package'):
                 clients = clients.filter(
                     packages__status='active',
-                    packages__expiry_date__gte=timezone.now().date()
+                    packages__expiry_date__gte=timezone.localdate()
                 )
             if filters.get('inactive_weeks'):
                 weeks = filters['inactive_weeks']

@@ -138,7 +138,7 @@ def check_inactive_clients(self):
 
             weeks_inactive = 3
             if last_booking:
-                days_since = (timezone.now().date() - last_booking.scheduled_date).days
+                days_since = (timezone.localdate() - last_booking.scheduled_date).days
                 weeks_inactive = days_since // 7
 
             context = {
@@ -178,7 +178,7 @@ def send_booking_reminders(self):
         logger.warning("Booking reminder template not found or inactive")
         return "No active template"
 
-    tomorrow = timezone.now().date() + timedelta(days=1)
+    tomorrow = timezone.localdate() + timedelta(days=1)
     sent_count = 0
 
     # Get bookings for tomorrow
@@ -239,7 +239,7 @@ def check_expiring_packages(self):
         return "No active template"
 
     # Check packages expiring in 7 days
-    expiry_date = timezone.now().date() + timedelta(days=7)
+    expiry_date = timezone.localdate() + timedelta(days=7)
     sent_count = 0
 
     expiring_packages = ClientPackage.objects.filter(
@@ -279,7 +279,7 @@ def check_expiring_packages(self):
             logger.error(f"Failed to send package expiring notification for {client_package}: {e}")
 
     # Also check packages expiring in 3 days
-    expiry_date_3days = timezone.now().date() + timedelta(days=3)
+    expiry_date_3days = timezone.localdate() + timedelta(days=3)
     expiring_soon = ClientPackage.objects.filter(
         status='active',
         expiry_date=expiry_date_3days
@@ -327,7 +327,7 @@ def send_upcoming_event_reminders(self):
         logger.info("Upcoming event template not found or inactive")
         return "No active template"
 
-    tomorrow = timezone.now().date() + timedelta(days=1)
+    tomorrow = timezone.localdate() + timedelta(days=1)
     sent_count = 0
 
     # Get special event packages starting tomorrow
@@ -390,7 +390,7 @@ def send_custom_campaign(self, template_id, target_filters=None):
     if target_filters.get('has_active_package'):
         clients = clients.filter(
             packages__status='active',
-            packages__expiry_date__gte=timezone.now().date()
+            packages__expiry_date__gte=timezone.localdate()
         )
 
     if target_filters.get('inactive_weeks'):

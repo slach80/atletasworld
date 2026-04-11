@@ -29,7 +29,7 @@ def is_owner(user):
 @user_passes_test(is_owner)
 def owner_dashboard(request):
     """Owner dashboard with overview across all entities."""
-    today = timezone.now().date()
+    today = timezone.localdate()
     month_start = today.replace(day=1)
     year_start  = today.replace(month=1, day=1)
 
@@ -234,7 +234,7 @@ def owner_notifications(request):
     all_coaches = Coach.objects.select_related('user').filter(is_active=True, user__email__isnull=False).exclude(user__email='')
     all_users = User.objects.filter(is_active=True, email__isnull=False).exclude(email='')
 
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Clients with bookings in last 30 days
     active_client_ids = Booking.objects.filter(
@@ -393,7 +393,7 @@ def _resolve_recipient_emails(recipient_group, package_id='', contact_source='',
     """Resolve a recipient group name to a set of email addresses."""
     from bookings.models import Booking
     recipients = set()
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     if recipient_group == 'all_clients':
         emails = Client.objects.filter(
@@ -793,7 +793,7 @@ def owner_coaches(request):
     """List all coaches with management options."""
     from django.contrib.auth.models import Group
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     active_client_q = Q(bookings__client__approval_status__in=['approved', 'not_required'])
     coaches = Coach.objects.annotate(
         today_sessions=Count('bookings', filter=active_client_q & Q(
@@ -888,7 +888,7 @@ def owner_coach_edit(request, pk):
     from django.shortcuts import get_object_or_404
 
     coach = get_object_or_404(Coach, pk=pk)
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Check for outstanding activities — 2 queries instead of 3
     booking_counts = Booking.objects.filter(coach=coach).aggregate(
@@ -969,7 +969,7 @@ def owner_coach_delete(request, pk):
     from django.shortcuts import get_object_or_404
 
     coach = get_object_or_404(Coach, pk=pk)
-    today = timezone.now().date()
+    today = timezone.localdate()
     permanent = request.POST.get('permanent') == 'true'
 
     if permanent:
@@ -1023,7 +1023,7 @@ def owner_coach_schedule(request, pk):
     from django.shortcuts import get_object_or_404
 
     coach = get_object_or_404(Coach, pk=pk)
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Get upcoming schedule blocks
     schedule_blocks = ScheduleBlock.objects.filter(
@@ -1081,7 +1081,7 @@ def owner_bookings(request):
     """List all bookings with filters."""
     from clients.models import Package
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     status_filter       = request.GET.get('status', '')
     coach_filter        = request.GET.get('coach', '')
     date_filter         = request.GET.get('date', '')
@@ -1524,7 +1524,7 @@ def owner_team_detail(request, pk):
     from datetime import timedelta
 
     team = get_object_or_404(Team.objects.select_related('manager__user'), pk=pk)
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Get team players with details
     players = Player.objects.filter(team=team, is_active=True).select_related('client__user')
@@ -1591,7 +1591,7 @@ def owner_team_bookings(request, team_id):
     from django.shortcuts import get_object_or_404
 
     team = get_object_or_404(Team.objects.select_related('manager__user'), pk=team_id)
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # Get date filters from request
     date_from = request.GET.get('date_from')
@@ -1642,7 +1642,7 @@ def owner_field_slots(request):
     from clients.models import FieldRentalSlot, RentalService, Notification, Client
     from datetime import datetime as dt
 
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # --- Service catalog actions (merged from owner_services) ---
     action = request.POST.get('action', '')
@@ -1788,7 +1788,7 @@ def owner_field_slot_edit(request, pk):
 
     if request.method == 'POST':
         try:
-            today = timezone.now().date()
+            today = timezone.localdate()
             start_t = dt.strptime(request.POST['start_time'], '%H:%M').time()
             end_t   = dt.strptime(request.POST['end_time'],   '%H:%M').time()
             slot.date             = request.POST['date']
@@ -2033,7 +2033,7 @@ def owner_finances(request):
     from calendar import month_name
     from decimal import Decimal
 
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # --- Date range: default to current month, support ?month=M&year=Y ---
     try:
@@ -2315,7 +2315,7 @@ def owner_credits(request):
         ClientCredit.objects.filter(
             status='available'
         ).filter(
-            Q(expires_at__isnull=True) | Q(expires_at__gte=timezone.now().date())
+            Q(expires_at__isnull=True) | Q(expires_at__gte=timezone.localdate())
         ).values('client_id').annotate(total=Sum('amount')).values_list('client_id', 'total')
     )
 

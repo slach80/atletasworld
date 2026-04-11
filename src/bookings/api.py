@@ -41,7 +41,7 @@ def get_client_select_membership(user):
     """Return True if user has an active APC Select ClientPackage."""
     if not user.is_authenticated or not hasattr(user, 'client'):
         return False
-    today = timezone.now().date()
+    today = timezone.localdate()
     return user.client.packages.filter(
         package__package_type='select',
         status='active',
@@ -132,7 +132,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
         # Clients see all available slots
         return AvailabilitySlot.objects.filter(
             status__in=['available', 'partially_booked'],
-            date__gte=timezone.now().date()
+            date__gte=timezone.localdate()
         )
 
     def list(self, request):

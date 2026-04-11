@@ -25,20 +25,20 @@ def dashboard(request):
     # Get active packages
     active_packages = client.packages.filter(
         status='active',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     )
 
     # Get upcoming bookings
     upcoming_bookings = Booking.objects.filter(
         client=client,
-        scheduled_date__gte=timezone.now().date(),
+        scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
     ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')[:5]
 
     # Get recent bookings (past)
     past_bookings = Booking.objects.filter(
         client=client,
-        scheduled_date__lt=timezone.now().date()
+        scheduled_date__lt=timezone.localdate()
     ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')[:5]
 
     # Total sessions remaining across all active packages
@@ -65,7 +65,7 @@ def dashboard(request):
             next_booking_soon = next_booking
 
     # Packages expiring soon (within 14 days)
-    today = timezone.now().date()
+    today = timezone.localdate()
     expiring_soon = [
         p for p in active_packages
         if (p.expiry_date - today).days <= 14
@@ -368,12 +368,12 @@ def packages_list(request):
 
     active_packages = client.packages.filter(
         status='active',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     )
 
     expired_packages = client.packages.exclude(
         status='active',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     )
 
     # Separate select membership from regular packages
@@ -414,13 +414,13 @@ def bookings_list(request):
 
     upcoming_bookings = Booking.objects.filter(
         client=client,
-        scheduled_date__gte=timezone.now().date(),
+        scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
     ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')
 
     past_bookings = Booking.objects.filter(
         client=client,
-        scheduled_date__lt=timezone.now().date()
+        scheduled_date__lt=timezone.localdate()
     ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')
 
     from django.conf import settings as django_settings
@@ -756,7 +756,7 @@ def booking_page(request):
     # Get client's active package
     active_package = client.packages.filter(
         status='active',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     ).first()
 
     # Get coaches
@@ -766,7 +766,7 @@ def booking_page(request):
     programs = Program.objects.filter(is_active=True)
 
     # Get available schedule blocks (next 30 days)
-    today = timezone.now().date()
+    today = timezone.localdate()
     available_blocks = ScheduleBlock.objects.filter(
         date__gte=today,
         date__lte=today + timedelta(days=30),
@@ -914,7 +914,7 @@ def reserve_session(request):
     # Check if client has an active package with sessions remaining
     active_package = client.packages.filter(
         status='active',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     ).first()
 
     if not active_package or (active_package.package.sessions_included > 0 and active_package.sessions_remaining <= 0):
@@ -993,7 +993,7 @@ def confirm_booking(request):
     # Get active package
     active_package = client.packages.filter(
         status='active',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     ).first()
 
     if not active_package:
@@ -1115,7 +1115,7 @@ def team_detail(request, team_id):
     # Get team's upcoming bookings
     upcoming_bookings = Booking.objects.filter(
         player__team=team,
-        scheduled_date__gte=timezone.now().date(),
+        scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
     ).select_related('player', 'coach').order_by('scheduled_date', 'scheduled_time')
     
@@ -1123,7 +1123,7 @@ def team_detail(request, team_id):
     active_package = client.packages.filter(
         status='active',
         package__package_type='team',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     ).first()
     
     context = {
@@ -1246,7 +1246,7 @@ def team_booking_page(request, team_id):
     active_package = client.packages.filter(
         status='active',
         package__package_type='team',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     ).first()
     
     if not active_package:
@@ -1254,7 +1254,7 @@ def team_booking_page(request, team_id):
         return redirect('clients:packages')
     
     # Get available schedule blocks for team training
-    today = timezone.now().date()
+    today = timezone.localdate()
     available_blocks = ScheduleBlock.objects.filter(
         date__gte=today,
         date__lte=today + timedelta(days=30),
@@ -1300,7 +1300,7 @@ def team_reserve_session(request, team_id):
     active_package = client.packages.filter(
         status='active',
         package__package_type='team',
-        expiry_date__gte=timezone.now().date()
+        expiry_date__gte=timezone.localdate()
     ).first()
     
     if not active_package:
@@ -1372,13 +1372,13 @@ def team_bookings_list(request):
     # Get bookings for players on these teams
     upcoming_bookings = Booking.objects.filter(
         player__team_id__in=team_ids,
-        scheduled_date__gte=timezone.now().date(),
+        scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
     ).select_related('player', 'player__team', 'coach').order_by('scheduled_date', 'scheduled_time')
     
     past_bookings = Booking.objects.filter(
         player__team_id__in=team_ids,
-        scheduled_date__lt=timezone.now().date()
+        scheduled_date__lt=timezone.localdate()
     ).select_related('player', 'player__team', 'coach').order_by('-scheduled_date', '-scheduled_time')
     
     context = {
@@ -1398,7 +1398,7 @@ def team_bookings_list(request):
 def field_rental_list(request):
     """Show available field rental slots and client's existing requests."""
     client, _ = Client.objects.get_or_create(user=request.user)
-    today = timezone.now().date()
+    today = timezone.localdate()
     preselect_team_id = request.GET.get('team')
 
     available_slots = FieldRentalSlot.objects.filter(
@@ -1529,7 +1529,7 @@ def field_rental_cancel(request, slot_id):
 @login_required
 def field_rental_available_json(request):
     """JSON API: available field rental slots for calendar overlay."""
-    today = timezone.now().date()
+    today = timezone.localdate()
     slots = FieldRentalSlot.objects.filter(
         date__gte=today,
         date__lte=today + timedelta(days=60),
