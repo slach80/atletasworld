@@ -175,7 +175,9 @@ PRODUCTION_EMAIL_ENABLED=True</pre>
             <div>
                 <h3 class="font-bold text-gray-900 mb-2">Bookings</h3>
                 <ul class="space-y-1 text-gray-600">
-                    <li>→ <a href="{% url 'owner_bookings' %}" class="text-owner hover:underline">Bookings</a> — full list of all bookings, filterable by status and date</li>
+                    <li>→ <a href="{% url 'owner_bookings' %}" class="text-owner hover:underline">Bookings</a> — full list of all bookings with filters and package column</li>
+                    <li>→ Filter by: <strong>Status</strong>, <strong>Coach</strong>, <strong>Session Type</strong>, <strong>Package Type</strong>, <strong>Date</strong></li>
+                    <li>→ Package column shows which package was used for each booking (or drop-in)</li>
                     <li>→ Statuses: Pending → Confirmed → Completed / No Show / Cancelled</li>
                     <li>→ Clients can cancel up to 24 hours before; after that contact the owner</li>
                 </ul>
@@ -268,6 +270,64 @@ PRODUCTION_EMAIL_ENABLED=True</pre>
     </div>
 </section>
 
+<!-- ── SECURITY ──────────────────────────────────────── -->
+<section id="security" class="mb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b flex items-center gap-3">
+            <span class="text-2xl">🔒</span>
+            <h2 class="text-lg font-bold text-gray-800">Security</h2>
+            <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">Hardened ✓</span>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Password Policy</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ Minimum password length: <strong>12 characters</strong></li>
+                        <li>→ Passwords expire annually — users are redirected to change their password when expired</li>
+                        <li>→ Existing users were given a <strong>6-month grace period</strong> from April 2026</li>
+                        <li>→ New users get a full year before their first required change</li>
+                        <li>→ Clock resets automatically when a user changes or resets their password</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Sibling Discount</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ 50% off applies to the 2nd, 3rd, 4th… sibling automatically</li>
+                        <li>→ Applies to group-format sessions (pick-up, clinic, camp, seasonal, team)</li>
+                        <li>→ Also applies to package purchases — 50% off same package for additional players</li>
+                        <li>→ Cannot be stacked with a promo code</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Automated Security Scanning</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ Runs every <strong>Monday 6 AM UTC</strong> via GitHub Actions</li>
+                        <li>→ <strong>pip-audit</strong> + <strong>Safety</strong> — checks all dependencies for known CVEs</li>
+                        <li>→ <strong>Bandit</strong> — static code analysis for vulnerabilities</li>
+                        <li>→ <strong>Django check --deploy</strong> — catches misconfigurations</li>
+                        <li>→ Results visible in GitHub → Actions → Security Scan</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-2">Dependency Updates (Dependabot)</h3>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>→ Opens PRs automatically every <strong>Monday 7 AM CT</strong></li>
+                        <li>→ Minor/patch updates grouped into one PR to reduce noise</li>
+                        <li>→ Major version bumps get individual PRs for manual review</li>
+                        <li>→ Tests run on each PR before merging</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="p-3 bg-blue-50 rounded-lg text-blue-800 text-xs">
+                <strong>Protection in place:</strong> CSRF, rate limiting (300 req/hr per user), Content Security Policy headers, annual password expiry, Stripe webhook signature verification, player ownership checks on all bookings.
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- ── SERVER / TECHNICAL ──────────────────────────────────────── -->
 <section id="server" class="mb-10">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -325,7 +385,7 @@ sudo supervisorctl restart atletasworld</pre>
 const sections = [
     ['payments','💳 Payments'],['email','📧 Email'],['clients','👥 Clients & Contacts'],
     ['packages','📦 Packages'],['sessions','📅 Sessions'],['rentals','🏟️ Rentals'],
-    ['coaches','🏋️ Coaches'],['waivers','📋 Waivers'],['teams','🏆 Teams'],['server','⚙️ Server']
+    ['coaches','🏋️ Coaches'],['waivers','📋 Waivers'],['teams','🏆 Teams'],['security','🔒 Security'],['server','⚙️ Server']
 ];
 const nav = document.querySelector('.flex.flex-wrap.gap-2.mb-8');
 if (nav) {
