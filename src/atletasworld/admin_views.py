@@ -1079,15 +1079,18 @@ def owner_coach_schedule(request, pk):
 @user_passes_test(is_owner)
 def owner_bookings(request):
     """List all bookings with filters."""
-    from clients.models import Player
+    from clients.models import Package
 
     today = timezone.now().date()
-    status_filter = request.GET.get('status', '')
-    coach_filter = request.GET.get('coach', '')
-    date_filter = request.GET.get('date', '')
+    status_filter       = request.GET.get('status', '')
+    coach_filter        = request.GET.get('coach', '')
+    date_filter         = request.GET.get('date', '')
+    session_type_filter = request.GET.get('session_type', '')
+    package_type_filter = request.GET.get('package_type', '')
 
     bookings = Booking.objects.select_related(
-        'client__user', 'player', 'coach__user', 'session_type'
+        'client__user', 'player', 'coach__user', 'session_type',
+        'client_package__package',
     ).order_by('-scheduled_date', '-scheduled_time')
 
     if status_filter:
@@ -1096,17 +1099,25 @@ def owner_bookings(request):
         bookings = bookings.filter(coach_id=coach_filter)
     if date_filter:
         bookings = bookings.filter(scheduled_date=date_filter)
+    if session_type_filter:
+        bookings = bookings.filter(session_type_id=session_type_filter)
+    if package_type_filter:
+        bookings = bookings.filter(client_package__package__package_type=package_type_filter)
 
-    # Limit to 100 recent bookings
-    bookings = bookings[:100]
+    # Limit to 200 recent bookings
+    bookings = bookings[:200]
 
     context = {
         'bookings': bookings,
         'coaches': Coach.objects.filter(is_active=True),
+        'session_types': SessionType.objects.filter(is_active=True).order_by('name'),
         'status_choices': Booking.STATUS_CHOICES,
+        'package_type_choices': Package.PACKAGE_TYPE_CHOICES,
         'status_filter': status_filter,
         'coach_filter': coach_filter,
         'date_filter': date_filter,
+        'session_type_filter': session_type_filter,
+        'package_type_filter': package_type_filter,
     }
     return render(request, 'owner/bookings.html', context)
 
