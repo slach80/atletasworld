@@ -5,7 +5,8 @@ Auto-adds users to Client group on signup.
 from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from allauth.account.signals import user_signed_up
+from django.utils import timezone
+from allauth.account.signals import user_signed_up, password_changed, password_reset
 
 
 @receiver(user_signed_up)
@@ -39,3 +40,14 @@ def link_contact_import_on_signup(sender, request, user, **kwargs):
     contact.client    = client
     contact.linked_at = tz.now()
     contact.save(update_fields=['client', 'linked_at'])
+
+
+@receiver(password_changed)
+@receiver(password_reset)
+def update_password_expiry(sender, request, user, **kwargs):
+    """Reset the password expiry clock whenever a user changes or resets their password."""
+    from clients.models import UserPasswordExpiry
+    UserPasswordExpiry.objects.update_or_create(
+        user=user,
+        defaults={'password_changed_at': timezone.now()}
+    )

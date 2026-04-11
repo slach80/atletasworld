@@ -1249,3 +1249,26 @@ class EmailBroadcast(models.Model):
 
     def __str__(self):
         return f'{self.subject} → {self.recipient_group} ({self.sent_count} sent)'
+
+
+class UserPasswordExpiry(models.Model):
+    """Tracks when a user last changed their password for annual expiry enforcement."""
+    user               = models.OneToOneField(User, on_delete=models.CASCADE, related_name='password_expiry')
+    password_changed_at = models.DateTimeField(default=timezone.now)
+
+    PASSWORD_EXPIRY_DAYS = 365
+
+    class Meta:
+        verbose_name        = 'Password Expiry'
+        verbose_name_plural = 'Password Expiries'
+
+    def __str__(self):
+        return f'{self.user.username} — changed {self.password_changed_at.date()}'
+
+    @property
+    def is_expired(self):
+        return (timezone.now() - self.password_changed_at).days >= self.PASSWORD_EXPIRY_DAYS
+
+    @property
+    def days_until_expiry(self):
+        return max(0, self.PASSWORD_EXPIRY_DAYS - (timezone.now() - self.password_changed_at).days)
