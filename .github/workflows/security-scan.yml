@@ -1,0 +1,69 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday 6 AM UTC
+  workflow_dispatch:
+
+jobs:
+  security:
+    name: Dependency & Code Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install scanners
+        run: pip install bandit safety pip-audit
+
+      - name: Install project dependencies
+        run: pip install -r requirements.txt
+
+      # ── Dependency vulnerability scan ──────────────────────────────
+      - name: pip-audit (CVE check)
+        run: pip-audit -r requirements.txt --format markdown >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Safety check
+        run: safety check -r requirements.txt --output text || true
+
+      # ── Static code security analysis ──────────────────────────────
+      - name: Bandit (SAST)
+        run: |
+          bandit -r src/ \
+            --exclude src/*/migrations,src/*/tests \
+            --severity-level medium \
+            --confidence-level medium \
+            --format txt \
+            -o bandit-report.txt || true
+          cat bandit-report.txt >> $GITHUB_STEP_SUMMARY
+
+      # ── Django deployment check ─────────────────────────────────────
+      - name: Django deploy check
+        env:
+          SECRET_KEY: ci-check-only-not-production
+          DEBUG: 'False'
+          DATABASE_URL: sqlite:///tmp/ci.db
+          ALLOWED_HOSTS: 'atletasperformancecenter.com'
+          STRIPE_PUBLIC_KEY: ''
+          STRIPE_SECRET_KEY: ''
+          STRIPE_WEBHOOK_SECRET: 'whsec_placeholder'
+        run: |
+          cd src
+          python manage.py check --deploy --tag security 2>&1 | tee -a $GITHUB_STEP_SUMMARY || true
+
+      # ── Upload Bandit report as artifact ───────────────────────────
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-${{ github.sha }}
+          path: bandit-report.txt
+          retention-days: 30
