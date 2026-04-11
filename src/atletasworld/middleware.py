@@ -11,6 +11,31 @@ _EXEMPT_PREFIXES = (
     '/__debug__/',
 )
 
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net js.stripe.com; "
+    "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.tailwindcss.com; "
+    "font-src 'self' fonts.gstatic.com data:; "
+    "img-src 'self' data: blob: *.stripe.com; "
+    "frame-src js.stripe.com *.stripe.com; "
+    "connect-src 'self' *.stripe.com api.stripe.com; "
+    "object-src 'none'; "
+    "base-uri 'self';"
+)
+
+
+class SecurityHeadersMiddleware:
+    """Adds Content-Security-Policy and Referrer-Policy to every response."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response['Content-Security-Policy'] = _CSP
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        return response
+
 
 class PasswordExpiryMiddleware:
     """

@@ -8,6 +8,26 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.core.cache import cache
 from datetime import datetime, timedelta
+
+_ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+_MAX_PHOTO_BYTES = 5 * 1024 * 1024  # 5 MB
+
+def _validate_photo(photo):
+    """Return an error string, or None if the photo is valid."""
+    import os
+    if photo.size > _MAX_PHOTO_BYTES:
+        return 'Photo must be under 5 MB.'
+    ext = os.path.splitext(photo.name)[1].lower()
+    if ext not in _ALLOWED_PHOTO_EXTENSIONS:
+        return 'Only JPG, PNG, and WebP images are allowed.'
+    try:
+        from PIL import Image
+        img = Image.open(photo)
+        img.verify()
+        photo.seek(0)
+    except Exception:
+        return 'Uploaded file is not a valid image.'
+    return None
 from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver, DiscountCode
 from bookings.models import Booking, Program
 from coaches.models import PlayerAssessment, Coach, ScheduleBlock
@@ -274,6 +294,10 @@ def player_add(request):
             notes=request.POST.get('notes', ''),
         )
         if request.FILES.get('photo'):
+            err = _validate_photo(request.FILES['photo'])
+            if err:
+                messages.error(request, err)
+                return redirect(request.path)
             player.photo = request.FILES['photo']
             player.save()
         messages.success(request, f'{player.first_name} has been added!')
@@ -310,6 +334,10 @@ def player_edit(request, player_id):
         player.school_grade = request.POST.get('school_grade', '')
         player.notes = request.POST.get('notes', '')
         if request.FILES.get('photo'):
+            err = _validate_photo(request.FILES['photo'])
+            if err:
+                messages.error(request, err)
+                return redirect(request.path)
             player.photo = request.FILES['photo']
         player.save()
 
