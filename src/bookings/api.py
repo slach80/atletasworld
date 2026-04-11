@@ -773,8 +773,8 @@ class BookingViewSet(viewsets.ModelViewSet):
         except AvailabilitySlot.DoesNotExist:
             return Response({'error': 'Availability slot not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.exception('Booking creation failed: slot_id=%s slot_type=%s player_id=%s',
-                             data.get('slot_id'), data.get('slot_type'), data.get('player_id'))
+            logger.exception('Booking creation failed: slot_id=%s slot_type=%s',
+                             data.get('slot_id'), data.get('slot_type'))
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])

@@ -312,7 +312,7 @@ def owner_send_notification(request):
     logger = logging.getLogger(__name__)
 
     recipient_group = request.POST.get('recipient_group', '')
-    subject = request.POST.get('subject', '').strip()
+    subject = request.POST.get('subject', '').strip().replace('\n', '').replace('\r', '')
     message = request.POST.get('message', '').strip()
     individual_emails = request.POST.getlist('individual_emails')
     send_as_html = request.POST.get('send_as_html') == 'on'
