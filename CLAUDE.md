@@ -138,4 +138,4 @@ See `docs/site-audit-2026-03-18.md` for full audit. Open items:
 2. ~~Client facility rental page not properly routed at `/portal/field-rental/`~~ ✅ fixed (added nav links to dashboard dropdown + mobile menu)
 3. ~~`owner_field_slots` — `FieldError: booked_at`~~ ✅ fixed (use `date__month`)
 
-**Next up**: SSL cert once `atletasperformancecenter.com` DNS propagates → then Google OAuth setup.
+**Next up**: Google OAuth setup — domain + SSL are live at `atletasperformancecenter.com`. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to EC2 `.env`, then enable the social login buttons.
