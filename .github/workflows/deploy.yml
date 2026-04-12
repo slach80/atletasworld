@@ -72,7 +72,8 @@ jobs:
         run: |
           cd src
           python manage.py migrate --noinput
-          python manage.py test --verbosity=2
+          cd ..
+          pytest --tb=short -q
 
   deploy:
     name: Deploy to EC2
