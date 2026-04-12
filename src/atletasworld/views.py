@@ -40,7 +40,7 @@ def home_view(request):
     packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=False
     ).exclude(package_type__in=['select', 'team']).order_by('price')
-    events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('start_date', 'name')
+    events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('event_display_order', 'start_date', 'name')
     programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').order_by('name')
 
     # Annotate formatted start times and a single date range from linked packages
@@ -49,12 +49,10 @@ def home_view(request):
         obj.weekend_start_times_fmt = _fmt_times(obj.weekend_start_times) if obj.weekend_start_times else ''
         obj.pkg_date = obj.linked_packages.filter(event_start_date__isnull=False).first()
 
-    import datetime as dt
     return render(request, 'home.html', {
         'packages': packages,
         'events': events_qs,
         'programs': programs_qs,
-        'show_apc_select_card': timezone.localdate() >= dt.date(2026, 4, 10),
     })
 
 

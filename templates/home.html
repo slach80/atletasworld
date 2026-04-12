@@ -213,88 +213,201 @@
     </div>
 </section>
 
-<!-- Upcoming Events Banner -->
-<section id="events" class="bg-gradient-to-r from-green-700 to-red-700 text-white py-14">
+<!-- Upcoming Events Carousel -->
+<section id="events" class="bg-gradient-to-r from-green-700 to-red-700 text-white py-14 overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
             <span class="inline-block bg-white/20 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">🔥 UPCOMING EVENTS</span>
             <h2 class="text-3xl md:text-4xl font-bold">Don't Miss Out!</h2>
         </div>
 
-        <div class="grid sm:grid-cols-1 md:grid-cols-{% if show_apc_select_card %}3{% else %}2{% endif %} lg:grid-cols-{% if show_apc_select_card %}3{% else %}2{% endif %} gap-5 max-w-4xl mx-auto">
+        {% if events %}
+        <!-- Carousel wrapper -->
+        <div class="relative" id="events-carousel-wrap">
+            <!-- Prev button -->
+            <button id="evt-prev" aria-label="Previous"
+                    class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 z-10 bg-white/20 hover:bg-white/40 text-white rounded-full w-9 h-9 flex items-center justify-center transition hidden sm:flex">
+                &#8249;
+            </button>
+            <!-- Next button -->
+            <button id="evt-next" aria-label="Next"
+                    class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 z-10 bg-white/20 hover:bg-white/40 text-white rounded-full w-9 h-9 flex items-center justify-center transition hidden sm:flex">
+                &#8250;
+            </button>
 
-            <!-- Summer Program — consolidated -->
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white">Outdoor Program</span>
-                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">May 18 – Aug 8</span>
-                </div>
-                <h3 class="text-xl font-black mb-1 ">Summer Program</h3>
-                <p class="text-white/65 text-xs mb-4">Tue &amp; Thu · Package required</p>
-                <div class="space-y-2 text-sm flex-1 mb-4">
-                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
-                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">U13 &amp; Younger</span>
-                        <span class="text-white/70 text-xs">9AM · 4:30PM · 6PM</span>
+            <!-- Viewport -->
+            <div class="overflow-hidden sm:mx-10">
+                <!-- Track — slides left via transform -->
+                <div id="evt-track" class="flex gap-5 transition-transform duration-700 ease-in-out will-change-transform">
+                    {% for ev in events %}
+                    <div class="evt-card flex-shrink-0 flex flex-col rounded-2xl border border-white/20 overflow-hidden"
+                         style="width: var(--card-w, 100%)">
+                        {% if ev.poster_image %}
+                        {# ── Poster card ── #}
+                        <div class="relative flex-1 min-h-[14rem]">
+                            <img src="{{ ev.poster_image.url }}" alt="{{ ev.name }}"
+                                 class="absolute inset-0 w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md p-4 flex items-center justify-between gap-3">
+                            <h3 class="text-lg font-black leading-tight">{{ ev.name }}</h3>
+                            {% if ev.event_cta_url and ev.event_cta_text %}
+                            <a href="{{ ev.event_cta_url }}"
+                               class="flex-shrink-0 bg-white text-red-600 px-4 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition">
+                                {{ ev.event_cta_text }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        {# ── Info card ── #}
+                        <div class="bg-white/10 backdrop-blur-md p-5 flex flex-col flex-1">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold uppercase tracking-widest text-white/80">
+                                    {{ ev.get_session_format_display }}
+                                </span>
+                                {% if ev.days_of_week %}
+                                <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                    {{ ev.days_of_week }}
+                                </span>
+                                {% elif ev.start_date %}
+                                <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                    {{ ev.start_date|date:"M j" }}{% if ev.end_date %} – {{ ev.end_date|date:"M j" }}{% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <h3 class="text-xl font-black mb-1">{{ ev.name }}</h3>
+                            {% if ev.description %}
+                            <p class="text-white/65 text-xs mb-3">{{ ev.description }}</p>
+                            {% endif %}
+                            {% if ev.age_group or ev.start_times_fmt %}
+                            <div class="space-y-2 text-sm flex-1 mb-4">
+                                {% if ev.age_group %}
+                                <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                                    <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Age Group</span>
+                                    <span class="text-white/70 text-xs">{{ ev.age_group }}</span>
+                                </div>
+                                {% endif %}
+                                {% if ev.start_times_fmt %}
+                                <div class="flex justify-between items-baseline">
+                                    <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Times</span>
+                                    <span class="text-white/70 text-xs">{{ ev.start_times_fmt }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="flex-1"></div>
+                            {% endif %}
+                            {% if ev.event_cta_url and ev.event_cta_text %}
+                            <a href="{{ ev.event_cta_url }}"
+                               class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                                {{ ev.event_cta_text }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">HS / College</span>
-                        <span class="text-white/70 text-xs">7AM · 10:30AM · 6PM</span>
-                    </div>
+                    {% endfor %}
                 </div>
-                <a href="{% url 'clients:packages' %}" class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
-                    Purchase Package →
-                </a>
             </div>
 
-            <!-- Serie A Elite Scouts Class -->
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white">Weekly Class</span>
-                    <span class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">Every Sunday</span>
-                </div>
-                <h3 class="text-xl font-black mb-1 ">Serie A Elite Scouts</h3>
-                <p class="text-white/65 text-xs mb-4">$40/session · 90 min · 20-player cap</p>
-                <div class="space-y-2 text-sm flex-1 mb-4">
-                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
-                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">U13 (2014–2018)</span>
-                        <span class="text-white/70 text-xs">4:00 PM</span>
-                    </div>
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">U19 (2007–2013)</span>
-                        <span class="text-white/70 text-xs">5:30 PM</span>
-                    </div>
-                </div>
-                <a href="/programs/" class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
-                    Learn More &amp; Book →
-                </a>
-            </div>
-
-            <!-- APC Select — hidden until April 10, 2026 -->
-            {% if show_apc_select_card %}
-            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white/60">New · 2026</span>
-                    <span class="bg-secondary text-gray-900 text-xs font-black px-2 py-0.5 rounded-full">Tryouts FREE</span>
-                </div>
-                <h3 class="text-xl font-black mb-1 ">APC Select</h3>
-                <p class="text-white/65 text-xs mb-4">$100/mo · 6-month commitment · Kits included</p>
-                <div class="space-y-2 text-sm flex-1 mb-4">
-                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
-                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Birth Years</span>
-                        <span class="text-white/70 text-xs">2014 · 2015 · 2016</span>
-                    </div>
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Tryouts</span>
-                        <span class="text-white/70 text-xs">May 21–24, 2026</span>
-                    </div>
-                </div>
-                <a href="/programs/" class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
-                    Learn More &amp; Register →
-                </a>
-            </div>
-            {% endif %}
-
+            <!-- Dot indicators -->
+            <div id="evt-dots" class="flex justify-center gap-2 mt-6"></div>
         </div>
+
+        <script>
+        (function () {
+            var cards   = document.querySelectorAll('.evt-card');
+            var track   = document.getElementById('evt-track');
+            var dotsWrap = document.getElementById('evt-dots');
+            var prevBtn = document.getElementById('evt-prev');
+            var nextBtn = document.getElementById('evt-next');
+            var total   = cards.length;
+            if (total === 0) return;
+
+            // Visible card count based on viewport width
+            function visibleCount() {
+                var w = window.innerWidth;
+                if (w >= 1024) return Math.min(3, total);
+                if (w >= 640)  return Math.min(2, total);
+                return 1;
+            }
+
+            // Set CSS custom property + card widths
+            function setCardWidths() {
+                var vis  = visibleCount();
+                var gapPx = (vis - 1) * 20;  // gap-5 = 20px
+                var pct  = 'calc((100% - ' + gapPx + 'px) / ' + vis + ')';
+                cards.forEach(function (c) { c.style.width = pct; });
+            }
+
+            var current = 0;
+
+            function pages() { return Math.max(1, total - visibleCount() + 1); }
+
+            function buildDots() {
+                dotsWrap.innerHTML = '';
+                var p = pages();
+                for (var i = 0; i < p; i++) {
+                    var d = document.createElement('button');
+                    d.className = 'w-2 h-2 rounded-full transition-all ' + (i === 0 ? 'bg-white scale-125' : 'bg-white/40');
+                    d.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+                    d.dataset.idx = i;
+                    d.addEventListener('click', function () { goTo(parseInt(this.dataset.idx)); });
+                    dotsWrap.appendChild(d);
+                }
+            }
+
+            function updateDots() {
+                dotsWrap.querySelectorAll('button').forEach(function (d, i) {
+                    d.className = 'w-2 h-2 rounded-full transition-all ' + (i === current ? 'bg-white scale-125' : 'bg-white/40');
+                });
+            }
+
+            function goTo(idx) {
+                var maxIdx = pages() - 1;
+                current = Math.max(0, Math.min(idx, maxIdx));
+                // Each card slot width = card width + gap
+                var cardEl = cards[0];
+                var gap = 20;
+                var slotW = cardEl.offsetWidth + gap;
+                track.style.transform = 'translateX(-' + (current * slotW) + 'px)';
+                updateDots();
+            }
+
+            function advance() { goTo(current + 1 < pages() ? current + 1 : 0); }
+
+            // Auto-rotate
+            var timer = setInterval(advance, 5000);
+            var wrap  = document.getElementById('events-carousel-wrap');
+            wrap.addEventListener('mouseenter', function () { clearInterval(timer); });
+            wrap.addEventListener('mouseleave', function () { timer = setInterval(advance, 5000); });
+
+            prevBtn.addEventListener('click', function () { goTo(current - 1 < 0 ? pages() - 1 : current - 1); });
+            nextBtn.addEventListener('click', function () { goTo(current + 1 < pages() ? current + 1 : 0); });
+
+            function init() {
+                setCardWidths();
+                buildDots();
+                goTo(0);
+                // Show arrows only when there are more cards than visible
+                var showArrows = total > visibleCount();
+                prevBtn.style.display = showArrows ? '' : 'none';
+                nextBtn.style.display = showArrows ? '' : 'none';
+            }
+
+            // Re-init on resize (debounced)
+            var resizeTimer;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function () { current = 0; init(); }, 150);
+            });
+
+            init();
+        })();
+        </script>
+        {% else %}
+        <p class="text-center text-white/70 text-sm">No upcoming events at this time. Check back soon!</p>
+        {% endif %}
 
         <p class="text-center mt-8 text-white text-sm">
             <span class="inline-block animate-pulse">⚡</span> Limited spots available — Book now to secure your place!

@@ -9,7 +9,7 @@
 <div class="bg-white rounded-xl shadow-md p-8 max-w-2xl">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Edit Session Type</h1>
 
-    <form method="post" class="space-y-6">
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
 
         <div class="grid grid-cols-2 gap-6">
@@ -239,18 +239,72 @@
                            class="w-5 h-5 text-owner border-gray-300 rounded focus:ring-owner">
                     <span class="text-sm text-gray-700">Active (available for booking)</span>
                 </label>
-                <div class="border rounded-lg p-3 bg-gray-50 space-y-2 mt-2">
+                <div class="border rounded-lg p-3 bg-gray-50 space-y-4 mt-2">
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Homepage Display</p>
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" name="show_as_event" {% if session_type.show_as_event %}checked{% endif %}
                                class="w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent">
-                        <span class="text-sm text-gray-700">🔥 Show in <strong>Upcoming Events</strong></span>
+                        <span class="text-sm text-gray-700">🔥 Show in <strong>Upcoming Events</strong> carousel</span>
                     </label>
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" name="show_as_program" {% if session_type.show_as_program %}checked{% endif %}
                                class="w-4 h-4 text-secondary border-gray-300 rounded focus:ring-secondary">
                         <span class="text-sm text-gray-700">📋 Show in <strong>Training Programs</strong></span>
                     </label>
+
+                    <!-- Carousel-specific fields -->
+                    <div class="border-t border-gray-200 pt-3 space-y-3">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Events Carousel Settings</p>
+
+                        <!-- Poster image -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Poster Image <span class="font-normal text-gray-400">— optional, fills the card with the image</span></label>
+                            {% if session_type.poster_image %}
+                            <div class="mb-2 flex items-center gap-3">
+                                <img src="{{ session_type.poster_image.url }}" alt="Current poster"
+                                     class="h-20 w-32 object-cover rounded-lg border border-gray-200">
+                                <label class="flex items-center gap-1.5 text-sm text-red-600 cursor-pointer">
+                                    <input type="checkbox" name="clear_poster_image" class="w-4 h-4">
+                                    Remove poster
+                                </label>
+                            </div>
+                            {% endif %}
+                            <input type="file" name="poster_image" accept="image/*"
+                                   class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-owner file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                            <p class="text-xs text-gray-400 mt-1">JPG, PNG, or WebP · max 5 MB</p>
+                        </div>
+
+                        <!-- CTA fields -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                                <input type="text" name="event_cta_text"
+                                       value="{{ session_type.event_cta_text }}"
+                                       placeholder="Learn More →"
+                                       maxlength="80"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-owner">
+                                <p class="text-xs text-gray-400 mt-0.5">Leave blank to hide button</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Button URL</label>
+                                <input type="text" name="event_cta_url"
+                                       value="{{ session_type.event_cta_url }}"
+                                       placeholder="/programs/"
+                                       maxlength="200"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-owner">
+                            </div>
+                        </div>
+
+                        <!-- Display order -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+                            <input type="number" name="event_display_order"
+                                   value="{{ session_type.event_display_order }}"
+                                   min="0" max="999"
+                                   class="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-owner">
+                            <p class="text-xs text-gray-400 mt-0.5">Lower numbers appear first (0 = first)</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

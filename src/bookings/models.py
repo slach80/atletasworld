@@ -43,6 +43,14 @@ class SessionType(models.Model):
     )
     show_as_event = models.BooleanField(default=False, help_text="Show in Upcoming Events on homepage")
     show_as_program = models.BooleanField(default=False, help_text="Show in Training Programs on homepage")
+    poster_image = models.ImageField(upload_to='events/', blank=True, null=True,
+                                     help_text="Optional poster image — fills the card. If set, text details are hidden.")
+    event_cta_text = models.CharField(max_length=80, blank=True,
+                                      help_text="Button label, e.g. 'Learn More →'. Leave blank to hide button.")
+    event_cta_url = models.CharField(max_length=200, blank=True,
+                                     help_text="Button destination URL (e.g. /programs/).")
+    event_display_order = models.PositiveSmallIntegerField(default=0,
+                                                           help_text="Lower numbers appear first in the carousel.")
 
     # Clinic/Camp specific fields
     start_date = models.DateField(null=True, blank=True, help_text="Start date for clinics/camps")

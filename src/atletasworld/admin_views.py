@@ -1440,6 +1440,37 @@ def owner_session_type_edit(request, pk):
             session_type.allow_package    = request.POST.get('allow_package') == 'on'
             session_type.show_as_event = request.POST.get('show_as_event') == 'on'
             session_type.show_as_program = request.POST.get('show_as_program') == 'on'
+            # Poster image
+            if request.POST.get('clear_poster_image') and session_type.poster_image:
+                session_type.poster_image.delete(save=False)
+                session_type.poster_image = None
+            elif 'poster_image' in request.FILES:
+                new_poster = request.FILES['poster_image']
+                import os as _os
+                _MAX = 5 * 1024 * 1024
+                _ALLOWED = {'.jpg', '.jpeg', '.png', '.webp'}
+                ext = _os.path.splitext(new_poster.name)[1].lower()
+                if new_poster.size > _MAX:
+                    raise ValueError('Poster image must be under 5 MB.')
+                if ext not in _ALLOWED:
+                    raise ValueError('Poster must be JPG, PNG, or WebP.')
+                try:
+                    from PIL import Image as _Img
+                    img = _Img.open(new_poster)
+                    img.verify()
+                    new_poster.seek(0)
+                except Exception:
+                    raise ValueError('Poster is not a valid image file.')
+                if session_type.poster_image:
+                    session_type.poster_image.delete(save=False)
+                session_type.poster_image = new_poster
+            # Carousel CTA + order
+            session_type.event_cta_text = request.POST.get('event_cta_text', '').strip()
+            session_type.event_cta_url = request.POST.get('event_cta_url', '').strip()
+            try:
+                session_type.event_display_order = int(request.POST.get('event_display_order', 0))
+            except (ValueError, TypeError):
+                session_type.event_display_order = 0
             session_type.start_times = ' '.join(t for t in request.POST.getlist('start_times') if t)
             session_type.weekend_start_times = ' '.join(t for t in request.POST.getlist('weekend_start_times') if t)
             session_type.location = request.POST.get('location', '')
