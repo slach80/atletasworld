@@ -125,6 +125,51 @@ class Player(models.Model):
     primary_position = models.CharField(max_length=20, choices=POSITION_CHOICES, blank=True)
     notes = models.TextField(blank=True, help_text="Any special needs or notes")
     photo = models.ImageField(upload_to='players/', blank=True, null=True)
+
+    # Jersey / kit preferences
+    JERSEY_SIZE_CHOICES = [
+        ('', '-- Select Size --'),
+        ('youth_s',  'Youth S'),
+        ('youth_m',  'Youth M'),
+        ('youth_l',  'Youth L'),
+        ('youth_xl', 'Youth XL'),
+        ('adult_s',  'Adult S'),
+        ('adult_m',  'Adult M'),
+        ('adult_l',  'Adult L'),
+        ('adult_xl', 'Adult XL'),
+    ]
+    NATIONAL_TEAM_CHOICES = [
+        ('', '-- Select Team --'),
+        ('usa',         'USA'),
+        ('brazil',      'Brazil'),
+        ('italy',       'Italy'),
+        ('argentina',   'Argentina'),
+        ('england',     'England'),
+        ('spain',       'Spain'),
+        ('colombia',    'Colombia'),
+        ('honduras',    'Honduras'),
+        ('mexico',      'Mexico'),
+        ('netherlands', 'Netherlands'),
+        ('germany',     'Germany'),
+        ('france',      'France'),
+        ('portugal',    'Portugal'),
+        ('serbia',      'Serbia'),
+        ('senegal',     'Senegal'),
+        ('ghana',       'Ghana'),
+    ]
+    jersey_size = models.CharField(
+        max_length=10, blank=True, choices=JERSEY_SIZE_CHOICES,
+        help_text="Shirt/jersey size for kits and team gear"
+    )
+    favorite_national_team = models.CharField(
+        max_length=20, blank=True, choices=NATIONAL_TEAM_CHOICES,
+        help_text="Player's favorite national team"
+    )
+    favorite_club_team = models.CharField(
+        max_length=100, blank=True,
+        help_text="Player's favorite club team (e.g. PSG, LFC, Real Madrid)"
+    )
+
     is_self = models.BooleanField(default=False,
                                   help_text='True when this Player record represents the client themselves (Athlete 18+ account type)')
     is_active = models.BooleanField(default=True)

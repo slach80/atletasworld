@@ -291,6 +291,9 @@ def player_add(request):
             primary_position=request.POST.get('primary_position', ''),
             school_grade=request.POST.get('school_grade', ''),
             notes=request.POST.get('notes', ''),
+            jersey_size=request.POST.get('jersey_size', ''),
+            favorite_national_team=request.POST.get('favorite_national_team', ''),
+            favorite_club_team=request.POST.get('favorite_club_team', ''),
         )
         if request.FILES.get('photo'):
             err = _validate_photo(request.FILES['photo'])
@@ -310,6 +313,8 @@ def player_add(request):
         'positions': Player.POSITION_CHOICES,
         'genders': Player.GENDER_CHOICES,
         'grades': Player.GRADE_CHOICES,
+        'jersey_sizes': Player.JERSEY_SIZE_CHOICES,
+        'national_teams': Player.NATIONAL_TEAM_CHOICES,
         'next': request.GET.get('next', ''),
     }
     return render(request, 'clients/player_form.html', context)
@@ -332,6 +337,9 @@ def player_edit(request, player_id):
         player.primary_position = request.POST.get('primary_position', '')
         player.school_grade = request.POST.get('school_grade', '')
         player.notes = request.POST.get('notes', '')
+        player.jersey_size = request.POST.get('jersey_size', '')
+        player.favorite_national_team = request.POST.get('favorite_national_team', '')
+        player.favorite_club_team = request.POST.get('favorite_club_team', '')
         if request.FILES.get('photo'):
             err = _validate_photo(request.FILES['photo'])
             if err:
@@ -349,6 +357,8 @@ def player_edit(request, player_id):
         'positions': Player.POSITION_CHOICES,
         'genders': Player.GENDER_CHOICES,
         'grades': Player.GRADE_CHOICES,
+        'jersey_sizes': Player.JERSEY_SIZE_CHOICES,
+        'national_teams': Player.NATIONAL_TEAM_CHOICES,
     }
     return render(request, 'clients/player_form.html', context)
 
