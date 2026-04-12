@@ -138,32 +138,13 @@ class Player(models.Model):
         ('adult_l',  'Adult L'),
         ('adult_xl', 'Adult XL'),
     ]
-    NATIONAL_TEAM_CHOICES = [
-        ('', '-- Select Team --'),
-        ('usa',         'USA'),
-        ('brazil',      'Brazil'),
-        ('italy',       'Italy'),
-        ('argentina',   'Argentina'),
-        ('england',     'England'),
-        ('spain',       'Spain'),
-        ('colombia',    'Colombia'),
-        ('honduras',    'Honduras'),
-        ('mexico',      'Mexico'),
-        ('netherlands', 'Netherlands'),
-        ('germany',     'Germany'),
-        ('france',      'France'),
-        ('portugal',    'Portugal'),
-        ('serbia',      'Serbia'),
-        ('senegal',     'Senegal'),
-        ('ghana',       'Ghana'),
-    ]
     jersey_size = models.CharField(
         max_length=10, blank=True, choices=JERSEY_SIZE_CHOICES,
         help_text="Shirt/jersey size for kits and team gear"
     )
     favorite_national_team = models.CharField(
-        max_length=20, blank=True, choices=NATIONAL_TEAM_CHOICES,
-        help_text="Player's favorite national team"
+        max_length=100, blank=True,
+        help_text="Player's favorite national team (free text + autocomplete from full FIFA list)"
     )
     favorite_club_team = models.CharField(
         max_length=100, blank=True,

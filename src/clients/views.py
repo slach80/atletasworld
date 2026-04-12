@@ -314,7 +314,6 @@ def player_add(request):
         'genders': Player.GENDER_CHOICES,
         'grades': Player.GRADE_CHOICES,
         'jersey_sizes': Player.JERSEY_SIZE_CHOICES,
-        'national_teams': Player.NATIONAL_TEAM_CHOICES,
         'next': request.GET.get('next', ''),
     }
     return render(request, 'clients/player_form.html', context)
@@ -358,7 +357,6 @@ def player_edit(request, player_id):
         'genders': Player.GENDER_CHOICES,
         'grades': Player.GRADE_CHOICES,
         'jersey_sizes': Player.JERSEY_SIZE_CHOICES,
-        'national_teams': Player.NATIONAL_TEAM_CHOICES,
     }
     return render(request, 'clients/player_form.html', context)
 

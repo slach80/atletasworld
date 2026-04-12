@@ -285,12 +285,92 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Favorite National Team</label>
-                            <select name="favorite_national_team"
-                                    class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
-                                {% for value, label in national_teams %}
-                                <option value="{{ value }}" {% if player.favorite_national_team == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
+                            <input type="text" name="favorite_national_team"
+                                   value="{{ player.favorite_national_team|default:'' }}"
+                                   list="national-teams-list"
+                                   autocomplete="off"
+                                   placeholder="Type to search… e.g. Brazil, Spain"
+                                   class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent">
+                            <datalist id="national-teams-list">
+                                <!-- UEFA — Europe -->
+                                <option value="Albania"><option value="Andorra"><option value="Armenia">
+                                <option value="Austria"><option value="Azerbaijan"><option value="Belarus">
+                                <option value="Belgium"><option value="Bosnia and Herzegovina"><option value="Bulgaria">
+                                <option value="Croatia"><option value="Cyprus"><option value="Czech Republic">
+                                <option value="Denmark"><option value="England"><option value="Estonia">
+                                <option value="Faroe Islands"><option value="Finland"><option value="France">
+                                <option value="Georgia"><option value="Germany"><option value="Gibraltar">
+                                <option value="Greece"><option value="Hungary"><option value="Iceland">
+                                <option value="Israel"><option value="Italy"><option value="Kazakhstan">
+                                <option value="Kosovo"><option value="Latvia"><option value="Liechtenstein">
+                                <option value="Lithuania"><option value="Luxembourg"><option value="Malta">
+                                <option value="Moldova"><option value="Montenegro"><option value="Netherlands">
+                                <option value="North Macedonia"><option value="Northern Ireland"><option value="Norway">
+                                <option value="Poland"><option value="Portugal"><option value="Republic of Ireland">
+                                <option value="Romania"><option value="Russia"><option value="San Marino">
+                                <option value="Scotland"><option value="Serbia"><option value="Slovakia">
+                                <option value="Slovenia"><option value="Spain"><option value="Sweden">
+                                <option value="Switzerland"><option value="Turkey"><option value="Ukraine">
+                                <option value="Wales">
+                                <!-- CONMEBOL — South America -->
+                                <option value="Argentina"><option value="Bolivia"><option value="Brazil">
+                                <option value="Chile"><option value="Colombia"><option value="Ecuador">
+                                <option value="Paraguay"><option value="Peru"><option value="Uruguay">
+                                <option value="Venezuela">
+                                <!-- CONCACAF — North/Central America & Caribbean -->
+                                <option value="Antigua and Barbuda"><option value="Aruba"><option value="Bahamas">
+                                <option value="Barbados"><option value="Belize"><option value="Bermuda">
+                                <option value="Canada"><option value="Cayman Islands"><option value="Costa Rica">
+                                <option value="Cuba"><option value="Curaçao"><option value="Dominica">
+                                <option value="Dominican Republic"><option value="El Salvador"><option value="Grenada">
+                                <option value="Guadeloupe"><option value="Guatemala"><option value="Guyana">
+                                <option value="Haiti"><option value="Honduras"><option value="Jamaica">
+                                <option value="Martinique"><option value="Mexico"><option value="Montserrat">
+                                <option value="Nicaragua"><option value="Panama"><option value="Puerto Rico">
+                                <option value="Saint Kitts and Nevis"><option value="Saint Lucia">
+                                <option value="Saint Vincent and the Grenadines"><option value="Suriname">
+                                <option value="Trinidad and Tobago"><option value="USA">
+                                <!-- AFC — Asia -->
+                                <option value="Afghanistan"><option value="Australia"><option value="Bahrain">
+                                <option value="Bangladesh"><option value="Bhutan"><option value="Cambodia">
+                                <option value="China"><option value="Chinese Taipei"><option value="Guam">
+                                <option value="Hong Kong"><option value="India"><option value="Indonesia">
+                                <option value="Iran"><option value="Iraq"><option value="Japan">
+                                <option value="Jordan"><option value="Kuwait"><option value="Kyrgyzstan">
+                                <option value="Laos"><option value="Lebanon"><option value="Malaysia">
+                                <option value="Maldives"><option value="Mongolia"><option value="Myanmar">
+                                <option value="Nepal"><option value="North Korea"><option value="Oman">
+                                <option value="Pakistan"><option value="Palestine"><option value="Philippines">
+                                <option value="Qatar"><option value="Saudi Arabia"><option value="Singapore">
+                                <option value="South Korea"><option value="Sri Lanka"><option value="Syria">
+                                <option value="Tajikistan"><option value="Thailand"><option value="Timor-Leste">
+                                <option value="Turkmenistan"><option value="UAE"><option value="Uzbekistan">
+                                <option value="Vietnam"><option value="Yemen">
+                                <!-- CAF — Africa -->
+                                <option value="Algeria"><option value="Angola"><option value="Benin">
+                                <option value="Botswana"><option value="Burkina Faso"><option value="Burundi">
+                                <option value="Cameroon"><option value="Cape Verde"><option value="Central African Republic">
+                                <option value="Chad"><option value="Comoros"><option value="Congo">
+                                <option value="DR Congo"><option value="Djibouti"><option value="Egypt">
+                                <option value="Equatorial Guinea"><option value="Eritrea"><option value="Eswatini">
+                                <option value="Ethiopia"><option value="Gabon"><option value="Gambia">
+                                <option value="Ghana"><option value="Guinea"><option value="Guinea-Bissau">
+                                <option value="Ivory Coast"><option value="Kenya"><option value="Lesotho">
+                                <option value="Liberia"><option value="Libya"><option value="Madagascar">
+                                <option value="Malawi"><option value="Mali"><option value="Mauritania">
+                                <option value="Mauritius"><option value="Morocco"><option value="Mozambique">
+                                <option value="Namibia"><option value="Niger"><option value="Nigeria">
+                                <option value="Rwanda"><option value="São Tomé and Príncipe"><option value="Senegal">
+                                <option value="Seychelles"><option value="Sierra Leone"><option value="Somalia">
+                                <option value="South Africa"><option value="South Sudan"><option value="Sudan">
+                                <option value="Tanzania"><option value="Togo"><option value="Tunisia">
+                                <option value="Uganda"><option value="Zambia"><option value="Zimbabwe">
+                                <!-- OFC — Oceania -->
+                                <option value="American Samoa"><option value="Cook Islands"><option value="Fiji">
+                                <option value="New Caledonia"><option value="New Zealand"><option value="Papua New Guinea">
+                                <option value="Samoa"><option value="Solomon Islands"><option value="Tahiti">
+                                <option value="Tonga"><option value="Vanuatu">
+                            </datalist>
                         </div>
                     </div>
 
