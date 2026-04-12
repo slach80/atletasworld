@@ -187,16 +187,20 @@ def client_package(db, client_profile, package_basic4):
 
 
 @pytest.fixture
-def booking(db, client_package, schedule_block, player):
-    """Create a booking."""
-    booking = Booking.objects.create(
+def booking(db, client_package, coach, player, schedule_block):
+    """Create a confirmed booking with all required fields."""
+    return Booking.objects.create(
+        client=client_package.client,
+        coach=coach,
+        scheduled_date=date.today() + timedelta(days=1),
+        scheduled_time=time(10, 0),
+        duration_minutes=60,
         client_package=client_package,
-        schedule_block=schedule_block,
         player=player,
-        amount_paid=50.00,
-        status='confirmed'
+        amount_paid=Decimal('50.00'),
+        payment_status='package',
+        status='confirmed',
     )
-    return booking
 
 
 @pytest.fixture

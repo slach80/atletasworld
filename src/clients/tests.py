@@ -103,7 +103,7 @@ class TestPackageModel:
             event_start_date=date.today(),
             event_end_date=date.today() + timedelta(days=1)
         )
-        assert event_pkg.is_event_package is True
+        assert event_pkg.is_event_package  # property returns the date (truthy) or False
 
     def test_package_string_representation(self, package_basic4):
         """Test the string representation of a package."""

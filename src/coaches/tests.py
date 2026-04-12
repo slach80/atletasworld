@@ -246,26 +246,13 @@ class TestPlayerAssessmentModel:
         assert player_assessment.overall_rating == round(expected, 1)
 
     def test_overall_rating_all_fives(self):
-        """Test overall rating with all 5s."""
-        from django.contrib.auth.models import User
-        from clients.models import Client
-
-        user = User.objects.create_user(username='test_user')
-        client = Client.objects.create(user=user)
-        player = Player.objects.create(
-            client=client,
-            first_name='Test',
-            last_name='Player',
-            birth_year=2010,
-            gender='M'
-        )
-
+        """Test overall rating with all 5s — no DB access needed, pure calculation."""
         assessment = PlayerAssessment(
             effort_engagement=5,
             technical_proficiency=5,
             tactical_awareness=5,
             physical_performance=5,
-            goals_achievement=5
+            goals_achievement=5,
         )
         assert assessment.overall_rating == 5.0
 
