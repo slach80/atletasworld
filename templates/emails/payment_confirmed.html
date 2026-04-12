@@ -1,0 +1,46 @@
+<h2>✅ Payment Received — You're Confirmed!</h2>
+
+{% if amount_paid %}
+<div class="highlight-box" style="border-color: #2ecc71; background-color: #f0fff4;">
+    <div class="label">Payment Received</div>
+    <div class="value" style="color: #2ecc71; font-size: 20px;"><strong>{{ amount_paid }}</strong></div>
+</div>
+{% endif %}
+
+<p style="margin-top: 20px;">Your session is now confirmed. Here's a reminder of your booking:</p>
+
+<!-- Session details -->
+<div class="highlight-box">
+    <div class="label">Session</div>
+    <div class="value">{{ session_type }}{% if session_duration %} &nbsp;·&nbsp; {{ session_duration }}{% endif %}</div>
+</div>
+
+{% if location %}
+<div class="highlight-box">
+    <div class="label">Location</div>
+    <div class="value">{{ location }}</div>
+</div>
+{% endif %}
+
+<div class="highlight-box">
+    <div class="label">Coach</div>
+    <div class="value">{{ coach_name }}</div>
+</div>
+
+<div class="highlight-box">
+    <div class="label">Date &amp; Time</div>
+    <div class="value">{{ date }} at {{ time }}</div>
+</div>
+
+{% if player_name %}
+<div class="highlight-box">
+    <div class="label">Player</div>
+    <div class="value">{{ player_name }}</div>
+</div>
+{% endif %}
+
+<p style="text-align: center; margin-top: 25px;">
+    <a href="{{ booking_link }}" class="btn">View My Bookings</a>
+</p>
+
+<p>See you on the field!</p>

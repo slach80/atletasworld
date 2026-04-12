@@ -643,12 +643,47 @@ class BookingViewSet(viewsets.ModelViewSet):
                 booking.confirm()
                 payment_required = False
                 # payment_status is set to 'package' by use_package()
+                # Queue confirmation email (45s window)
+                try:
+                    from clients.notification_utils import queue_grouped_notification
+                    queue_grouped_notification(
+                        client=booking.client,
+                        event_type='booking_confirmed',
+                        context={
+                            'booking_id': booking.id,
+                            'payment_method': 'package',
+                            'package_name': package.name,
+                            'sessions_remaining': client_package.sessions_remaining,
+                        },
+                        group_key=f'booking_{booking.id}',
+                        window_seconds=45,
+                    )
+                except Exception:
+                    pass  # never block booking on notification failure
             elif amount_due and amount_due > 0:
                 # Pay-now booking with a cost — hold as pending until payment received
                 booking.payment_status = 'pending'
                 booking.amount_paid = amount_due
                 booking.save()
                 payment_required = True
+                # Queue reservation email (2-min window — catches most Stripe webhooks)
+                try:
+                    from clients.notification_utils import queue_grouped_notification
+                    from django.utils import timezone as _tz
+                    deadline = (_tz.now() + timedelta(hours=24)).strftime('%A, %B %-d at %-I:%M %p')
+                    queue_grouped_notification(
+                        client=booking.client,
+                        event_type='booking_reserved',
+                        context={
+                            'booking_id': booking.id,
+                            'amount_due': float(amount_due),
+                            'payment_deadline': deadline,
+                        },
+                        group_key=f'booking_{booking.id}',
+                        window_seconds=120,
+                    )
+                except Exception:
+                    pass
                 # Track sibling discount use — finalised by webhook on payment success
                 if sibling_session_found and sibling_session_discount > 0:
                     from clients.models import DiscountCode, DiscountCodeUse
@@ -692,6 +727,17 @@ class BookingViewSet(viewsets.ModelViewSet):
                 booking.payment_status = 'paid'  # free = no payment needed
                 booking.save(update_fields=['payment_status'])
                 booking.confirm()
+                try:
+                    from clients.notification_utils import queue_grouped_notification
+                    queue_grouped_notification(
+                        client=booking.client,
+                        event_type='booking_confirmed',
+                        context={'booking_id': booking.id, 'payment_method': 'paid'},
+                        group_key=f'booking_{booking.id}',
+                        window_seconds=45,
+                    )
+                except Exception:
+                    pass
                 payment_required = False
 
             return Response({

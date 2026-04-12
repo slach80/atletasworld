@@ -467,6 +467,34 @@ def send_assessment_notification_task(self, assessment_id):
         raise self.retry(exc=e, countdown=60)
 
 
+@shared_task(bind=True, max_retries=2)
+def flush_notification_group(self, group_key):
+    """Flush a NotificationOutbox group and send ONE combined email.
+
+    Runs after the coalescing window expires.  Reads all accumulated events,
+    delegates rendering + sending to NotificationService.send_grouped(), then
+    deletes the transient outbox record.
+
+    Retries up to 2 times (60 s apart) on transient failures so a brief SMTP
+    hiccup doesn't permanently lose the notification.
+    """
+    from .models import NotificationOutbox
+    from .services import NotificationService
+
+    try:
+        outbox = NotificationOutbox.objects.get(group_key=group_key)
+    except NotificationOutbox.DoesNotExist:
+        return  # Already processed or cleaned up — nothing to do
+
+    try:
+        NotificationService.send_grouped(outbox.client, outbox.events)
+        outbox.delete()
+        logger.info('Flushed notification group %s (%d events)', group_key, len(outbox.events))
+    except Exception as exc:
+        logger.exception('flush_notification_group failed for %s', group_key)
+        raise self.retry(exc=exc, countdown=60)
+
+
 @shared_task(bind=True, max_retries=3)
 def send_booking_confirmation_task(self, booking_id):
     """

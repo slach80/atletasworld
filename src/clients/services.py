@@ -153,6 +153,186 @@ class NotificationService:
         return results
 
     @classmethod
+    def send_grouped(cls, client, events):
+        """Render and send ONE email covering all accumulated outbox events.
+
+        Inspects the set of event types to pick the right template and subject,
+        loads fresh booking/package data from the DB using IDs stored in the
+        event contexts, respects the client's NotificationPreference opt-out,
+        and creates a Notification audit record.
+
+        Event type combinations → templates:
+            booking_confirmed                  → booking_confirmation.html (package)
+            booking_reserved                   → booking_reserved.html
+            booking_reserved + confirmed_paid  → booking_confirmation.html (paid)
+            booking_confirmed_paid only        → payment_confirmed.html (late payment)
+            package_activated                  → package_activated.html
+        """
+        from .models import Notification, NotificationPreference
+        from django.conf import settings as _settings
+        from django.utils import timezone as _tz
+
+        site_url = getattr(_settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+        client_name = client.user.first_name or client.user.username
+
+        # Merge all event contexts into one dict (later events win on key conflicts)
+        merged = {}
+        for e in events:
+            merged.update(e.get('context', {}))
+
+        event_types = {e['type'] for e in events}
+
+        # ── Load booking data from DB if we have a booking_id ──────────────
+        booking_ctx = {}
+        booking_id = merged.get('booking_id')
+        if booking_id:
+            try:
+                from bookings.models import Booking
+                b = Booking.objects.select_related(
+                    'coach', 'session_type', 'player', 'client_package__package'
+                ).get(pk=booking_id)
+                booking_ctx = {
+                    'session_type':     b.session_type.name if b.session_type else 'Training Session',
+                    'session_format':   b.session_type.get_session_format_display() if b.session_type else '',
+                    'session_duration': f"{b.session_type.duration_minutes} min" if b.session_type else '',
+                    'location':         b.session_type.location if b.session_type else '',
+                    'coach_name':       b.coach.user.get_full_name() or str(b.coach),
+                    'date':             b.scheduled_date.strftime('%A, %B %-d, %Y'),
+                    'time':             b.scheduled_time.strftime('%-I:%M %p'),
+                    'player_name':      b.player.first_name if b.player else '',
+                    'booking_link':     f"{site_url}/portal/bookings/",
+                }
+                if b.client_package and b.payment_status == 'package':
+                    booking_ctx['package_name'] = b.client_package.package.name
+                    booking_ctx['sessions_remaining'] = b.client_package.sessions_remaining
+                if b.payment_status == 'paid':
+                    booking_ctx['amount_paid'] = f"${b.amount_paid:.2f}"
+            except Exception:
+                logger.exception('send_grouped: failed to load booking #%s', booking_id)
+
+        # ── Load package data from DB if we have a package_id ──────────────
+        pkg_ctx = {}
+        pkg_id = merged.get('package_id')
+        if pkg_id:
+            try:
+                from clients.models import ClientPackage
+                cp = ClientPackage.objects.select_related('package').get(pk=pkg_id)
+                sessions = cp.package.sessions_included
+                pkg_ctx = {
+                    'package_name':      cp.package.name,
+                    'sessions_included': sessions if sessions > 0 else 'Unlimited',
+                    'price_paid':        f"${cp.package.price:.2f}",
+                    'expiry_date':       cp.expiry_date.strftime('%B %-d, %Y'),
+                    'book_url':          f"{site_url}/book/",
+                }
+            except Exception:
+                logger.exception('send_grouped: failed to load ClientPackage #%s', pkg_id)
+
+        # ── Determine template + subject + preference key ───────────────────
+        has_confirmed     = 'booking_confirmed' in event_types      # package path
+        has_reserved      = 'booking_reserved' in event_types       # pending payment
+        has_paid          = 'booking_confirmed_paid' in event_types  # stripe webhook
+        has_pkg_activated = 'package_activated' in event_types
+
+        if has_confirmed:
+            # Package booking confirmed
+            template_name = 'emails/booking_confirmation.html'
+            subject = '🎉 Booking Confirmed'
+            pref_key = 'booking_confirmations'
+            notification_type = 'booking_confirmed'
+            ctx = {**booking_ctx, 'payment_method': 'package', 'payment_confirmed': False}
+
+        elif has_reserved and has_paid:
+            # Fast payment — booked + paid within the 2-min window
+            template_name = 'emails/booking_confirmation.html'
+            subject = '🎉 Booking Confirmed · Payment Received'
+            pref_key = 'booking_confirmations'
+            notification_type = 'booking_confirmed'
+            ctx = {**booking_ctx, 'payment_method': 'paid', 'payment_confirmed': True,
+                   'amount_paid': booking_ctx.get('amount_paid') or f"${merged.get('amount', 0):.2f}"}
+
+        elif has_reserved:
+            # Drop-in reserved but no payment yet
+            template_name = 'emails/booking_reserved.html'
+            subject = '⏳ Session Reserved — Payment Required'
+            pref_key = 'booking_confirmations'
+            notification_type = 'booking_confirmed'
+            payment_deadline = merged.get('payment_deadline', '')
+            ctx = {**booking_ctx,
+                   'amount_due': f"${merged.get('amount_due', 0):.2f}",
+                   'payment_deadline': payment_deadline,
+                   'payment_link': f"{site_url}/portal/bookings/"}
+
+        elif has_paid:
+            # Late payment — reservation email already sent, now confirm payment
+            template_name = 'emails/payment_confirmed.html'
+            subject = '✅ Payment Received — Session Confirmed'
+            pref_key = 'purchase_confirmations'
+            notification_type = 'purchase_confirmed'
+            ctx = {**booking_ctx,
+                   'amount_paid': booking_ctx.get('amount_paid') or f"${merged.get('amount', 0):.2f}"}
+
+        elif has_pkg_activated:
+            template_name = 'emails/package_activated.html'
+            subject = '🎽 Package Activated!'
+            pref_key = 'purchase_confirmations'
+            notification_type = 'purchase_confirmed'
+            ctx = {**pkg_ctx}
+
+        else:
+            logger.warning('send_grouped: unknown event types %s for group', event_types)
+            return
+
+        # ── Check opt-out preference ────────────────────────────────────────
+        try:
+            prefs = client.notification_preferences
+            method = getattr(prefs, pref_key, 'email')
+        except Exception:
+            method = 'email'  # default if no preferences set
+
+        if method == 'none':
+            logger.info('send_grouped: client %s opted out of %s', client, pref_key)
+            return
+
+        # ── Build full context and send ─────────────────────────────────────
+        ctx.update({
+            'client_name': client_name,
+            'site_url': site_url,
+            'current_year': _tz.now().year,
+        })
+
+        html_content = render_to_string(template_name, ctx)
+        text_content = (
+            f"{subject}\n\n"
+            f"Hi {client_name},\n\n"
+            f"{ctx.get('session_type', ctx.get('package_name', 'Your booking'))} "
+            f"on {ctx.get('date', '')} at {ctx.get('time', '')}.\n\n"
+            f"View details: {site_url}/portal/bookings/"
+        )
+
+        success, msg = cls.send_email(
+            to_email=client.user.email,
+            subject=subject,
+            html_content=html_content,
+            text_content=text_content,
+            context=ctx,
+        )
+
+        # ── Audit trail ──────────────────────────────────────────────────────
+        Notification.objects.create(
+            client=client,
+            notification_type=notification_type,
+            title=subject,
+            message=text_content[:500],
+            method='email',
+            status='sent' if success else 'failed',
+            sent_at=_tz.now() if success else None,
+        )
+
+        if not success:
+            logger.error('send_grouped: email failed for %s — %s', client, msg)
+
+    @classmethod
     def send_booking_confirmation(cls, booking):
         """Send booking confirmation notification."""
         from .models import NotificationTemplate

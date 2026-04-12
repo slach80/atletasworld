@@ -1,11 +1,19 @@
-<h2>🎉 Booking Confirmed!</h2>
+<h2>🎉 Booking Confirmed{% if payment_confirmed %} · Payment Received{% endif %}!</h2>
 
-<p>Your training session has been successfully booked. Here are the details:</p>
+<p>Your training session is confirmed. Here are the details:</p>
 
+<!-- Session details -->
 <div class="highlight-box">
     <div class="label">Session</div>
-    <div class="value">{{ session_type }}</div>
+    <div class="value">{{ session_type }}{% if session_duration %} &nbsp;·&nbsp; {{ session_duration }}{% endif %}{% if session_format %} &nbsp;·&nbsp; {{ session_format }}{% endif %}</div>
 </div>
+
+{% if location %}
+<div class="highlight-box">
+    <div class="label">Location</div>
+    <div class="value">{{ location }}</div>
+</div>
+{% endif %}
 
 <div class="highlight-box">
     <div class="label">Coach</div>
@@ -13,7 +21,7 @@
 </div>
 
 <div class="highlight-box">
-    <div class="label">Date & Time</div>
+    <div class="label">Date &amp; Time</div>
     <div class="value">{{ date }} at {{ time }}</div>
 </div>
 
@@ -24,17 +32,29 @@
 </div>
 {% endif %}
 
-<p style="margin-top: 25px;">
-    <strong>What to bring:</strong>
-</p>
+<!-- Package or payment info -->
+{% if payment_method == 'package' and package_name %}
+<div class="highlight-box" style="border-color: #D7FF00;">
+    <div class="label">Package Used</div>
+    <div class="value">{{ package_name }}{% if sessions_remaining is not None %} &nbsp;·&nbsp; <strong>{{ sessions_remaining }} session{{ sessions_remaining|pluralize }} remaining</strong>{% endif %}</div>
+</div>
+{% endif %}
+
+{% if payment_confirmed and amount_paid %}
+<div class="highlight-box" style="border-color: #2ecc71;">
+    <div class="label">Payment Received</div>
+    <div class="value"><strong>{{ amount_paid }}</strong></div>
+</div>
+{% endif %}
+
+<p style="margin-top: 25px;"><strong>What to bring:</strong></p>
 <ul>
-    <li>Soccer cleats</li>
-    <li>Shin guards</li>
+    <li>Soccer cleats &amp; shin guards</li>
     <li>Water bottle</li>
     <li>Comfortable athletic wear</li>
 </ul>
 
-<p style="text-align: center;">
+<p style="text-align: center; margin-top: 25px;">
     <a href="{{ booking_link }}" class="btn">View My Bookings</a>
 </p>
 

@@ -333,6 +333,22 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
         stripe_payment_id=payment_intent_id,
     )
     logger.info('ClientPackage #%s activated for %s — %s', cp.pk, client, package.name)
+    # Queue package activation email (45-second window)
+    try:
+        from clients.notification_utils import queue_grouped_notification
+        queue_grouped_notification(
+            client=client,
+            event_type='package_activated',
+            context={
+                'package_id': cp.id,
+                'package_name': package.name,
+                'price': float(package.price),
+            },
+            group_key=f'pkg_{cp.id}',
+            window_seconds=45,
+        )
+    except Exception:
+        logger.exception('_activate_package: notification queuing failed for package %s', cp.pk)
 
     # Finalize pending DiscountCodeUse for this PaymentIntent
     from clients.models import DiscountCodeUse
@@ -496,5 +512,21 @@ def _confirm_booking_paid(booking_id, payment_intent_id, amount):
         DiscountCodeUse.objects.filter(
             applied_to_booking=booking, status='pending'
         ).update(status='applied')
+        # Queue confirmation email — appends to the 2-min reservation window if still open,
+        # otherwise creates a new group (late payment) → separate "payment received" email
+        try:
+            from clients.notification_utils import queue_grouped_notification
+            queue_grouped_notification(
+                client=booking.client,
+                event_type='booking_confirmed_paid',
+                context={
+                    'booking_id': booking.id,
+                    'amount': float(booking.amount_paid),
+                },
+                group_key=f'booking_{booking.id}',
+                window_seconds=45,
+            )
+        except Exception:
+            logger.exception('_confirm_booking_paid: notification queuing failed for booking %s', booking_id)
     except Booking.DoesNotExist:
         logger.warning('_confirm_booking_paid: booking %s not found or already paid', booking_id)

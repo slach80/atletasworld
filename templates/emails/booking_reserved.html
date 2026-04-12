@@ -1,0 +1,53 @@
+<h2>⏳ Session Reserved — Payment Required</h2>
+
+<p>Your spot is being held. Complete payment below to confirm your booking.</p>
+
+<!-- Session details -->
+<div class="highlight-box">
+    <div class="label">Session</div>
+    <div class="value">{{ session_type }}{% if session_duration %} &nbsp;·&nbsp; {{ session_duration }}{% endif %}{% if session_format %} &nbsp;·&nbsp; {{ session_format }}{% endif %}</div>
+</div>
+
+{% if location %}
+<div class="highlight-box">
+    <div class="label">Location</div>
+    <div class="value">{{ location }}</div>
+</div>
+{% endif %}
+
+<div class="highlight-box">
+    <div class="label">Coach</div>
+    <div class="value">{{ coach_name }}</div>
+</div>
+
+<div class="highlight-box">
+    <div class="label">Date &amp; Time</div>
+    <div class="value">{{ date }} at {{ time }}</div>
+</div>
+
+{% if player_name %}
+<div class="highlight-box">
+    <div class="label">Player</div>
+    <div class="value">{{ player_name }}</div>
+</div>
+{% endif %}
+
+<!-- Payment due -->
+<div class="highlight-box" style="border-color: #e74c3c; background-color: #fff5f5;">
+    <div class="label">Amount Due</div>
+    <div class="value" style="color: #e74c3c; font-size: 20px;"><strong>{{ amount_due }}</strong></div>
+</div>
+
+{% if payment_deadline %}
+<p style="color: #888888; font-size: 13px; margin-top: 8px;">
+    ⚠️ Your spot is held until <strong>{{ payment_deadline }}</strong>. If payment is not received, the reservation will be released.
+</p>
+{% endif %}
+
+<p style="text-align: center; margin-top: 25px;">
+    <a href="{{ payment_link }}" class="btn">Complete Payment →</a>
+</p>
+
+<p style="font-size: 13px; color: #888888; text-align: center;">
+    Already paid? It may take a moment to process. You'll receive a confirmation email shortly.
+</p>

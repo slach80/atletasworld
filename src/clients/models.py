@@ -1299,3 +1299,33 @@ class UserPasswordExpiry(models.Model):
     @property
     def days_until_expiry(self):
         return max(0, self.PASSWORD_EXPIRY_DAYS - (timezone.now() - self.password_changed_at).days)
+
+
+class NotificationOutbox(models.Model):
+    """Short-lived buffer that coalesces related notification events into one email.
+
+    A record is created the moment the first event fires (booking confirmed,
+    payment received, package activated, etc.).  A Celery task is scheduled
+    to run after `send_after`.  Any follow-on related events that arrive
+    before the task fires simply append to `events` — so the task always
+    sends ONE combined email regardless of how many individual events occurred.
+
+    Records are deleted immediately after the email is sent.
+
+    group_key format examples:
+        "booking_42"   — all events for booking #42
+        "pkg_17"       — events for ClientPackage #17
+    """
+    client     = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='outbox')
+    group_key  = models.CharField(max_length=120, unique=True)
+    events     = models.JSONField(default=list,
+                     help_text="Accumulated list of {type, context, ts} dicts")
+    send_after = models.DateTimeField(help_text="Task runs after this time")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['send_after'])]
+
+    def __str__(self):
+        types = ', '.join({e.get('type', '?') for e in self.events})
+        return f'{self.group_key} [{types}] → {self.client}'

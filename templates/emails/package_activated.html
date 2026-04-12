@@ -1,0 +1,42 @@
+<h2>🎽 Package Activated!</h2>
+
+<p>Your package is ready to use. Book your sessions anytime before it expires.</p>
+
+<!-- Package details -->
+<div class="highlight-box" style="border-color: #D7FF00;">
+    <div class="label">Package</div>
+    <div class="value"><strong>{{ package_name }}</strong></div>
+</div>
+
+<div class="highlight-box">
+    <div class="label">Sessions Included</div>
+    <div class="value">
+        {% if sessions_included == 'Unlimited' %}
+            <strong>Unlimited</strong>
+        {% else %}
+            <strong>{{ sessions_included }} session{{ sessions_included|pluralize }}</strong>
+        {% endif %}
+    </div>
+</div>
+
+{% if price_paid %}
+<div class="highlight-box">
+    <div class="label">Amount Paid</div>
+    <div class="value"><strong>{{ price_paid }}</strong></div>
+</div>
+{% endif %}
+
+{% if expiry_date %}
+<div class="highlight-box">
+    <div class="label">Valid Until</div>
+    <div class="value">{{ expiry_date }}</div>
+</div>
+{% endif %}
+
+<p style="text-align: center; margin-top: 30px;">
+    <a href="{{ book_url }}" class="btn">Book Your First Session →</a>
+</p>
+
+<p style="font-size: 13px; color: #888888; text-align: center;">
+    Your sessions are available to use any time before {{ expiry_date }}.
+</p>
