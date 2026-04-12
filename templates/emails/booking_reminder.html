@@ -4,8 +4,15 @@
 
 <div class="highlight-box">
     <div class="label">Session</div>
-    <div class="value">{{ session_type }}</div>
+    <div class="value">{{ session_type }}{% if session_duration %} &nbsp;·&nbsp; {{ session_duration }}{% endif %}</div>
 </div>
+
+{% if location %}
+<div class="highlight-box">
+    <div class="label">Location</div>
+    <div class="value">{{ location }}</div>
+</div>
+{% endif %}
 
 <div class="highlight-box">
     <div class="label">Coach</div>
@@ -13,7 +20,7 @@
 </div>
 
 <div class="highlight-box">
-    <div class="label">Date & Time</div>
+    <div class="label">Date &amp; Time</div>
     <div class="value">{{ date }} at {{ time }}</div>
 </div>
 

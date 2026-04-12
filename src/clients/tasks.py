@@ -161,62 +161,113 @@ def check_inactive_clients(self):
 
 @shared_task(bind=True, max_retries=3)
 def send_booking_reminders(self):
+    """Send session reminders for bookings occurring within the next 24–48 hours.
+
+    Runs daily at 8 AM via Celery Beat.  Uses the file-based
+    emails/booking_reminder.html template directly so no DB NotificationTemplate
+    record is required.  Respects each client's reminder_hours_before preference
+    and booking_reminders opt-out setting.  Deduplicates via Notification records
+    so a client never receives the same reminder twice.
     """
-    Send reminders for bookings happening tomorrow.
-    Runs daily at 8 AM.
-    """
-    from .models import Client, NotificationTemplate, Notification
+    from .models import Notification, NotificationPreference
     from .services import NotificationService
     from bookings.models import Booking
+    from django.template.loader import render_to_string
 
-    try:
-        template = NotificationTemplate.objects.get(
-            template_type='booking_reminder',
-            is_active=True
-        )
-    except NotificationTemplate.DoesNotExist:
-        logger.warning("Booking reminder template not found or inactive")
-        return "No active template"
-
-    tomorrow = timezone.localdate() + timedelta(days=1)
+    site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+    today = timezone.localdate()
     sent_count = 0
 
-    # Get bookings for tomorrow
-    tomorrows_bookings = Booking.objects.filter(
-        scheduled_date=tomorrow,
-        status='confirmed'
-    ).select_related('client', 'coach', 'session_type', 'player')
+    # Fetch confirmed bookings in the next 2 days (covers 24h and 48h prefs)
+    upcoming = Booking.objects.filter(
+        scheduled_date__in=[today + timedelta(days=1), today + timedelta(days=2)],
+        status='confirmed',
+    ).select_related('client__user', 'coach__user', 'session_type', 'player')
 
-    for booking in tomorrows_bookings:
+    for booking in upcoming:
         try:
-            # Check if reminder already sent
-            reminder_sent = Notification.objects.filter(
-                client=booking.client,
-                notification_type='booking_reminder',
-                booking=booking
-            ).exists()
+            client = booking.client
 
-            if reminder_sent:
+            # Determine how many hours ahead this client wants their reminder
+            try:
+                prefs = client.notification_preferences
+                hours_before = prefs.reminder_hours_before or 24
+                method = prefs.booking_reminders
+            except NotificationPreference.DoesNotExist:
+                hours_before = 24
+                method = 'email'
+
+            if method == 'none':
                 continue
 
-            context = {
-                'client_name': booking.client.user.first_name or booking.client.user.username,
-                'player_name': booking.player.first_name if booking.player else 'Your player',
+            # Check if this booking falls within the client's reminder window
+            from datetime import datetime as _dt
+            session_dt = _dt.combine(booking.scheduled_date, booking.scheduled_time)
+            aware_session = timezone.make_aware(session_dt)
+            hours_until = (aware_session - timezone.now()).total_seconds() / 3600
+
+            # Send if within [hours_before, hours_before + 24) to avoid repeat sends
+            if not (hours_before <= hours_until < hours_before + 24):
+                continue
+
+            # Skip if already sent
+            if Notification.objects.filter(
+                client=client,
+                notification_type='booking_reminder',
+                booking=booking,
+            ).exists():
+                continue
+
+            client_name = client.user.first_name or client.user.username
+            ctx = {
+                'client_name': client_name,
+                'player_name': booking.player.first_name if booking.player else '',
                 'session_type': booking.session_type.name if booking.session_type else 'Training Session',
-                'coach_name': str(booking.coach),
-                'date': booking.scheduled_date.strftime('%B %d, %Y'),
-                'time': booking.scheduled_time.strftime('%I:%M %p'),
-                'booking_link': f"{getattr(settings, 'SITE_URL', '')}/portal/bookings/",
-                'site_url': getattr(settings, 'SITE_URL', ''),
+                'session_duration': f"{booking.session_type.duration_minutes} min" if booking.session_type else '',
+                'location': booking.session_type.location if booking.session_type else '',
+                'coach_name': booking.coach.user.get_full_name() or str(booking.coach),
+                'date': booking.scheduled_date.strftime('%A, %B %-d, %Y'),
+                'time': booking.scheduled_time.strftime('%-I:%M %p'),
+                'booking_link': f"{site_url}/portal/bookings/",
+                'site_url': site_url,
+                'current_year': timezone.now().year,
             }
 
-            NotificationService.send_notification_from_template(booking.client, template, context)
-            sent_count += 1
+            subject = f"⏰ Reminder: Training {'Tomorrow' if booking.scheduled_date == today + timedelta(days=1) else 'in 2 Days'}!"
+            html_body = render_to_string('emails/booking_reminder.html', ctx)
+
+            success, msg = NotificationService.send_email(
+                to_email=client.user.email,
+                subject=subject,
+                html_content=html_body,
+                text_content=(
+                    f"Reminder: {ctx['session_type']} on {ctx['date']} at {ctx['time']} "
+                    f"with {ctx['coach_name']}. View: {site_url}/portal/bookings/"
+                ),
+                context=ctx,
+            )
+
+            # Audit record — also used for deduplication on next run
+            Notification.objects.create(
+                client=client,
+                notification_type='booking_reminder',
+                title=subject,
+                message=f"Reminder for {ctx['session_type']} on {ctx['date']}",
+                method='email',
+                booking=booking,
+                status='sent' if success else 'failed',
+                sent_at=timezone.now() if success else None,
+            )
+
+            if success:
+                sent_count += 1
+            else:
+                logger.error('Reminder failed for booking %s: %s', booking.id, msg)
 
         except Exception as e:
-            logger.error(f"Failed to send booking reminder for {booking}: {e}")
+            logger.error('send_booking_reminders: failed for booking %s — %s', booking.id, e)
 
-    logger.info(f"Sent booking reminders for {sent_count} bookings")
+    logger.info('Sent booking reminders: %d', sent_count)
     return f"Sent booking reminders for {sent_count} bookings"
 
 
