@@ -244,10 +244,10 @@
                          style="width: var(--card-w, 100%)">
                         {% if ev.poster_image %}
                         {# ── Poster card ── #}
-                        <div class="relative flex-1 min-h-[28rem]">
+                        <div class="relative">
                             <img src="{{ ev.poster_image.url }}" alt="{{ ev.name }}"
-                                 class="absolute inset-0 w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                                 class="w-full h-auto block">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
                         </div>
                         <div class="bg-white/10 backdrop-blur-md p-4 flex items-center justify-between gap-3">
                             <h3 class="text-lg font-black leading-tight">{{ ev.name }}</h3>
