@@ -206,8 +206,10 @@ def send_booking_reminders(self):
             aware_session = timezone.make_aware(session_dt)
             hours_until = (aware_session - timezone.now()).total_seconds() / 3600
 
-            # Send if within [hours_before, hours_before + 24) to avoid repeat sends
-            if not (hours_before <= hours_until < hours_before + 24):
+            # Send if within window: session is coming up within hours_before (+4h buffer
+            # for daily task timing drift), and hasn't already passed.
+            # Deduplication via Notification records prevents double-sending.
+            if not (0 < hours_until <= hours_before + 4):
                 continue
 
             # Skip if already sent
