@@ -1,3 +1,20 @@
+"""
+Client portal views for Atletas Performance Center.
+
+Covers all functionality accessible to authenticated clients (parents/athletes):
+  - Dashboard and profile management
+  - Player add / edit / deactivate
+  - Session booking, reservation, confirmation, and cancellation
+  - Package browsing, purchase, and upgrade flows
+  - Team session booking (for team-coach clients)
+  - Facility / field rental requests
+  - Assessment and progress charts
+  - Notification preferences and in-app inbox
+  - Waiver signing
+
+URL namespace: 'clients' (registered in atletasworld/urls.py via include()).
+All views require @login_required; portal access is gated by Client group membership.
+"""
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.db.models import Sum, Q
@@ -9,25 +26,7 @@ from django.utils import timezone
 from django.core.cache import cache
 from datetime import datetime, timedelta
 
-_ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
-_MAX_PHOTO_BYTES = 5 * 1024 * 1024  # 5 MB
-
-def _validate_photo(photo):
-    """Return an error string, or None if the photo is valid."""
-    import os
-    if photo.size > _MAX_PHOTO_BYTES:
-        return 'Photo must be under 5 MB.'
-    ext = os.path.splitext(photo.name)[1].lower()
-    if ext not in _ALLOWED_PHOTO_EXTENSIONS:
-        return 'Only JPG, PNG, and WebP images are allowed.'
-    try:
-        from PIL import Image
-        img = Image.open(photo)
-        img.verify()
-        photo.seek(0)
-    except Exception:
-        return 'Uploaded file is not a valid image.'
-    return None
+from clients.utils import validate_photo as _validate_photo, _MAX_PHOTO_BYTES, _ALLOWED_PHOTO_EXTENSIONS
 from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver, DiscountCode
 from bookings.models import Booking, Program
 from coaches.models import PlayerAssessment, Coach, ScheduleBlock

@@ -270,7 +270,16 @@ class ClientPackage(models.Model):
         return True
 
     def use_session(self):
-        """Decrement session count when a booking is made."""
+        """Consume one session from this package when a booking is confirmed.
+
+        For session-counted packages (sessions_included > 0), decrements
+        sessions_remaining and increments sessions_used.  Automatically marks
+        the package as 'exhausted' when the last session is used so it no
+        longer appears as active to the booking system.
+
+        Unlimited packages (sessions_included == 0) are unaffected — their
+        validity is controlled purely by expiry_date.
+        """
         if self.package.sessions_included > 0:
             self.sessions_remaining -= 1
             self.sessions_used += 1
@@ -279,7 +288,24 @@ class ClientPackage(models.Model):
             self.save()
 
     def calculate_upgrade_cost(self, new_package):
-        """Calculate upgrade cost based on remaining sessions."""
+        """Calculate how much a client owes to upgrade to a higher-tier package.
+
+        The upgrade is prorated: the unused value of the current package is
+        credited against the new package's price.
+
+        For session-counted packages:
+            remaining_value = (price / total_sessions) × sessions_remaining
+
+        For unlimited (time-based) packages:
+            remaining_value = price × (days_left / total_days)
+
+        Args:
+            new_package (Package): The package the client wants to upgrade to.
+
+        Returns:
+            float: The amount (≥ 0) the client must pay.  Returns the full
+                   new_package.price if the current package is no longer valid.
+        """
         if not self.is_valid:
             return new_package.price  # Full price if current package invalid
 
@@ -288,7 +314,7 @@ class ClientPackage(models.Model):
             price_per_session = self.package.price / self.package.sessions_included
             remaining_value = price_per_session * self.sessions_remaining
         else:
-            # For unlimited, prorate by time remaining
+            # For unlimited packages, prorate by days remaining in the term
             total_days = (self.expiry_date - self.start_date).days
             remaining_days = (self.expiry_date - timezone.localdate()).days
             if remaining_days > 0 and total_days > 0:
@@ -296,6 +322,7 @@ class ClientPackage(models.Model):
             else:
                 remaining_value = 0
 
+        # Upgrade cost = new price minus the credit for unused value (floor at $0)
         upgrade_cost = max(0, float(new_package.price) - float(remaining_value))
         return round(upgrade_cost, 2)
 

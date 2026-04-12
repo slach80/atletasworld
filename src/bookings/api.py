@@ -16,78 +16,20 @@ from decimal import Decimal
 from .models import SessionType, AvailabilitySlot, Booking
 from coaches.models import Coach, ScheduleBlock
 from clients.models import Client, ClientPackage, Package, Player
+from bookings.utils import (
+    apply_select_discount,
+    get_client_select_membership,
+    is_team_coach,
+    notify_pending_payment as _notify_pending_payment,
+    SELECT_PICKUP_PRICE,
+    SELECT_DISCOUNT_FORMATS,
+    SELECT_PICKUP_FORMATS,
+)
 
 SCHEDULE_BLOCK_CALENDARS = {
     'private': {'id': 'sb_private', 'name': 'Private Training', 'color': '#1a1a1a'},
     'group':   {'id': 'sb_group',   'name': 'Group Training',   'color': '#D7FF00'},
 }
-
-
-SELECT_PICKUP_PRICE = Decimal('5.00')
-SELECT_DISCOUNT_FORMATS = {'camp', 'clinic'}   # 10% off
-SELECT_PICKUP_FORMATS = {'pickup'}              # flat $5
-
-
-def apply_select_discount(price, session_format):
-    """Return discounted price for APC Select members, or None if no discount applies."""
-    if session_format in SELECT_PICKUP_FORMATS:
-        return SELECT_PICKUP_PRICE
-    if session_format in SELECT_DISCOUNT_FORMATS:
-        return (price * Decimal('0.90')).quantize(Decimal('0.01'))
-    return None
-
-
-def get_client_select_membership(user):
-    """Return True if user has an active APC Select ClientPackage."""
-    if not user.is_authenticated or not hasattr(user, 'client'):
-        return False
-    today = timezone.localdate()
-    return user.client.packages.filter(
-        package__package_type='select',
-        status='active',
-        expiry_date__gte=today,
-    ).exists()
-
-
-def _notify_pending_payment(booking, amount_due):
-    """Notify coach and owners when a drop-in booking is pending payment."""
-    try:
-        from clients.models import Client, Notification
-        from django.contrib.auth.models import User
-        player_name = str(booking.player) if booking.player else booking.client.user.get_full_name()
-        session_name = booking.session_type.name if booking.session_type else 'Session'
-        date_str = booking.scheduled_date.strftime('%b %-d') if booking.scheduled_date else ''
-        msg = (f"{player_name} reserved {session_name} on {date_str} "
-               f"— awaiting payment of ${amount_due:.2f}. Session held for 24 hours.")
-        # Coach notification
-        if booking.coach and hasattr(booking.coach, 'user'):
-            if hasattr(booking.coach.user, 'client'):
-                Notification.objects.create(
-                    client=booking.coach.user.client,
-                    notification_type='promotional',
-                    title=f'Pending Payment: {player_name}',
-                    message=msg, method='in_app',
-                )
-        # Owner notification
-        for owner in User.objects.filter(groups__name='Owner'):
-            if hasattr(owner, 'client'):
-                Notification.objects.create(
-                    client=owner.client,
-                    notification_type='promotional',
-                    title=f'Pending Payment: {session_name} — ${amount_due:.2f}',
-                    message=msg, method='in_app',
-                )
-    except Exception:
-        pass  # never block a booking due to notification failure
-
-
-def is_team_coach(user):
-    """Team coaches/managers see team session types; regular parents don't."""
-    if hasattr(user, 'coach'):
-        return True
-    if hasattr(user, 'client') and user.client.client_type == 'coach':
-        return True
-    return False
 
 
 class SessionTypeViewSet(viewsets.ReadOnlyModelViewSet):

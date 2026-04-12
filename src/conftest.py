@@ -1,7 +1,17 @@
 """
 Pytest configuration and fixtures for Atletas Performance Center tests.
+
+Fixtures are grouped by domain:
+  - Users & auth:     admin_user, client_user, coach_user
+  - Client domain:    client_profile, player, package_basic4, package_unlimited,
+                      client_package, booking_preference, notification_preference,
+                      discount_code
+  - Coach domain:     coach, availability, schedule_block, player_assessment
+  - Booking domain:   session_type_group, availability_slot, pending_booking
+  - Other domains:    review, daily_metrics
 """
 import pytest
+from decimal import Decimal
 from django.contrib.auth.models import User, Group
 from django.utils import timezone
 from datetime import date, time, timedelta
@@ -233,3 +243,115 @@ def player_assessment(db, booking, coach, player):
         parent_visible_notes='Excellent progress on passing'
     )
     return assessment
+
+
+# ── Booking-domain fixtures ───────────────────────────────────────────────────
+
+@pytest.fixture
+def session_type_group(db):
+    """Group session type used as a base for AvailabilitySlot and Booking tests."""
+    from bookings.models import SessionType
+    return SessionType.objects.create(
+        name='Group Training',
+        session_format='group',
+        duration_minutes=60,
+        price=Decimal('40.00'),
+        max_participants=10,
+        is_active=True,
+    )
+
+
+@pytest.fixture
+def availability_slot(db, coach, session_type_group):
+    """AvailabilitySlot with 5 spots, scheduled 3 days out."""
+    from bookings.models import AvailabilitySlot
+    return AvailabilitySlot.objects.create(
+        coach=coach,
+        session_type=session_type_group,
+        date=date.today() + timedelta(days=3),
+        start_time=time(14, 0),
+        end_time=time(15, 0),
+        max_bookings=5,
+        current_bookings=0,
+        status='available',
+    )
+
+
+@pytest.fixture
+def pending_booking(db, client_profile, coach, session_type_group, availability_slot):
+    """A pending Booking scheduled 3 days out (safe for cancel/reschedule tests)."""
+    return Booking.objects.create(
+        client=client_profile,
+        coach=coach,
+        session_type=session_type_group,
+        availability_slot=availability_slot,
+        scheduled_date=date.today() + timedelta(days=3),
+        scheduled_time=time(14, 0),
+        duration_minutes=60,
+        status='pending',
+        payment_status='pending',
+        amount_paid=Decimal('0.00'),
+    )
+
+
+@pytest.fixture
+def near_term_booking(db, client_profile, coach, session_type_group):
+    """A confirmed Booking scheduled only 1 hour from now — cannot be cancelled."""
+    from django.utils import timezone as tz
+    now = tz.now()
+    return Booking.objects.create(
+        client=client_profile,
+        coach=coach,
+        session_type=session_type_group,
+        scheduled_date=now.date(),
+        scheduled_time=(now + timedelta(hours=1)).time(),
+        duration_minutes=60,
+        status='confirmed',
+        payment_status='pending',
+        amount_paid=Decimal('0.00'),
+    )
+
+
+# ── Other-domain fixtures ─────────────────────────────────────────────────────
+
+@pytest.fixture
+def discount_code(db):
+    """A 10% percentage-off discount code valid indefinitely."""
+    from clients.models import DiscountCode
+    return DiscountCode.objects.create(
+        code='TEST10',
+        description='10% off everything',
+        discount_type='percent',
+        value=Decimal('10.00'),
+        scope='all',
+        is_active=True,
+    )
+
+
+@pytest.fixture
+def review(db, client_profile, coach, pending_booking):
+    """A 5-star review linking a client, coach, and booking."""
+    from reviews.models import Review
+    return Review.objects.create(
+        client=client_profile,
+        coach=coach,
+        booking=pending_booking,
+        rating=5,
+        comment='Excellent session!',
+        is_featured=False,
+        is_approved=True,
+    )
+
+
+@pytest.fixture
+def daily_metrics(db):
+    """DailyMetrics record for today."""
+    from analytics.models import DailyMetrics
+    return DailyMetrics.objects.create(
+        date=date.today(),
+        total_bookings=5,
+        completed_sessions=3,
+        cancelled_sessions=1,
+        new_clients=2,
+        total_revenue=Decimal('200.00'),
+    )

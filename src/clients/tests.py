@@ -330,3 +330,230 @@ class TestNotificationModel:
 
         expected = f"{notification.get_notification_type_display()} - {client_profile}"
         assert str(notification) == expected
+
+
+# ── Client approval workflow ──────────────────────────────────────────────────
+
+@pytest.mark.unit
+class TestClientApproval:
+    """Tests for Client.needs_approval and Client.is_approved property logic.
+
+    Coaches and renters require explicit owner approval before they can access
+    services. The is_approved property also respects optional term_start/term_end
+    datetime bounds.
+    """
+
+    def test_needs_approval_true_for_coach_type(self, db, client_user):
+        """Clients with client_type='coach' must go through the approval workflow."""
+        client = Client.objects.create(user=client_user, client_type='coach')
+        assert client.needs_approval is True
+
+    def test_needs_approval_true_for_renter_type(self, db, coach_user):
+        """Clients with client_type='renter' must go through the approval workflow."""
+        client = Client.objects.create(user=coach_user, client_type='renter')
+        assert client.needs_approval is True
+
+    def test_needs_approval_false_for_parent_type(self, client_profile):
+        """Standard parent/guardian accounts do not require owner approval."""
+        assert client_profile.needs_approval is False
+
+    def test_is_approved_false_when_status_pending(self, client_profile):
+        """Client with approval_status='pending' should not be considered approved."""
+        client_profile.approval_status = 'pending'
+        assert client_profile.is_approved is False
+
+    def test_is_approved_true_when_approved_with_no_term(self, client_profile):
+        """Approved client with no term dates should be considered fully approved."""
+        client_profile.approval_status = 'approved'
+        client_profile.term_start = None
+        client_profile.term_end = None
+        assert client_profile.is_approved is True
+
+    def test_is_approved_false_when_term_expired(self, client_profile):
+        """Approved client whose term_end is in the past should not be approved."""
+        from django.utils import timezone
+        from datetime import timedelta
+        client_profile.approval_status = 'approved'
+        client_profile.term_end = timezone.now() - timedelta(days=1)
+        assert client_profile.is_approved is False
+
+    def test_is_approved_false_when_term_not_started(self, client_profile):
+        """Approved client whose term_start is in the future should not yet be approved."""
+        from django.utils import timezone
+        from datetime import timedelta
+        client_profile.approval_status = 'approved'
+        client_profile.term_start = timezone.now() + timedelta(days=7)
+        assert client_profile.is_approved is False
+
+
+# ── DiscountCode ──────────────────────────────────────────────────────────────
+
+@pytest.mark.unit
+class TestDiscountCode:
+    """Tests for DiscountCode validity, scoping, and discount calculations."""
+
+    def test_str_representation(self, discount_code):
+        """__str__ should show the code and its discount value."""
+        result = str(discount_code)
+        assert 'TEST10' in result
+        assert '%' in result or 'off' in result.lower()
+
+    def test_is_active_default_true(self, db):
+        """Newly created discount codes should be active by default."""
+        from clients.models import DiscountCode
+        from decimal import Decimal
+        dc = DiscountCode.objects.create(
+            code='NEWCODE',
+            discount_type='percent',
+            value=Decimal('5.00'),
+        )
+        assert dc.is_active is True
+
+    def test_scope_choices_are_valid(self, discount_code):
+        """The default scope 'all' should be a valid choice string."""
+        assert discount_code.scope in ['all', 'packages', 'sessions']
+
+    def test_is_valid_now_returns_true_when_active(self, discount_code):
+        """An active code with no date restrictions should be valid."""
+        valid, message = discount_code.is_valid_now()
+        assert valid is True
+        assert message == ''
+
+    def test_is_valid_now_returns_false_when_expired(self, db):
+        """A code past its valid_until date should not be valid."""
+        from clients.models import DiscountCode
+        from decimal import Decimal
+        from datetime import date, timedelta
+        dc = DiscountCode.objects.create(
+            code='EXPIRED',
+            discount_type='percent',
+            value=Decimal('10.00'),
+            valid_until=date.today() - timedelta(days=1),  # expired yesterday
+        )
+        valid, message = dc.is_valid_now()
+        assert valid is False
+        assert 'expired' in message.lower()
+
+    def test_is_valid_now_returns_false_when_inactive(self, db):
+        """A code with is_active=False should never be valid."""
+        from clients.models import DiscountCode
+        from decimal import Decimal
+        dc = DiscountCode.objects.create(
+            code='INACTIVE',
+            discount_type='percent',
+            value=Decimal('10.00'),
+            is_active=False,
+        )
+        valid, message = dc.is_valid_now()
+        assert valid is False
+
+    def test_percentage_discount_calculation(self, discount_code):
+        """compute_discount() should return 10% of the subtotal for a 10% code."""
+        from decimal import Decimal
+        result = discount_code.compute_discount(Decimal('100.00'))
+        assert result == Decimal('10.00')
+
+    def test_fixed_discount_calculation(self, db):
+        """compute_discount() with a fixed-dollar code should return the fixed amount."""
+        from clients.models import DiscountCode
+        from decimal import Decimal
+        dc = DiscountCode.objects.create(
+            code='SAVE20',
+            discount_type='fixed',
+            value=Decimal('20.00'),
+        )
+        result = dc.compute_discount(Decimal('100.00'))
+        assert result == Decimal('20.00')
+
+    def test_fixed_discount_capped_at_subtotal(self, db):
+        """Fixed-dollar discounts should not exceed the subtotal amount."""
+        from clients.models import DiscountCode
+        from decimal import Decimal
+        dc = DiscountCode.objects.create(
+            code='SAVE50',
+            discount_type='fixed',
+            value=Decimal('50.00'),
+        )
+        # Subtotal is only $30, discount of $50 should be capped at $30
+        result = dc.compute_discount(Decimal('30.00'))
+        assert result == Decimal('30.00')
+
+
+# ── ClientCredit ──────────────────────────────────────────────────────────────
+
+@pytest.mark.unit
+class TestClientCredit:
+    """Tests for ClientCredit model — APC Select monthly credits and manual grants."""
+
+    def test_str_representation(self, db, client_profile):
+        """__str__ should show client name, amount, type, and status."""
+        from clients.models import ClientCredit
+        from decimal import Decimal
+        credit = ClientCredit.objects.create(
+            client=client_profile,
+            amount=Decimal('40.00'),
+            credit_type='select_monthly',
+            status='available',
+        )
+        result = str(credit)
+        assert '40' in result
+        assert 'available' in result.lower() or 'Select' in result
+
+    def test_credit_amount_stored_correctly(self, db, client_profile):
+        """The credit amount should be stored with full decimal precision."""
+        from clients.models import ClientCredit
+        from decimal import Decimal
+        credit = ClientCredit.objects.create(
+            client=client_profile,
+            amount=Decimal('40.00'),
+            credit_type='manual',
+        )
+        assert credit.amount == Decimal('40.00')
+
+    def test_is_usable_true_for_available_credit(self, db, client_profile):
+        """An available credit with no expiry should be usable."""
+        from clients.models import ClientCredit
+        from decimal import Decimal
+        credit = ClientCredit.objects.create(
+            client=client_profile,
+            amount=Decimal('40.00'),
+            credit_type='manual',
+            status='available',
+            expires_at=None,
+        )
+        assert credit.is_usable is True
+
+    def test_is_usable_false_for_applied_credit(self, db, client_profile):
+        """An already-applied credit should not be reusable."""
+        from clients.models import ClientCredit
+        from decimal import Decimal
+        credit = ClientCredit.objects.create(
+            client=client_profile,
+            amount=Decimal('40.00'),
+            credit_type='manual',
+            status='applied',
+        )
+        assert credit.is_usable is False
+
+    def test_is_usable_false_for_expired_credit(self, db, client_profile):
+        """A credit past its expires_at date should not be usable."""
+        from clients.models import ClientCredit
+        from decimal import Decimal
+        from datetime import date, timedelta
+        credit = ClientCredit.objects.create(
+            client=client_profile,
+            amount=Decimal('40.00'),
+            credit_type='manual',
+            status='available',
+            expires_at=date.today() - timedelta(days=1),
+        )
+        assert credit.is_usable is False
+
+    def test_ordering_newest_first(self, db, client_profile):
+        """Credits should be ordered newest first (Meta ordering = ['-created_at'])."""
+        from clients.models import ClientCredit
+        from decimal import Decimal
+        c1 = ClientCredit.objects.create(client=client_profile, amount=Decimal('10.00'))
+        c2 = ClientCredit.objects.create(client=client_profile, amount=Decimal('20.00'))
+        credits = list(ClientCredit.objects.filter(pk__in=[c1.pk, c2.pk]))
+        assert credits[0].pk == c2.pk  # c2 created later → appears first

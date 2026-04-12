@@ -1,3 +1,17 @@
+"""
+Booking domain models for Atletas Performance Center.
+
+Model hierarchy:
+  SessionType      — the catalogue of what can be booked (private, group, clinic, etc.)
+  AvailabilitySlot — a coach's open time window that clients can book into
+  Booking          — a confirmed reservation linking client → coach → slot
+
+Booking lifecycle:
+    pending ──► confirmed ──► completed
+                          └──► no_show
+    pending/confirmed ──► cancelled   (only allowed > 24 h before the session)
+    pending/confirmed ──► rescheduled (creates a new Booking, cancels this one)
+"""
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -7,7 +21,14 @@ from coaches.models import Coach
 
 
 class SessionType(models.Model):
-    """Defines types of training sessions available."""
+    """Catalogue entry describing a type of training session.
+
+    Used both for booking (filtering which sessions a client can reserve) and
+    for the public homepage (show_as_event / show_as_program flags).  The
+    event-carousel fields (poster_image, event_cta_*, event_display_order) are
+    managed by the owner via the owner portal and require no code changes to
+    update.
+    """
     SESSION_FORMAT_CHOICES = [
         ('private', 'Private (1-on-1)'),
         ('semi_private', 'Semi-Private (2-3 players)'),
@@ -182,11 +203,21 @@ class AvailabilitySlot(models.Model):
         self.save(update_fields=['status'])
 
     def generate_recurring_slots(self):
-        """Generate individual slot instances from recurring pattern."""
+        """Build unsaved AvailabilitySlot instances for a recurring series.
+
+        Starts the series one interval after self.date and stops at (inclusive)
+        recurrence_end_date.  All generated slots reference self as parent_slot
+        and have recurrence='none' so they do not themselves spawn sub-series.
+
+        Returns:
+            list[AvailabilitySlot]: Unsaved slot objects ready for bulk_create.
+            Returns an empty list if recurrence is 'none' or no end date is set.
+        """
         if self.recurrence == 'none' or not self.recurrence_end_date:
             return []
 
         slots = []
+        # Advance one interval beyond the parent slot's date to start the series
         current_date = self.date + timedelta(days=7 if self.recurrence == 'weekly' else
                                               14 if self.recurrence == 'biweekly' else 1)
 
@@ -341,7 +372,14 @@ class Booking(models.Model):
         return self.can_cancel and self.status in ['pending', 'confirmed']
 
     def confirm(self, user=None):
-        """Confirm the booking."""
+        """Transition the booking from pending → confirmed.
+
+        Also increments the linked AvailabilitySlot's booking counter so
+        spot availability is kept accurate in real time.
+
+        Raises:
+            ValidationError: If status is not 'pending'.
+        """
         if self.status != 'pending':
             raise ValidationError("Only pending bookings can be confirmed.")
 
@@ -349,7 +387,7 @@ class Booking(models.Model):
         self.confirmed_at = timezone.now()
         self.save()
 
-        # Update slot booking count
+        # Keep the slot's booking count in sync so spots_remaining stays accurate
         if self.availability_slot:
             self.availability_slot.current_bookings += 1
             self.availability_slot.update_status()
@@ -357,7 +395,23 @@ class Booking(models.Model):
         return True
 
     def cancel(self, reason, notes='', cancelled_by=None):
-        """Cancel the booking with reason tracking."""
+        """Cancel the booking and reverse any resource allocations.
+
+        Side effects when a booking is cancelled:
+        - AvailabilitySlot.current_bookings is decremented.
+        - The matching ScheduleBlock (if any) participant count is decremented.
+        - If payment_status is 'package', the consumed session is returned to
+          the client's ClientPackage so it can be used again.
+
+        Args:
+            reason (str): One of CANCELLATION_REASON_CHOICES.
+            notes (str): Free-text detail (e.g. reason explanation from coach).
+            cancelled_by (User|None): The user initiating the cancellation.
+
+        Raises:
+            ValidationError: If can_cancel is False (booking is within 24 h,
+                             already cancelled, completed, or a no-show).
+        """
         if not self.can_cancel:
             raise ValidationError("This booking cannot be cancelled.")
 
@@ -398,7 +452,22 @@ class Booking(models.Model):
         return True
 
     def reschedule(self, new_slot, cancelled_by=None):
-        """Reschedule booking to a new slot."""
+        """Move a booking to a different AvailabilitySlot.
+
+        Creates a brand-new confirmed Booking on new_slot, then cancels the
+        current booking with reason='rescheduled'.  The new booking inherits
+        payment info, package linkage, and client notes from the original.
+
+        Args:
+            new_slot (AvailabilitySlot): The replacement slot to book into.
+            cancelled_by (User|None): The user initiating the reschedule.
+
+        Returns:
+            Booking: The newly created replacement booking.
+
+        Raises:
+            ValidationError: If can_reschedule is False.
+        """
         if not self.can_reschedule:
             raise ValidationError("This booking cannot be rescheduled.")
 

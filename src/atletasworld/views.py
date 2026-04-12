@@ -6,6 +6,7 @@ from django.utils import timezone
 from clients.models import Package
 from bookings.models import SessionType
 from coaches.models import ScheduleBlock
+from atletasworld.utils import fmt_times as _fmt_times, tryout_label as _tryout_label
 
 
 def apple_pay_verification(request):
@@ -17,22 +18,6 @@ def apple_pay_verification(request):
     if os.path.exists(path):
         return FileResponse(open(path, 'rb'), content_type='text/plain')
     return HttpResponse('', content_type='text/plain', status=404)
-
-
-def _fmt_times(start_times_str):
-    """Convert '09:00 10:30' → '9:00 AM · 10:30 AM'"""
-    if not start_times_str:
-        return ''
-    results = []
-    for t in start_times_str.split():
-        try:
-            h, m = map(int, t.split(':'))
-            period = 'AM' if h < 12 else 'PM'
-            h12 = h % 12 or 12
-            results.append(f"{h12}:{m:02d} {period}")
-        except Exception:
-            results.append(t)
-    return ', '.join(results)
 
 
 def home_view(request):
@@ -59,9 +44,6 @@ def home_view(request):
 def programs_view(request):
     """Special Projects & Events page — APC Select with live tryout spot counts."""
     import datetime
-
-    def _tryout_label(d):
-        return d.strftime('%A, %B %-d')  # e.g. "Thursday, May 21"
 
     TRYOUT_SESSIONS = [
         # (date, location, slots, is_outdoor)

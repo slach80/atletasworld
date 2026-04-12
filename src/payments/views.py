@@ -20,29 +20,9 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from clients.models import Client, Package, ClientPackage
 from payments.models import Payment
+from payments.stripe_utils import get_stripe as _stripe, get_or_create_stripe_customer as _get_or_create_stripe_customer
 
 logger = logging.getLogger(__name__)
-
-
-def _stripe():
-    """Return stripe module configured with secret key."""
-    stripe.api_key = settings.STRIPE_SECRET_KEY
-    return stripe
-
-
-def _get_or_create_stripe_customer(client):
-    """Get existing or create new Stripe customer for this client."""
-    s = _stripe()
-    if client.stripe_customer_id:
-        return client.stripe_customer_id
-    customer = s.Customer.create(
-        email=client.user.email,
-        name=client.user.get_full_name() or client.user.username,
-        metadata={'client_id': client.pk},
-    )
-    client.stripe_customer_id = customer.id
-    client.save(update_fields=['stripe_customer_id'])
-    return customer.id
 
 
 # ── One-time package purchase ─────────────────────────────────────────────────

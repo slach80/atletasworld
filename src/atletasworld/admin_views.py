@@ -1,6 +1,29 @@
 """
-Owner dashboard views for Atletas Performance Center.
-Provides overview across all coaches, clients, and players.
+Owner portal views for Atletas Performance Center.
+
+All views are gated by @user_passes_test(is_owner), which allows access to
+Django superusers, staff users, and members of the 'Owner' auth group.
+
+Sections (separated by banner comments in the file):
+  - Dashboard       — KPI tiles, revenue summary, recent activity
+  - Packages        — CRUD for purchasable packages (add/edit/delete/restore/duplicate)
+  - Session Types   — CRUD for session format catalogue + homepage display config
+  - Coaches         — Add/edit/deactivate coaches; view schedule
+  - Clients         — Browse clients; approve/reject coach & renter access
+  - Players         — Browse players; view assessments
+  - Bookings        — View and manage all bookings
+  - Field Rental    — Manage rental slots, approve/reject tenant requests
+  - Teams           — Team roster and booking overview
+  - Finances        — Revenue reports, payment history, refunds
+  - Credits         — Grant and track client credits
+  - Discount Codes  — Create and monitor promo codes
+  - Services        — Rental service catalogue
+  - Waivers         — View signed waivers
+  - Notifications   — Bulk email/push notification broadcasts
+  - Contacts        — Pre-registration contact import list
+  - Guide           — Owner how-to reference page
+
+URL prefix: /owner-portal/  (all routes registered in atletasworld/urls.py)
 """
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -1446,21 +1469,10 @@ def owner_session_type_edit(request, pk):
                 session_type.poster_image = None
             elif 'poster_image' in request.FILES:
                 new_poster = request.FILES['poster_image']
-                import os as _os
-                _MAX = 5 * 1024 * 1024
-                _ALLOWED = {'.jpg', '.jpeg', '.png', '.webp'}
-                ext = _os.path.splitext(new_poster.name)[1].lower()
-                if new_poster.size > _MAX:
-                    raise ValueError('Poster image must be under 5 MB.')
-                if ext not in _ALLOWED:
-                    raise ValueError('Poster must be JPG, PNG, or WebP.')
-                try:
-                    from PIL import Image as _Img
-                    img = _Img.open(new_poster)
-                    img.verify()
-                    new_poster.seek(0)
-                except Exception:
-                    raise ValueError('Poster is not a valid image file.')
+                from clients.utils import validate_photo
+                err = validate_photo(new_poster)
+                if err:
+                    raise ValueError(err)
                 if session_type.poster_image:
                     session_type.poster_image.delete(save=False)
                 session_type.poster_image = new_poster

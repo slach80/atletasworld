@@ -1,3 +1,19 @@
+"""
+Coach portal views for Atletas Performance Center.
+
+Covers all functionality accessible to authenticated coaches:
+  - Dashboard with upcoming sessions and performance summary
+  - Schedule management: add, bulk-edit, and delete ScheduleBlocks
+  - Session attendance tracking
+  - Player assessments: create, view, list
+  - Player and client browsing (coaches' own clients)
+  - Profile and availability editing
+  - In-app notification inbox
+
+Access control: @login_required + @user_passes_test(is_coach) on all views.
+The is_coach helper checks that request.user belongs to the 'Coach' group OR
+has a Coach profile record.
+"""
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
