@@ -90,6 +90,7 @@
                     <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                         <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'bookings' %}text-gray-900 font-semibold{% endif %} rounded-t-lg">📅 My Bookings</a>
                         <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'packages' %}text-gray-900 font-semibold{% endif %}">📦 Packages</a>
+                        <a href="{% url 'clients:field_rental_list' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'field_rental_list' %}text-gray-900 font-semibold{% endif %}">🏟️ Facility Rental</a>
                         <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'profile' %}text-gray-900 font-semibold{% endif %}">👤 My Profile</a>
                         <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'notification_settings' or request.resolver_match.url_name == 'notification_history' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">🔔 Notifications</a>
                     </div>
@@ -119,6 +120,7 @@
             <p class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wider">Account</p>
             <a href="{% url 'clients:bookings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📅 My Bookings</a>
             <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📦 Packages</a>
+            <a href="{% url 'clients:field_rental_list' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🏟️ Facility Rental</a>
             <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👤 My Profile</a>
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🔔 Notifications</a>
             <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full hover:bg-[#b8e000] font-semibold text-center">Book Session</a>
@@ -133,6 +135,17 @@
     if(btn) btn.addEventListener('click', function(){
         document.getElementById('client-mobile-menu').classList.toggle('hidden');
     });
+})();
+function toggleClientDark(){
+    var html = document.documentElement;
+    var on = html.classList.toggle('dark');
+    localStorage.setItem('apc-dark', on ? '1' : '0');
+    var btn = document.getElementById('client-dark-btn');
+    if(btn) btn.textContent = on ? '☀️' : '🌙';
+}
+(function(){
+    var btn = document.getElementById('client-dark-btn');
+    if(btn && document.documentElement.classList.contains('dark')) btn.textContent = '☀️';
 })();
 </script>
 
