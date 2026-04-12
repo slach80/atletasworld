@@ -583,8 +583,8 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
     <div class="email-footer">
         <div class="footer-logo">APC</div>
         <p>
-            <a href="https://www.instagram.com/atletasworld/" target="_blank">Instagram</a> &nbsp;|&nbsp;
-            <a href="https://www.facebook.com/atletasworld/" target="_blank">Facebook</a>
+            <a href="https://www.instagram.com/atletasperformancecenter/" target="_blank">Instagram</a> &nbsp;|&nbsp;
+            <a href="https://www.facebook.com/profile.php?id=61572009236369" target="_blank">Facebook</a>
         </p>
         <p style="margin-top: 12px; font-size: 11px; color: #555555;">
             &copy; 2026 Atletas Performance Center. All rights reserved.
