@@ -134,8 +134,8 @@ GOOGLE_CLIENT_ID/SECRET     # OAuth, needs HTTPS first
 ## Known Issues / Pending
 
 See `docs/site-audit-2026-03-18.md` for full audit. Open items:
-1. `owner_teams` view — `AttributeError: player_count no setter` (Team @property conflicts with annotate)
-2. Client facility rental page not properly routed at `/portal/field-rental/`
+1. ~~`owner_teams` view — `AttributeError: player_count no setter`~~ ✅ fixed (view uses `active_player_count` annotation)
+2. ~~Client facility rental page not properly routed at `/portal/field-rental/`~~ ✅ fixed (added nav links to dashboard dropdown + mobile menu)
 3. ~~`owner_field_slots` — `FieldError: booked_at`~~ ✅ fixed (use `date__month`)
 
 **Next up**: SSL cert once `atletasperformancecenter.com` DNS propagates → then Google OAuth setup.
