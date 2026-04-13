@@ -557,15 +557,32 @@ class Notification(models.Model):
         self.save()
 
     def _send_email(self):
-        """Send email notification."""
+        """Send HTML email notification using the branded base template."""
+        from django.core.mail import EmailMultiAlternatives
+        from django.template.loader import render_to_string
+        import html as _html
         try:
-            send_mail(
-                subject=self.title,
-                message=self.message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[self.client.user.email],
-                fail_silently=False,
+            site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+            # Convert plain message text to simple HTML paragraphs
+            body_html = ''.join(
+                f'<p>{_html.escape(line)}</p>' if line.strip() else '<br>'
+                for line in self.message.splitlines()
             )
+            html_content = render_to_string('emails/base_email.html', {
+                'subject':     self.title,
+                'client_name': self.client.user.first_name or self.client.user.username,
+                'content':     body_html,
+                'site_url':    site_url,
+                'current_year': timezone.now().year,
+            })
+            msg = EmailMultiAlternatives(
+                subject=self.title,
+                body=self.message,  # plain text fallback
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[self.client.user.email],
+            )
+            msg.attach_alternative(html_content, 'text/html')
+            msg.send()
         except Exception as e:
             self.status = 'failed'
             self.save()
