@@ -34,7 +34,7 @@ python manage.py load_team_demo_data
 ## Production (EC2)
 
 - **Server**: `3.135.174.227` — Ubuntu 24.04, us-east-2c
-- **Domain**: `atletasperformancecenter.com` (DNS pending)
+- **Domain**: `atletasperformancecenter.com` ✅ live
 - **App dir**: `/var/www/atletasworld/`
 - **SSH**: `ssh -i ~/Documents/certs/atletasworld-prod.pem ubuntu@3.135.174.227`
 - **Deploy key**: `~/Documents/certs/atletasworld-deploy-key` (used by GitHub Actions)
@@ -137,5 +137,6 @@ See `docs/site-audit-2026-03-18.md` for full audit. Open items:
 1. ~~`owner_teams` view — `AttributeError: player_count no setter`~~ ✅ fixed (view uses `active_player_count` annotation)
 2. ~~Client facility rental page not properly routed at `/portal/field-rental/`~~ ✅ fixed (added nav links to dashboard dropdown + mobile menu)
 3. ~~`owner_field_slots` — `FieldError: booked_at`~~ ✅ fixed (use `date__month`)
+4. ~~Client dashboard "Session today" banner triggered on Sunday for Monday sessions~~ ✅ fixed (check `scheduled_date == today` before datetime math)
 
 **Next up**: Google OAuth setup — domain + SSL are live at `atletasperformancecenter.com`. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to EC2 `.env`, then enable the social login buttons.
