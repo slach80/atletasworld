@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Players Export — Atletas Performance Center</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; background: #fff; }
+        .header { padding: 16px 20px 12px; border-bottom: 3px solid #6366f1; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 18px; font-weight: 700; }
+        .header .meta { font-size: 10px; color: #666; text-align: right; }
+        .logo { font-size: 13px; font-weight: 700; color: #6366f1; margin-bottom: 2px; }
+        .summary { padding: 8px 20px; background: #f5f3ff; font-size: 10px; color: #555; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: #6366f1; color: #fff; }
+        thead th { padding: 7px 8px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid #e5e7eb; }
+        tbody tr:nth-child(even) { background: #f9f8ff; }
+        tbody td { padding: 6px 8px; font-size: 10px; vertical-align: top; }
+        .print-btn { position: fixed; top: 12px; right: 12px; padding: 8px 18px; background: #6366f1; color: #fff;
+                     border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        @media print { .print-btn { display: none; } body { font-size: 9px; } }
+    </style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+<div class="header">
+    <div>
+        <div class="logo">ATLETAS PERFORMANCE CENTER</div>
+        <h1>Player Roster Export</h1>
+    </div>
+    <div class="meta">
+        <div><strong>{{ total }}</strong> player{{ total|pluralize }}</div>
+        <div>{% now "N j, Y g:i A" %}</div>
+    </div>
+</div>
+<div class="summary">
+    Name · Birth Year · Age Group · Skill · Position · Club/Team · Jersey · National Team · Fav Club · Parent · Email · Phone · Bookings · Assessments · Active Packages
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Player</th><th>Born</th><th>Group</th><th>Skill</th><th>Position</th>
+            <th>Club / Team</th><th>Jersey</th><th>National Team</th><th>Fav Club</th>
+            <th>Parent</th><th>Email</th><th>Phone</th><th>Bk</th><th>As</th><th>Active Packages</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in players %}
+        {% with active_pkgs=p.client.packages.all %}
+        <tr>
+            <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+            <td>{{ p.birth_year }}</td>
+            <td>{{ p.age_group }}</td>
+            <td>{{ p.get_skill_level_display }}</td>
+            <td>{{ p.get_primary_position_display|default:"-" }}</td>
+            <td>
+                {{ p.soccer_club|default:"-" }}
+                {% if p.team_name %}<br><small style="color:#888;">{{ p.team_name }}</small>{% endif %}
+            </td>
+            <td>{{ p.get_jersey_size_display|default:"-" }}</td>
+            <td>{{ p.favorite_national_team|default:"-" }}</td>
+            <td>{{ p.favorite_club_team|default:"-" }}</td>
+            <td>{{ p.client.user.get_full_name }}</td>
+            <td style="color:#6366f1;">{{ p.client.user.email }}</td>
+            <td>{{ p.client.phone|default:"-" }}</td>
+            <td style="text-align:center;font-weight:700;">{{ p.total_bookings }}</td>
+            <td style="text-align:center;">{{ p.total_assessments }}</td>
+            <td>
+                {% for cp in active_pkgs %}
+                    {% if cp.status == 'active' %}{{ cp.package.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                {% empty %}-{% endfor %}
+            </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="15" style="text-align:center;padding:20px;color:#888;">No players found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>setTimeout(function(){ window.print(); }, 600);</script>
+</body>
+</html>

@@ -75,3 +75,4 @@ wcwidth==0.2.14
 whitenoise==6.7.0
 pywebpush==2.1.2
 twilio==9.6.0
+openpyxl==3.1.5
