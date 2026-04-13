@@ -82,6 +82,7 @@
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Position</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Club/Team</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Jersey</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">National Team</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Parent/Guardian</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Bookings</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Assessments</th>
@@ -117,6 +118,9 @@
                 <td class="py-4 px-6 text-xs text-gray-600">
                     {{ player.get_jersey_size_display|default:"-" }}
                 </td>
+                <td class="py-4 px-6 text-xs text-gray-600">
+                    {{ player.favorite_national_team|default:"-" }}
+                </td>
                 <td class="py-4 px-6 text-sm text-gray-600">
                     <a href="{% url 'owner_client_detail' player.client.pk %}" class="text-owner hover:underline">
                         {{ player.client.user.first_name }} {{ player.client.user.last_name }}
@@ -132,7 +136,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="10" class="py-8 text-center text-gray-500">No players found{% if search or selected_session or selected_package %} matching filters{% endif %}.</td>
+                <td colspan="11" class="py-8 text-center text-gray-500">No players found{% if search or selected_session or selected_package %} matching filters{% endif %}.</td>
             </tr>
             {% endfor %}
         </tbody>
