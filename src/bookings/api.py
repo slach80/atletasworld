@@ -412,6 +412,20 @@ class BookingViewSet(viewsets.ModelViewSet):
         data = request.data
         client = user.client
 
+        # Waiver gate — exempt staff/owners/coaches, block everyone else without a signed waiver
+        is_exempt = (
+            user.is_staff or user.is_superuser
+            or user.groups.filter(name__in=['Owner', 'Coach']).exists()
+            or hasattr(user, 'coach')
+        )
+        if not is_exempt:
+            from clients.models import get_current_waiver
+            if not get_current_waiver(client):
+                return Response(
+                    {'error': 'Annual waiver required. Please sign it in your Profile before booking.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         try:
             slot_id = data.get('slot_id')
             slot_type = data.get('slot_type', 'availability_slot')
