@@ -471,21 +471,17 @@
                         <div class="flex flex-col items-end gap-1">
                             <span class="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">{{ prog.get_session_format_display }}</span>
                             {% if prog.total_block_capacity %}
+                                {# Date-bounded (camp/clinic): show booked / total capacity #}
                                 {% if prog.confirmed_bookings >= prog.total_block_capacity %}
                                 <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">Full</span>
                                 {% else %}
-                                <span class="{% if prog.confirmed_bookings >= prog.total_block_capacity|add:"-5" %}bg-orange-100 text-orange-700{% else %}bg-gray-100 text-gray-600{% endif %} px-2 py-0.5 rounded-full text-xs font-semibold">
+                                <span class="{% if prog.confirmed_bookings >= prog.total_block_capacity|add:"-5" %}bg-orange-100 text-orange-700{% else %}bg-gray-100 text-gray-600{% endif %} px-2 py-0.5 rounded-full text-xs">
                                     {% if prog.confirmed_bookings >= prog.total_block_capacity|add:"-5" %}⚡ {% endif %}{{ prog.confirmed_bookings }} / {{ prog.total_block_capacity }} registered
                                 </span>
                                 {% endif %}
-                            {% elif prog.max_participants > 1 %}
-                                {% if prog.confirmed_bookings >= prog.max_participants %}
-                                <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">Full</span>
-                                {% elif prog.max_participants|add:"-5" <= prog.confirmed_bookings %}
-                                <span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-xs font-semibold">⚡ {{ prog.confirmed_bookings }} / {{ prog.max_participants }} registered</span>
-                                {% else %}
-                                <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{{ prog.confirmed_bookings }} / {{ prog.max_participants }} registered</span>
-                                {% endif %}
+                            {% elif prog.confirmed_bookings %}
+                                {# Recurring program: just show how many are enrolled, no misleading total #}
+                                <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{{ prog.confirmed_bookings }} enrolled</span>
                             {% endif %}
                         </div>
                     </div>

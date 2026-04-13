@@ -55,7 +55,11 @@ def home_view(request):
         obj.pkg_date = obj.linked_packages.filter(event_start_date__isnull=False).first()
 
     for obj in programs_qs:
-        obj.total_block_capacity = cap_by_st.get(obj.pk)
+        cap = cap_by_st.get(obj.pk)
+        # Only surface block-based capacity for date-bounded sessions (camp/clinic).
+        # For open-ended recurring programs, the sum across all future blocks is
+        # meaningless (e.g. 5150 for a summer program running all summer).
+        obj.total_block_capacity = cap if (cap and obj.start_date and obj.end_date) else None
 
     return render(request, 'home.html', {
         'packages': packages,
