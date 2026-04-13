@@ -468,7 +468,18 @@
                 <div class="p-8">
                     <div class="flex justify-between items-start mb-4">
                         <h3 class="text-2xl font-bold text-gray-900">{{ prog.name }}</h3>
-                        <span class="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">{{ prog.get_session_format_display }}</span>
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">{{ prog.get_session_format_display }}</span>
+                            {% if prog.max_participants > 1 %}
+                                {% if prog.confirmed_bookings >= prog.max_participants %}
+                                <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">Full</span>
+                                {% elif prog.max_participants|add:"-5" <= prog.confirmed_bookings %}
+                                <span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-xs font-semibold">⚡ {{ prog.confirmed_bookings }} / {{ prog.max_participants }} registered</span>
+                                {% else %}
+                                <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{{ prog.confirmed_bookings }} / {{ prog.max_participants }} registered</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     {% if prog.description %}
                     <p class="text-gray-600 mb-6">{{ prog.description|linebreaksbr }}</p>

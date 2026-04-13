@@ -26,7 +26,15 @@ def home_view(request):
         is_active=True, is_purchasable=True, is_special=False
     ).exclude(package_type__in=['select', 'team']).order_by('price')
     events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('event_display_order', 'start_date', 'name')
-    programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').order_by('name')
+    from django.db.models import Count, Q as DQ
+    programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').annotate(
+        confirmed_bookings=Count(
+            'bookings',
+            filter=DQ(bookings__status__in=['pending', 'confirmed'],
+                      bookings__scheduled_date__gte=timezone.localdate()),
+            distinct=True,
+        )
+    ).order_by('name')
 
     # Annotate formatted start times and a single date range from linked packages
     for obj in list(events_qs) + list(programs_qs):
