@@ -28,26 +28,34 @@ def home_view(request):
     ).exclude(package_type__in=['select', 'team']).order_by('price')
     events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('event_display_order', 'start_date', 'name')
     from django.db.models import Sum
+    today = timezone.localdate()
     programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').annotate(
         confirmed_bookings=Count(
             'bookings',
             filter=Q(bookings__status__in=['pending', 'confirmed'],
-                     bookings__scheduled_date__gte=timezone.localdate()),
+                     bookings__scheduled_date__gte=today),
             distinct=True,
         ),
-        # Sum capacity from actual schedule blocks so per-day overrides are reflected
-        total_block_capacity=Sum(
-            'schedule_blocks__max_participants',
-            filter=Q(schedule_blocks__date__gte=timezone.localdate(),
-                     schedule_blocks__status__in=['available', 'booked']),
-        ),
     ).order_by('name')
+
+    # Compute total block capacity per session type in one query to avoid
+    # ORM JOIN multiplication (two M2M annotates inflate each other's counts).
+    block_caps = (
+        ScheduleBlock.objects
+        .filter(date__gte=today, status__in=['available', 'booked'])
+        .values('catalog_session_types')
+        .annotate(total=Sum('max_participants'))
+    )
+    cap_by_st = {row['catalog_session_types']: row['total'] for row in block_caps}
 
     # Annotate formatted start times and a single date range from linked packages
     for obj in list(events_qs) + list(programs_qs):
         obj.start_times_fmt = _fmt_times(obj.start_times)
         obj.weekend_start_times_fmt = _fmt_times(obj.weekend_start_times) if obj.weekend_start_times else ''
         obj.pkg_date = obj.linked_packages.filter(event_start_date__isnull=False).first()
+
+    for obj in programs_qs:
+        obj.total_block_capacity = cap_by_st.get(obj.pk)
 
     return render(request, 'home.html', {
         'packages': packages,
