@@ -27,13 +27,20 @@ def home_view(request):
         is_active=True, is_purchasable=True, is_special=False
     ).exclude(package_type__in=['select', 'team']).order_by('price')
     events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('event_display_order', 'start_date', 'name')
+    from django.db.models import Sum
     programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').annotate(
         confirmed_bookings=Count(
             'bookings',
             filter=Q(bookings__status__in=['pending', 'confirmed'],
                      bookings__scheduled_date__gte=timezone.localdate()),
             distinct=True,
-        )
+        ),
+        # Sum capacity from actual schedule blocks so per-day overrides are reflected
+        total_block_capacity=Sum(
+            'schedule_blocks__max_participants',
+            filter=Q(schedule_blocks__date__gte=timezone.localdate(),
+                     schedule_blocks__status__in=['available', 'booked']),
+        ),
     ).order_by('name')
 
     # Annotate formatted start times and a single date range from linked packages
