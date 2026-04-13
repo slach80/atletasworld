@@ -428,9 +428,9 @@
                         <div class="flex items-center gap-2">
                             {% if slot.spots_remaining is not None %}
                                 {% if slot.spots_remaining <= 5 %}
-                                <span class="px-2 py-0.5 bg-orange-900/60 text-orange-300 text-xs rounded-full font-semibold">{{ slot.spots_remaining }} left</span>
+                                <span class="px-2 py-0.5 bg-orange-900/60 text-orange-300 text-xs rounded-full font-semibold">⚡ {{ slot.spots_remaining }} left</span>
                                 {% else %}
-                                <span class="px-2 py-0.5 bg-gray-600 text-gray-300 text-xs rounded-full">{{ slot.spots_remaining }}/{{ slot.max_participants }}</span>
+                                <span class="px-2 py-0.5 bg-gray-600 text-gray-300 text-xs rounded-full">{{ slot.registered }} / {{ slot.max_participants }} registered</span>
                                 {% endif %}
                             {% endif %}
                             <svg class="w-4 h-4 text-secondary opacity-0 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">

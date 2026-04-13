@@ -79,11 +79,15 @@ def programs_view(request):
         for age_label, time_str, time_24 in slots:
             bdata = block_map.get((date, time_24), {})
             st_id = bdata.get('session_type_id')
+            spots_remaining = bdata.get('spots_remaining')
+            max_participants = bdata.get('max_participants')
+            registered = (max_participants - spots_remaining) if (spots_remaining is not None and max_participants) else None
             slots_enriched.append({
                 'age_label': age_label,
                 'time_str': time_str,
-                'spots_remaining': bdata.get('spots_remaining'),
-                'max_participants': bdata.get('max_participants'),
+                'spots_remaining': spots_remaining,
+                'max_participants': max_participants,
+                'registered': registered,
                 'book_url': f"/book/?st={st_id}" if st_id else "/book/",
             })
         sessions_enriched.append({
