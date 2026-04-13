@@ -16,7 +16,7 @@
     {% if s.location %}
     <div class="highlight-box">
         <div class="label">Location</div>
-        <div class="value">{{ s.location }}</div>
+        <div class="value"><a href="https://maps.google.com/?q={{ s.location|urlencode }}" target="_blank" style="color:#1a1a1a;text-decoration:underline;">{{ s.location }}</a></div>
     </div>
     {% endif %}
     <div class="highlight-box">
