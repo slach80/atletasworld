@@ -261,6 +261,10 @@
                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                     ✏️ Edit
                                 </a>
+                                <a href="{% url 'owner_session_type_roster' st.pk %}"
+                                   class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    📋 Roster
+                                </a>
                                 <form method="post" action="{% url 'owner_session_type_duplicate' st.pk %}">{% csrf_token %}
                                     <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                         📋 Duplicate

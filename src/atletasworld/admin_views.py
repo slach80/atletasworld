@@ -1611,6 +1611,15 @@ def owner_session_type_edit(request, pk):
             session_type.end_date = request.POST.get('end_date') or None
             session_type.min_age = request.POST.get('min_age') or None
             session_type.max_age = request.POST.get('max_age') or None
+            # Per-day/time capacity rules: fields named cap_<Day>_<HH:MM>
+            day_capacities = {}
+            for key, val in request.POST.items():
+                if key.startswith('cap_') and val.strip():
+                    try:
+                        day_capacities[key[4:]] = int(val)
+                    except ValueError:
+                        pass
+            session_type.day_capacities = day_capacities
             session_type.save()
             pkg_ids = request.POST.getlist('linked_packages')
             from clients.models import Package as Pkg
@@ -1637,6 +1646,109 @@ def owner_session_type_edit(request, pk):
         'days_of_week_choices': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     }
     return render(request, 'owner/session_type_form.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_session_type_apply_capacities(request, pk):
+    """AJAX: bulk-update ScheduleBlock.max_participants for blocks linked to this session type."""
+    import json
+    from django.http import JsonResponse
+    from django.shortcuts import get_object_or_404
+    from coaches.models import ScheduleBlock
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    session_type = get_object_or_404(SessionType, pk=pk)
+
+    try:
+        data = json.loads(request.body)
+        capacities = data.get('capacities', {})  # {"Mon_17:00": 20, ...}
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    if not capacities:
+        return JsonResponse({'error': 'No capacity rules provided'}, status=400)
+
+    # Day abbr → weekday integer (Monday=0)
+    day_map = {'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6}
+
+    blocks = ScheduleBlock.objects.filter(catalog_session_types=session_type)
+    updated = 0
+
+    for block in blocks:
+        day_abbr = list(day_map.keys())[block.date.weekday()]
+        time_str = block.start_time.strftime('%H:%M')
+        key = f"{day_abbr}_{time_str}"
+        if key in capacities:
+            new_cap = int(capacities[key])
+            if block.max_participants != new_cap:
+                block.max_participants = new_cap
+                block.save(update_fields=['max_participants'])
+                updated += 1
+
+    # Also save capacities to the session type
+    session_type.day_capacities = {k: int(v) for k, v in capacities.items()}
+    session_type.save(update_fields=['day_capacities'])
+
+    return JsonResponse({'updated': updated})
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_session_type_roster(request, pk):
+    """Capacity roster: bookings vs max per day/time for a session type."""
+    from django.shortcuts import get_object_or_404
+    from coaches.models import ScheduleBlock
+    from django.db.models import Count, Q
+
+    session_type = get_object_or_404(SessionType, pk=pk)
+
+    # All schedule blocks linked to this session type
+    blocks = (
+        ScheduleBlock.objects
+        .filter(catalog_session_types=session_type)
+        .select_related('coach__user')
+        .order_by('date', 'start_time')
+    )
+
+    # Pre-fetch booking counts keyed by (coach_id, date, start_time)
+    booking_counts = {}
+    for b in (
+        Booking.objects
+        .filter(session_type=session_type, status__in=['pending', 'confirmed'])
+        .values('coach_id', 'scheduled_date', 'scheduled_time')
+        .annotate(cnt=Count('id'))
+    ):
+        booking_counts[(b['coach_id'], b['scheduled_date'], b['scheduled_time'])] = b['cnt']
+
+    # Build roster rows with fill metrics
+    roster = []
+    for block in blocks:
+        booked = booking_counts.get(
+            (block.coach_id, block.date, block.start_time), 0
+        )
+        capacity = session_type.get_capacity(
+            ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][block.date.weekday()],
+            block.start_time.strftime('%H:%M'),
+        )
+        pct = round(booked / capacity * 100) if capacity else 0
+        roster.append({
+            'block':    block,
+            'booked':   booked,
+            'capacity': capacity,
+            'pct':      pct,
+            'status':   'full' if pct >= 100 else ('warning' if pct >= 70 else 'ok'),
+        })
+
+    context = {
+        'session_type': session_type,
+        'roster':       roster,
+        'total_booked': sum(r['booked'] for r in roster),
+        'total_capacity': sum(r['capacity'] for r in roster),
+    }
+    return render(request, 'owner/session_type_roster.html', context)
 
 
 # ============================================================================

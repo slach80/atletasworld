@@ -20,6 +20,7 @@ from .admin_views import (
     owner_bookings, owner_booking_detail,
     owner_clients, owner_client_detail, owner_client_approve, owner_client_reject, owner_players, owner_player_detail,
     owner_session_types, owner_session_type_edit,
+    owner_session_type_apply_capacities, owner_session_type_roster,
     owner_teams, owner_team_detail,
     owner_field_slots, owner_field_slot_edit,
     owner_field_slot_approve, owner_field_slot_reject,
@@ -137,6 +138,8 @@ urlpatterns = [
     path('owner-portal/session-types/<int:pk>/edit/', owner_session_type_edit, name='owner_session_type_edit'),
     path('owner-portal/session-types/<int:pk>/delete/', owner_session_type_hard_delete, name='owner_session_type_delete'),
     path('owner-portal/session-types/<int:pk>/duplicate/', owner_session_type_duplicate, name='owner_session_type_duplicate'),
+    path('owner-portal/session-types/<int:pk>/apply-capacities/', owner_session_type_apply_capacities, name='owner_session_type_apply_capacities'),
+    path('owner-portal/session-types/<int:pk>/roster/', owner_session_type_roster, name='owner_session_type_roster'),
 
     # Owner - Team Management
     path('owner-portal/teams/', owner_teams, name='owner_teams'),

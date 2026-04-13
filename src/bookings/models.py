@@ -86,7 +86,19 @@ class SessionType(models.Model):
     min_age = models.IntegerField(null=True, blank=True, help_text="Minimum age restriction")
     max_age = models.IntegerField(null=True, blank=True, help_text="Maximum age restriction")
 
+    # Per-day/time capacity overrides. Keys: "Mon_17:00", values: int.
+    # Falls back to max_participants when no override exists.
+    day_capacities = models.JSONField(
+        default=dict, blank=True,
+        help_text='Per-day/time capacity overrides e.g. {"Mon_17:00": 20, "Sat_15:00": 40}'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_capacity(self, day_abbr, time_str):
+        """Return max participants for a specific day (e.g. 'Mon') + time ('17:00').
+        Falls back to max_participants when no override is set."""
+        return self.day_capacities.get(f"{day_abbr}_{time_str}", self.max_participants)
 
     def get_drop_in_price(self):
         """Return drop-in price, falling back to standard price."""

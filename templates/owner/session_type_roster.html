@@ -1,0 +1,126 @@
+{% extends 'owner/base.html' %}
+{% block title %}Roster — {{ session_type.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <a href="{% url 'owner_session_types' %}" class="text-owner hover:underline text-sm">&larr; Session Types</a>
+        <span class="text-gray-400 mx-2 text-sm">/</span>
+        <a href="{% url 'owner_session_type_edit' session_type.pk %}" class="text-owner hover:underline text-sm">{{ session_type.name }}</a>
+    </div>
+    <a href="{% url 'owner_session_type_edit' session_type.pk %}" class="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+        ✏️ Edit Session Type
+    </a>
+</div>
+
+<!-- Header -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <div class="flex items-start justify-between flex-wrap gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-5 h-5 rounded-full shrink-0" style="background-color:{{ session_type.color }}"></div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">{{ session_type.name }}</h1>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    {{ session_type.get_session_format_display }}
+                    {% if session_type.location %} · {{ session_type.location }}{% endif %}
+                    {% if session_type.age_group %} · {{ session_type.age_group }}{% endif %}
+                </p>
+            </div>
+        </div>
+        {% if roster %}
+        <div class="flex items-center gap-6 text-center">
+            <div>
+                <div class="text-2xl font-bold text-gray-800">{{ total_booked }}</div>
+                <div class="text-xs text-gray-500">Total Booked</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-gray-800">{{ total_capacity }}</div>
+                <div class="text-xs text-gray-500">Total Capacity</div>
+            </div>
+            <div>
+                {% if total_capacity %}
+                {% widthratio total_booked total_capacity 100 as overall_pct %}
+                <div class="text-2xl font-bold {% if overall_pct >= 100 %}text-red-600{% elif overall_pct >= 70 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                    {{ overall_pct }}%
+                </div>
+                {% else %}
+                <div class="text-2xl font-bold text-gray-400">—</div>
+                {% endif %}
+                <div class="text-xs text-gray-500">Fill Rate</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if roster %}
+<!-- Roster table -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Day</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Time</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Coach</th>
+                <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Booked</th>
+                <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Cap</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-40">Fill</th>
+                <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                <th class="px-4 py-3"></th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for row in roster %}
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3 font-medium text-gray-800">{{ row.block.date|date:"M j, Y" }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ row.block.date|date:"D" }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ row.block.start_time|time:"g:i A" }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ row.block.coach.user.get_full_name|default:row.block.coach.user.username }}</td>
+                <td class="px-4 py-3 text-center font-semibold
+                    {% if row.status == 'full' %}text-red-600
+                    {% elif row.status == 'warning' %}text-yellow-600
+                    {% else %}text-gray-800{% endif %}">
+                    {{ row.booked }}
+                </td>
+                <td class="px-4 py-3 text-center text-gray-500">{{ row.capacity }}</td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2 max-w-[100px]">
+                            <div class="h-2 rounded-full
+                                {% if row.status == 'full' %}bg-red-500
+                                {% elif row.status == 'warning' %}bg-yellow-400
+                                {% else %}bg-green-500{% endif %}"
+                                 style="width:{% if row.pct > 100 %}100{% else %}{{ row.pct }}{% endif %}%">
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-500 w-8 text-right">{{ row.pct }}%</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    {% if row.status == 'full' %}
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-medium">Full</span>
+                    {% elif row.status == 'warning' %}
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700 font-medium">Filling</span>
+                    {% else %}
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 font-medium">Open</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <a href="{% url 'owner_bookings' %}?session_type={{ session_type.pk }}&date={{ row.block.date|date:'Y-m-d' }}"
+                       class="text-xs text-owner hover:underline">View →</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="bg-white rounded-xl shadow-md p-12 text-center text-gray-400">
+    <p class="text-lg">No schedule blocks linked to this session type yet.</p>
+    <p class="text-sm mt-2">Schedule blocks are created in the <a href="{% url 'owner_coaches' %}" class="text-owner hover:underline">coach schedule</a>.</p>
+</div>
+{% endif %}
+
+{% endblock %}
