@@ -18,6 +18,20 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # These packages dropped Django 4.2 support — hold until Django 5 upgrade
+      - dependency-name: "django-allauth"
+        versions: [">=65.0.0"]
+      - dependency-name: "django-anymail"
+        versions: [">=13.0"]
+      - dependency-name: "django-bootstrap5"
+        versions: [">=24.0"]
+      - dependency-name: "django-crispy-forms"
+        versions: [">=2.4"]
+      - dependency-name: "crispy-bootstrap5"
+        versions: [">=2024.0"]
+      - dependency-name: "django-cors-headers"
+        versions: [">=4.7.0"]
 
   # GitHub Actions
   - package-ecosystem: github-actions
