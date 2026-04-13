@@ -71,7 +71,7 @@ def dashboard(request):
         client=client, status__in=['completed', 'cancelled', 'no_show']
     ).count()
 
-    # Next upcoming booking (for 24h reminder)
+    # Next upcoming booking (for same-day reminder)
     today_dt = timezone.now()
     next_booking = upcoming_bookings.first()
     next_booking_soon = None
@@ -80,7 +80,7 @@ def dashboard(request):
         next_dt = dt.datetime.combine(next_booking.scheduled_date, next_booking.scheduled_time)
         next_dt = timezone.make_aware(next_dt) if timezone.is_naive(next_dt) else next_dt
         hours_away = (next_dt - today_dt).total_seconds() / 3600
-        if 0 < hours_away <= 24:
+        if 0 < hours_away <= 24 and next_booking.scheduled_date == timezone.localdate():
             next_booking_soon = next_booking
 
     # Packages expiring soon (within 14 days)
