@@ -681,7 +681,6 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
     .email-footer {{ background-color: #1a1a1a; padding: 25px 30px; text-align: center; }}
     .email-footer p {{ color: #888888; font-size: 12px; margin: 4px 0; }}
     .email-footer a {{ color: #D7FF00; text-decoration: none; }}
-    .footer-logo {{ color: #ffffff; font-size: 15px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; }}
 </style>
 </head>
 <body>
@@ -701,7 +700,7 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
         </div>
     </div>
     <div class="email-footer">
-        <div class="footer-logo">APC</div>
+        <img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" height="36" style="height:36px;width:auto;display:inline-block;margin-bottom:8px;">
         <p>
             <a href="https://www.instagram.com/atletasperformancecenter/" target="_blank">Instagram</a> &nbsp;|&nbsp;
             <a href="https://www.facebook.com/profile.php?id=61572009236369" target="_blank">Facebook</a>
