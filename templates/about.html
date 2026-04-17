@@ -126,23 +126,29 @@
         <!-- Coaches -->
         <section class="bg-white rounded-2xl shadow-lg p-8 mb-8">
             <h2 class="text-3xl font-bold text-gray-900 mb-6">Meet Our Coaches</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <a href="/coach/mirko" class="flex items-center p-6 border rounded-xl hover:border-secondary transition">
-                    <div class="w-20 h-20 rounded-full bg-gray-200 bg-cover bg-top mr-4 flex-shrink-0" style="background-image: url('https://scontent.fmkc1-1.fna.fbcdn.net/v/t39.30808-6/531786468_10213182800482631_458699935474470537_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=4VQ-gwNp5swQ7kNvwFsZi3i&_nc_oc=Adlh1NtBPvNR38Sgwtiuy4F1kWiR-Pf-rDqq_X9nGu_5POxrRwGbyShnoEdb_-0z7Q0&_nc_zt=23&_nc_ht=scontent.fmkc1-1.fna&_nc_gid=L6td_L4sm0wA8wP_XFRTmg&oh=00_AfmsC44X0sKkmr6sWvaZ3ZOx4RTzBDJFGzFftT1F9T0-cg&oe=693BD215');"></div>
+            <div class="grid md:grid-cols-2 gap-6">
+                {% for coach in active_coaches %}
+                <a href="{% if coach.slug and coach.profile_enabled %}/coach/{{ coach.slug }}/{% else %}/#coaches{% endif %}"
+                   class="flex items-center p-6 border rounded-xl hover:border-secondary transition">
+                    {% if coach.photo %}
+                    <div class="w-20 h-20 rounded-full bg-cover bg-top mr-4 flex-shrink-0"
+                         style="background-image: url('{{ coach.photo.url }}');"></div>
+                    {% else %}
+                    <div class="w-20 h-20 rounded-full bg-gray-800 mr-4 flex-shrink-0 flex items-center justify-center">
+                        <span class="text-white text-2xl font-bold">{{ coach.user.first_name.0 }}{{ coach.user.last_name.0 }}</span>
+                    </div>
+                    {% endif %}
                     <div>
-                        <h3 class="font-bold text-xl text-gray-900">Mirko Trapletti</h3>
-                        <p class="text-secondary font-semibold">Founder | Tactics & Conditioning</p>
-                        <p class="text-gray-500 text-sm mt-1">10+ years international experience</p>
+                        <h3 class="font-bold text-xl text-gray-900">{{ coach.user.get_full_name }}</h3>
+                        {% if coach.tagline %}
+                        <p class="text-secondary font-semibold">{{ coach.tagline }}</p>
+                        {% endif %}
+                        {% if coach.experience_years %}
+                        <p class="text-gray-500 text-sm mt-1">{{ coach.experience_years }}+ years experience</p>
+                        {% endif %}
                     </div>
                 </a>
-                <a href="/coach/roger" class="flex items-center p-6 border rounded-xl hover:border-secondary transition">
-                    <div class="w-20 h-20 rounded-full bg-gray-200 bg-cover bg-top mr-4 flex-shrink-0" style="background-image: url('https://scontent.fmkc1-1.fna.fbcdn.net/v/t39.30808-6/530279404_10213182800722637_1861514008881481787_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_ohc=YFC2iw1FYycQ7kNvwG4XTqx&_nc_oc=AdlL8viAs8-cZ1wiMsAHu9KX6dnmsxITj36KBIc-Zz6EuMA6kcgHO1Thj9xXID9psoo&_nc_zt=23&_nc_ht=scontent.fmkc1-1.fna&_nc_gid=t4PCQlNXSD9A6Bdg8QYeSw&oh=00_AfkK70HcS-EpwRUGIDjf9WDQ-CCq1fjSNld6KGHCeZ1ldA&oe=693BC2FA');"></div>
-                    <div>
-                        <h3 class="font-bold text-xl text-gray-900">Roger Espinoza</h3>
-                        <p class="text-blue-600 font-semibold">Former MLS Pro</p>
-                        <p class="text-gray-500 text-sm mt-1">Professional playing experience</p>
-                    </div>
-                </a>
+                {% endfor %}
             </div>
         </section>
 

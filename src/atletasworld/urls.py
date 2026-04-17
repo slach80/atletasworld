@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from coaches.views import coach_public_profile
-from .views import home_view, apple_pay_verification, programs_view
+from .views import home_view, about_view, apple_pay_verification, programs_view
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
@@ -174,7 +174,7 @@ urlpatterns = [
 
     # Public pages
     path('', home_view, name='home'),
-    path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
+    path('about/', about_view, name='about'),
     path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
     path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
     path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),

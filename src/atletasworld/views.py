@@ -21,10 +21,18 @@ def apple_pay_verification(request):
     return HttpResponse('', content_type='text/plain', status=404)
 
 
+def _get_active_coaches():
+    from coaches.models import Coach
+    return Coach.objects.filter(is_active=True).select_related('user').order_by('user__first_name')
+
+
+def about_view(request):
+    return render(request, 'about.html', {'active_coaches': _get_active_coaches()})
+
+
 def home_view(request):
     """Public homepage — packages, events, and programs from the database."""
-    from coaches.models import Coach
-    active_coaches = Coach.objects.filter(is_active=True).select_related('user').order_by('user__first_name')
+    active_coaches = _get_active_coaches()
 
     packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=False
