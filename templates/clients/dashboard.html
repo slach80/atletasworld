@@ -421,6 +421,12 @@
                                         {% else %}bg-gray-100 text-gray-800{% endif %}">
                                         {{ booking.get_status_display }}
                                     </span>
+                                    {% if booking.status in 'pending,confirmed' %}
+                                    <a href="{% url 'clients:booking_reschedule' booking.id %}"
+                                       class="px-3 py-1 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition text-xs">
+                                        Reschedule
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
