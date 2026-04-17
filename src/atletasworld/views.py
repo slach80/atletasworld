@@ -23,6 +23,9 @@ def apple_pay_verification(request):
 
 def home_view(request):
     """Public homepage — packages, events, and programs from the database."""
+    from coaches.models import Coach
+    active_coaches = Coach.objects.filter(is_active=True).select_related('user').order_by('user__first_name')
+
     packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=False
     ).exclude(package_type__in=['select', 'team']).order_by('price')
@@ -65,6 +68,7 @@ def home_view(request):
         'packages': packages,
         'events': events_qs,
         'programs': programs_qs,
+        'active_coaches': active_coaches,
     })
 
 
