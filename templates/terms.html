@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - Atletas Performance Center</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
+    <link rel="stylesheet" href="/static/gymlife/css/bilgen.css?v=7">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#1a1a1a',secondary:'#D7FF00',accent:'#D7FF00'}}}}</script>
+    <style>body{font-family:'Archivo Condensed',system-ui,sans-serif;}</style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-primary shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="APC" class="h-10 w-auto"></a>
+            <a href="/" class="text-white hover:text-secondary transition">← Back to Home</a>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-12">
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Terms of Service</h1>
+            <p class="text-gray-500 mb-8">Last updated: April 2026</p>
+
+            <div class="prose max-w-none text-gray-700 space-y-6">
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">1. Acceptance of Terms</h2>
+                    <p>By creating an account or using any services provided by Atletas Performance Center ("APC", "we", "us"), you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">2. Services</h2>
+                    <p>APC provides athletic training programs, coaching sessions, facility rentals, and related services at 11301 W 88th St, Overland Park, KS 66214. Session schedules, pricing, and availability are subject to change.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">3. Registration & Accounts</h2>
+                    <p>You must provide accurate information when creating an account. You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">4. Payments & Cancellations</h2>
+                    <p>All session bookings are subject to our cancellation policy. Payments are processed securely via Stripe. Refunds are handled on a case-by-case basis at APC's discretion. Package sessions expire as specified at time of purchase.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">5. Liability Waiver</h2>
+                    <p>Participation in athletic training involves inherent physical risks. By using our services, you acknowledge these risks and agree that APC, its coaches, and staff are not liable for injuries sustained during training activities, except in cases of gross negligence.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">6. Code of Conduct</h2>
+                    <p>All participants are expected to treat coaches, staff, and fellow athletes with respect. APC reserves the right to terminate access for conduct that is disruptive, abusive, or harmful to others.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">7. Changes to Terms</h2>
+                    <p>We may update these Terms at any time. Continued use of our services after changes constitutes acceptance of the revised Terms.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">8. Contact</h2>
+                    <p>Questions? Email us at <a href="mailto:info@atletasperformancecenter.com" class="text-secondary hover:underline">info@atletasperformancecenter.com</a>.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    {% include "includes/public_footer.html" %}
+</body>
+</html>

@@ -4,35 +4,49 @@
 {% block title %}Sign Up - Atletas Performance Center{% endblock %}
 
 {% block body %}
-<div class="min-vh-100 d-flex flex-column" style="background-color: #1a1a1a;">
+<style>
+.auth-bg {
+    background-color: #111111;
+    background-image:
+        radial-gradient(circle at 20% 50%, rgba(215,255,0,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(215,255,0,0.04) 0%, transparent 40%),
+        repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 40px,
+            rgba(255,255,255,0.015) 40px,
+            rgba(255,255,255,0.015) 41px
+        );
+}
+</style>
+<div class="min-vh-100 d-flex flex-column auth-bg">
     <!-- Simple Nav -->
-    <nav class="navbar navbar-dark shadow-sm" style="background-color: #111111;">
+    <nav class="navbar navbar-dark shadow-sm" style="background-color: #0d0d0d; border-bottom: 1px solid rgba(215,255,0,0.15);">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" height="40" class="rounded">
             </a>
-            <a href="/" class="btn btn-outline-light btn-sm">
-                <i class="bi bi-house me-1"></i> Home
+            <a href="/" class="btn btn-sm fw-semibold" style="color:#D7FF00; border: 1px solid rgba(215,255,0,0.4);">
+                ← Home
             </a>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-grow-1 d-flex align-items-center py-5">
+    <main class="flex-grow-1 d-flex align-items-center py-4">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-6 col-lg-5">
                     <!-- Logo/Header -->
                     <div class="text-center mb-4">
-                        <img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="mb-3" style="height: 80px;">
-                        <h1 class="h3 fw-bold text-white">Join Atletas Performance Center</h1>
-                        <p class="text-light opacity-75">Create your account and start training</p>
+                        <img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="mb-3" style="height: 72px;">
+                        <h1 class="h3 fw-bold text-white mb-1">Join Atletas Performance Center</h1>
+                        <p class="text-light opacity-50 small mb-0">Create your account and start training</p>
                     </div>
 
                     <!-- Signup Card -->
-                    <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card border-0 shadow-lg rounded-4 mb-3" style="background:#1e1e1e; border: 1px solid rgba(255,255,255,0.08) !important;">
                         <div class="card-body p-4">
-                            <!-- Email Signup Form -->
                             <form method="POST" action="{% url 'account_signup' %}">
                                 {% csrf_token %}
                                 {{ form|crispy }}
@@ -40,12 +54,12 @@
                                 <div class="form-check mb-3">
                                     <input type="checkbox" class="form-check-input" id="terms" required>
                                     <label class="form-check-label small text-muted" for="terms">
-                                        I agree to the <a href="#" class="text-success">Terms of Service</a> and <a href="#" class="text-success">Privacy Policy</a>
+                                        I agree to the <a href="{% url 'terms' %}" class="text-decoration-none" style="color:#D7FF00;">Terms of Service</a> and <a href="{% url 'privacy' %}" class="text-decoration-none" style="color:#D7FF00;">Privacy Policy</a>
                                     </label>
                                 </div>
 
-                                <button type="submit" class="btn btn-success w-100 py-2 fw-semibold" style="background-color:#D7FF00;border-color:#D7FF00;color:#1a1a1a;">
-                                    <i class="bi bi-person-plus me-1"></i> Create Account
+                                <button type="submit" class="btn w-100 py-2 fw-bold" style="background-color:#D7FF00;border-color:#D7FF00;color:#111;font-size:1rem;">
+                                    Create Account →
                                 </button>
                             </form>
                         </div>
@@ -53,9 +67,9 @@
 
                     <!-- Sign In Link -->
                     <div class="text-center">
-                        <p class="text-light opacity-75 mb-0">
+                        <p class="text-light opacity-50 mb-0 small">
                             Already have an account?
-                            <a href="{% url 'account_login' %}" class="text-success fw-semibold text-decoration-none">Sign in</a>
+                            <a href="{% url 'account_login' %}" class="fw-semibold text-decoration-none" style="color:#D7FF00;">Sign in</a>
                         </p>
                     </div>
                 </div>

@@ -47,10 +47,10 @@
         h1, h2, .brand-heading { font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif; }
         h3, h4, h5, h6 { font-family: 'Archivo Condensed', system-ui, sans-serif; }
         .hero-gradient {
-            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(46, 204, 113, 0.85) 100%), 
-                        url('https://images.squarespace-cdn.com/content/v1/661d5ed368f9961459c0ea9f/ad365857-512c-49ea-a74d-fadedb744770/nz9_0059_53907201547_o.jpg');
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(46, 204, 113, 0.85) 100%),
+                        url('/static/img/mirko.jpg');
             background-size: cover;
-            background-position: center;
+            background-position: center top;
         }
         .card-hover {
             transition: all 0.4s ease;
@@ -128,7 +128,7 @@
                 <a href="#about" class="text-gray-300 hover:text-secondary font-medium transition">About</a>
                 <a href="#services" class="text-gray-300 hover:text-secondary font-medium transition">Services</a>
                 <a href="#fundraising" class="text-gray-300 hover:text-secondary font-medium transition">Fundraising</a>
-                <a href="/programs/" class="text-secondary font-bold transition">Special Projects ✦</a>
+                <a href="/programs/" class="text-secondary font-bold transition">APC Select & Events ✦</a>
                 <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-[#b8e000] transition transform hover:scale-105 shadow-lg">
                     Book Now
                 </a>
@@ -168,12 +168,13 @@
             </a>
             {% endif %}
             <hr class="my-2 border-gray-700">
-            <a href="#events" class="block px-3 py-2 text-accent font-bold hover:bg-gray-800 rounded">Events</a>
+            <a href="#events" class="block px-3 py-2 text-accent font-bold hover:bg-gray-800 rounded">Events 🔥</a>
             <a href="#programs" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Programs</a>
             <a href="#coaches" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Coaches</a>
             <a href="#about" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">About</a>
             <a href="#services" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Services</a>
-            <a href="/programs/" class="block px-3 py-2 text-secondary font-bold hover:bg-gray-800 rounded">Special Projects ✦</a>
+            <a href="#fundraising" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Fundraising</a>
+            <a href="/programs/" class="block px-3 py-2 text-secondary font-bold hover:bg-gray-800 rounded">APC Select & Events ✦</a>
             <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-gray-900 hover:bg-[#b8e000] rounded">Book Now</a>
         </div>
     </div>
@@ -750,22 +751,27 @@
                 </div>
                 
                 <div class="bg-white text-gray-900 rounded-2xl p-8 shadow-2xl">
-                    <h3 class="text-2xl font-bold mb-6">Make a Donation</h3>
-                    <div class="space-y-4">
-                        <button class="w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg">
-                            $25 - Equipment Fund
-                        </button>
-                        <button class="w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg">
-                            $50 - One Training Session
-                        </button>
-                        <button class="w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg">
-                            $100 - Monthly Scholarship
-                        </button>
-                        <button class="w-full border-2 border-accent text-accent py-4 rounded-lg font-semibold hover:bg-accent hover:text-white transition text-lg">
-                            Custom Amount
-                        </button>
+                    <h3 class="text-2xl font-bold mb-2">Make a Donation</h3>
+                    <p class="text-gray-500 text-sm mb-6">Choose an amount or reach out to donate by check or bank transfer.</p>
+                    <div class="space-y-3">
+                        <a href="mailto:info@atletasperformancecenter.com?subject=Donation%20-%20%2425%20Equipment%20Fund&body=Hi%2C%20I%27d%20like%20to%20donate%20%2425%20to%20the%20Equipment%20Fund."
+                           class="block w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg text-center">
+                            $25 — Equipment Fund
+                        </a>
+                        <a href="mailto:info@atletasperformancecenter.com?subject=Donation%20-%20%2450%20Training%20Session&body=Hi%2C%20I%27d%20like%20to%20donate%20%2450%20to%20sponsor%20one%20training%20session."
+                           class="block w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg text-center">
+                            $50 — One Training Session
+                        </a>
+                        <a href="mailto:info@atletasperformancecenter.com?subject=Donation%20-%20%24100%20Monthly%20Scholarship&body=Hi%2C%20I%27d%20like%20to%20donate%20%24100%20toward%20a%20monthly%20scholarship."
+                           class="block w-full bg-accent text-gray-900 py-4 rounded-lg font-semibold hover:bg-[#b8e000] transition text-lg text-center">
+                            $100 — Monthly Scholarship
+                        </a>
+                        <a href="mailto:info@atletasperformancecenter.com?subject=Donation%20-%20Custom%20Amount&body=Hi%2C%20I%27d%20like%20to%20make%20a%20donation%20of%20%24"
+                           class="block w-full border-2 border-gray-900 text-gray-900 py-4 rounded-lg font-semibold hover:bg-gray-900 hover:text-white transition text-lg text-center">
+                            Custom Amount →
+                        </a>
                     </div>
-                    <p class="text-sm text-gray-600 mt-6 text-center">
+                    <p class="text-xs text-gray-500 mt-5 text-center">
                         🏆 100% of donations go directly to athlete support programs
                     </p>
                 </div>

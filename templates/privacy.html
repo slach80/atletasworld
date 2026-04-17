@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Atletas Performance Center</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
+    <link rel="stylesheet" href="/static/gymlife/css/bilgen.css?v=7">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#1a1a1a',secondary:'#D7FF00',accent:'#D7FF00'}}}}</script>
+    <style>body{font-family:'Archivo Condensed',system-ui,sans-serif;}</style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-primary shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="APC" class="h-10 w-auto"></a>
+            <a href="/" class="text-white hover:text-secondary transition">← Back to Home</a>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-12">
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
+            <p class="text-gray-500 mb-8">Last updated: April 2026</p>
+
+            <div class="prose max-w-none text-gray-700 space-y-6">
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">1. Information We Collect</h2>
+                    <p>We collect information you provide directly: name, email address, date of birth (for age-group registration), and payment information. We also collect usage data such as session history and booking records.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">2. How We Use Your Information</h2>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li>To manage your account and bookings</li>
+                        <li>To send session reminders and confirmations</li>
+                        <li>To process payments via Stripe (we do not store card numbers)</li>
+                        <li>To improve our programs and communications</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">3. Information Sharing</h2>
+                    <p>We do not sell your personal information. We share data only with:</p>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li><strong>Stripe</strong> — for payment processing</li>
+                        <li><strong>SendGrid / Mailgun</strong> — for transactional emails</li>
+                        <li><strong>Twilio</strong> — for SMS reminders (if opted in)</li>
+                        <li>Legal authorities when required by law</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">4. Data Retention</h2>
+                    <p>We retain your account data for as long as your account is active. You may request deletion by emailing us. Payment records are retained as required by law.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">5. Cookies</h2>
+                    <p>We use session cookies for authentication and basic site functionality. We do not use third-party tracking or advertising cookies.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">6. Your Rights</h2>
+                    <p>You may access, update, or request deletion of your personal data at any time by contacting us. Kansas residents may have additional rights under applicable state law.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">7. Contact</h2>
+                    <p>Privacy questions: <a href="mailto:info@atletasperformancecenter.com" class="text-secondary hover:underline">info@atletasperformancecenter.com</a></p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    {% include "includes/public_footer.html" %}
+</body>
+</html>

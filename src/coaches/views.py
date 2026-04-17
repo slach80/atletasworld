@@ -1077,8 +1077,9 @@ def coach_public_profile(request, slug):
         total_reviews=models.Count('id')
     )
 
-    # Get session count
-    total_sessions = Booking.objects.filter(coach=coach, status='completed').count()
+    # Get session count — floor to coach's display setting to account for pre-platform history
+    db_sessions = Booking.objects.filter(coach=coach, status='completed').count()
+    total_sessions = max(db_sessions, coach.sessions_display_floor)
 
     # Parse specializations
     specializations = []

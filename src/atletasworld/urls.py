@@ -176,6 +176,8 @@ urlpatterns = [
     path('', home_view, name='home'),
     path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
     path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
+    path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
+    path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
     path('book/', book_redirect_view, name='book'),  # Redirects to portal booking
     path('comparison/', TemplateView.as_view(template_name='comparison.html'), name='comparison'),
     path('programs/', programs_view, name='programs'),

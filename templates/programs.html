@@ -33,9 +33,9 @@
         h1, h2, h3 { font-weight: 800; }
         .hero-select {
             background: linear-gradient(135deg, rgba(26,26,26,0.97) 0%, rgba(20,20,20,0.92) 100%),
-                        url('https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1600&q=80');
+                        url('/static/img/roger.jpg');
             background-size: cover;
-            background-position: center;
+            background-position: center top;
         }
         .card-hover { transition: all 0.3s ease; }
         .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -81,7 +81,7 @@
                 <a href="/#programs" class="text-gray-300 hover:text-secondary font-medium transition">Programs</a>
                 <a href="/#coaches" class="text-gray-300 hover:text-secondary font-medium transition">Coaches</a>
                 <a href="/#about" class="text-gray-300 hover:text-secondary font-medium transition">About</a>
-                <a href="/programs/" class="text-secondary font-bold transition border-b-2 border-secondary pb-1">Special Projects</a>
+                <a href="/programs/" class="text-secondary font-bold transition border-b-2 border-secondary pb-1">APC Select & Events</a>
                 <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-[#b8e000] transition transform hover:scale-105 shadow-lg">
                     Book Now
                 </a>
@@ -109,7 +109,7 @@
             <a href="/#programs" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Programs</a>
             <a href="/#coaches" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">Coaches</a>
             <a href="/#about" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">About</a>
-            <a href="/programs/" class="block px-3 py-2 text-secondary font-bold hover:bg-gray-800 rounded">Special Projects</a>
+            <a href="/programs/" class="block px-3 py-2 text-secondary font-bold hover:bg-gray-800 rounded">APC Select & Events</a>
             <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-gray-900 hover:bg-[#b8e000] rounded">Book Now</a>
         </div>
     </div>
@@ -133,7 +133,7 @@
 </section>
 
 <!-- APC Select Hero -->
-<section class="hero-select text-white py-20 md:py-28">
+<section class="hero-select text-white py-14 md:py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl">
             <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1 rounded mb-6">New Program — 2026</span>
@@ -156,7 +156,7 @@
 </section>
 
 <!-- Philosophy / 3 Principles -->
-<section id="details" class="py-20 bg-white">
+<section id="details" class="py-14 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
             <span class="text-secondary font-bold uppercase tracking-widest text-sm">Our Philosophy</span>

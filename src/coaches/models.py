@@ -25,6 +25,8 @@ class Coach(models.Model):
                                help_text="Short tagline shown on profile")
     full_bio = models.TextField(blank=True, help_text="Extended biography for public profile")
     experience_years = models.IntegerField(default=0, help_text="Years of coaching experience")
+    sessions_display_floor = models.IntegerField(default=0,
+                                                  help_text="Minimum session count shown publicly (accounts for pre-platform history)")
     coaching_philosophy = models.TextField(blank=True, help_text="Your coaching philosophy")
     achievements = models.TextField(blank=True, help_text="Notable achievements and awards")
 
