@@ -119,9 +119,26 @@ def owner_dashboard(request):
     _raw_bookings = Booking.objects.filter(
         payment_status='paid', amount_paid__gt=0
     ).select_related('client__user', 'player', 'session_type').order_by('-updated_at')[:8]
-    _raw_packages = ClientPackage.objects.exclude(
+    _raw_packages = list(ClientPackage.objects.exclude(
         status='cancelled'
-    ).select_related('client__user', 'package', 'player').order_by('-purchase_date')[:8]
+    ).select_related('client__user', 'package', 'player').order_by('-purchase_date')[:8])
+
+    # Resolve actual charged amounts and discount labels for package rows
+    from payments.models import Payment as _Payment
+    from clients.models import DiscountCodeUse as _DiscountCodeUse
+    _pi_ids = [cp.stripe_payment_id for cp in _raw_packages if cp.stripe_payment_id]
+    _pay_map = {
+        p.stripe_payment_intent_id: p.amount
+        for p in _Payment.objects.filter(stripe_payment_intent_id__in=_pi_ids)
+    } if _pi_ids else {}
+    _use_map = {
+        u.applied_to_package_id: u
+        for u in _DiscountCodeUse.objects.filter(
+            applied_to_package__in=[cp.id for cp in _raw_packages],
+            status='applied',
+        ).select_related('code')
+    }
+
     _transactions = []
     for bk in _raw_bookings:
         _transactions.append({
@@ -131,15 +148,23 @@ def owner_dashboard(request):
             'amount': bk.amount_paid,
             'date': bk.updated_at.date(),
             'type': 'dropin',
+            'discount_label': None,
+            'discount_amount': None,
+            'list_price': None,
         })
     for cp in _raw_packages:
+        use = _use_map.get(cp.id)
+        charged = _pay_map.get(cp.stripe_payment_id, cp.package.price)
         _transactions.append({
             'name': (f"{cp.player.first_name} {cp.player.last_name}".strip()
                      if cp.player else cp.client.user.get_full_name()),
             'label': cp.package.name,
-            'amount': cp.package.price,
+            'amount': charged,
             'date': cp.purchase_date.date(),
             'type': 'package',
+            'discount_label': use.code.code if use else None,
+            'discount_amount': use.discount_amount if use else None,
+            'list_price': cp.package.price if use else None,
         })
     _transactions.sort(key=lambda x: x['date'], reverse=True)
     recent_transactions = _transactions[:8]
@@ -254,6 +279,7 @@ def owner_dashboard(request):
         'coaches': coaches,
         'todays_schedule': todays_schedule,
         'recent_bookings': recent_bookings,
+        'recent_transactions': recent_transactions,
         'players_pending_assessment': players_pending_assessment,
     }
     return render(request, 'owner/dashboard.html', context)

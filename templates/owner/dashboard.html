@@ -187,8 +187,14 @@
                 <span class="text-gray-400 mx-1">·</span>
                 <span class="text-gray-500">{{ tx.label }}</span>
                 {% if tx.type == 'package' %}<span class="ml-1 text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">pkg</span>{% endif %}
+                {% if tx.discount_label %}
+                <span class="ml-1 text-xs bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded">{{ tx.discount_label }} −${{ tx.discount_amount|floatformat:0 }}</span>
+                {% endif %}
             </div>
             <div class="text-right">
+                {% if tx.list_price %}
+                <div class="text-xs text-gray-400 line-through">${{ tx.list_price|floatformat:0 }}</div>
+                {% endif %}
                 <span class="font-bold text-green-700">${{ tx.amount|floatformat:2 }}</span>
                 <span class="text-gray-400 text-xs ml-2">{{ tx.date|date:"M j" }}</span>
             </div>
