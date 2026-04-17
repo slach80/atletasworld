@@ -266,12 +266,10 @@
                             {% endif %}
 
                             {% if booking.status in 'pending,confirmed' %}
-                            {% if booking.can_reschedule %}
                             <a href="{% url 'clients:booking_reschedule' booking.id %}"
                                class="px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition text-sm">
                                 Reschedule
                             </a>
-                            {% endif %}
                             <form method="POST" action="{% url 'clients:booking_cancel' booking.id %}" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                                 {% csrf_token %}
                                 <button type="submit" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition text-sm">

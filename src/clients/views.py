@@ -511,8 +511,8 @@ def booking_reschedule(request, booking_id):
     client, _ = Client.objects.get_or_create(user=request.user)
     booking = get_object_or_404(Booking, id=booking_id, client=client)
 
-    if not booking.can_reschedule:
-        messages.error(request, 'This booking cannot be rescheduled (must be 24+ hours before the session).')
+    if booking.status in ['cancelled', 'completed', 'no_show']:
+        messages.error(request, 'This booking cannot be rescheduled.')
         return redirect('clients:bookings')
 
     if request.method == 'POST':
@@ -522,7 +522,29 @@ def booking_reschedule(request, booking_id):
             messages.error(request, 'That slot is no longer available. Please choose another.')
             return redirect('clients:booking_reschedule', booking_id=booking_id)
         try:
-            booking.reschedule(new_slot=new_slot, cancelled_by=request.user)
+            from bookings.models import Booking as _Booking
+            new_booking = _Booking.objects.create(
+                client=booking.client,
+                player=booking.player,
+                coach=new_slot.coach,
+                availability_slot=new_slot,
+                session_type=booking.session_type,
+                client_package=booking.client_package,
+                scheduled_date=new_slot.date,
+                scheduled_time=new_slot.start_time,
+                duration_minutes=booking.duration_minutes,
+                status='confirmed',
+                payment_status=booking.payment_status,
+                amount_paid=booking.amount_paid,
+                rescheduled_from=booking,
+                client_notes=booking.client_notes,
+            )
+            booking.status = 'cancelled'
+            booking.cancellation_reason = 'rescheduled'
+            booking.cancellation_notes = f'Rescheduled to {new_slot.date}'
+            booking.cancelled_at = timezone.now()
+            booking.cancelled_by = request.user
+            booking.save()
             messages.success(request, f'Booking rescheduled to {new_slot.date.strftime("%B %-d")} at {new_slot.start_time.strftime("%-I:%M %p")}.')
         except Exception as e:
             messages.error(request, f'Could not reschedule: {e}')
