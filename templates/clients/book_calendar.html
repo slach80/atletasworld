@@ -526,7 +526,7 @@ function renderSlots(){
                         <p class="font-semibold text-sm">${time} · ${s.duration} min</p>
                         <p class="text-xs text-gray-500 truncate">${s.session_type_name}</p>
                         <p class="text-xs mt-0.5 ${low?'text-orange-500 font-semibold':'text-gray-400'}">${s.coach_name} · ${s.spots_remaining} spot${s.spots_remaining!==1?'s':''}</p>
-                        ${s.location?`<p class="text-xs truncate"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationMapQuery(s.location))}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${s.location}</a></p>`:''}
+                        ${s.location?`<p class="text-xs truncate"><a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${s.location}</a></p>`:''}
                         ${priceLine}
                     </div>
                 </div>${btn}</div>`;
@@ -595,7 +595,7 @@ function buildCartHtml(){
                     <div>
                         <p class="font-semibold text-sm">${fmtDateLabel(slot.start.split('T')[0])} · ${fmtTime(slot.start)}</p>
                         <p class="text-xs text-gray-500">${slot.session_type_name} · ${slot.coach_name}</p>
-                        ${slot.location?`<p class="text-xs"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationMapQuery(slot.location))}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${slot.location}</a></p>`:''}
+                        ${slot.location?`<p class="text-xs"><a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-yellow-500 transition">📍 ${slot.location}</a></p>`:''}
                         <div class="mt-0.5">${priceTag}</div>
                     </div>
                 </div>
