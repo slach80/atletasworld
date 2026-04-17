@@ -688,7 +688,6 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
 <div class="email-wrapper">
     <div class="email-header">
         <img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" onerror="this.style.display=\'none\'">
-        <h1>Atletas Performance Center</h1>
     </div>
     <div class="email-body">
         {html_message}
@@ -740,6 +739,9 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
         except Exception as e:
             logger.warning(f"send_bulk_email_task: could not read inline_image {img_info.get('path')}: {e}")
 
+    import time
+    send_delay = getattr(settings, 'BULK_EMAIL_SEND_DELAY', 0.5)
+
     # Reuse one SMTP connection for all recipients to avoid Gmail rate-limiting
     connection = get_connection()
     try:
@@ -790,6 +792,8 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
                         email_msg.attach(att_name, att_data, att_ctype)
                 email_msg.send(fail_silently=False)
                 sent_count += 1
+                if send_delay > 0:
+                    time.sleep(send_delay)
             except Exception as e:
                 failed_count += 1
                 logger.error(f"send_bulk_email_task: failed to send to {email_addr}: {e}")

@@ -294,6 +294,8 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # General Settings
 # =============================================================================
 SITE_URL = env('SITE_URL', default='http://localhost:8000')
+# Delay (seconds) between each email in a bulk send — prevents Gmail rate-limit lockdowns
+BULK_EMAIL_SEND_DELAY = env.float('BULK_EMAIL_SEND_DELAY', default=0.5)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@atletasperformancecenter.com')
 SERVER_EMAIL = env('SERVER_EMAIL', default='noreply@atletasperformancecenter.com')
 
