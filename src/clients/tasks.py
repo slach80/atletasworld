@@ -700,7 +700,7 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
         </div>
     </div>
     <div class="email-footer">
-        <img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" height="36" style="height:36px;width:auto;display:inline-block;margin-bottom:8px;">
+        <a href="{site_url}" target="_blank" style="display:inline-block;"><img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" height="36" style="height:36px;width:auto;display:inline-block;border:0;margin-bottom:8px;"></a>
         <p>
             <a href="https://www.instagram.com/atletasperformancecenter/" target="_blank">Instagram</a> &nbsp;|&nbsp;
             <a href="https://www.facebook.com/profile.php?id=61572009236369" target="_blank">Facebook</a>
