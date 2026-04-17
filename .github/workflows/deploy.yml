@@ -41,13 +41,11 @@ jobs:
         run: |
           FIRST_LINE=$(echo "$MSG" | head -1)
           SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          TEXT=$(printf '🚀 <b>Deploy started</b>\n<b>By:</b> %s\n<b>Commit:</b> <code>%s</code>\n<b>Message:</b> %s' "$ACTOR" "$SHORT_SHA" "$FIRST_LINE")
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            --data-urlencode "text=🚀 <b>Deploy started</b>
-<b>By:</b> ${ACTOR}
-<b>Commit:</b> <code>${SHORT_SHA}</code>
-<b>Message:</b> ${FIRST_LINE}"
+            --data-urlencode "text=${TEXT}"
 
   test:
     name: Test
@@ -114,14 +112,11 @@ jobs:
         run: |
           FIRST_LINE=$(echo "$MSG" | head -1)
           SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          TEXT=$(printf '❌ <b>Tests FAILED</b> — deploy blocked\n<b>By:</b> %s\n<b>Commit:</b> <code>%s</code>\n<b>Message:</b> %s\n🔗 %s' "$ACTOR" "$SHORT_SHA" "$FIRST_LINE" "$RUN_URL")
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            --data-urlencode "text=❌ <b>Tests FAILED</b> — deploy blocked
-<b>By:</b> ${ACTOR}
-<b>Commit:</b> <code>${SHORT_SHA}</code>
-<b>Message:</b> ${FIRST_LINE}
-🔗 ${RUN_URL}"
+            --data-urlencode "text=${TEXT}"
 
   deploy:
     name: Deploy to EC2
@@ -173,14 +168,11 @@ jobs:
         run: |
           FIRST_LINE=$(echo "$MSG" | head -1)
           SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          TEXT=$(printf '✅ <b>Deploy succeeded</b>\n<b>By:</b> %s\n<b>Commit:</b> <code>%s</code>\n<b>Message:</b> %s\n⏱ %s UTC' "$ACTOR" "$SHORT_SHA" "$FIRST_LINE" "$(date -u '+%H:%M')")
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            --data-urlencode "text=✅ <b>Deploy succeeded</b>
-<b>By:</b> ${ACTOR}
-<b>Commit:</b> <code>${SHORT_SHA}</code>
-<b>Message:</b> ${FIRST_LINE}
-⏱ $(date -u '+%H:%M UTC')"
+            --data-urlencode "text=${TEXT}"
 
       - name: Telegram — deploy failed
         if: failure()
@@ -194,11 +186,8 @@ jobs:
         run: |
           FIRST_LINE=$(echo "$MSG" | head -1)
           SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          TEXT=$(printf '💥 <b>Deploy FAILED</b>\n<b>By:</b> %s\n<b>Commit:</b> <code>%s</code>\n<b>Message:</b> %s\n🔗 %s' "$ACTOR" "$SHORT_SHA" "$FIRST_LINE" "$RUN_URL")
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            --data-urlencode "text=💥 <b>Deploy FAILED</b>
-<b>By:</b> ${ACTOR}
-<b>Commit:</b> <code>${SHORT_SHA}</code>
-<b>Message:</b> ${FIRST_LINE}
-🔗 ${RUN_URL}"
+            --data-urlencode "text=${TEXT}"
