@@ -686,7 +686,7 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
 <body>
 <div class="email-wrapper">
     <div class="email-header">
-        <img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" onerror="this.style.display=\'none\'">
+        <a href="{site_url}" target="_blank" style="display:inline-block;"><img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" onerror="this.style.display=\'none\'" style="border:0;"></a>
     </div>
     <div class="email-body">
         {html_message}
