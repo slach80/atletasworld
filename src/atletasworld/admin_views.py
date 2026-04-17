@@ -90,11 +90,12 @@ def owner_dashboard(request):
         ytd=       Sum(Case(When(scheduled_date__gte=year_start,  scheduled_date__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
         last_month=Sum(Case(When(scheduled_date__gte=last_month_start, scheduled_date__lt=month_start, then='amount_paid'), default=Value(0), output_field=DecimalField())),
     )
-    # 1 query: all package revenue periods (purchase_date is DateTimeField — use aware datetimes)
-    pkg_rev = ClientPackage.objects.exclude(status='cancelled').aggregate(
-        this_month=Sum(Case(When(purchase_date__gte=month_start_dt, purchase_date__lt=today_dt,        then='package__price'), default=Value(0), output_field=DecimalField())),
-        ytd=       Sum(Case(When(purchase_date__gte=year_start_dt,  purchase_date__lt=today_dt,        then='package__price'), default=Value(0), output_field=DecimalField())),
-        last_month=Sum(Case(When(purchase_date__gte=last_month_start_dt, purchase_date__lt=month_start_dt, then='package__price'), default=Value(0), output_field=DecimalField())),
+    # 1 query: package revenue = actual amount charged (Payment.amount, status=succeeded)
+    from payments.models import Payment as _Payment
+    pkg_rev = _Payment.objects.filter(status='succeeded').aggregate(
+        this_month=Sum(Case(When(created_at__gte=month_start_dt, created_at__lt=today_dt,        then='amount'), default=Value(0), output_field=DecimalField())),
+        ytd=       Sum(Case(When(created_at__gte=year_start_dt,  created_at__lt=today_dt,        then='amount'), default=Value(0), output_field=DecimalField())),
+        last_month=Sum(Case(When(created_at__gte=last_month_start_dt, created_at__lt=month_start_dt, then='amount'), default=Value(0), output_field=DecimalField())),
     )
     # 1 query: all rental revenue periods (approved_at is DateTimeField — use aware datetimes)
     rental_rev = FieldRentalSlot.objects.filter(payment_status='paid').aggregate(
@@ -2349,13 +2350,12 @@ def owner_finances(request):
         payment_status='paid',
     ).aggregate(total=Sum('amount_paid'))['total'] or Decimal('0')
 
-    # Package purchases (use Package.price as proxy until Stripe is live)
-    package_revenue = ClientPackage.objects.filter(
-        purchase_date__month=view_month,
-        purchase_date__year=view_year,
-    ).exclude(
-        status='cancelled'
-    ).aggregate(total=Sum('package__price'))['total'] or Decimal('0')
+    # Package revenue = actual amount charged via Stripe (not list price)
+    package_revenue = Payment.objects.filter(
+        status='succeeded',
+        created_at__month=view_month,
+        created_at__year=view_year,
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
     # Facility rentals paid
     rental_revenue = FieldRentalSlot.objects.filter(
@@ -2398,9 +2398,10 @@ def owner_finances(request):
             scheduled_date__month=m, scheduled_date__year=y, payment_status='paid'
         ).aggregate(t=Sum('amount_paid'))['t'] or Decimal('0')
 
-        p = ClientPackage.objects.filter(
-            purchase_date__month=m, purchase_date__year=y
-        ).exclude(status='cancelled').aggregate(t=Sum('package__price'))['t'] or Decimal('0')
+        p = Payment.objects.filter(
+            status='succeeded',
+            created_at__month=m, created_at__year=y
+        ).aggregate(t=Sum('amount'))['t'] or Decimal('0')
 
         r = FieldRentalSlot.objects.filter(
             approved_at__month=m, approved_at__year=y, payment_status='paid'
