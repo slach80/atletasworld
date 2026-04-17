@@ -11,6 +11,10 @@ name: Deploy Atletas World
 #   AWS_ACCESS_KEY_ID
 #   AWS_SECRET_ACCESS_KEY
 #   AWS_STORAGE_BUCKET_NAME
+#
+# Telegram secrets:
+#   TELEGRAM_BOT_TOKEN
+#   TELEGRAM_CHAT_ID
 # ============================================================
 
 on:
@@ -28,11 +32,22 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Telegram — deploy started
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          MSG: ${{ github.event.head_commit.message }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          FIRST_LINE=$(echo "$MSG" | head -1)
+          SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            -d text="🚀 <b>Deploy started</b>%0A<b>Repo:</b> atletasworld%0A<b>By:</b> ${{ github.actor }}%0A<b>Commit:</b> <code>${{ github.sha }}</code>%0A<b>Message:</b> ${{ github.event.head_commit.message }}"
+            --data-urlencode "text=🚀 <b>Deploy started</b>
+<b>By:</b> ${ACTOR}
+<b>Commit:</b> <code>${SHORT_SHA}</code>
+<b>Message:</b> ${FIRST_LINE}"
 
   test:
     name: Test
@@ -89,11 +104,24 @@ jobs:
 
       - name: Telegram — tests failed
         if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          MSG: ${{ github.event.head_commit.message }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          FIRST_LINE=$(echo "$MSG" | head -1)
+          SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            -d text="❌ <b>Tests FAILED</b> — deploy blocked%0A<b>By:</b> ${{ github.actor }}%0A<b>Commit:</b> <code>${{ github.sha }}</code>%0A<b>Message:</b> ${{ github.event.head_commit.message }}%0A🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode "text=❌ <b>Tests FAILED</b> — deploy blocked
+<b>By:</b> ${ACTOR}
+<b>Commit:</b> <code>${SHORT_SHA}</code>
+<b>Message:</b> ${FIRST_LINE}
+🔗 ${RUN_URL}"
 
   deploy:
     name: Deploy to EC2
@@ -136,16 +164,41 @@ jobs:
 
       - name: Telegram — deploy succeeded
         if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          MSG: ${{ github.event.head_commit.message }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          FIRST_LINE=$(echo "$MSG" | head -1)
+          SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            -d text="✅ <b>Deploy succeeded</b>%0A<b>By:</b> ${{ github.actor }}%0A<b>Commit:</b> <code>${{ github.sha }}</code>%0A<b>Message:</b> ${{ github.event.head_commit.message }}%0A⏱ $(date -u '+%H:%M UTC')"
+            --data-urlencode "text=✅ <b>Deploy succeeded</b>
+<b>By:</b> ${ACTOR}
+<b>Commit:</b> <code>${SHORT_SHA}</code>
+<b>Message:</b> ${FIRST_LINE}
+⏱ $(date -u '+%H:%M UTC')"
 
       - name: Telegram — deploy failed
         if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          MSG: ${{ github.event.head_commit.message }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          FIRST_LINE=$(echo "$MSG" | head -1)
+          SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
             -d parse_mode="HTML" \
-            -d text="💥 <b>Deploy FAILED</b>%0A<b>By:</b> ${{ github.actor }}%0A<b>Commit:</b> <code>${{ github.sha }}</code>%0A<b>Message:</b> ${{ github.event.head_commit.message }}%0A🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode "text=💥 <b>Deploy FAILED</b>
+<b>By:</b> ${ACTOR}
+<b>Commit:</b> <code>${SHORT_SHA}</code>
+<b>Message:</b> ${FIRST_LINE}
+🔗 ${RUN_URL}"
