@@ -25,6 +25,7 @@ urlpatterns = [
     # Bookings
     path('bookings/', views.bookings_list, name='bookings'),
     path('bookings/<int:booking_id>/cancel/', views.booking_cancel, name='booking_cancel'),
+    path('bookings/<int:booking_id>/reschedule/', views.booking_reschedule, name='booking_reschedule'),
 
     # Book new sessions
     path('book/', views.booking_page, name='book'),

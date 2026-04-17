@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 
 from clients.utils import validate_photo as _validate_photo, _MAX_PHOTO_BYTES, _ALLOWED_PHOTO_EXTENSIONS
 from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver, DiscountCode
-from bookings.models import Booking, Program
+from bookings.models import Booking, Program, AvailabilitySlot
 from coaches.models import PlayerAssessment, Coach, ScheduleBlock
 
 
@@ -503,6 +503,50 @@ def booking_cancel(request, booking_id):
         messages.error(request, 'This booking cannot be cancelled.')
 
     return redirect('clients:bookings')
+
+
+@login_required
+def booking_reschedule(request, booking_id):
+    """Show available slots and process reschedule for an existing booking."""
+    client, _ = Client.objects.get_or_create(user=request.user)
+    booking = get_object_or_404(Booking, id=booking_id, client=client)
+
+    if not booking.can_reschedule:
+        messages.error(request, 'This booking cannot be rescheduled (must be 24+ hours before the session).')
+        return redirect('clients:bookings')
+
+    if request.method == 'POST':
+        slot_id = request.POST.get('slot_id')
+        new_slot = get_object_or_404(AvailabilitySlot, id=slot_id)
+        if not new_slot.is_available:
+            messages.error(request, 'That slot is no longer available. Please choose another.')
+            return redirect('clients:booking_reschedule', booking_id=booking_id)
+        try:
+            booking.reschedule(new_slot=new_slot, cancelled_by=request.user)
+            messages.success(request, f'Booking rescheduled to {new_slot.date.strftime("%B %-d")} at {new_slot.start_time.strftime("%-I:%M %p")}.')
+        except Exception as e:
+            messages.error(request, f'Could not reschedule: {e}')
+        return redirect('clients:bookings')
+
+    # GET: find available slots for same coach + session type, future 60 days
+    today = timezone.localdate()
+    available_slots = AvailabilitySlot.objects.filter(
+        coach=booking.coach,
+        session_type=booking.session_type,
+        date__gt=today,
+        date__lte=today + timedelta(days=60),
+        status__in=['available', 'partially_booked'],
+    ).exclude(
+        id=booking.availability_slot_id,
+    ).order_by('date', 'start_time')
+
+    # Only slots that still have spots
+    available_slots = [s for s in available_slots if s.is_available]
+
+    return render(request, 'clients/booking_reschedule.html', {
+        'booking': booking,
+        'available_slots': available_slots,
+    })
 
 
 @login_required

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="stylesheet" href="/static/gymlife/css/bilgen.css?v=7">
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("apc-dark")==="1")document.documentElement.classList.add("dark");})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
+    <title>Reschedule Booking - Atletas Performance Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00', accent: '#D7FF00' } } }
+        }
+    </script>
+    <style>
+        body { font-family: 'Archivo Condensed', system-ui, sans-serif; font-weight: 400; }
+        h1, .brand-heading { font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif; font-weight: 800; }
+        h2 { font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif; font-weight: 700; }
+        h3, h4, h5, h6 { font-family: 'Archivo Condensed', system-ui, sans-serif; font-weight: 700; }
+        small, caption { font-weight: 300; }
+        html.dark body{background-color:#0f172a!important;color:#e2e8f0!important}
+        html.dark .bg-white{background-color:#1e293b!important}
+        html.dark .bg-gray-50{background-color:#0f172a!important}
+        html.dark .bg-gray-100{background-color:#1e293b!important}
+        html.dark .text-gray-800,html.dark .text-gray-700{color:#f1f5f9!important}
+        html.dark .text-gray-600,html.dark .text-gray-500{color:#cbd5e1!important}
+        html.dark .text-gray-900{color:#f8fafc!important}
+        html.dark .border,html.dark .border-gray-200,html.dark .border-gray-100{border-color:#334155!important}
+        html.dark .shadow-md,html.dark .shadow-lg,html.dark .shadow-sm{box-shadow:0 4px 6px rgba(0,0,0,.5)!important}
+        html.dark .bg-blue-50{background-color:#1e3a5f!important}html.dark .text-blue-800{color:#93c5fd!important}
+        html.dark .bg-green-50{background-color:#052e16!important}html.dark .text-green-800{color:#86efac!important}
+        html.dark .bg-red-50{background-color:#450a0a!important}html.dark .text-red-800{color:#fca5a5!important}
+        html.dark .hover\:bg-gray-50:hover{background-color:#263048!important}
+        html.dark .bg-secondary.text-gray-900,html.dark .bg-accent.text-gray-900{color:#1a1a1a!important}
+        html.dark .bg-secondary,html.dark .bg-accent{background-color:#D7FF00!important}
+        .slot-card input[type="radio"]:checked ~ .slot-label { border-color: #D7FF00; background-color: #f7ffe0; }
+        html.dark .slot-card input[type="radio"]:checked ~ .slot-label { border-color: #D7FF00; background-color: #1e2d05; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-gray-900 shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto"></a>
+            </div>
+            <div class="hidden md:flex items-center space-x-1 text-sm">
+                <a href="{% url 'clients:dashboard' %}" class="px-3 py-2 rounded text-white hover:bg-white/10 transition">Dashboard</a>
+                <div class="relative group">
+                    <button class="flex items-center gap-1 px-3 py-2 rounded text-white hover:bg-white/10 transition">
+                        Account
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                        <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 font-semibold rounded-t-lg">📅 My Bookings</a>
+                        <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700">📦 Packages</a>
+                        <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 rounded-b-lg">👤 My Profile</a>
+                    </div>
+                </div>
+                <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full hover:bg-[#b8e000] transition font-semibold ml-2">Book Session</a>
+                <span class="text-gray-500 mx-1">|</span>
+                <button onclick="toggleClientDark()" id="client-dark-btn" title="Toggle dark mode" class="px-2 py-1.5 rounded hover:bg-white/10 transition text-gray-300 hover:text-accent text-base">🌙</button>
+                <a href="/accounts/logout/" class="px-3 py-2 text-gray-300 hover:text-accent transition text-xs">Logout</a>
+            </div>
+            <div class="md:hidden flex items-center">
+                <button id="client-mobile-btn" class="p-2 rounded text-white hover:bg-white/10">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="client-mobile-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-700">
+        <div class="px-2 pt-2 pb-3 space-y-1 text-sm">
+            <a href="{% url 'clients:dashboard' %}" class="block px-3 py-2 rounded text-white hover:bg-white/10">🏠 Dashboard</a>
+            <a href="{% url 'clients:bookings' %}" class="block px-3 py-2 rounded text-white hover:bg-white/10">📅 My Bookings</a>
+            <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full hover:bg-[#b8e000] font-semibold text-center">Book Session</a>
+            <hr class="my-1 border-gray-700">
+            <a href="/accounts/logout/" class="block px-3 py-2 text-gray-300 hover:text-accent rounded">Logout</a>
+        </div>
+    </div>
+</nav>
+<script>
+(function(){
+    var btn = document.getElementById('client-mobile-btn');
+    if(btn) btn.addEventListener('click', function(){
+        document.getElementById('client-mobile-menu').classList.toggle('hidden');
+    });
+})();
+function toggleClientDark(){
+    var html = document.documentElement;
+    if(html.classList.toggle('dark')){
+        localStorage.setItem('apc-dark','1');
+    } else {
+        localStorage.removeItem('apc-dark');
+    }
+}
+</script>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center text-sm text-gray-500 mb-6">
+        <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <a href="{% url 'clients:bookings' %}" class="hover:text-secondary">My Bookings</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-800">Reschedule</span>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Current booking summary -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Reschedule Session</h1>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm text-blue-700 font-semibold mb-1">Current booking</p>
+            <p class="text-gray-800 font-bold">{{ booking.session_type.name }}</p>
+            <p class="text-gray-600 text-sm">
+                {{ booking.scheduled_date|date:"l, F j, Y" }} at {{ booking.scheduled_time|time:"g:i A" }}
+                &nbsp;&bull;&nbsp; Coach {{ booking.coach.user.get_full_name }}
+                {% if booking.player %}&nbsp;&bull;&nbsp; {{ booking.player.first_name }}{% endif %}
+            </p>
+        </div>
+        <p class="text-sm text-gray-500 mt-3">Choose a new date and time below. Your original session will be cancelled and a new confirmed booking will be created.</p>
+    </div>
+
+    <!-- Slot picker -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4">Available Times</h2>
+
+        {% if available_slots %}
+        <form method="POST" action="{% url 'clients:booking_reschedule' booking.id %}" id="reschedule-form">
+            {% csrf_token %}
+
+            <div class="space-y-3" id="slot-list">
+                {% regroup available_slots by date as slots_by_date %}
+                {% for day in slots_by_date %}
+                <div class="mb-2">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{{ day.grouper|date:"l, F j" }}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {% for slot in day.list %}
+                        <label class="slot-card cursor-pointer">
+                            <input type="radio" name="slot_id" value="{{ slot.id }}" class="sr-only" required>
+                            <div class="slot-label border-2 border-gray-200 rounded-lg p-3 hover:border-accent transition select-none">
+                                <p class="font-bold text-gray-800">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}</p>
+                                <p class="text-sm text-gray-500">
+                                    {{ slot.spots_remaining }} spot{{ slot.spots_remaining|pluralize }} left
+                                    {% if slot.price_override %}&nbsp;&bull;&nbsp; ${{ slot.price_override|floatformat:0 }}{% endif %}
+                                </p>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 flex items-center gap-3">
+                <button type="submit" id="confirm-btn" disabled
+                        class="flex-1 bg-accent text-gray-900 font-bold py-3 rounded-lg hover:bg-[#b8e000] transition disabled:opacity-40 disabled:cursor-not-allowed">
+                    Confirm Reschedule
+                </button>
+                <a href="{% url 'clients:bookings' %}" class="px-6 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition text-center">
+                    Cancel
+                </a>
+            </div>
+        </form>
+
+        <script>
+        (function(){
+            var radios = document.querySelectorAll('input[name="slot_id"]');
+            var btn = document.getElementById('confirm-btn');
+            radios.forEach(function(r){
+                r.addEventListener('change', function(){
+                    btn.disabled = false;
+                    // Highlight selected card
+                    radios.forEach(function(x){
+                        x.nextElementSibling.classList.remove('border-accent','bg-[#f7ffe0]');
+                    });
+                    r.nextElementSibling.classList.add('border-accent','bg-[#f7ffe0]');
+                });
+            });
+        })();
+        </script>
+
+        {% else %}
+        <div class="text-center py-10">
+            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p class="text-gray-600 font-semibold mb-1">No available slots in the next 60 days</p>
+            <p class="text-gray-400 text-sm mb-4">There are no open times for this session type with the same coach right now.</p>
+            <a href="{% url 'clients:bookings' %}" class="inline-block px-6 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">
+                Back to Bookings
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>
