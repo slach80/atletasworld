@@ -106,6 +106,7 @@
                 </a>
                 {% endif %}
                 <span class="text-gray-600">|</span>
+                <button onclick="toggleDarkMode()" id="coach-dark-btn" title="Toggle dark mode" class="px-2 py-1.5 rounded hover:bg-white/10 transition text-gray-300 text-base">🌙</button>
                 <a href="/accounts/logout/" class="px-3 py-2 rounded hover:bg-accent/20 text-gray-400 hover:text-accent transition text-xs">Logout</a>
             </div>
             <!-- Mobile button -->
@@ -344,5 +345,8 @@
         </div>
         </form>
     </div>
+<script>
+function toggleDarkMode(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("coach-dark-btn");if(b)b.textContent=d?"2600Fe0f":"D83cDf19";}
+</script>
 </body>
 </html>

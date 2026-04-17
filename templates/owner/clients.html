@@ -28,7 +28,7 @@
             {% for client in clients %}
             <tr class="hover:bg-gray-50">
                 <td class="py-4 px-6">
-                    <div class="font-semibold text-gray-800">{{ client.user.first_name }} {{ client.user.last_name }}</div>
+                    <div class="font-semibold text-gray-800">{{ client.user.get_full_name|default:client.user.email }}</div>
                     <div class="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
                         {{ client.get_client_type_display }}
                         {% if client.approval_status == 'pending' %}<span class="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">⏳ Pending</span>{% endif %}

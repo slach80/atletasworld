@@ -108,6 +108,7 @@
                 </a>
                 {% endif %}
                 <span class="text-gray-600">|</span>
+                <button onclick="toggleDarkMode()" id="coach-dark-btn" title="Toggle dark mode" class="px-2 py-1.5 rounded hover:bg-white/10 transition text-gray-300 text-base">🌙</button>
                 <a href="/accounts/logout/" class="px-3 py-2 rounded hover:bg-accent/20 text-gray-400 hover:text-accent transition text-xs">Logout</a>
             </div>
             <!-- Mobile button -->
@@ -182,7 +183,8 @@
                         <p class="text-xs text-gray-400 mt-0.5">{{ item.bookings|length }} player{{ item.bookings|length|pluralize }} booked</p>
                     </div>
 
-                    <!-- Action buttons — stacked on mobile, side by side on sm+ -->
+                    <!-- Action buttons — only shown when players are booked -->
+                    {% if item.bookings %}
                     <div class="flex flex-col xs:flex-row sm:flex-row gap-2 shrink-0">
                         <a href="{% url 'coaches:session_attendance' item.block.id %}"
                            class="flex-1 sm:flex-none text-center bg-secondary text-gray-900 px-4 py-2.5 rounded-lg hover:bg-[#b8e000] text-sm font-bold transition">
@@ -193,6 +195,9 @@
                             📋 Assess
                         </a>
                     </div>
+                    {% else %}
+                    <span class="text-xs text-gray-400 shrink-0 italic">No players booked</span>
+                    {% endif %}
                 </div>
             </div>
 
@@ -232,5 +237,8 @@
         </div>
         {% endfor %}
     </div>
+<script>
+function toggleDarkMode(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("coach-dark-btn");if(b)b.textContent=d?"2600Fe0f":"D83cDf19";}
+</script>
 </body>
 </html>

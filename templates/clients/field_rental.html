@@ -202,7 +202,33 @@ function toggleClientDark(){
     </div>
     {% endif %}
 
-    <!-- Coming Soon hero -->
+    <!-- Available slots — shown when owner has published any -->
+    {% if available_slots %}
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+            <span>🏟️</span> Available Slots
+        </h3>
+        <div class="space-y-3">
+            {% for slot in available_slots %}
+            <div class="flex justify-between items-center p-4 border border-gray-200 rounded-xl hover:border-secondary transition">
+                <div>
+                    <div class="font-semibold text-gray-800">{{ slot.date|date:"l, F j, Y" }}</div>
+                    <div class="text-sm text-gray-500">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}
+                        {% if slot.service %} &bull; {{ slot.service.name }}{% endif %}
+                        &bull; ${{ slot.price }}
+                    </div>
+                </div>
+                <a href="{% url 'clients:field_rental_request' slot.id %}"
+                   class="px-4 py-2 bg-secondary text-gray-900 rounded-full text-sm font-bold hover:bg-[#b8e000] transition shrink-0 ml-4">
+                    Request →
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Coming Soon hero — shown only when no slots are published yet -->
     <div class="bg-gray-900 rounded-2xl overflow-hidden shadow-xl mb-6">
         <div class="relative px-8 py-14 text-center">
             <div class="absolute inset-0 opacity-5">
@@ -247,6 +273,7 @@ function toggleClientDark(){
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 {% include "includes/public_footer.html" %}

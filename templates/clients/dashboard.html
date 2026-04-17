@@ -421,7 +421,7 @@
                                         {% else %}bg-gray-100 text-gray-800{% endif %}">
                                         {{ booking.get_status_display }}
                                     </span>
-                                    {% if booking.status in 'pending,confirmed' %}
+                                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
                                     <a href="{% url 'clients:booking_reschedule' booking.id %}"
                                        class="px-3 py-1 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition text-xs">
                                         Reschedule
@@ -479,5 +479,8 @@
     </div>
 
 {% include "includes/public_footer.html" %}
+<script>
+function toggleClientDark(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("client-dark-btn");if(b)b.textContent=d?"2600Fe0f":"D83cDf19";}
+</script>
 </body>
 </html>

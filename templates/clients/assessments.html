@@ -122,6 +122,7 @@
             <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📦 Packages</a>
             <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👤 My Profile</a>
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🔔 Notifications</a>
+            <a href="{% url 'clients:field_rental_list' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🏟️ Facility Rental</a>
             <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full hover:bg-[#b8e000] font-semibold text-center">Book Session</a>
             <hr class="my-1 border-gray-700">
             <a href="/accounts/logout/" class="block px-3 py-2 text-gray-300 hover:text-accent rounded">Logout</a>
@@ -259,5 +260,8 @@
         {% endif %}
     </div>
 {% include "includes/public_footer.html" %}
+<script>
+function toggleClientDark(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("client-dark-btn");if(b)b.textContent=d?"2600Fe0f":"D83cDf19";}
+</script>
 </body>
 </html>

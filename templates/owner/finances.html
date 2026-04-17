@@ -68,7 +68,7 @@
         <div class="flex items-end gap-2 h-40">
             {% for m in monthly_trend %}
             {% with bar_pct=m.total|default:0 %}
-            <div class="flex-1 flex flex-col items-center gap-1 group">
+            <div class="flex-1 flex flex-col items-center gap-1 group relative">
                 <div class="w-full flex flex-col-reverse gap-0.5"
                      style="height: {% if max_total > 0 %}{{ m.total|floatformat:0 }}{% else %}0{% endif %}px;
                             max-height: 130px;
@@ -85,7 +85,7 @@
                          style="flex: {{ m.rentals }}; min-height: {% if m.rentals > 0 %}2px{% else %}0{% endif %}"></div>
                 </div>
                 <div class="text-xs text-gray-400 text-center leading-tight">{{ m.label }}</div>
-                <div class="text-xs font-semibold text-gray-600 opacity-0 group-hover:opacity-100 transition absolute -mt-6 bg-gray-800 text-white px-1.5 py-0.5 rounded text-[10px] pointer-events-none">
+                <div class="text-xs font-semibold opacity-0 group-hover:opacity-100 transition absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-1.5 py-0.5 rounded text-[10px] pointer-events-none whitespace-nowrap z-10">
                     ${{ m.total|floatformat:0 }}
                 </div>
             </div>

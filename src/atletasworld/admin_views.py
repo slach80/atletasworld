@@ -143,7 +143,7 @@ def owner_dashboard(request):
     for bk in _raw_bookings:
         _transactions.append({
             'name': (f"{bk.player.first_name} {bk.player.last_name}".strip()
-                     if bk.player else bk.client.user.get_full_name()),
+                     if bk.player else (bk.client.user.get_full_name() or bk.client.user.email)),
             'label': bk.session_type.name if bk.session_type else 'Session',
             'amount': bk.amount_paid,
             'date': bk.updated_at.date(),
@@ -157,7 +157,7 @@ def owner_dashboard(request):
         charged = _pay_map.get(cp.stripe_payment_id, cp.package.price)
         _transactions.append({
             'name': (f"{cp.player.first_name} {cp.player.last_name}".strip()
-                     if cp.player else cp.client.user.get_full_name()),
+                     if cp.player else (cp.client.user.get_full_name() or cp.client.user.email)),
             'label': cp.package.name,
             'amount': charged,
             'date': cp.purchase_date.date(),
@@ -2456,6 +2456,7 @@ def owner_finances(request):
     # ---- Recent transactions -----------------------------------------------
     recent_bookings = Booking.objects.filter(
         payment_status='paid',
+        amount_paid__gt=0,
     ).select_related('client__user', 'player', 'session_type').order_by('-scheduled_date')[:15]
 
     _recent_packages_qs = list(ClientPackage.objects.exclude(
@@ -2545,7 +2546,10 @@ def owner_finances(request):
 def owner_payments(request):
     """List all Stripe payment records."""
     from payments.models import Payment
-    payments = Payment.objects.select_related('client__user').order_by('-created_at')[:100]
+    payments = Payment.objects.filter(
+        client__user__is_staff=False,
+        client__user__is_superuser=False,
+    ).select_related('client__user').order_by('-created_at')[:100]
     context = {
         'payments': payments,
         'stripe_live': bool(settings.STRIPE_SECRET_KEY and settings.STRIPE_SECRET_KEY.startswith(('sk_live', 'rk_live'))),

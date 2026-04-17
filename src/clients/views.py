@@ -394,6 +394,7 @@ def package_subscribe(request, package_id):
 def packages_list(request):
     """List all packages for the client."""
     client, created = Client.objects.get_or_create(user=request.user)
+    today = timezone.localdate()
 
     # Require at least one player before purchasing
     if not client.players.filter(is_active=True).exists():

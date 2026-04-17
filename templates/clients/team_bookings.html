@@ -140,7 +140,7 @@
                                 {{ booking.get_status_display }}
                             </span>
 
-                            {% if booking.status in 'pending,confirmed' %}
+                            {% if booking.status == 'pending' or booking.status == 'confirmed' %}
                             <form method="POST" action="{% url 'clients:booking_cancel' booking.id %}" onsubmit="return confirm('Cancel this team booking?');" class="inline">
                                 {% csrf_token %}
                                 <button type="submit" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition text-sm">

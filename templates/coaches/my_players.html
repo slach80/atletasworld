@@ -102,7 +102,7 @@
                     Notify
                 </a>
                 {% if teams %}
-                <a href="{% url 'clients:team_list' %}" class="px-3 py-2 rounded hover:bg-white/10 transition">Teams</a>
+                <a href="{% url 'coaches:my_players' %}" class="px-3 py-2 rounded hover:bg-white/10 transition">My Players</a>
                 {% endif %}
                 {% if coach.profile_enabled %}
                 <a href="{% url 'coaches:edit_profile' %}"
@@ -111,6 +111,7 @@
                 </a>
                 {% endif %}
                 <span class="text-gray-600">|</span>
+                <button onclick="toggleDarkMode()" id="coach-dark-btn" title="Toggle dark mode" class="px-2 py-1.5 rounded hover:bg-white/10 transition text-gray-300 text-base">🌙</button>
                 <a href="/accounts/logout/" class="px-3 py-2 rounded hover:bg-accent/20 text-gray-400 hover:text-accent transition text-xs">Logout</a>
             </div>
             <!-- Mobile button -->
@@ -132,7 +133,7 @@
         <a href="{% url 'coaches:schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📆 Schedule</a>
         <a href="{% url 'coaches:add_bulk_schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">⏰ Add Availability</a>
         <a href="{% url 'coaches:notify_parents' %}" class="block px-4 py-2 hover:bg-white/10 rounded">🔔 Notify</a>
-        {% if teams %}<a href="{% url 'clients:team_list' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
+        {% if teams %}<a href="{% url 'coaches:my_players' %}" class="block px-4 py-2 hover:bg-white/10 rounded">My Players</a>{% endif %}
         {% if coach.profile_enabled %}<a href="{% url 'coaches:edit_profile' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Profile</a>{% endif %}
         <div class="border-t border-gray-700 mt-2 pt-2">
             <a href="/accounts/logout/" class="block px-4 py-2 text-gray-400 hover:text-accent rounded">Logout</a>
@@ -227,8 +228,8 @@
                         </div>
                         <div>
                             <p class="text-xs text-gray-400">Avg</p>
-                            <p class="font-black text-lg leading-none {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">
-                                {{ player_data.avg_rating|floatformat:1 }}
+                            <p class="font-black text-lg leading-none {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% elif player_data.avg_rating > 0 %}text-yellow-500{% else %}text-gray-300{% endif %}">
+                                {% if player_data.avg_rating > 0 %}{{ player_data.avg_rating|floatformat:1 }}{% else %}—{% endif %}
                             </p>
                         </div>
                     </div>
@@ -242,8 +243,8 @@
                     </div>
                     <div>
                         <p class="text-xs text-gray-400">Avg Rating</p>
-                        <p class="font-black {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% else %}text-yellow-500{% endif %}">
-                            {{ player_data.avg_rating|floatformat:1 }}/5
+                        <p class="font-black {% if player_data.avg_rating >= 4 %}text-green-500{% elif player_data.avg_rating >= 3 %}text-blue-500{% elif player_data.avg_rating > 0 %}text-yellow-500{% else %}text-gray-300{% endif %}">
+                            {% if player_data.avg_rating > 0 %}{{ player_data.avg_rating|floatformat:1 }}/5{% else %}—{% endif %}
                         </p>
                     </div>
                     {% if player_data.last_session %}
@@ -340,5 +341,8 @@
             document.getElementById('notify-modal').classList.remove('flex');
         }
     </script>
+<script>
+function toggleDarkMode(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("coach-dark-btn");if(b)b.textContent=d?"2600Fe0f":"D83cDf19";}
+</script>
 </body>
 </html>

@@ -35,7 +35,7 @@
         <tbody class="divide-y divide-gray-100">
             {% for p in payments %}
             <tr class="hover:bg-gray-50">
-                <td class="py-3 px-4 font-medium">{{ p.client.user.get_full_name|default:p.client.user.username }}</td>
+                <td class="py-3 px-4 font-medium">{{ p.client.user.get_full_name|default:p.client.user.email }}</td>
                 <td class="py-3 px-4 font-bold">${{ p.amount }}</td>
                 <td class="py-3 px-4 text-gray-500 max-w-xs truncate">{{ p.description|default:"—" }}</td>
                 <td class="py-3 px-4">
@@ -46,6 +46,9 @@
                         {% else %}bg-yellow-100 text-yellow-700{% endif %}">
                         {{ p.get_status_display }}
                     </span>
+                    {% if p.status == 'pending' and not p.stripe_charge_id and not p.stripe_payment_intent_id %}
+                    <span class="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded">Manual</span>
+                    {% endif %}
                 </td>
                 <td class="py-3 px-4 text-gray-500">{{ p.created_at|date:"M d, Y" }}</td>
                 <td class="py-3 px-4">
