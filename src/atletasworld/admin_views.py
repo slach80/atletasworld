@@ -2432,9 +2432,31 @@ def owner_finances(request):
         payment_status='paid',
     ).select_related('client__user', 'player', 'session_type').order_by('-scheduled_date')[:15]
 
-    recent_packages = ClientPackage.objects.exclude(
+    _recent_packages_qs = list(ClientPackage.objects.exclude(
         status='cancelled'
-    ).select_related('client__user', 'package').order_by('-purchase_date')[:10]
+    ).select_related('client__user', 'package').order_by('-purchase_date')[:10])
+
+    # Attach actual charged amount and discount info to each package
+    _pi_ids = [cp.stripe_payment_id for cp in _recent_packages_qs if cp.stripe_payment_id]
+    _payments_by_pi = {
+        p.stripe_payment_intent_id: p
+        for p in Payment.objects.filter(stripe_payment_intent_id__in=_pi_ids)
+    } if _pi_ids else {}
+    from clients.models import DiscountCodeUse
+    _uses_by_pkg = {
+        u.applied_to_package_id: u
+        for u in DiscountCodeUse.objects.filter(
+            applied_to_package__in=[cp.id for cp in _recent_packages_qs],
+            status='applied',
+        ).select_related('code')
+    }
+    for cp in _recent_packages_qs:
+        pay = _payments_by_pi.get(cp.stripe_payment_id)
+        cp.charged_amount = pay.amount if pay else cp.package.price
+        use = _uses_by_pkg.get(cp.id)
+        cp.discount_label = use.code.code if use else None
+        cp.discount_amount = use.discount_amount if use else None
+    recent_packages = _recent_packages_qs
 
     recent_rentals = FieldRentalSlot.objects.filter(
         payment_status='paid',
