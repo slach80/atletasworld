@@ -157,7 +157,7 @@ function toggleClientDark(){
                                 <p class="font-bold text-gray-800">{{ slot.start_time|time:"g:i A" }} – {{ slot.end_time|time:"g:i A" }}</p>
                                 <p class="text-sm text-gray-500">
                                     {{ slot.spots_remaining }} spot{{ slot.spots_remaining|pluralize }} left
-                                    {% if slot.price_override %}&nbsp;&bull;&nbsp; ${{ slot.price_override|floatformat:0 }}{% endif %}
+                                    &nbsp;&bull;&nbsp; {{ slot.duration_minutes }} min
                                 </p>
                             </div>
                         </label>

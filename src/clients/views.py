@@ -516,54 +516,58 @@ def booking_reschedule(request, booking_id):
         return redirect('clients:bookings')
 
     if request.method == 'POST':
-        slot_id = request.POST.get('slot_id')
-        new_slot = get_object_or_404(AvailabilitySlot, id=slot_id)
-        if not new_slot.is_available:
+        block_id = request.POST.get('slot_id')
+        new_block = get_object_or_404(ScheduleBlock, id=block_id)
+        if not new_block.is_available:
             messages.error(request, 'That slot is no longer available. Please choose another.')
             return redirect('clients:booking_reschedule', booking_id=booking_id)
         try:
-            from bookings.models import Booking as _Booking
-            new_booking = _Booking.objects.create(
+            new_booking = Booking.objects.create(
                 client=booking.client,
                 player=booking.player,
-                coach=new_slot.coach,
-                availability_slot=new_slot,
+                coach=new_block.coach,
                 session_type=booking.session_type,
                 client_package=booking.client_package,
-                scheduled_date=new_slot.date,
-                scheduled_time=new_slot.start_time,
-                duration_minutes=booking.duration_minutes,
+                scheduled_date=new_block.date,
+                scheduled_time=new_block.start_time,
+                duration_minutes=new_block.duration_minutes,
                 status='confirmed',
                 payment_status=booking.payment_status,
                 amount_paid=booking.amount_paid,
                 rescheduled_from=booking,
                 client_notes=booking.client_notes,
             )
+            new_block.current_participants += 1
+            if new_block.current_participants >= new_block.max_participants:
+                new_block.status = 'booked'
+            new_block.save()
             booking.status = 'cancelled'
             booking.cancellation_reason = 'rescheduled'
-            booking.cancellation_notes = f'Rescheduled to {new_slot.date}'
+            booking.cancellation_notes = f'Rescheduled to {new_block.date}'
             booking.cancelled_at = timezone.now()
             booking.cancelled_by = request.user
             booking.save()
-            messages.success(request, f'Booking rescheduled to {new_slot.date.strftime("%B %-d")} at {new_slot.start_time.strftime("%-I:%M %p")}.')
+            messages.success(request, f'Booking rescheduled to {new_block.date.strftime("%B %-d")} at {new_block.start_time.strftime("%-I:%M %p")}.')
         except Exception as e:
             messages.error(request, f'Could not reschedule: {e}')
         return redirect('clients:bookings')
 
-    # GET: find available slots for same coach + session type, future 60 days
+    # GET: find available ScheduleBlocks for same coach + session type, next 60 days
     today = timezone.localdate()
-    available_slots = AvailabilitySlot.objects.filter(
+    available_slots = ScheduleBlock.objects.filter(
         coach=booking.coach,
-        session_type=booking.session_type,
         date__gt=today,
         date__lte=today + timedelta(days=60),
-        status__in=['available', 'partially_booked'],
-    ).exclude(
-        id=booking.availability_slot_id,
+        status='available',
+    )
+    if booking.session_type:
+        available_slots = available_slots.filter(catalog_session_types=booking.session_type)
+    # Exclude the block the original booking was on
+    available_slots = available_slots.exclude(
+        date=booking.scheduled_date,
+        start_time=booking.scheduled_time,
     ).order_by('date', 'start_time')
-
-    # Only slots that still have spots
-    available_slots = [s for s in available_slots if s.is_available]
+    available_slots = [b for b in available_slots if b.is_available]
 
     return render(request, 'clients/booking_reschedule.html', {
         'booking': booking,
