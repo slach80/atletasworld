@@ -25,13 +25,28 @@ _CSP = (
 
 
 class SecurityHeadersMiddleware:
-    """Adds Content-Security-Policy and Referrer-Policy to every response."""
+    """Adds Content-Security-Policy and Referrer-Policy to every response.
+
+    Also handles stale-CSRF 403s on the login POST: redirects to a fresh
+    GET so the user gets a new token instead of a blank error page.
+    """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         response = self.get_response(request)
+
+        # Stale CSRF on login POST → fresh GET so the user gets a new token
+        if (response.status_code == 403
+                and request.method == 'POST'
+                and request.path == '/accounts/login/'):
+            next_url = request.POST.get('next') or request.GET.get('next', '')
+            location = '/accounts/login/'
+            if next_url:
+                location += f'?next={next_url}'
+            return redirect(location)
+
         response['Content-Security-Policy'] = _CSP
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         return response

@@ -56,6 +56,14 @@ def owner_dashboard(request):
     month_start = today.replace(day=1)
     year_start  = today.replace(month=1, day=1)
 
+    # Aware datetime boundaries for DateTimeField comparisons (avoids naive-datetime warnings)
+    def _dt(d):
+        from datetime import datetime as _datetime
+        return timezone.make_aware(_datetime(d.year, d.month, d.day))
+
+    month_start_dt     = _dt(month_start)
+    year_start_dt      = _dt(year_start)
+
     # ── Core counts ────────────────────────────────────────────────────────────
     total_coaches  = Coach.objects.filter(is_active=True).count()
     _client_qs = Client.objects.filter(user__is_staff=False, user__is_superuser=False
@@ -71,25 +79,28 @@ def owner_dashboard(request):
                                                    scheduled_date__gte=today).count()
 
     # ── Financial ──────────────────────────────────────────────────────────────
-    last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+    last_month_start    = (month_start - timedelta(days=1)).replace(day=1)
+    last_month_start_dt = _dt(last_month_start)
+    today_dt            = _dt(today + timedelta(days=1))  # exclusive upper bound (end of today)
 
     # 1 query: all booking drop-in revenue periods via conditional Sum
+    # scheduled_date is DateField so date comparisons are correct here
     booking_rev = Booking.objects.filter(payment_status='paid').aggregate(
         this_month=Sum(Case(When(scheduled_date__gte=month_start, scheduled_date__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
         ytd=       Sum(Case(When(scheduled_date__gte=year_start,  scheduled_date__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
         last_month=Sum(Case(When(scheduled_date__gte=last_month_start, scheduled_date__lt=month_start, then='amount_paid'), default=Value(0), output_field=DecimalField())),
     )
-    # 1 query: all package revenue periods
+    # 1 query: all package revenue periods (purchase_date is DateTimeField — use aware datetimes)
     pkg_rev = ClientPackage.objects.exclude(status='cancelled').aggregate(
-        this_month=Sum(Case(When(purchase_date__gte=month_start, purchase_date__lte=today,   then='package__price'), default=Value(0), output_field=DecimalField())),
-        ytd=       Sum(Case(When(purchase_date__gte=year_start,  purchase_date__lte=today,   then='package__price'), default=Value(0), output_field=DecimalField())),
-        last_month=Sum(Case(When(purchase_date__gte=last_month_start, purchase_date__lt=month_start, then='package__price'), default=Value(0), output_field=DecimalField())),
+        this_month=Sum(Case(When(purchase_date__gte=month_start_dt, purchase_date__lt=today_dt,        then='package__price'), default=Value(0), output_field=DecimalField())),
+        ytd=       Sum(Case(When(purchase_date__gte=year_start_dt,  purchase_date__lt=today_dt,        then='package__price'), default=Value(0), output_field=DecimalField())),
+        last_month=Sum(Case(When(purchase_date__gte=last_month_start_dt, purchase_date__lt=month_start_dt, then='package__price'), default=Value(0), output_field=DecimalField())),
     )
-    # 1 query: all rental revenue periods
+    # 1 query: all rental revenue periods (approved_at is DateTimeField — use aware datetimes)
     rental_rev = FieldRentalSlot.objects.filter(payment_status='paid').aggregate(
-        this_month=Sum(Case(When(approved_at__gte=month_start, approved_at__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
-        ytd=       Sum(Case(When(approved_at__gte=year_start,  approved_at__lte=today,   then='amount_paid'), default=Value(0), output_field=DecimalField())),
-        last_month=Sum(Case(When(approved_at__gte=last_month_start, approved_at__lt=month_start, then='amount_paid'), default=Value(0), output_field=DecimalField())),
+        this_month=Sum(Case(When(approved_at__gte=month_start_dt, approved_at__lt=today_dt,        then='amount_paid'), default=Value(0), output_field=DecimalField())),
+        ytd=       Sum(Case(When(approved_at__gte=year_start_dt,  approved_at__lt=today_dt,        then='amount_paid'), default=Value(0), output_field=DecimalField())),
+        last_month=Sum(Case(When(approved_at__gte=last_month_start_dt, approved_at__lt=month_start_dt, then='amount_paid'), default=Value(0), output_field=DecimalField())),
     )
     revenue_this_month = (booking_rev['this_month'] or 0) + (pkg_rev['this_month'] or 0) + (rental_rev['this_month'] or 0)
     revenue_ytd        = (booking_rev['ytd']        or 0) + (pkg_rev['ytd']        or 0) + (rental_rev['ytd']        or 0)
