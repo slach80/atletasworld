@@ -263,6 +263,16 @@
                                class="flex-shrink-0 bg-white text-red-600 px-4 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition">
                                 {{ ev.event_cta_text }}
                             </a>
+                            {% elif ev.show_as_event %}
+                            <a href="/programs/"
+                               class="flex-shrink-0 bg-white text-red-600 px-4 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition">
+                                Learn More →
+                            </a>
+                            {% else %}
+                            <a href="{% url 'book' %}"
+                               class="flex-shrink-0 bg-white text-red-600 px-4 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition">
+                                Book Now →
+                            </a>
                             {% endif %}
                         </div>
                         {% else %}
@@ -308,6 +318,16 @@
                             <a href="{{ ev.event_cta_url }}"
                                class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
                                 {{ ev.event_cta_text }}
+                            </a>
+                            {% elif ev.show_as_event %}
+                            <a href="/programs/"
+                               class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                                Learn More →
+                            </a>
+                            {% else %}
+                            <a href="{% url 'book' %}"
+                               class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
+                                Book Now →
                             </a>
                             {% endif %}
                         </div>
