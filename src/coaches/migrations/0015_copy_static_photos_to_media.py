@@ -20,8 +20,13 @@ def copy_photos(apps, schema_editor):
         if coach is None or coach.photo:
             continue
 
-        src = os.path.join(settings.BASE_DIR, '..', 'static', static_rel)
-        src = os.path.normpath(src)
+        # BASE_DIR is src/ — static files live one level up at <project_root>/static/
+        src = os.path.normpath(os.path.join(settings.BASE_DIR, '..', 'static', static_rel))
+        if not os.path.exists(src):
+            # Fallback: try STATICFILES_DIRS or STATIC_ROOT
+            static_root = getattr(settings, 'STATIC_ROOT', None)
+            if static_root:
+                src = os.path.join(static_root, static_rel)
         if not os.path.exists(src):
             continue
 
