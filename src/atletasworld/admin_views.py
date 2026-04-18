@@ -1201,6 +1201,18 @@ def owner_booking_detail(request, pk):
             try:
                 booking.confirm()
                 messages.success(request, 'Booking confirmed!')
+                # Send confirmation email to client
+                try:
+                    from clients.notification_utils import queue_grouped_notification
+                    queue_grouped_notification(
+                        client=booking.client,
+                        event_type='booking_confirmed',
+                        context={'booking_id': booking.id, 'payment_method': booking.payment_status},
+                        group_key=f'booking_{booking.id}',
+                        window_seconds=30,
+                    )
+                except Exception:
+                    pass
             except Exception as e:
                 messages.error(request, f'Error: {str(e)}')
 

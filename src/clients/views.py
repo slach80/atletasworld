@@ -548,6 +548,18 @@ def booking_reschedule(request, booking_id):
             booking.cancelled_at = timezone.now()
             booking.cancelled_by = request.user
             booking.save()
+            # Send confirmation email for the new booking
+            try:
+                from clients.notification_utils import queue_grouped_notification
+                queue_grouped_notification(
+                    client=client,
+                    event_type='booking_confirmed',
+                    context={'booking_id': new_booking.id, 'payment_method': new_booking.payment_status, 'rescheduled': True},
+                    group_key=f'booking_{new_booking.id}',
+                    window_seconds=30,
+                )
+            except Exception:
+                pass
             messages.success(request, f'Booking rescheduled to {new_block.date.strftime("%B %-d")} at {new_block.start_time.strftime("%-I:%M %p")}.')
         except Exception as e:
             messages.error(request, f'Could not reschedule: {e}')
@@ -1135,6 +1147,19 @@ def confirm_booking(request):
         # Mark reservation as confirmed
         reservation.is_confirmed = True
         reservation.save()
+
+        # Send booking confirmation email
+        try:
+            from clients.notification_utils import queue_grouped_notification
+            queue_grouped_notification(
+                client=client,
+                event_type='booking_confirmed',
+                context={'booking_id': booking.id, 'payment_method': 'package'},
+                group_key=f'booking_{booking.id}',
+                window_seconds=30,
+            )
+        except Exception:
+            logger.exception('confirm_booking: notification failed for booking %s', booking.id)
 
         bookings_created += 1
 
