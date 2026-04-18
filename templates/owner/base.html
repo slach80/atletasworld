@@ -105,7 +105,8 @@
                         <div class="absolute left-0 top-full mt-1 w-44 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                             <a href="{% url 'owner_coaches' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'coach' in request.resolver_match.url_name %}text-owner{% endif %} rounded-t-lg">🏋️ Coaches</a>
                             <a href="{% url 'owner_bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'booking' in request.resolver_match.url_name %}text-owner{% endif %}">📅 Bookings</a>
-                            <a href="{% url 'owner_finances' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'finance' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">💰 Finances</a>
+                            <a href="{% url 'owner_finances' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'owner_finances' %}text-owner{% endif %}">💰 Finances</a>
+                            <a href="{% url 'owner_payments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'owner_payments' %}text-owner{% endif %} rounded-b-lg">💳 Payments</a>
                         </div>
                     </div>
 
@@ -173,6 +174,7 @@
                 <a href="{% url 'owner_coaches' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🏋️ Coaches</a>
                 <a href="{% url 'owner_bookings' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📅 Bookings</a>
                 <a href="{% url 'owner_finances' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">💰 Finances</a>
+                <a href="{% url 'owner_payments' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">💳 Payments</a>
                 <p class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wider">Catalog</p>
                 <a href="{% url 'owner_session_types' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📋 Sessions</a>
                 <a href="{% url 'owner_packages' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📦 Packages</a>

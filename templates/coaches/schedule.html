@@ -102,7 +102,7 @@
                     Notify
                 </a>
                 {% if teams %}
-                <a href="{% url 'clients:team_list' %}" class="px-3 py-2 rounded hover:bg-white/10 transition">Teams</a>
+                <a href="{% url 'coaches:my_players' %}" class="px-3 py-2 rounded hover:bg-white/10 transition">Teams</a>
                 {% endif %}
                 {% if coach.profile_enabled %}
                 <a href="{% url 'coaches:edit_profile' %}"
@@ -133,7 +133,7 @@
         <a href="{% url 'coaches:schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📆 Schedule</a>
         <a href="{% url 'coaches:add_bulk_schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">⏰ Add Availability</a>
         <a href="{% url 'coaches:notify_parents' %}" class="block px-4 py-2 hover:bg-white/10 rounded">🔔 Notify</a>
-        {% if teams %}<a href="{% url 'clients:team_list' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
+        {% if teams %}<a href="{% url 'coaches:my_players' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
         {% if coach.profile_enabled %}<a href="{% url 'coaches:edit_profile' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Profile</a>{% endif %}
         <div class="border-t border-gray-700 mt-2 pt-2">
             <a href="/accounts/logout/" class="block px-4 py-2 text-gray-400 hover:text-accent rounded">Logout</a>
@@ -180,7 +180,10 @@
         <div class="bg-white rounded-xl shadow-md p-4 mb-4">
             <div class="flex justify-between items-center">
                 <a href="?start={{ prev_week }}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">&larr; Prev</a>
-                <h2 class="text-lg font-semibold">{{ start_date|date:"M j" }} – {{ end_date|date:"M j, Y" }}</h2>
+                <div class="flex items-center gap-3">
+                    <h2 class="text-lg font-semibold">{{ start_date|date:"M j" }} – {{ end_date|date:"M j, Y" }}</h2>
+                    {% if start_date != today %}<a href="?" class="px-3 py-1.5 bg-secondary text-gray-900 rounded-lg text-xs font-bold hover:bg-[#b8e000] transition">Today</a>{% endif %}
+                </div>
                 <a href="?start={{ next_week }}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">Next &rarr;</a>
             </div>
         </div>

@@ -209,7 +209,7 @@
                                 </form>
                             </td>
                             <td class="py-3 px-3 text-right">
-                                <button onclick="editCode({{ dc.pk }}, '{{ dc.code }}', '{{ dc.description|escapejs }}', '{{ dc.discount_type }}', '{{ dc.value }}', '{{ dc.scope }}', '{{ dc.max_uses|default:'' }}', '{{ dc.max_uses_per_client }}', '{{ dc.min_purchase_amount|default:'' }}', '{{ dc.valid_from|date:"Y-m-d" }}', '{{ dc.valid_until|date:"Y-m-d" }}')"
+                                <button onclick="editCode({{ dc.pk }}, '{{ dc.code }}', '{{ dc.description|escapejs }}', '{{ dc.discount_type }}', '{{ dc.value }}', '{{ dc.scope }}', '{{ dc.max_uses|default:'' }}', '{{ dc.max_uses_per_client }}', '{{ dc.min_purchase_amount|default:'' }}', '{{ dc.valid_from|date:"Y-m-d" }}', '{{ dc.valid_until|date:"Y-m-d" }}', [{% for p in dc.specific_packages.all %}{{ p.pk }}{% if not forloop.last %},{% endif %}{% endfor %}], [{% for s in dc.specific_session_types.all %}{{ s.pk }}{% if not forloop.last %},{% endif %}{% endfor %}])"
                                         class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold mr-2">Edit</button>
                                 <form method="POST" class="inline" onsubmit="return confirm('Delete {{ dc.code }}?')">
                                     {% csrf_token %}
@@ -325,7 +325,7 @@
 </div>
 
 <script>
-function editCode(pk, code, desc, type, value, scope, maxUses, maxPerClient, minPurchase, validFrom, validUntil) {
+function editCode(pk, code, desc, type, value, scope, maxUses, maxPerClient, minPurchase, validFrom, validUntil, pkgIds, stIds) {
     document.getElementById('form-title').textContent = '✏️ Edit: ' + code;
     document.getElementById('form-action').value = 'edit';
     document.getElementById('form-code-id').value = pk;
@@ -340,6 +340,15 @@ function editCode(pk, code, desc, type, value, scope, maxUses, maxPerClient, min
     document.getElementById('field-min-purchase').value = minPurchase;
     document.getElementById('field-valid-from').value = validFrom;
     document.getElementById('field-valid-until').value = validUntil;
+    // Restore specific package/session type selections
+    var pkgSel = document.getElementById('field-packages');
+    for (var i = 0; i < pkgSel.options.length; i++) {
+        pkgSel.options[i].selected = pkgIds.indexOf(parseInt(pkgSel.options[i].value)) !== -1;
+    }
+    var stSel = document.getElementById('field-session-types');
+    for (var i = 0; i < stSel.options.length; i++) {
+        stSel.options[i].selected = stIds.indexOf(parseInt(stSel.options[i].value)) !== -1;
+    }
     document.getElementById('discount-form').scrollIntoView({behavior:'smooth'});
 }
 function resetForm() {

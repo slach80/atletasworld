@@ -29,7 +29,18 @@
     <div class="bg-white rounded-xl shadow-md overflow-hidden">
         <div class="px-6 py-4 bg-red-50 border-b border-red-100 flex items-center justify-between">
             <h2 class="font-bold text-red-700">⚠️ Unsigned ({{ unsigned|length }})</h2>
-            <span class="text-xs text-red-500">Cannot book sessions</span>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-red-500">Cannot book sessions</span>
+                {% if unsigned %}
+                <form method="POST" action="{% url 'owner_waivers' %}" onsubmit="return confirm('Send waiver reminder to all {{ unsigned|length }} unsigned clients?')">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remind_unsigned">
+                    <button type="submit" class="text-xs bg-red-600 text-white px-3 py-1 rounded-full hover:bg-red-700 transition font-semibold">
+                        📧 Remind All
+                    </button>
+                </form>
+                {% endif %}
+            </div>
         </div>
         {% if unsigned %}
         <ul class="divide-y divide-gray-100">

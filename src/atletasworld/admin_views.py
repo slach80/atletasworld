@@ -171,9 +171,9 @@ def owner_dashboard(request):
 
     # ── Coaches ────────────────────────────────────────────────────────────────
     coaches = Coach.objects.filter(is_active=True).annotate(
-        sessions_today=Count('schedule_blocks', filter=Q(schedule_blocks__date=today)),
+        sessions_today=Count('schedule_blocks', filter=Q(schedule_blocks__date=today), distinct=True),
         upcoming=Count('bookings', filter=Q(bookings__scheduled_date__gte=today,
-                                            bookings__status__in=['pending','confirmed'])),
+                                            bookings__status__in=['pending','confirmed']), distinct=True),
         total_players=Count('bookings__player', distinct=True)
     ).order_by('-sessions_today')[:10]
 
@@ -1230,6 +1230,14 @@ def owner_booking_detail(request, pk):
             booking.status = 'no_show'
             booking.save()
             messages.success(request, 'Booking marked as no-show.')
+
+        elif action == 'mark_paid':
+            booking.payment_status = 'paid'
+            if not booking.amount_paid:
+                booking.amount_paid = booking.session_type.price if booking.session_type else 0
+            booking.save()
+            messages.success(request, 'Booking marked as paid.')
+            return redirect('owner_finances')
 
         return redirect('owner_booking_detail', pk=pk)
 
@@ -2489,16 +2497,29 @@ def owner_finances(request):
         payment_status='paid',
     ).select_related('booked_by_client__user', 'service').order_by('-approved_at')[:10]
 
-    # ---- Package sales summary for the month --------------------------------
-    package_breakdown = ClientPackage.objects.filter(
+    # ---- Package sales summary for the month — use actual Payment amounts ----
+    from django.db.models import Subquery, OuterRef
+    pkg_payment_map = {
+        p.stripe_payment_intent_id: p.amount
+        for p in Payment.objects.filter(
+            status='succeeded',
+            created_at__month=view_month,
+            created_at__year=view_year,
+        )
+    }
+    _breakdown_qs = ClientPackage.objects.filter(
         purchase_date__month=view_month,
         purchase_date__year=view_year,
-    ).exclude(status='cancelled').values(
-        'package__name'
-    ).annotate(
-        count=Count('id'),
-        revenue=Sum('package__price'),
-    ).order_by('-revenue')
+    ).exclude(status='cancelled').select_related('package')
+    _bd = {}
+    for cp in _breakdown_qs:
+        name = cp.package.name
+        charged = pkg_payment_map.get(cp.stripe_payment_id, cp.package.price)
+        if name not in _bd:
+            _bd[name] = {'package__name': name, 'count': 0, 'revenue': Decimal('0')}
+        _bd[name]['count'] += 1
+        _bd[name]['revenue'] += charged
+    package_breakdown = sorted(_bd.values(), key=lambda x: x['revenue'], reverse=True)
 
     context = {
         'today': today,
@@ -2787,6 +2808,30 @@ def owner_waivers(request):
     """Waiver compliance dashboard — shows signed and unsigned clients."""
     today = timezone.now()
     current_year = today.year
+
+    if request.method == 'POST' and request.POST.get('action') == 'remind_unsigned':
+        from clients.models import Notification
+        _unsigned_clients = Client.objects.filter(
+            user__groups__name='Client',
+            user__is_staff=False,
+            user__is_superuser=False,
+        ).exclude(
+            user__groups__name__in=['Owner', 'Coach']
+        ).exclude(
+            waivers__valid_year=current_year,
+            waivers__waiver_version=ClientWaiver.WAIVER_VERSION,
+        ).distinct()
+        count = 0
+        for client in _unsigned_clients:
+            Notification.objects.create(
+                client=client,
+                title='Action Required: Sign Your 2026 Waiver',
+                message='You have not yet signed the 2026 annual waiver. Please log in to your portal and sign it under My Profile to continue booking sessions.',
+                notification_type='general',
+            )
+            count += 1
+        messages.success(request, f'Waiver reminder sent to {count} unsigned client{"s" if count != 1 else ""}.')
+        return redirect('owner_waivers')
 
     # Only track waivers for Client group members — exclude coaches, owners, staff
     all_clients = Client.objects.select_related('user').filter(

@@ -102,7 +102,7 @@
                     Notify
                 </a>
                 {% if teams %}
-                <a href="{% url 'clients:team_list' %}" class="px-3 py-2 rounded hover:bg-white/10 transition">Teams</a>
+                <a href="{% url 'coaches:my_players' %}" class="px-3 py-2 rounded hover:bg-white/10 transition">Teams</a>
                 {% endif %}
                 {% if coach.profile_enabled %}
                 <a href="{% url 'coaches:edit_profile' %}"
@@ -134,7 +134,7 @@
         <a href="{% url 'coaches:schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📆 Schedule</a>
         <a href="{% url 'coaches:add_bulk_schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">⏰ Add Availability</a>
         <a href="{% url 'coaches:notify_parents' %}" class="block px-4 py-2 hover:bg-white/10 rounded">🔔 Notify</a>
-        {% if teams %}<a href="{% url 'clients:team_list' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
+        {% if teams %}<a href="{% url 'coaches:my_players' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
         {% if coach.profile_enabled %}<a href="{% url 'coaches:edit_profile' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Profile</a>{% endif %}
         <div class="border-t border-gray-700 mt-2 pt-2">
             <a href="/accounts/logout/" class="block px-4 py-2 text-gray-400 hover:text-accent rounded">Logout</a>
@@ -160,7 +160,7 @@
             </div>
             <div class="flex gap-2">
                 {% if teams %}
-                <a href="{% url 'clients:team_list' %}" class="px-3 py-1.5 bg-white/10 text-white rounded-lg text-sm hover:bg-white/20 transition">My Teams</a>
+                <a href="{% url 'coaches:my_players' %}" class="px-3 py-1.5 bg-white/10 text-white rounded-lg text-sm hover:bg-white/20 transition">My Teams</a>
                 {% endif %}
                 <a href="{% url 'coaches:notify_parents' %}" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">🔔 Notify Parents</a>
             </div>
@@ -255,7 +255,7 @@
         <div class="bg-white rounded-xl shadow-md p-6 mt-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">My Teams</h2>
-                <a href="{% url 'clients:team_list' %}" class="text-secondary text-sm hover:underline">View All</a>
+                <a href="{% url 'coaches:my_players' %}" class="text-secondary text-sm hover:underline">View All</a>
             </div>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {% for team in teams %}

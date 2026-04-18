@@ -199,9 +199,7 @@
             <a href="{% url 'clients:packages' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📦 My Packages</a>
             <a href="{% url 'clients:players' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">👥 My Players</a>
             <a href="{% url 'clients:bookings' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📋 All Bookings</a>
-            {% if client.client_type == 'renter' or client.client_type == 'coach' %}
             <a href="{% url 'clients:field_rental_list' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">🏟️ Facility Rental</a>
-            {% endif %}
         </div>
 
         <!-- Upcoming session reminder (within 24h) -->
@@ -480,7 +478,7 @@
 
 {% include "includes/public_footer.html" %}
 <script>
-function toggleClientDark(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("client-dark-btn");if(b)b.textContent=d?"2600Fe0f":"D83cDf19";}
+function toggleClientDark(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("client-dark-btn");if(b)b.textContent=d?"☀️":"🌙";}
 </script>
 </body>
 </html>

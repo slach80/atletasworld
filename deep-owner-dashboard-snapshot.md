@@ -1,0 +1,196 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e7]: Welcome, admin
+    - generic [ref=e8]:
+      - link "My Portal" [ref=e9] [cursor=pointer]:
+        - /url: /login-redirect/
+        - img [ref=e10]
+        - text: My Portal
+      - generic [ref=e12]: "|"
+      - link "Sign Out" [ref=e13] [cursor=pointer]:
+        - /url: /accounts/logout/
+        - img [ref=e14]
+        - text: Sign Out
+  - navigation [ref=e16]:
+    - generic [ref=e18]:
+      - link "Atletas Performance Center" [ref=e21] [cursor=pointer]:
+        - /url: /
+        - img "Atletas Performance Center" [ref=e22]
+      - generic [ref=e23]:
+        - link "Events 🔥" [ref=e24] [cursor=pointer]:
+          - /url: "#events"
+        - link "Programs" [ref=e25] [cursor=pointer]:
+          - /url: "#programs"
+        - link "Coaches" [ref=e26] [cursor=pointer]:
+          - /url: "#coaches"
+        - link "About" [ref=e27] [cursor=pointer]:
+          - /url: "#about"
+        - link "Services" [ref=e28] [cursor=pointer]:
+          - /url: "#services"
+        - link "Fundraising" [ref=e29] [cursor=pointer]:
+          - /url: "#fundraising"
+        - link "Special Projects ✦" [ref=e30] [cursor=pointer]:
+          - /url: /programs/
+        - link "Book Now" [ref=e31] [cursor=pointer]:
+          - /url: /book/
+  - generic [ref=e34]:
+    - heading "Welcome to Atletas Performance Center" [level=1] [ref=e35]
+    - paragraph [ref=e36]: Empowering athletes of all levels with tailored training programs. Your success is our priority.
+    - generic [ref=e37]:
+      - link "Explore Programs" [ref=e38] [cursor=pointer]:
+        - /url: "#programs"
+      - link "Client Login →" [ref=e39] [cursor=pointer]:
+        - /url: /accounts/login/
+    - generic [ref=e40]:
+      - generic [ref=e41]:
+        - generic [ref=e42]: "3"
+        - generic [ref=e43]: Expert Coaches
+      - generic [ref=e44]:
+        - generic [ref=e45]: 15+
+        - generic [ref=e46]: Years Experience
+  - generic [ref=e48]:
+    - generic [ref=e49]:
+      - generic [ref=e50]: 🔥 UPCOMING EVENTS
+      - heading "Don't Miss Out!" [level=2] [ref=e51]
+    - generic [ref=e52]:
+      - button "Previous" [ref=e53] [cursor=pointer]: ‹
+      - button "Next" [ref=e54] [cursor=pointer]: ›
+      - generic [ref=e56]:
+        - generic [ref=e57]
+        - generic [ref=e63]
+        - generic [ref=e69]
+        - generic [ref=e75]
+        - generic [ref=e81]
+        - generic [ref=e88]
+        - generic [ref=e102]
+      - generic [ref=e108]:
+        - button "Go to slide 1" [ref=e109] [cursor=pointer]
+        - button "Go to slide 2" [ref=e110] [cursor=pointer]
+        - button "Go to slide 3" [ref=e111] [cursor=pointer]
+        - button "Go to slide 4" [ref=e112] [cursor=pointer]
+        - button "Go to slide 5" [ref=e113] [cursor=pointer]
+    - paragraph [ref=e114]:
+      - generic [ref=e115]: ⚡
+      - text: Limited spots available — Book now to secure your place!
+  - generic [ref=e118]:
+    - generic [ref=e119]:
+      - heading "Our Mission" [level=2] [ref=e120]
+      - generic [ref=e121]:
+        - paragraph [ref=e122]: In Atletas Performance Center, we want you to succeed. Our mission is to empower athletes of all levels by providing tailored training programs that align with your individual goals.
+        - paragraph [ref=e123]: Whether you're striving for peak performance, rehabilitation from an injury, or simply aiming to enhance your overall fitness, our experienced trainers are here to guide you every step of the way.
+        - paragraph [ref=e124]: We understand that each athlete has unique needs and challenges. That's why we emphasize a personalized approach to training, incorporating the latest techniques and sports science to maximize your potential.
+        - paragraph [ref=e125]: Success in sports is not just about physical capability; it also involves mental strength and resilience. At Atletas Performance Center, we focus on holistic development, integrating psychological coaching and nutrition guidance into our training regimens.
+    - generic [ref=e126]:
+      - img "Training session" [ref=e127]
+      - generic [ref=e128]:
+        - generic [ref=e129]: Your Success
+        - generic [ref=e130]: Is Our Priority
+  - generic [ref=e132]:
+    - generic [ref=e133]:
+      - heading "Training Programs" [level=2] [ref=e134]
+      - paragraph [ref=e135]: Personalized training that aligns with your goals
+    - generic [ref=e136]:
+      - generic [ref=e137]:
+        - generic [ref=e139]: ⛺
+        - generic [ref=e140]
+      - generic [ref=e168]:
+        - generic [ref=e170]: 🏆
+        - generic [ref=e171]
+      - generic [ref=e196]:
+        - generic [ref=e198]: 🏆
+        - generic [ref=e199]
+      - generic [ref=e224]:
+        - generic [ref=e226]: ⚽
+        - generic [ref=e227]
+      - generic [ref=e252]:
+        - generic [ref=e254]: ⚽
+        - generic [ref=e255]
+      - generic [ref=e279]:
+        - generic [ref=e281]: ⚽
+        - generic [ref=e282]
+      - generic [ref=e306]:
+        - generic [ref=e308]: ☀️
+        - generic [ref=e309]
+      - generic [ref=e336]:
+        - generic [ref=e338]: ☀️
+        - generic [ref=e339]
+    - generic [ref=e366]:
+      - generic [ref=e367]:
+        - heading "Training Packages" [level=3] [ref=e368]
+        - link "View all packages →" [ref=e369] [cursor=pointer]:
+          - /url: /portal/packages/
+      - generic [ref=e370]:
+        - generic [ref=e371]
+        - generic [ref=e377]
+        - generic [ref=e383]
+        - generic [ref=e389]
+        - generic [ref=e395]
+  - generic [ref=e402]:
+    - generic [ref=e403]:
+      - heading "Our Expert Coaches" [level=2] [ref=e404]
+      - paragraph [ref=e405]: Professional trainers with proven track records
+    - generic [ref=e406]:
+      - generic [ref=e407]:
+        - generic [ref=e409]: MT
+        - generic [ref=e410]
+      - generic [ref=e426]:
+        - generic [ref=e428]: PC
+        - generic [ref=e429]
+      - generic [ref=e438]:
+        - generic [ref=e440]: RE
+        - generic [ref=e441]
+  - generic [ref=e458]:
+    - generic [ref=e459]:
+      - generic [ref=e460]: Coming Soon
+      - heading "Upcoming Services" [level=2] [ref=e461]
+      - paragraph [ref=e462]: We are expanding our offerings to support athletes at every level — beyond the field.
+    - generic [ref=e463]:
+      - generic [ref=e465]:
+        - generic [ref=e466]: 🥗
+        - generic [ref=e467]
+      - generic [ref=e473]:
+        - generic [ref=e474]: ⚡
+        - generic [ref=e475]
+      - generic [ref=e481]:
+        - generic [ref=e482]: 🩹
+        - generic [ref=e483]
+      - generic [ref=e489]:
+        - generic [ref=e490]: 🧠
+        - generic [ref=e491]
+    - paragraph [ref=e496]:
+      - text: Interested in early access?
+      - link "Contact us →" [ref=e497] [cursor=pointer]:
+        - /url: mailto:info@atletasperformancecenter.com
+  - generic [ref=e499]:
+    - generic [ref=e500]:
+      - heading "Support Our Mission" [level=2] [ref=e501]
+      - paragraph [ref=e502]: Help us make quality soccer training accessible to all athletes
+    - generic [ref=e503]:
+      - generic [ref=e504]:
+        - heading "Community Impact" [level=3] [ref=e505]
+        - generic [ref=e506]
+      - generic [ref=e520]:
+        - heading "Make a Donation" [level=3] [ref=e521]
+        - paragraph [ref=e522]: Choose an amount or reach out to donate by check or bank transfer.
+        - generic [ref=e523]
+        - paragraph [ref=e528]: 🏆 100% of donations go directly to athlete support programs
+  - generic [ref=e530]:
+    - heading "Ready to Transform Your Training?" [level=2] [ref=e531]
+    - paragraph [ref=e532]: Join hundreds of athletes who have elevated their game with Atletas Performance Center's personalized approach
+    - generic [ref=e533]:
+      - link "Book Your First Session" [ref=e534] [cursor=pointer]:
+        - /url: /book/
+      - link "Contact Us" [ref=e535] [cursor=pointer]:
+        - /url: "#contact"
+  - contentinfo [ref=e536]:
+    - generic [ref=e537]:
+      - generic [ref=e538]:
+        - generic [ref=e539]
+        - generic [ref=e550]
+        - generic [ref=e571]
+        - generic [ref=e587]
+      - generic [ref=e599]:
+        - paragraph [ref=e600]: © 2026 Atletas Performance Center. All rights reserved.
+        - paragraph [ref=e601]: 11301 W 88th St, Overland Park, KS 66214

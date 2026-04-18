@@ -1,0 +1,91 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Atletas Performance Center" [ref=e6] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e8]: Owner Portal
+      - generic [ref=e9]:
+        - link "Dashboard" [ref=e10] [cursor=pointer]:
+          - /url: /owner-portal/
+        - button "People" [ref=e12] [cursor=pointer]
+        - button "Operations" [ref=e16] [cursor=pointer]
+        - button "Catalog" [ref=e20] [cursor=pointer]
+        - link "Notify" [ref=e23] [cursor=pointer]:
+          - /url: /owner-portal/notifications/
+        - generic [ref=e24]: "|"
+        - link "Guide" [ref=e25] [cursor=pointer]:
+          - /url: /owner-portal/guide/
+        - link "Backend" [ref=e26] [cursor=pointer]:
+          - /url: /admin/
+        - button "🌙" [ref=e27] [cursor=pointer]
+        - link "Logout" [ref=e28] [cursor=pointer]:
+          - /url: /accounts/logout/
+  - generic [ref=e29]:
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - heading "Client Management" [level=1] [ref=e32]
+        - paragraph [ref=e33]: View all clients and their players
+      - link "View All Players" [ref=e34] [cursor=pointer]:
+        - /url: /owner-portal/players/
+    - table [ref=e36]:
+      - rowgroup [ref=e37]:
+        - row "Client Email Phone Players Active Packages Bookings Joined Actions" [ref=e38]
+      - rowgroup [ref=e47]:
+        - row "Emery Reyes Parent/Guardian emeryreyes880@gmail.com 8169137273 1 1 0 Apr 17, 2026 View" [ref=e48]
+        - row "Shaun Castro Parent/Guardian castro.shaun7@gmail.com 8165001607 1 1 0 Apr 17, 2026 View" [ref=e60]
+        - row "brayangalvan041@gmail.com Parent/Guardian brayangalvan041@gmail.com - 0 0 0 Apr 17, 2026 View" [ref=e72]
+        - row "Lauren Elliott Parent/Guardian lnelliott87@gmail.com 9139517626 2 0 2 Apr 17, 2026 View" [ref=e84]
+        - row "Kate Brummel Parent/Guardian kate.brummel@hotmail.com 8166511924 1 0 1 Apr 17, 2026 View" [ref=e96]
+        - row "Taylor Kramer Parent/Guardian taylor.r.kramer@gmail.com 9132200922 5 4 0 Apr 16, 2026 View" [ref=e108]
+        - row "miguelcerros91@icloud.com Parent/Guardian miguelcerros91@icloud.com - 0 0 0 Apr 16, 2026 View" [ref=e120]
+        - row "A’den Porchia Parent/Guardian latreeceholliday@icloud.com 8168309332 1 0 0 Apr 16, 2026 View" [ref=e132]
+        - row "Kristin Terranella-Gumina Parent/Guardian kgumina@hotmail.com 8165073783 1 0 0 Apr 15, 2026 View" [ref=e144]
+        - row "Nancie Turek Parent/Guardian nancieshen@gmail.com 4156088030 1 0 1 Apr 13, 2026 View" [ref=e156]
+        - row "Brandon Gasaway Parent/Guardian jxco117kt@hmail.com 8165226249 2 0 0 Apr 13, 2026 View" [ref=e168]
+        - row "Julie Massana Parent/Guardian massanafamily@gmail.com 8164412214 1 0 1 Apr 12, 2026 View" [ref=e180]
+        - row "Courtney Winterer Parent/Guardian cmwinterer@gmail.com 3142583131 1 0 1 Apr 12, 2026 View" [ref=e192]
+        - row "Stephanie Morrow Parent/Guardian sdhaney9@gmail.com 9134816331 1 0 2 Apr 12, 2026 View" [ref=e204]
+        - row "Heather Barnes Parent/Guardian hcw1224@yahoo.com 8168636842 1 0 1 Apr 12, 2026 View" [ref=e216]
+        - row "Kelley Ramirez Parent/Guardian ksimpson_4@ymail.com 9135585340 0 0 0 Apr 12, 2026 View" [ref=e228]
+        - row "andreakwhite1@gmail.com Parent/Guardian andreakwhite1@gmail.com - 0 0 0 Apr 12, 2026 View" [ref=e240]
+        - row "George Williams Parent/Guardian georgebwilliams3@gmail.com 8165166836 1 0 0 Apr 12, 2026 View" [ref=e252]
+        - row "Jake Pitts Parent/Guardian iamjakepitts@gmail.com 9139612451 0 0 0 Apr 12, 2026 View" [ref=e264]
+        - row "Angel Liera Parent/Guardian angelgcervantes@yahoo.com 9132079486 1 0 1 Apr 12, 2026 View" [ref=e276]
+        - row "Eric Rouse Parent/Guardian erouse107@gmail.com 8162777965 1 0 1 Apr 12, 2026 View" [ref=e288]
+        - row "Xandria Thomas Parent/Guardian xcw2002@hotmail.com 8168686089 1 0 1 Apr 12, 2026 View" [ref=e300]
+        - row "Tom Francis Parent/Guardian thfrqncis18@gmail.com 9134490517 2 0 1 Apr 12, 2026 View" [ref=e312]
+        - row "Leann Leavene Parent/Guardian lapiperpaul@yahoo.com 9136201827 1 0 1 Apr 12, 2026 View" [ref=e324]
+        - row "Pete Peemoeller Parent/Guardian pete_78@hotmail.com 8162898940 1 0 1 Apr 12, 2026 View" [ref=e336]
+        - row "tammarac@hotmail.com Parent/Guardian tammarac@hotmail.com - 2 0 0 Apr 12, 2026 View" [ref=e348]
+        - row "Betsy Curtis Parent/Guardian betsmill@hotmail.com 4176844071 1 0 0 Apr 11, 2026 View" [ref=e360]
+        - row "Ashley Ferguson Parent/Guardian ashley.h.steele@gmail.com 9132064519 1 0 1 Apr 11, 2026 View" [ref=e372]
+        - row "Eric Kruger Parent/Guardian emkruger741@gmail.com 8165825550 1 1 1 Apr 11, 2026 View" [ref=e384]
+        - row "Mirko Trapletti Parent/Guardian mirko.trapletti96@gmail.com 8162881446 1 0 1 Apr 11, 2026 View" [ref=e396]
+        - row "Dina Blevins Parent/Guardian blevins_12@yahoo.com +18166792446 2 0 1 Apr 11, 2026 View" [ref=e408]
+        - row "Bojan Lugonja Parent/Guardian lbojan021@gmail.com 9137069724 1 0 4 Apr 10, 2026 View" [ref=e420]
+        - row "Craig Hisle Parent/Guardian crag24@hotmail.com 4802630107 1 0 2 Apr 10, 2026 View" [ref=e432]
+        - row "Jessica Jaynes Parent/Guardian jessjaynes09@gmail.com 9135587811 1 0 2 Apr 10, 2026 View" [ref=e444]
+        - row "jenparkey@yahoo.com Parent/Guardian jenparkey@yahoo.com - 0 0 0 Apr 10, 2026 View" [ref=e456]
+        - row "Jennifer Moyer Parent/Guardian jm1600@comcast.net 8166797265 1 0 0 Apr 10, 2026 View" [ref=e468]
+        - row "tracie.michelle.howell@gmail.com Parent/Guardian tracie.michelle.howell@gmail.com - 1 0 0 Apr 10, 2026 View" [ref=e480]
+        - row "Vincent Gennusa Parent/Guardian vmgennusasr@gmail.com (816) 935-6869 1 0 2 Apr 10, 2026 View" [ref=e492]
+        - row "spencer.sward@gmail.com Parent/Guardian spencer.sward@gmail.com - 1 0 0 Apr 10, 2026 View" [ref=e504]
+        - row "Elsa Patino Parent/Guardian ppati000@yahoo.com 4793135663 1 0 2 Apr 10, 2026 View" [ref=e516]
+        - row "Eric Roach Parent/Guardian numbersguy.ks@gmail.com 9139576374 1 0 1 Apr 10, 2026 View" [ref=e528]
+        - row "adrianacoleman1207@gmail.com Parent/Guardian adrianacoleman1207@gmail.com - 0 0 0 Apr 10, 2026 View" [ref=e540]
+        - row "Zack Osmanovic Parent/Guardian zackosmanovic@gmail.com 8166168506 1 0 2 Apr 9, 2026 View" [ref=e552]
+        - row "Eric Gossett Parent/Guardian egossett19@gmail.com 8164422326 2 0 2 Apr 9, 2026 View" [ref=e564]
+        - row "rodriguezkarla563@yahoo.com Parent/Guardian rodriguezkarla563@yahoo.com - 0 0 0 Apr 9, 2026 View" [ref=e576]
+        - row "Kate Carter-Brown Parent/Guardian kate.garrett2030@gmail.com 9136336836 2 0 1 Apr 9, 2026 View" [ref=e588]
+        - row "Stephanie Bates Parent/Guardian wlkitout@yahoo.com 7708614726 1 0 1 Apr 8, 2026 View" [ref=e600]
+        - row "Ram Chettiar Parent/Guardian ramc99@gmail.com 6127418865 2 2 38 Apr 8, 2026 View" [ref=e612]
+        - row "Larissa Gasaway Parent/Guardian lgasaway0206@gmail.com 7852181828 1 0 0 Apr 8, 2026 View" [ref=e624]
+        - row "Adam Lohoefener Parent/Guardian a.lohoefener@gmail.com 9136699546 1 0 0 Apr 7, 2026 View" [ref=e636]
+        - row "jeankcornell@gmail.com Parent/Guardian jeankcornell@gmail.com - 0 0 0 Apr 7, 2026 View" [ref=e648]
+        - row "Barbara Stroble Parent/Guardian barbarastroble@gmail.com 9132196615 2 0 2 Apr 6, 2026 View" [ref=e660]
+        - row "tlduncan@hotmail.com Parent/Guardian tlduncan@hotmail.com - 2 0 2 Apr 6, 2026 View" [ref=e672]
+        - row "Terry Pierce Parent/Guardian bosz56@icloud.com 9135587114 1 0 0 Apr 6, 2026 View" [ref=e684]
+        - row "alvaroagon@gmail.com Parent/Guardian alvaroagon@gmail.com - 1 0 0 Apr 6, 2026 View" [ref=e696]
+        - row "lizashkan@gmail.com Parent/Guardian lizashkan@gmail.com - 0 0 1 Apr 1, 2026 View" [ref=e708]
+        - row "Sokly Lach Parent/Guardian slach80@gmail.com 8165855655 1 1 29 Mar 28, 2026 View" [ref=e720]

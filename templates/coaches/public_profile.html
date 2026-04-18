@@ -61,7 +61,7 @@
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-gray-900 shadow-lg">
+    <nav class="bg-gray-900 shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -69,13 +69,52 @@
                         <img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-10 w-auto">
                     </a>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-white hover:text-secondary">Home</a>
-                    <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full hover:bg-[#b8e000]">Book Now</a>
+                <!-- Desktop nav -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/" class="text-white hover:text-secondary transition">Home</a>
+                    <a href="/#programs" class="text-white hover:text-secondary transition">Programs</a>
+                    <a href="/#coaches" class="text-secondary font-semibold">Coaches</a>
+                    <a href="/programs/" class="text-white hover:text-secondary transition">Special Projects</a>
+                    {% if user.is_authenticated %}
+                    <a href="/login-redirect/" class="text-white hover:text-secondary transition">My Portal</a>
+                    {% else %}
+                    <a href="/accounts/login/" class="text-white hover:text-secondary transition">Login</a>
+                    {% endif %}
+                    <a href="{% url 'book' %}" class="bg-accent text-gray-900 px-4 py-2 rounded-full font-semibold hover:bg-[#b8e000] transition">Book Now</a>
+                </div>
+                <!-- Mobile hamburger -->
+                <div class="md:hidden flex items-center">
+                    <button id="coach-profile-mobile-btn" class="text-gray-300 hover:text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
+        <!-- Mobile menu -->
+        <div id="coach-profile-mobile-menu" class="hidden md:hidden bg-gray-900 border-t border-gray-700">
+            <div class="px-2 pt-2 pb-3 space-y-1 text-sm">
+                <a href="/" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">🏠 Home</a>
+                <a href="/#programs" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">📋 Programs</a>
+                <a href="/#coaches" class="block px-3 py-2 text-secondary font-semibold hover:bg-gray-800 rounded">👥 Coaches</a>
+                <a href="/programs/" class="block px-3 py-2 text-gray-300 hover:bg-gray-800 rounded">✦ Special Projects</a>
+                {% if user.is_authenticated %}
+                <a href="/login-redirect/" class="block px-3 py-2 bg-secondary text-gray-900 font-semibold rounded">My Portal</a>
+                {% else %}
+                <a href="/accounts/login/" class="block px-3 py-2 bg-secondary text-gray-900 font-semibold rounded">Login</a>
+                {% endif %}
+                <a href="{% url 'book' %}" class="block px-3 py-2 bg-accent text-gray-900 font-semibold rounded hover:bg-[#b8e000]">Book Now</a>
+            </div>
+        </div>
     </nav>
+    <script>
+    (function(){
+        var btn = document.getElementById('coach-profile-mobile-btn');
+        var menu = document.getElementById('coach-profile-mobile-menu');
+        if (btn && menu) btn.addEventListener('click', function(){ menu.classList.toggle('hidden'); });
+    })();
+    </script>
 
     <main class="max-w-5xl mx-auto px-4 py-8">
         <!-- Breadcrumb -->

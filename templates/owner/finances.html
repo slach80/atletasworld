@@ -241,6 +241,7 @@
                     <th class="text-left py-3 px-4 font-semibold text-gray-600">Date</th>
                     <th class="text-right py-3 px-4 font-semibold text-gray-600">Amount</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-600">Status</th>
+                    <th class="py-3 px-4"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -262,12 +263,23 @@
                         {% endif %}
                     </td>
                     <td class="py-3 px-4 text-right font-semibold text-red-600">
-                        ${{ booking.session_type.price|default:"—" }}
+                        ${% if booking.amount_paid %}{{ booking.amount_paid }}{% else %}{{ booking.session_type.price|default:"—" }}{% endif %}
                     </td>
                     <td class="py-3 px-4">
                         <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full">
                             {{ booking.get_status_display }}
                         </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <form method="POST" action="{% url 'owner_booking_detail' booking.pk %}" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="mark_paid">
+                            <button type="submit"
+                                    onclick="return confirm('Mark this booking as paid?')"
+                                    class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded hover:bg-green-200 transition">
+                                Mark Paid
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

@@ -1,0 +1,19 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - link "Atletas Performance Center" [ref=e6] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e8]
+  - generic [ref=e22]:
+    - generic [ref=e23]:
+      - link [ref=e24] [cursor=pointer]:
+        - /url: /portal/dashboard/
+      - img [ref=e25]
+      - generic [ref=e27]: My Players
+    - generic [ref=e28]:
+      - generic [ref=e29]
+      - generic [ref=e34]
+  - contentinfo [ref=e92]:
+    - generic [ref=e93]:
+      - generic [ref=e94]
+      - generic [ref=e155]

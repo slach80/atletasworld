@@ -32,9 +32,11 @@ def coach_required(view_func):
     """Decorator to ensure user is a coach with proper group membership."""
     @login_required
     def wrapper(request, *args, **kwargs):
-        # Check user is in Coach group
+        # Check user is in Coach group — owners/staff are silently redirected (no error banner)
         if not request.user.groups.filter(name='Coach').exists():
-            messages.error(request, 'You do not have coach access.')
+            if not (request.user.is_staff or request.user.is_superuser or
+                    request.user.groups.filter(name='Owner').exists()):
+                messages.error(request, 'You do not have coach access.')
             return redirect('home')
 
         # Get associated Coach profile
@@ -604,7 +606,7 @@ def assessments_list(request):
     pending = Booking.objects.filter(
         coach=coach,
         status='completed',
-        scheduled_date__gte=today - timedelta(days=14),
+        scheduled_date__gte=today - timedelta(days=30),
         scheduled_date__lte=today
     ).exclude(
         assessments__isnull=False
@@ -975,7 +977,7 @@ def send_notification(request):
             # Create and send notification
             notification = Notification.objects.create(
                 client=client,
-                notification_type='promotional' if notification_type == 'general' else notification_type,
+                notification_type=notification_type,
                 title=f'Message from Coach {coach.user.first_name or coach.user.username}',
                 message=message,
                 method=method,
