@@ -15,7 +15,7 @@ class CoachAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Basic Information (Admin Only)', {
-            'fields': ('user', 'slug', 'is_active', 'hourly_rate'),
+            'fields': ('user', 'slug', 'is_active', 'hourly_rate', 'sessions_display_floor'),
             'description': 'Core settings managed by admin only.'
         }),
         ('Profile Access Control (Admin Only)', {
