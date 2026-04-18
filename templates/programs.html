@@ -40,6 +40,8 @@
         .card-hover { transition: all 0.3s ease; }
         .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .principle-card { border-top: 4px solid #D7FF00; }
+        .section-nav-link { transition: all 0.2s ease; }
+        .section-nav-link.active { background: #D7FF00; color: #1a1a1a; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -116,7 +118,7 @@
 </nav>
 
 <!-- Page Header -->
-<section class="bg-primary text-white py-16">
+<section class="bg-primary text-white py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center space-x-3 mb-4">
             <a href="/" class="text-gray-400 hover:text-secondary text-sm transition">Home</a>
@@ -132,7 +134,36 @@
     </div>
 </section>
 
+<!-- Section Quick-Nav -->
+<div class="bg-gray-900 border-b border-gray-700 sticky top-20 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-2 overflow-x-auto py-3 scrollbar-hide">
+            <a href="#select" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
+                🏆 APC Select
+            </a>
+            <span class="text-gray-700 flex-shrink-0">|</span>
+            <a href="#serie-a" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
+                ⚽ Serie A Scouts
+            </a>
+            <span class="text-gray-700 flex-shrink-0">|</span>
+            <a href="#camps" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
+                ☀️ Summer Camps
+            </a>
+            <span class="text-gray-700 flex-shrink-0">|</span>
+            <a href="#tournament" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
+                🎮 APC FIFA Tournament
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- APC SELECT — all sub-sections grouped under one block  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
 <!-- APC Select Hero -->
+<div id="select" class="border-l-4 border-secondary">
+
 <section class="hero-select text-white py-14 md:py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl">
@@ -165,7 +196,6 @@
         </div>
         <div class="grid md:grid-cols-3 gap-8">
 
-            <!-- Global -->
             <div class="principle-card bg-gray-50 rounded-2xl p-8 card-hover">
                 <div class="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-6">
                     <svg class="w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +208,6 @@
                 </p>
             </div>
 
-            <!-- Accessible -->
             <div class="principle-card bg-gray-50 rounded-2xl p-8 card-hover">
                 <div class="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-6">
                     <svg class="w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +220,6 @@
                 </p>
             </div>
 
-            <!-- Sustainable -->
             <div class="principle-card bg-gray-50 rounded-2xl p-8 card-hover">
                 <div class="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-6">
                     <svg class="w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +241,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid md:grid-cols-2 gap-16 items-start">
 
-            <!-- Program Details -->
             <div>
                 <span class="text-secondary font-bold uppercase tracking-widest text-sm">What You Get</span>
                 <h2 class="text-4xl font-black text-gray-900 mt-2 uppercase mb-8">Program Details</h2>
@@ -255,9 +282,7 @@
                 </div>
             </div>
 
-            <!-- Team Info & Cost -->
             <div class="space-y-6">
-                <!-- Team Info -->
                 <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                     <h3 class="text-2xl font-black text-gray-900 uppercase mb-5">Team Information</h3>
                     <div class="space-y-3 text-gray-700">
@@ -278,7 +303,6 @@
                     </div>
                 </div>
 
-                <!-- Cost -->
                 <div class="bg-primary text-white rounded-2xl p-8">
                     <div class="flex items-end space-x-2 mb-2">
                         <span class="text-6xl font-black text-secondary">$100</span>
@@ -287,95 +311,6 @@
                     <p class="text-gray-300 mb-4">6-month commitment · Includes playing and training kits</p>
                     <div class="border-t border-gray-700 pt-4">
                         <p class="text-secondary font-bold text-lg">Tryouts are FREE — No fee to attend.</p>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-<!-- Serie A Elite Scouts Class -->
-<section id="serie-a" class="py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-2 gap-16 items-center">
-
-            <div>
-                <span class="inline-block bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded mb-5">Weekly Class · Every Sunday</span>
-                <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight text-gray-900 mb-4">
-                    Serie A Elite<br><span class="text-primary">Scouts Class</span>
-                </h2>
-                <p class="text-gray-600 text-lg leading-relaxed mb-8">Elite development sessions coached at a Serie A scouting standard. Two age groups — 20-player cap per class to ensure personalized attention and high-intensity training.</p>
-
-                <div class="space-y-4 mb-8">
-                    <div class="flex items-center gap-3 text-gray-700">
-                        <span class="text-xl">⏱️</span>
-                        <span>90 minutes per session</span>
-                    </div>
-                    <div class="flex items-start gap-3 text-gray-700">
-                        <span class="text-xl">🕐</span>
-                        <div>
-                            <div><span class="font-semibold">U13</span> <span class="text-gray-400 text-sm">(Born 2014–2018)</span> — 4:00 PM</div>
-                            <div><span class="font-semibold">U19</span> <span class="text-gray-400 text-sm">(Born 2007–2013)</span> — 5:30 PM</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 text-gray-700">
-                        <span class="text-xl">💰</span>
-                        <span><strong>$40</strong> per session · No package required</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-gray-700">
-                        <span class="text-xl">📍</span>
-                        <span>Atletas Performance Center</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row gap-3">
-                    {% if serie_a.u13_id %}
-                    <a href="/book/?st={{ serie_a.u13_id }}"
-                       class="flex-1 text-center py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition">
-                        Book U13 Class
-                    </a>
-                    {% endif %}
-                    {% if serie_a.u19_id %}
-                    <a href="/book/?st={{ serie_a.u19_id }}"
-                       class="flex-1 text-center py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition">
-                        Book U19 Class
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="bg-gray-50 rounded-3xl p-10 border border-gray-100">
-                <div class="text-center mb-8">
-                    <div class="text-6xl mb-4">⚽</div>
-                    <h3 class="text-2xl font-black text-gray-900 uppercase">Weekly Schedule</h3>
-                    <p class="text-gray-500 text-sm mt-1">Every Sunday at APC</p>
-                </div>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-gray-100">
-                        <div>
-                            <p class="font-black text-gray-900">U13 Class</p>
-                            <p class="text-xs text-gray-400">Born 2014–2018</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-bold text-gray-900">4:00 – 5:30 PM</p>
-                            <p class="text-xs text-gray-400">90 min · max 20 players</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-gray-100">
-                        <div>
-                            <p class="font-black text-gray-900">U19 Class</p>
-                            <p class="text-xs text-gray-400">Born 2007–2013</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-bold text-gray-900">5:30 – 7:00 PM</p>
-                            <p class="text-xs text-gray-400">90 min · max 20 players</p>
-                        </div>
-                    </div>
-                    <div class="text-center pt-2">
-                        <p class="text-3xl font-black text-primary">$40</p>
-                        <p class="text-gray-400 text-sm">per session</p>
-                        <p class="text-xs text-gray-400 mt-1">APC Select members: 10% off</p>
                     </div>
                 </div>
             </div>
@@ -457,7 +392,6 @@
             {% endfor %}
         </div>
 
-        <!-- Registration CTA -->
         <div class="text-center">
             <p class="text-gray-300 mb-6 text-lg">Register under <strong class="text-white">"APC Select Tryout"</strong> on our website.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -472,6 +406,206 @@
     </div>
 </section>
 
+</div><!-- end #select wrapper -->
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SERIE A ELITE SCOUTS                        -->
+<!-- ═══════════════════════════════════════════ -->
+
+<section id="serie-a" class="py-20 bg-white border-t-4 border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="text-center mb-14">
+            <span class="inline-block bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded mb-4">Weekly Class · Every Sunday</span>
+            <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight text-gray-900">
+                Serie A Elite Scouts Class
+            </h2>
+            <p class="text-gray-500 mt-4 max-w-2xl mx-auto text-lg">Elite development sessions coached at a Serie A scouting standard. Two age groups — 20-player cap per class.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+
+            <div>
+                <div class="space-y-4 mb-8">
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <span class="text-xl">⏱️</span>
+                        <span>90 minutes per session</span>
+                    </div>
+                    <div class="flex items-start gap-3 text-gray-700">
+                        <span class="text-xl">🕐</span>
+                        <div>
+                            <div><span class="font-semibold">U13</span> <span class="text-gray-400 text-sm">(Born 2014–2018)</span> — 4:00 PM</div>
+                            <div><span class="font-semibold">U19</span> <span class="text-gray-400 text-sm">(Born 2007–2013)</span> — 5:30 PM</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <span class="text-xl">💰</span>
+                        <span><strong>$40</strong> per session · No package required</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <span class="text-xl">📍</span>
+                        <span>Atletas Performance Center</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    {% if serie_a.u13_id %}
+                    <a href="/book/?st={{ serie_a.u13_id }}"
+                       class="flex-1 text-center py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition">
+                        Book U13 Class
+                    </a>
+                    {% endif %}
+                    {% if serie_a.u19_id %}
+                    <a href="/book/?st={{ serie_a.u19_id }}"
+                       class="flex-1 text-center py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition">
+                        Book U19 Class
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-3xl p-10 border border-gray-100">
+                <div class="text-center mb-8">
+                    <div class="text-6xl mb-4">⚽</div>
+                    <h3 class="text-2xl font-black text-gray-900 uppercase">Weekly Schedule</h3>
+                    <p class="text-gray-500 text-sm mt-1">Every Sunday at APC</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-gray-100">
+                        <div>
+                            <p class="font-black text-gray-900">U13 Class</p>
+                            <p class="text-xs text-gray-400">Born 2014–2018</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-900">4:00 – 5:30 PM</p>
+                            <p class="text-xs text-gray-400">90 min · max 20 players</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-gray-100">
+                        <div>
+                            <p class="font-black text-gray-900">U19 Class</p>
+                            <p class="text-xs text-gray-400">Born 2007–2013</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-900">5:30 – 7:00 PM</p>
+                            <p class="text-xs text-gray-400">90 min · max 20 players</p>
+                        </div>
+                    </div>
+                    <div class="text-center pt-2">
+                        <p class="text-3xl font-black text-primary">$40</p>
+                        <p class="text-gray-400 text-sm">per session</p>
+                        <p class="text-xs text-gray-400 mt-1">APC Select members: 10% off</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SUMMER CAMPS                                -->
+<!-- ═══════════════════════════════════════════ -->
+
+<section id="camps" class="py-20 bg-gray-900 text-white border-t-4 border-secondary">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="text-center mb-14">
+            <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded mb-4">Summer 2026</span>
+            <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight">
+                ☀️ Summer Camps
+            </h2>
+            <p class="text-gray-400 mt-4 max-w-2xl mx-auto text-lg">Intensive multi-week programs across multiple locations. Full-day and half-day options for all ages and skill levels.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+
+            <!-- Summer Program HS/College -->
+            <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 hover:border-secondary transition card-hover">
+                <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-2 py-1 rounded mb-4">HS / College</span>
+                <h3 class="text-2xl font-black text-white uppercase mb-2">Summer Program</h3>
+                <p class="text-gray-400 text-sm mb-5">Mon–Wed &amp; Weekends at APC. Outdoor sessions Tue &amp; Thu. Mornings @ Hocker Grove MS, Afternoons/Evenings @ Shawnee Mission North HS.</p>
+                <div class="space-y-2 text-sm text-gray-300 mb-6">
+                    <div class="flex items-center gap-2"><span>📅</span><span>May 18 – Aug 8, 2026</span></div>
+                    <div class="flex items-center gap-2"><span>⏱️</span><span>90-minute sessions</span></div>
+                    <div class="flex items-center gap-2"><span>🕐</span><span>Mon–Fri: 7:00 AM, 10:30 AM, 6:00 PM</span></div>
+                    <div class="flex items-center gap-2"><span>🕐</span><span>Sat–Sun: 10:30 AM</span></div>
+                </div>
+                <a href="{% url 'book' %}" class="block text-center py-3 bg-secondary text-gray-900 rounded-xl font-black text-sm uppercase tracking-wide hover:bg-[#b8e000] transition">
+                    View Packages
+                </a>
+            </div>
+
+            <!-- Summer Program U13 & Younger -->
+            <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 hover:border-secondary transition card-hover">
+                <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-2 py-1 rounded mb-4">U13 &amp; Younger</span>
+                <h3 class="text-2xl font-black text-white uppercase mb-2">Summer Program</h3>
+                <p class="text-gray-400 text-sm mb-5">Age-appropriate sessions designed for younger players to develop foundational skills in a fun, competitive environment.</p>
+                <div class="space-y-2 text-sm text-gray-300 mb-6">
+                    <div class="flex items-center gap-2"><span>📅</span><span>Summer 2026 — Dates TBA</span></div>
+                    <div class="flex items-center gap-2"><span>⏱️</span><span>90-minute sessions</span></div>
+                    <div class="flex items-center gap-2"><span>📍</span><span>APC Indoor Facility</span></div>
+                </div>
+                <a href="mailto:info@atletasperformancecenter.com?subject=Summer Camp U13 Interest" class="block text-center py-3 border-2 border-secondary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-secondary hover:text-gray-900 transition">
+                    Express Interest
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- APC FIFA TOURNAMENT                         -->
+<!-- ═══════════════════════════════════════════ -->
+
+<section id="tournament" class="py-20 bg-white border-t-4 border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+
+            <div>
+                <span class="inline-block bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded mb-5">Community Event</span>
+                <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight text-gray-900 mb-4">
+                    🎮 APC FIFA<br>Tournament
+                </h2>
+                <p class="text-gray-600 text-lg leading-relaxed mb-6">
+                    Compete off the pitch. APC's FIFA tournament brings our community together for a fun, competitive gaming event — open to players, parents, and fans.
+                </p>
+                <div class="space-y-3 mb-8 text-gray-700">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">📅</span>
+                        <span>Date &amp; format — coming soon</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">📍</span>
+                        <span>Atletas Performance Center</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">🏆</span>
+                        <span>Prizes for top finishers</span>
+                    </div>
+                </div>
+                <a href="mailto:info@atletasperformancecenter.com?subject=FIFA Tournament Interest"
+                   class="inline-block bg-primary text-secondary px-8 py-4 rounded-full font-black uppercase tracking-wide hover:bg-gray-800 transition">
+                    Get Notified →
+                </a>
+            </div>
+
+            <div class="bg-gray-50 rounded-3xl p-10 border border-gray-100 text-center">
+                <div class="text-8xl mb-6">🎮</div>
+                <h3 class="text-2xl font-black text-gray-900 uppercase mb-3">Coming Soon</h3>
+                <p class="text-gray-500 leading-relaxed">Details on bracket format, registration, and prizes will be announced shortly. Email us to be added to the notification list.</p>
+                <div class="mt-8 p-4 bg-primary rounded-xl">
+                    <p class="text-secondary font-bold">Stay tuned — APC FIFA Tournament 2026</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
 {% include "includes/public_footer.html" %}
 
 <script>
@@ -479,6 +613,24 @@
     const mobileMenu = document.getElementById('mobile-menu');
     mobileMenuBtn.addEventListener('click', () => {
         mobileMenu.classList.toggle('hidden');
+    });
+
+    // Highlight active section in quick-nav on scroll
+    const sections = [
+        { id: 'select', link: document.querySelector('a[href="#select"]') },
+        { id: 'serie-a', link: document.querySelector('a[href="#serie-a"]') },
+        { id: 'camps', link: document.querySelector('a[href="#camps"]') },
+        { id: 'tournament', link: document.querySelector('a[href="#tournament"]') },
+    ];
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const s = sections.find(s => s.id === entry.target.id);
+            if (s) s.link.classList.toggle('active', entry.isIntersecting);
+        });
+    }, { rootMargin: '-20% 0px -60% 0px' });
+    sections.forEach(s => {
+        const el = document.getElementById(s.id);
+        if (el) observer.observe(el);
     });
 </script>
 </body>
