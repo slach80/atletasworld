@@ -296,17 +296,23 @@
                             {% if ev.description %}
                             <p class="text-white/65 text-xs mb-3">{{ ev.description }}</p>
                             {% endif %}
-                            {% if ev.age_group or ev.start_times_fmt %}
+                            {% if ev.age_group or ev.start_times_fmt or ev.location %}
                             <div class="space-y-2 text-sm flex-1 mb-4">
                                 {% if ev.age_group %}
                                 <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
-                                    <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Age Group</span>
+                                    <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">👥 Age Group</span>
                                     <span class="text-white/70 text-xs">{{ ev.age_group }}</span>
+                                </div>
+                                {% endif %}
+                                {% if ev.location %}
+                                <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                                    <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">📍 Location</span>
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ ev.location|urlencode }}" target="_blank" rel="noopener" class="text-white/70 text-xs hover:text-white transition">{{ ev.location }}</a>
                                 </div>
                                 {% endif %}
                                 {% if ev.start_times_fmt %}
                                 <div class="flex justify-between items-baseline">
-                                    <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">Times</span>
+                                    <span class="text-white/80 font-semibold text-xs uppercase tracking-wide">🕐 Times</span>
                                     <span class="text-white/70 text-xs">{{ ev.start_times_fmt }}</span>
                                 </div>
                                 {% endif %}
