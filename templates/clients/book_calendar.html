@@ -410,7 +410,11 @@ let cartPromoCode='', cartPromoDiscount=0;
 let timeStart=6, timeEnd=23;
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
-const existingBookings=[{% for b in existing_bookings %}{"date":"{{ b.scheduled_date|date:'Y-m-d' }}","time":"{{ b.scheduled_time|time:'H:i' }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
+const existingBookingsByPlayer={};
+{% for b in existing_bookings %}
+if(!existingBookingsByPlayer["{{ b.player_id }}"]) existingBookingsByPlayer["{{ b.player_id }}"]=[];
+existingBookingsByPlayer["{{ b.player_id }}"].push({"date":"{{ b.scheduled_date|date:'Y-m-d' }}","time":"{{ b.scheduled_time|time:'H:i' }}"});
+{% endfor %}
 
 // Startup
 document.addEventListener('DOMContentLoaded',()=>{
@@ -736,7 +740,9 @@ async function confirmBookings(){
                         const cis=document.getElementById(`cis-${i}`);
                         if(cis) cis.insertAdjacentHTML('beforeend',`<p class="text-xs text-indigo-600 font-semibold mt-1">👨‍👩‍👧 Sibling discount applied — 50% off!</p>`);
                     }
-                    existingBookings.push({date:slot.start.split('T')[0],time:slot.start.split('T')[1].substring(0,5)});
+                    const _d=slot.start.split('T')[0],_t=slot.start.split('T')[1].substring(0,5);
+                    if(!existingBookingsByPlayer[playerId]) existingBookingsByPlayer[playerId]=[];
+                    existingBookingsByPlayer[playerId].push({date:_d,time:_t});
                 }else{
                     let errMsg = data.error || 'This slot is no longer available.';
                     if(data.required_packages && data.required_packages.length){
@@ -984,7 +990,7 @@ function switchTab(name){
     else    { bc.className='flex-1 py-2 rounded-lg text-sm font-semibold bg-primary text-white transition'; bs.className='flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 transition'; }
 }
 
-function isBooked(s){ const d=s.start.split('T')[0],t=(s.start.split('T')[1]||'').substring(0,5); return existingBookings.some(b=>b.date===d&&b.time===t); }
+function isBooked(s){ const d=s.start.split('T')[0],t=(s.start.split('T')[1]||'').substring(0,5); const sel=getSelectedPlayerIds(); if(!sel.length) return false; return sel.every(pid=>(existingBookingsByPlayer[pid]||[]).some(b=>b.date===d&&b.time===t)); }
 function isoDate(d){ return d.toISOString().split('T')[0]; }
 function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
 function fmtDateLabel(ds){ const t=new Date(); t.setHours(0,0,0,0); const tm=new Date(t); tm.setDate(tm.getDate()+1); if(ds===isoDate(t)) return'Today'; if(ds===isoDate(tm)) return'Tomorrow'; return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
