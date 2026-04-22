@@ -1,0 +1,13 @@
+{% if role_multi %}
+<div class="flex items-center gap-0.5 bg-white/10 rounded-full px-1 py-0.5 ml-1">
+  {% if role_is_owner %}
+  <a href="/owner-portal/" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide transition {% if '/owner-portal/' in request.path %}bg-secondary text-gray-900{% else %}text-gray-400 hover:text-white{% endif %}">Owner</a>
+  {% endif %}
+  {% if role_is_coach %}
+  <a href="/coach-portal/dashboard/" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide transition {% if '/coach-portal/' in request.path %}bg-secondary text-gray-900{% else %}text-gray-400 hover:text-white{% endif %}">Coach</a>
+  {% endif %}
+  {% if role_is_client %}
+  <a href="/portal/dashboard/" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide transition {% if '/portal/' in request.path and '/owner-portal/' not in request.path and '/coach-portal/' not in request.path %}bg-secondary text-gray-900{% else %}text-gray-400 hover:text-white{% endif %}">Client</a>
+  {% endif %}
+</div>
+{% endif %}

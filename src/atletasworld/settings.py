@@ -91,6 +91,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'atletasworld.context_processors.pending_field_rentals',
+                'atletasworld.context_processors.user_roles',
             ],
         },
     },

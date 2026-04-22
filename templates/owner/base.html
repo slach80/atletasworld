@@ -145,6 +145,7 @@
                     <!-- Backend -->
                     <a href="/admin/" class="px-3 py-2 rounded hover:bg-white/10 transition text-gray-400 text-xs">Backend</a>
 
+                    {% include "includes/_role_switcher.html" %}
                     <!-- Dark mode toggle -->
                     <button onclick="toggleDarkMode()" title="Toggle dark mode"
                             class="px-2 py-1.5 rounded hover:bg-white/10 transition text-gray-400 hover:text-accent text-base" id="owner-dark-btn">🌙</button>
@@ -163,6 +164,7 @@
 
             <!-- Mobile menu -->
             <div id="owner-mobile-menu" class="hidden md:hidden pb-4 border-t border-gray-700 mt-2 pt-2 space-y-1 text-sm">
+                {% include "includes/_role_switcher_mobile.html" %}
                 <a href="{% url 'owner_dashboard' %}" class="block px-3 py-2 rounded hover:bg-white/10">Dashboard</a>
                 <p class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wider">People</p>
                 <a href="{% url 'owner_clients' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">👥 Clients</a>
