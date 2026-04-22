@@ -885,7 +885,7 @@ def owner_coach_add(request):
 
     if request.method == 'POST':
         username   = request.POST.get('username', '').strip()
-        email      = request.POST.get('email', '').strip()
+        email      = request.POST.get('email', '').strip().lower()
         first_name = request.POST.get('first_name', '').strip()
         last_name  = request.POST.get('last_name', '').strip()
         password   = request.POST.get('password', '')
@@ -918,11 +918,11 @@ def owner_coach_add(request):
             )
 
         try:
-            if User.objects.filter(username=username).exists():
+            if User.objects.filter(username__iexact=username).exists():
                 messages.error(request, f'Username "{username}" already exists.')
                 return render(request, 'owner/coach_form.html', {'editing': False, 'coach': _form_coach()})
-            if User.objects.filter(email=email).exists():
-                messages.error(request, f'Email "{email}" already exists.')
+            if User.objects.filter(email__iexact=email).exists():
+                messages.error(request, f'A user with email "{email}" already exists.')
                 return render(request, 'owner/coach_form.html', {'editing': False, 'coach': _form_coach()})
 
             # Ensure slug is unique — append -2, -3, … if needed
