@@ -33,6 +33,8 @@ def about_view(request):
 def home_view(request):
     """Public homepage — packages, events, and programs from the database."""
     active_coaches = _get_active_coaches()
+    raw_sessions = sum(c.sessions_display_floor for c in active_coaches)
+    total_sessions_rounded = round(raw_sessions / 100) * 100 if raw_sessions else 0
 
     packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=False
@@ -77,6 +79,7 @@ def home_view(request):
         'events': events_qs,
         'programs': programs_qs,
         'active_coaches': active_coaches,
+        'total_sessions_rounded': total_sessions_rounded,
     })
 
 

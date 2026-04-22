@@ -880,40 +880,71 @@ def owner_coaches(request):
 def owner_coach_add(request):
     """Add a new coach."""
     from django.contrib.auth.models import Group
+    from django.utils.text import slugify
+    from types import SimpleNamespace
 
     if request.method == 'POST':
-        try:
-            # Create user
-            username = request.POST.get('username')
-            email = request.POST.get('email')
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
-            password = request.POST.get('password')
+        username   = request.POST.get('username', '').strip()
+        email      = request.POST.get('email', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name  = request.POST.get('last_name', '').strip()
+        password   = request.POST.get('password', '')
 
-            # Check if user exists
+        # Auto-generate slug from name if left blank; never use raw username/email
+        slug_input = request.POST.get('slug', '').strip() or slugify(f'{first_name}-{last_name}')
+
+        def _form_coach():
+            """Build a SimpleNamespace that mirrors Coach/User fields for re-rendering."""
+            return SimpleNamespace(
+                user=SimpleNamespace(first_name=first_name, last_name=last_name, email=email),
+                slug=slug_input,
+                hourly_rate=request.POST.get('hourly_rate', 0),
+                is_active=False, profile_enabled=False, photo=None,
+                tagline=request.POST.get('tagline', ''),
+                bio=request.POST.get('bio', ''),
+                full_bio=request.POST.get('full_bio', ''),
+                specializations=request.POST.get('specializations', ''),
+                certifications=request.POST.get('certifications', ''),
+                experience_years=request.POST.get('experience_years', 0),
+                coaching_philosophy=request.POST.get('coaching_philosophy', ''),
+                achievements=request.POST.get('achievements', ''),
+                instagram_url=request.POST.get('instagram_url', ''),
+                facebook_url=request.POST.get('facebook_url', ''),
+                twitter_url=request.POST.get('twitter_url', ''),
+                linkedin_url=request.POST.get('linkedin_url', ''),
+                youtube_url=request.POST.get('youtube_url', ''),
+                personal_website=request.POST.get('personal_website', ''),
+                gallery_image_1=None, gallery_image_2=None, gallery_image_3=None,
+            )
+
+        try:
             if User.objects.filter(username=username).exists():
                 messages.error(request, f'Username "{username}" already exists.')
-                return redirect('owner_coach_add')
+                return render(request, 'owner/coach_form.html', {'editing': False, 'coach': _form_coach()})
             if User.objects.filter(email=email).exists():
                 messages.error(request, f'Email "{email}" already exists.')
-                return redirect('owner_coach_add')
+                return render(request, 'owner/coach_form.html', {'editing': False, 'coach': _form_coach()})
+
+            # Ensure slug is unique — append -2, -3, … if needed
+            slug = slug_input
+            counter = 2
+            while Coach.objects.filter(slug=slug).exists():
+                slug = f'{slug_input}-{counter}'
+                counter += 1
 
             user = User.objects.create_user(
                 username=username,
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                password=password
+                password=password,
             )
-
-            # Add to Coach group
             coach_group, _ = Group.objects.get_or_create(name='Coach')
             user.groups.add(coach_group)
 
-            # Create coach profile
             coach = Coach.objects.create(
                 user=user,
-                slug=request.POST.get('slug', username),
+                slug=slug,
                 tagline=request.POST.get('tagline', '')[:200],
                 bio=request.POST.get('bio', ''),
                 full_bio=request.POST.get('full_bio', ''),
@@ -938,6 +969,7 @@ def owner_coach_add(request):
             return redirect('owner_coaches')
         except Exception as e:
             messages.error(request, f'Error creating coach: {str(e)}')
+            return render(request, 'owner/coach_form.html', {'editing': False, 'coach': _form_coach()})
 
     return render(request, 'owner/coach_form.html', {'editing': False})
 
