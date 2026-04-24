@@ -1075,7 +1075,7 @@ function showBookingPayError(msg) {
 {% if stripe_public_key %}
 <!-- Booking payment modal -->
 <div id="booking-pay-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold mb-0.5">Complete Payment</h2>
         <p id="booking-pay-label" class="text-gray-500 text-sm mb-4"></p>
         <div id="booking-pay-loading" class="py-8 text-center text-gray-400">
