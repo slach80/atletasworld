@@ -476,6 +476,31 @@ class BookingPreference(models.Model):
         return True
 
 
+class UnsubscribeToken(models.Model):
+    """One-time-use token for password-less email unsubscribe flow."""
+    client = models.OneToOneField('Client', on_delete=models.CASCADE, related_name='unsubscribe_token')
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"UnsubscribeToken for {self.client}"
+
+    @classmethod
+    def get_or_create_for_client(cls, client):
+        import secrets
+        obj, created = cls.objects.get_or_create(client=client)
+        now = timezone.now()
+        if created or obj.expires_at <= now:
+            obj.token = secrets.token_urlsafe(48)
+            obj.expires_at = now + timezone.timedelta(days=30)
+            obj.save()
+        return obj
+
+    def is_valid(self):
+        return timezone.now() < self.expires_at
+
+
 class NotificationPreference(models.Model):
     """Client notification preferences."""
     NOTIFICATION_METHOD_CHOICES = [
@@ -568,12 +593,14 @@ class Notification(models.Model):
                 f'<p>{_html.escape(line)}</p>' if line.strip() else '<br>'
                 for line in self.message.splitlines()
             )
+            unsub = UnsubscribeToken.get_or_create_for_client(self.client)
             html_content = render_to_string('emails/base_email.html', {
                 'subject':     self.title,
                 'client_name': self.client.user.first_name or self.client.user.username,
                 'content':     body_html,
                 'site_url':    site_url,
                 'current_year': timezone.now().year,
+                'unsubscribe_token': unsub.token,
             })
             msg = EmailMultiAlternatives(
                 subject=self.title,

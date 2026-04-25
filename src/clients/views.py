@@ -27,7 +27,7 @@ from django.core.cache import cache
 from datetime import datetime, timedelta
 
 from clients.utils import validate_photo as _validate_photo, _MAX_PHOTO_BYTES, _ALLOWED_PHOTO_EXTENSIONS
-from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver, DiscountCode
+from .models import Client, Player, Package, ClientPackage, NotificationPreference, Notification, SessionReservation, BookingPreference, PushSubscription, Team, FieldRentalSlot, ClientWaiver, get_current_waiver, DiscountCode, UnsubscribeToken
 from bookings.models import Booking, Program, AvailabilitySlot
 from coaches.models import PlayerAssessment, Coach, ScheduleBlock
 
@@ -1741,4 +1741,53 @@ def discount_validate(request):
         'discount_amount': str(discount_amount),
         'final_amount': str(final_amount),
         'message': msg,
+    })
+
+
+def unsubscribe_landing(request, token):
+    """Public unsubscribe page — no login required. Shows survey + preference checkboxes."""
+    try:
+        obj = UnsubscribeToken.objects.select_related('client__user', 'client__notification_preferences').get(token=token)
+    except UnsubscribeToken.DoesNotExist:
+        return render(request, 'clients/unsubscribe.html', {'invalid': True})
+
+    if not obj.is_valid():
+        return render(request, 'clients/unsubscribe.html', {'expired': True})
+
+    client = obj.client
+    prefs, _ = NotificationPreference.objects.get_or_create(client=client)
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '')
+        reason_other = request.POST.get('reason_other', '').strip()
+
+        selected_fields = request.POST.getlist('notification_types')
+        all_fields = [
+            'booking_confirmations', 'booking_reminders', 'booking_cancellations',
+            'purchase_confirmations', 'assessment_notifications', 'promotional_updates',
+        ]
+        for field in all_fields:
+            if field in selected_fields:
+                setattr(prefs, field, 'none')
+        prefs.save()
+
+        return render(request, 'clients/unsubscribe.html', {
+            'done': True,
+            'client': client,
+            'unsubscribed': selected_fields,
+            'token': token,
+        })
+
+    reasons = [
+        ('too_many', 'Too many emails'),
+        ('not_relevant', 'Not relevant to me'),
+        ('no_longer_client', "I'm no longer a client"),
+        ('prefer_phone', 'I prefer phone/text'),
+        ('other', 'Other'),
+    ]
+    return render(request, 'clients/unsubscribe.html', {
+        'client': client,
+        'prefs': prefs,
+        'token': token,
+        'reasons': reasons,
     })

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Preferences — Atletas Performance Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1a1a1a', secondary: '#D7FF00' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+    <!-- Nav -->
+    <nav class="bg-gray-900 shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center">
+            <a href="/"><img src="/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" class="h-9 w-auto"></a>
+        </div>
+    </nav>
+
+    <main class="flex-1 flex items-start justify-center py-12 px-4">
+        <div class="bg-white rounded-2xl shadow-lg max-w-lg w-full p-8">
+
+            {% if invalid %}
+            <!-- Invalid token -->
+            <div class="text-center">
+                <div class="text-5xl mb-4">🔗</div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-3">Invalid Link</h1>
+                <p class="text-gray-500">This unsubscribe link is not valid. It may have already been used or the URL was incomplete.</p>
+                <a href="/" class="mt-6 inline-block bg-gray-900 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-gray-700">Back to Home</a>
+            </div>
+
+            {% elif expired %}
+            <!-- Expired token -->
+            <div class="text-center">
+                <div class="text-5xl mb-4">⏰</div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-3">Link Expired</h1>
+                <p class="text-gray-500">This unsubscribe link has expired (links are valid for 30 days). Please log in to manage your notification preferences.</p>
+                <a href="/portal/notifications/" class="mt-6 inline-block bg-gray-900 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-gray-700">Manage Preferences</a>
+            </div>
+
+            {% elif done %}
+            <!-- Success confirmation -->
+            <div class="text-center">
+                <div class="text-5xl mb-4">✅</div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-3">You're Unsubscribed</h1>
+                <p class="text-gray-500 mb-4">
+                    Hi {{ client.user.first_name|default:"there" }}, your preferences have been updated. You will no longer receive the selected notifications.
+                </p>
+                {% if unsubscribed %}
+                <div class="bg-gray-50 rounded-xl p-4 text-left text-sm text-gray-600 mb-6">
+                    <p class="font-semibold text-gray-800 mb-2">Turned off:</p>
+                    <ul class="space-y-1">
+                        {% for field in unsubscribed %}
+                        <li class="flex items-center gap-2">
+                            <span class="text-green-500">✓</span>
+                            {% if field == "booking_confirmations" %}Booking Confirmations
+                            {% elif field == "booking_reminders" %}Session Reminders
+                            {% elif field == "booking_cancellations" %}Cancellation Notices
+                            {% elif field == "purchase_confirmations" %}Purchase Confirmations
+                            {% elif field == "assessment_notifications" %}Assessment Results
+                            {% elif field == "promotional_updates" %}Promotions &amp; Events
+                            {% else %}{{ field }}{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                <p class="text-sm text-gray-400 mb-6">Changed your mind? You can update your preferences any time.</p>
+                <a href="/portal/notifications/" class="inline-block bg-gray-900 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-gray-700">Manage All Preferences</a>
+            </div>
+
+            {% else %}
+            <!-- Main form -->
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-1">Email Preferences</h1>
+                <p class="text-gray-500 text-sm">Hi {{ client.user.first_name|default:"there" }}, choose which emails you'd like to stop receiving.</p>
+            </div>
+
+            <form method="post" action="/unsubscribe/{{ token }}/">
+                {% csrf_token %}
+
+                <!-- Why section -->
+                <div class="mb-6">
+                    <p class="text-sm font-semibold text-gray-700 mb-3">Why are you unsubscribing? <span class="text-gray-400 font-normal">(optional)</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3" id="reason-buttons">
+                        {% for val, label in reasons %}
+                        <button type="button"
+                            class="reason-btn border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 hover:border-gray-800 hover:text-gray-900 text-left transition"
+                            data-value="{{ val }}">
+                            {{ label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="reason" id="reason-hidden" value="">
+                    <textarea name="reason_other" id="reason-other"
+                        placeholder="Tell us more (optional)..."
+                        class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 resize-none focus:outline-none focus:border-gray-400"
+                        rows="2"></textarea>
+                </div>
+
+                <!-- Notification type checkboxes -->
+                <div class="mb-6">
+                    <p class="text-sm font-semibold text-gray-700 mb-3">Which emails would you like to stop?</p>
+                    <div class="space-y-3">
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" name="notification_types" value="booking_confirmations"
+                                class="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                                {% if prefs.booking_confirmations == 'none' %}checked{% endif %}>
+                            <span class="text-sm">
+                                <span class="font-medium text-gray-800 group-hover:text-gray-900">Booking Confirmations</span>
+                                <span class="block text-gray-400 text-xs">Sent when a session is booked or confirmed</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" name="notification_types" value="booking_reminders"
+                                class="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                                {% if prefs.booking_reminders == 'none' %}checked{% endif %}>
+                            <span class="text-sm">
+                                <span class="font-medium text-gray-800 group-hover:text-gray-900">Session Reminders</span>
+                                <span class="block text-gray-400 text-xs">Sent before your upcoming sessions</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" name="notification_types" value="booking_cancellations"
+                                class="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                                {% if prefs.booking_cancellations == 'none' %}checked{% endif %}>
+                            <span class="text-sm">
+                                <span class="font-medium text-gray-800 group-hover:text-gray-900">Cancellation Notices</span>
+                                <span class="block text-gray-400 text-xs">Sent when a booking is cancelled</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" name="notification_types" value="purchase_confirmations"
+                                class="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                                {% if prefs.purchase_confirmations == 'none' %}checked{% endif %}>
+                            <span class="text-sm">
+                                <span class="font-medium text-gray-800 group-hover:text-gray-900">Purchase Confirmations</span>
+                                <span class="block text-gray-400 text-xs">Sent when you purchase a package or make a payment</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" name="notification_types" value="assessment_notifications"
+                                class="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                                {% if prefs.assessment_notifications == 'none' %}checked{% endif %}>
+                            <span class="text-sm">
+                                <span class="font-medium text-gray-800 group-hover:text-gray-900">Assessment Results</span>
+                                <span class="block text-gray-400 text-xs">Sent when your coach completes a player assessment</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" name="notification_types" value="promotional_updates"
+                                class="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                                {% if prefs.promotional_updates == 'none' %}checked{% endif %}>
+                            <span class="text-sm">
+                                <span class="font-medium text-gray-800 group-hover:text-gray-900">Promotions &amp; Events</span>
+                                <span class="block text-gray-400 text-xs">Camps, tournaments, special offers, and program announcements</span>
+                            </span>
+                        </label>
+
+                    </div>
+                </div>
+
+                <!-- Unsubscribe All shortcut -->
+                <button type="button" id="unsubscribe-all"
+                    class="text-xs text-gray-400 underline hover:text-gray-600 mb-4 block">
+                    Select all (unsubscribe from everything)
+                </button>
+
+                <button type="submit"
+                    class="w-full bg-gray-900 text-white py-3 rounded-full font-semibold hover:bg-gray-700 transition">
+                    Save Preferences
+                </button>
+
+                <p class="text-center text-xs text-gray-400 mt-4">
+                    You can always update preferences from your <a href="/portal/notifications/" class="underline hover:text-gray-600">account settings</a>.
+                </p>
+            </form>
+            {% endif %}
+
+        </div>
+    </main>
+
+    {% include "includes/public_footer.html" %}
+
+    <script>
+        // Reason button toggle
+        const reasonBtns = document.querySelectorAll('.reason-btn');
+        const reasonHidden = document.getElementById('reason-hidden');
+        reasonBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const isActive = btn.classList.contains('selected');
+                reasonBtns.forEach(b => {
+                    b.classList.remove('selected', 'border-gray-900', 'text-gray-900', 'bg-gray-50');
+                    b.classList.add('border-gray-200', 'text-gray-600');
+                });
+                if (!isActive) {
+                    btn.classList.add('selected', 'border-gray-900', 'text-gray-900', 'bg-gray-50');
+                    btn.classList.remove('border-gray-200', 'text-gray-600');
+                    reasonHidden.value = btn.dataset.value;
+                } else {
+                    reasonHidden.value = '';
+                }
+            });
+        });
+
+        // Select all
+        const unsubAll = document.getElementById('unsubscribe-all');
+        if (unsubAll) {
+            unsubAll.addEventListener('click', () => {
+                document.querySelectorAll('input[name="notification_types"]').forEach(cb => {
+                    cb.checked = true;
+                });
+            });
+        }
+    </script>
+</body>
+</html>

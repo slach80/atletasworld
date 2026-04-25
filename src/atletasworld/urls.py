@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from coaches.views import coach_public_profile
 from .views import home_view, about_view, apple_pay_verification, programs_view
+from clients.views import unsubscribe_landing
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
@@ -188,6 +189,9 @@ urlpatterns = [
 
     # Coach public profiles (dynamic based on slug - fallback for other coaches)
     path('coach/<slug:slug>/', coach_public_profile, name='coach_public_profile'),
+
+    # Email unsubscribe (public, no login required)
+    path('unsubscribe/<str:token>/', unsubscribe_landing, name='email_unsubscribe'),
 
     # Grappelli admin (must be before admin)
     path('grappelli/', include('grappelli.urls')),

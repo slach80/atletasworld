@@ -81,9 +81,14 @@ class NotificationService:
         """Send notification using a template based on client preferences."""
         from .models import Notification, NotificationPreference
 
+        from .models import UnsubscribeToken
         context = context or {}
         context['client_name'] = client.user.first_name or client.user.username
         context['site_url'] = getattr(settings, 'SITE_URL', 'http://localhost:8000')
+        try:
+            context['unsubscribe_token'] = UnsubscribeToken.get_or_create_for_client(client).token
+        except Exception:
+            pass
 
         results = []
 
@@ -168,12 +173,16 @@ class NotificationService:
             booking_confirmed_paid only        → payment_confirmed.html (late payment)
             package_activated                  → package_activated.html
         """
-        from .models import Notification, NotificationPreference
+        from .models import Notification, NotificationPreference, UnsubscribeToken
         from django.conf import settings as _settings
         from django.utils import timezone as _tz
 
         site_url = getattr(_settings, 'SITE_URL', 'https://atletasperformancecenter.com')
         client_name = client.user.first_name or client.user.username
+        try:
+            _unsub_token = UnsubscribeToken.get_or_create_for_client(client).token
+        except Exception:
+            _unsub_token = None
 
         # Merge all event contexts into one dict (later events win on key conflicts)
         merged = {}
@@ -299,6 +308,7 @@ class NotificationService:
             'client_name': client_name,
             'site_url': site_url,
             'current_year': _tz.now().year,
+            'unsubscribe_token': _unsub_token,
         })
 
         html_content = render_to_string(template_name, ctx)

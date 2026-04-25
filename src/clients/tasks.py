@@ -694,7 +694,7 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
         <div class="signature">
             <div class="signature-bar"></div>
             <strong>Atletas Performance Center</strong><br>
-            <div class="title">Professional Soccer Training</div>
+            <div class="title">High Performance &amp; Athletic Development</div>
             <div class="contact">📧 <a href="mailto:info@atletasperformancecenter.com">info@atletasperformancecenter.com</a></div>
             <div class="contact">🌐 <a href="{site_url}">{site_url.replace("https://", "")}</a></div>
         </div>
@@ -705,6 +705,9 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
             <a href="https://www.instagram.com/atletasperformancecenter/" target="_blank">Instagram</a> &nbsp;|&nbsp;
             <a href="https://www.facebook.com/profile.php?id=61572009236369" target="_blank">Facebook</a>
         </p>
+        <p style="margin-top: 8px;">
+            <a href="{site_url}/portal/notifications/" style="color:#aaaaaa;font-size:11px;">Manage Notification Preferences</a>
+        </p>
         <p style="margin-top: 12px; font-size: 11px; color: #555555;">
             &copy; 2026 Atletas Performance Center. All rights reserved.
         </p>
@@ -714,8 +717,9 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
 </html>'''
     else:
         body = message + (
-            f"\n\n--\nAtletas Performance Center\nProfessional Soccer Training\n"
-            f"info@atletasperformancecenter.com\n{site_url}"
+            f"\n\n--\nAtletas Performance Center\nHigh Performance & Athletic Development\n"
+            f"info@atletasperformancecenter.com\n{site_url}\n"
+            f"Manage preferences: {site_url}/portal/notifications/"
         )
 
     # Load attachment file data from disk (saved by the view before dispatching to Celery)
