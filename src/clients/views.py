@@ -1028,13 +1028,24 @@ def reserve_session(request):
     if not block.is_available:
         return JsonResponse({'success': False, 'error': 'Session is no longer available'})
 
+    # Check if this block is free (e.g. tryout / free event) — no package required
+    catalog_types = block.catalog_session_types.all()
+    block_is_free = (
+        block.price_override is not None and block.price_override == 0
+    ) or (
+        catalog_types.exists() and all(
+            (st.drop_in_price is not None and st.drop_in_price == 0) or st.price == 0
+            for st in catalog_types
+        )
+    )
+
     # Check if client has an active package with sessions remaining
     active_package = client.packages.filter(
         status='active',
         expiry_date__gte=timezone.localdate()
     ).first()
 
-    if not active_package or (active_package.package.sessions_included > 0 and active_package.sessions_remaining <= 0):
+    if not block_is_free and (not active_package or (active_package.package.sessions_included > 0 and active_package.sessions_remaining <= 0)):
         return JsonResponse({'success': False, 'error': 'No available sessions in your package'})
 
     # Check if already reserved by this client
@@ -1107,18 +1118,36 @@ def confirm_booking(request):
     if not reservations.exists():
         return JsonResponse({'success': False, 'error': 'No reservations to confirm'})
 
-    # Get active package
+    # Determine which reservations need a package vs. which are free
+    free_reservations = []
+    paid_reservations = []
+    for res in reservations:
+        catalog_types = res.schedule_block.catalog_session_types.all()
+        is_free = (
+            res.schedule_block.price_override is not None and res.schedule_block.price_override == 0
+        ) or (
+            catalog_types.exists() and all(
+                (st.drop_in_price is not None and st.drop_in_price == 0) or st.price == 0
+                for st in catalog_types
+            )
+        )
+        if is_free:
+            free_reservations.append(res)
+        else:
+            paid_reservations.append(res)
+
+    # Get active package (only required if there are paid reservations)
     active_package = client.packages.filter(
         status='active',
         expiry_date__gte=timezone.localdate()
     ).first()
 
-    if not active_package:
+    if paid_reservations and not active_package:
         return JsonResponse({'success': False, 'error': 'No active package'})
 
-    # Check if enough sessions remain
-    if active_package.package.sessions_included > 0:
-        if active_package.sessions_remaining < reservations.count():
+    # Check if enough sessions remain for paid reservations
+    if active_package and active_package.package.sessions_included > 0:
+        if active_package.sessions_remaining < len(paid_reservations):
             return JsonResponse({
                 'success': False,
                 'error': f'Only {active_package.sessions_remaining} sessions remaining in your package'
@@ -1129,7 +1158,7 @@ def confirm_booking(request):
 
     bookings_created = 0
     for reservation in reservations:
-        # Create the booking
+        is_free_res = reservation in free_reservations
         booking = Booking.objects.create(
             client=client,
             player=reservation.player,
@@ -1137,24 +1166,22 @@ def confirm_booking(request):
             program=program,
             scheduled_date=reservation.schedule_block.date,
             scheduled_time=reservation.schedule_block.start_time,
-            client_package=active_package,
+            client_package=active_package if not is_free_res else None,
             status='confirmed'
         )
 
-        # Use a session from the package
-        active_package.use_session()
+        if not is_free_res and active_package:
+            active_package.use_session()
 
-        # Mark reservation as confirmed
         reservation.is_confirmed = True
         reservation.save()
 
-        # Send booking confirmation email
         try:
             from clients.notification_utils import queue_grouped_notification
             queue_grouped_notification(
                 client=client,
                 event_type='booking_confirmed',
-                context={'booking_id': booking.id, 'payment_method': 'package'},
+                context={'booking_id': booking.id, 'payment_method': 'free' if is_free_res else 'package'},
                 group_key=f'booking_{booking.id}',
                 window_seconds=30,
             )
@@ -1163,10 +1190,11 @@ def confirm_booking(request):
 
         bookings_created += 1
 
+    sessions_left = active_package.sessions_remaining if active_package else 0
     return JsonResponse({
         'success': True,
         'bookings_created': bookings_created,
-        'sessions_remaining': active_package.sessions_remaining
+        'sessions_remaining': sessions_left,
     })
 
 
