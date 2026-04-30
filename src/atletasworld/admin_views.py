@@ -1143,21 +1143,33 @@ def owner_coach_schedule(request, pk):
                     if first_st and first_st.session_format == 'private':
                         session_type_str = 'private'
 
-                block = ScheduleBlock.objects.create(
+                block, created = ScheduleBlock.objects.get_or_create(
                     coach=coach,
                     date=request.POST.get('date'),
                     start_time=request.POST.get('start_time'),
-                    end_time=request.POST.get('end_time'),
-                    session_type=session_type_str,
-                    max_participants=request.POST.get('max_participants', 1),
-                    price_override=price_override,
-                    notes=request.POST.get('notes', ''),
+                    defaults=dict(
+                        end_time=request.POST.get('end_time'),
+                        session_type=session_type_str,
+                        max_participants=request.POST.get('max_participants', 1),
+                        price_override=price_override,
+                        notes=request.POST.get('notes', ''),
+                    )
                 )
+                if not created:
+                    # Block already exists at this slot — update it in place
+                    block.end_time = request.POST.get('end_time')
+                    block.session_type = session_type_str
+                    block.max_participants = request.POST.get('max_participants', 1)
+                    block.price_override = price_override
+                    if request.POST.get('notes'):
+                        block.notes = request.POST.get('notes', '')
+                    block.save()
                 if catalog_ids:
                     block.catalog_session_types.set(
                         SessionType.objects.filter(id__in=catalog_ids, is_active=True)
                     )
-                messages.success(request, 'Schedule block added successfully!')
+                verb = 'updated' if not created else 'added'
+                messages.success(request, f'Schedule block {verb} successfully!')
             except Exception as e:
                 messages.error(request, f'Error adding block: {str(e)}')
 
