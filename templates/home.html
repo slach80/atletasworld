@@ -273,7 +273,7 @@
                                 Learn More →
                             </a>
                             {% else %}
-                            <a href="{% url 'book' %}"
+                            <a href="{% url 'book' %}?st={{ ev.id }}"
                                class="flex-shrink-0 bg-white text-red-600 px-4 py-2 rounded-xl text-sm font-black hover:bg-gray-100 transition">
                                 Book Now →
                             </a>
@@ -335,7 +335,7 @@
                                 Learn More →
                             </a>
                             {% else %}
-                            <a href="{% url 'book' %}"
+                            <a href="{% url 'book' %}?st={{ ev.id }}"
                                class="block text-center bg-white text-red-600 py-2.5 rounded-xl text-sm font-black hover:bg-gray-100 transition mt-auto">
                                 Book Now →
                             </a>
@@ -566,7 +566,7 @@
                             <span class="text-3xl font-bold text-primary">${{ prog.price }}</span>
                             <span class="text-gray-600">per session</span>
                         </div>
-                        <a href="{% url 'book' %}" class="block text-center bg-accent text-gray-900 py-3 rounded-lg font-semibold hover:bg-[#b8e000] transition shadow-lg">Book Now</a>
+                        <a href="{% url 'book' %}?st={{ prog.id }}" class="block text-center bg-accent text-gray-900 py-3 rounded-lg font-semibold hover:bg-[#b8e000] transition shadow-lg">Book Now</a>
                         {% endif %}
                     </div>
                 </div>
