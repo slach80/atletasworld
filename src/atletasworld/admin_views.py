@@ -1132,15 +1132,31 @@ def owner_coach_schedule(request, pk):
 
         if action == 'add_block':
             try:
-                ScheduleBlock.objects.create(
+                catalog_ids = request.POST.getlist('catalog_session_types')
+                price_override_raw = request.POST.get('price_override', '').strip()
+                price_override = float(price_override_raw) if price_override_raw else None
+
+                # Derive session_type string from first catalog type's format
+                session_type_str = 'group'
+                if catalog_ids:
+                    first_st = SessionType.objects.filter(id__in=catalog_ids, is_active=True).first()
+                    if first_st and first_st.session_format == 'private':
+                        session_type_str = 'private'
+
+                block = ScheduleBlock.objects.create(
                     coach=coach,
                     date=request.POST.get('date'),
                     start_time=request.POST.get('start_time'),
                     end_time=request.POST.get('end_time'),
-                    session_type=request.POST.get('session_type', 'private'),
+                    session_type=session_type_str,
                     max_participants=request.POST.get('max_participants', 1),
+                    price_override=price_override,
                     notes=request.POST.get('notes', ''),
                 )
+                if catalog_ids:
+                    block.catalog_session_types.set(
+                        SessionType.objects.filter(id__in=catalog_ids, is_active=True)
+                    )
                 messages.success(request, 'Schedule block added successfully!')
             except Exception as e:
                 messages.error(request, f'Error adding block: {str(e)}')
@@ -1163,6 +1179,7 @@ def owner_coach_schedule(request, pk):
         'coach': coach,
         'schedule_blocks': schedule_blocks,
         'session_types': ScheduleBlock.SESSION_TYPE_CHOICES,
+        'all_session_types': SessionType.objects.filter(is_active=True).order_by('name'),
     }
     return render(request, 'owner/coach_schedule.html', context)
 

@@ -45,12 +45,20 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Session Type</label>
-                <select name="session_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner">
-                    {% for value, label in session_types %}
-                    <option value="{{ value }}">{{ label }}</option>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Session Type(s)</label>
+                <select name="catalog_session_types" multiple class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner" size="5">
+                    {% for st in all_session_types %}
+                    <option value="{{ st.id }}">{{ st.name }} ({{ st.get_session_format_display }})</option>
                     {% endfor %}
                 </select>
+                <p class="text-xs text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple. Leave blank for generic group block.</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Price Override</label>
+                <input type="number" name="price_override" min="0" step="0.01" placeholder="Leave blank to use session type price"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner">
+                <p class="text-xs text-gray-400 mt-1">Set to 0 for a free event. Leave blank to use the session type's price.</p>
             </div>
 
             <div>
@@ -78,7 +86,7 @@
                 <div>
                     <div class="font-semibold text-gray-800">{{ block.date|date:"D, M j, Y" }}</div>
                     <div class="text-sm text-gray-600">{{ block.start_time|time:"g:i A" }} - {{ block.end_time|time:"g:i A" }}</div>
-                    <div class="text-xs text-gray-500 mt-1">{{ block.get_session_type_display }} | {{ block.current_participants }}/{{ block.max_participants }} booked</div>
+                    <div class="text-xs text-gray-500 mt-1">{{ block.display_session_type }} | {{ block.current_participants }}/{{ block.max_participants }} booked{% if block.price_override is not None %} | ${{ block.price_override }}{% endif %}</div>
                 </div>
                 <div class="flex items-center space-x-3">
                     <span class="px-2 py-1 text-xs rounded-full {% if block.status == 'booked' %}bg-blue-100 text-blue-700{% elif block.status == 'available' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
