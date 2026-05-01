@@ -177,6 +177,36 @@
     </div>
     {% endif %}
 
+    {% if pending_confirmation_list %}
+    <div class="mb-5 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-bold text-blue-800">📋 Pending Confirmation ({{ pending_confirmation_list|length }})</h3>
+            <a href="{% url 'owner_bookings' %}?status=pending" class="text-xs text-blue-700 hover:underline">View all →</a>
+        </div>
+        <div class="space-y-1.5">
+            {% for bk in pending_confirmation_list %}
+            <div class="flex items-center justify-between py-1.5 px-2 bg-white rounded-lg text-xs border border-blue-100">
+                <div class="min-w-0 flex-1">
+                    <span class="font-semibold text-gray-800">{{ bk.player.first_name|default:bk.client.user.first_name }} {{ bk.player.last_name|default:'' }}</span>
+                    <span class="text-gray-400 mx-1">·</span>
+                    <span class="text-gray-500">{{ bk.session_type.name|default:"Session" }}</span>
+                    <span class="text-gray-400 mx-1">·</span>
+                    <span class="text-gray-400">{{ bk.scheduled_date|date:"M j" }} {{ bk.scheduled_time|time:"g:i A" }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                    <form method="post" action="{% url 'owner_booking_detail' bk.pk %}" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="confirm">
+                        <button type="submit" class="px-2 py-1 bg-green-500 text-white rounded text-xs font-semibold hover:bg-green-600 transition">✓ Confirm</button>
+                    </form>
+                    <a href="{% url 'owner_booking_detail' bk.pk %}" class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200 transition">View</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {% if recent_transactions %}
     <h3 class="text-sm font-semibold text-gray-600 mb-3">Recent Transactions</h3>
     <div class="space-y-2">

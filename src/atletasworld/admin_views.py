@@ -190,6 +190,13 @@ def owner_dashboard(request):
         scheduled_date__gte=today - timedelta(days=14)
     ).exclude(assessments__isnull=False).select_related('player', 'coach__user')[:10]
 
+    pending_confirmation_list = Booking.objects.filter(
+        status='pending',
+        scheduled_date__gte=today,
+    ).exclude(
+        client__user__is_staff=True
+    ).select_related('client__user', 'player', 'coach__user', 'session_type').order_by('scheduled_date')[:20]
+
     # ── Rentals ────────────────────────────────────────────────────────────────
     rentals_pending  = FieldRentalSlot.objects.filter(status='pending_approval').count()
     rentals_upcoming = FieldRentalSlot.objects.filter(
@@ -281,6 +288,7 @@ def owner_dashboard(request):
         'recent_bookings': recent_bookings,
         'recent_transactions': recent_transactions,
         'players_pending_assessment': players_pending_assessment,
+        'pending_confirmation_list': pending_confirmation_list,
     }
     return render(request, 'owner/dashboard.html', context)
 
@@ -1205,35 +1213,79 @@ def owner_coach_schedule(request, pk):
 def owner_bookings(request):
     """List all bookings with filters."""
     from clients.models import Package
+    from django.core.paginator import Paginator
+    import csv
+    from django.http import HttpResponse
 
     today = timezone.localdate()
     status_filter       = request.GET.get('status', '')
     coach_filter        = request.GET.get('coach', '')
     date_filter         = request.GET.get('date', '')
+    date_from_filter    = request.GET.get('date_from', '')
+    date_to_filter      = request.GET.get('date_to', '')
     session_type_filter = request.GET.get('session_type', '')
     package_type_filter = request.GET.get('package_type', '')
+    search              = request.GET.get('q', '').strip()
+    export              = request.GET.get('export', '')
 
     bookings = Booking.objects.select_related(
         'client__user', 'player', 'coach__user', 'session_type',
         'client_package__package',
+    ).exclude(
+        client__user__is_staff=True
+    ).exclude(
+        client__user__is_superuser=True
     ).order_by('-scheduled_date', '-scheduled_time')
 
+    if search:
+        bookings = bookings.filter(
+            Q(player__first_name__icontains=search) |
+            Q(player__last_name__icontains=search) |
+            Q(client__user__first_name__icontains=search) |
+            Q(client__user__last_name__icontains=search) |
+            Q(client__user__email__icontains=search)
+        )
     if status_filter:
         bookings = bookings.filter(status=status_filter)
     if coach_filter:
         bookings = bookings.filter(coach_id=coach_filter)
     if date_filter:
         bookings = bookings.filter(scheduled_date=date_filter)
+    if date_from_filter:
+        bookings = bookings.filter(scheduled_date__gte=date_from_filter)
+    if date_to_filter:
+        bookings = bookings.filter(scheduled_date__lte=date_to_filter)
     if session_type_filter:
         bookings = bookings.filter(session_type_id=session_type_filter)
     if package_type_filter:
         bookings = bookings.filter(client_package__package__package_type=package_type_filter)
 
-    # Limit to 200 recent bookings
-    bookings = bookings[:200]
+    if export == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="bookings.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Time', 'Player', 'Client', 'Coach', 'Session Type', 'Status', 'Payment', 'Amount'])
+        for bk in bookings:
+            writer.writerow([
+                bk.scheduled_date,
+                bk.scheduled_time.strftime('%H:%M'),
+                f"{bk.player.first_name} {bk.player.last_name}" if bk.player else '',
+                bk.client.user.get_full_name() or bk.client.user.email,
+                str(bk.coach) if bk.coach else '',
+                bk.session_type.name if bk.session_type else '',
+                bk.get_status_display(),
+                bk.get_payment_status_display(),
+                bk.amount_paid or '',
+            ])
+        return response
+
+    paginator = Paginator(bookings, 50)
+    page = paginator.get_page(request.GET.get('page', 1))
 
     context = {
-        'bookings': bookings,
+        'bookings': page,
+        'paginator': paginator,
+        'page_obj': page,
         'coaches': Coach.objects.filter(is_active=True),
         'session_types': SessionType.objects.filter(is_active=True).order_by('name'),
         'status_choices': Booking.STATUS_CHOICES,
@@ -1241,8 +1293,11 @@ def owner_bookings(request):
         'status_filter': status_filter,
         'coach_filter': coach_filter,
         'date_filter': date_filter,
+        'date_from_filter': date_from_filter,
+        'date_to_filter': date_to_filter,
         'session_type_filter': session_type_filter,
         'package_type_filter': package_type_filter,
+        'search': search,
     }
     return render(request, 'owner/bookings.html', context)
 
@@ -1334,21 +1389,46 @@ def owner_clients(request):
     """List all clients with their players - only users in Client group."""
     from clients.models import ClientPackage
     from django.contrib.auth.models import Group
+    from django.core.paginator import Paginator
 
-    # Only show clients who are in the Client group (not coaches with client profiles)
+    search = request.GET.get('q', '').strip()
+    has_package = request.GET.get('has_package', '')
+
     client_group = Group.objects.filter(name='Client').first()
     if client_group:
         client_user_ids = client_group.user_set.values_list('id', flat=True)
-        clients = Client.objects.filter(user_id__in=client_user_ids).select_related('user').annotate(
+        qs = Client.objects.filter(user_id__in=client_user_ids).select_related('user').annotate(
             player_count=Count('players', distinct=True),
             active_packages=Count('packages', filter=Q(packages__status='active'), distinct=True),
             total_bookings=Count('bookings', distinct=True)
-        ).order_by('-created_at')[:100]
+        ).order_by('-created_at')
     else:
-        clients = Client.objects.none()
+        qs = Client.objects.none()
+
+    if search:
+        qs = qs.filter(
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__email__icontains=search) |
+            Q(phone__icontains=search) |
+            Q(players__first_name__icontains=search) |
+            Q(players__last_name__icontains=search)
+        ).distinct()
+
+    if has_package == '1':
+        qs = qs.filter(active_packages__gt=0)
+    elif has_package == '0':
+        qs = qs.filter(active_packages=0)
+
+    paginator = Paginator(qs, 50)
+    page = paginator.get_page(request.GET.get('page', 1))
 
     context = {
-        'clients': clients,
+        'clients': page,
+        'paginator': paginator,
+        'page_obj': page,
+        'search': search,
+        'has_package': has_package,
     }
     return render(request, 'owner/clients.html', context)
 
@@ -2932,6 +3012,32 @@ def owner_waivers(request):
         'client__user'
     ).order_by('-signed_at')[:100]
 
+    if request.GET.get('export') == 'csv':
+        import csv
+        from django.http import HttpResponse
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="waivers_{current_year}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Name', 'Email', 'Phone', 'Waiver Signed', 'Signed At'])
+        for c in signed:
+            w = next((w for w in recent_waivers if w.client_id == c.id), None)
+            writer.writerow([
+                c.user.get_full_name(),
+                c.user.email,
+                c.phone or '',
+                'Yes',
+                w.signed_at.strftime('%Y-%m-%d %H:%M') if w else '',
+            ])
+        for c in unsigned:
+            writer.writerow([
+                c.user.get_full_name(),
+                c.user.email,
+                c.phone or '',
+                'No',
+                '',
+            ])
+        return response
+
     context = {
         'signed': signed,
         'unsigned': unsigned,
@@ -2954,6 +3060,35 @@ def owner_contacts(request):
     """Imported contact registry — parents from past events with their players."""
     from clients.models import ContactParent, ContactPlayer
     from django.db.models import Count, Prefetch
+
+    # Invite All — send registration invitation to all unregistered contacts with email
+    if request.method == 'POST' and request.POST.get('action') == 'invite_all':
+        from django.core.mail import send_mail
+        from django.conf import settings as _s
+        unregistered = ContactParent.objects.filter(client__isnull=True).exclude(email='').exclude(email__isnull=True)
+        sent = 0
+        signup_url = request.build_absolute_uri('/accounts/signup/')
+        for contact in unregistered:
+            try:
+                send_mail(
+                    subject='Join Atletas Performance Center — Create Your Account',
+                    message=(
+                        f"Hi {contact.first_name or 'there'},\n\n"
+                        "We'd like to invite you to create your account at Atletas Performance Center so you can book sessions, "
+                        "track your players' progress, and manage your family's training schedule online.\n\n"
+                        f"Sign up here: {signup_url}\n\n"
+                        "If you have any questions, reply to this email.\n\n"
+                        "— Atletas Performance Center"
+                    ),
+                    from_email=_s.DEFAULT_FROM_EMAIL,
+                    recipient_list=[contact.email],
+                    fail_silently=True,
+                )
+                sent += 1
+            except Exception:
+                pass
+        messages.success(request, f'Invitation sent to {sent} unregistered contact{"s" if sent != 1 else ""}.')
+        return redirect('owner_contacts')
 
     search  = request.GET.get('q', '').strip()
     status  = request.GET.get('status', '')   # linked / unlinked

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Book a Session — Atletas Performance Center{% endblock %}
+
+{% block content %}
+<section class="min-h-[70vh] flex items-center justify-center bg-gray-900 py-20">
+    <div class="max-w-lg mx-auto px-6 text-center">
+        <div class="text-6xl mb-6">⚽</div>
+        <h1 class="text-4xl font-black text-white mb-4">Book a Session</h1>
+        <p class="text-gray-300 text-lg mb-8">
+            Create a free account to browse available sessions, book training, and manage your players — all in one place.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ signup_url }}"
+               class="px-8 py-4 bg-accent text-gray-900 rounded-full text-lg font-bold hover:bg-[#b8e000] transition shadow-lg">
+                Create Free Account
+            </a>
+            <a href="{{ login_url }}"
+               class="px-8 py-4 border-2 border-white text-white rounded-full text-lg font-semibold hover:bg-white hover:text-gray-900 transition">
+                Sign In
+            </a>
+        </div>
+        <p class="text-gray-500 text-sm mt-6">
+            Already have an account? <a href="{{ login_url }}" class="text-accent hover:underline">Sign in to book →</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

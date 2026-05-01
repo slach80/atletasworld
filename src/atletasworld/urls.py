@@ -86,15 +86,21 @@ def login_redirect_view(request):
     return redirect('clients:dashboard')
 
 
-@login_required
 def book_redirect_view(request):
-    """Redirect to client booking page, forwarding query string."""
+    """Redirect authenticated users to client booking page; show CTA for guests."""
     from django.urls import reverse
-    url = reverse('clients:book')
+    if request.user.is_authenticated:
+        url = reverse('clients:book')
+        qs = request.META.get('QUERY_STRING', '')
+        if qs:
+            url = f"{url}?{qs}"
+        return redirect(url)
+    # Unauthenticated — show public booking landing with sign-up / login CTA
+    from django.shortcuts import render as _render
     qs = request.META.get('QUERY_STRING', '')
-    if qs:
-        url = f"{url}?{qs}"
-    return redirect(url)
+    login_url = reverse('account_login') + (f'?next=/portal/book/?{qs}' if qs else f'?next={reverse("clients:book")}')
+    signup_url = reverse('account_signup')
+    return _render(request, 'book_landing.html', {'login_url': login_url, 'signup_url': signup_url})
 
 
 urlpatterns = [

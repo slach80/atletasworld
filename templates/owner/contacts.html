@@ -55,6 +55,25 @@
     {% endif %}
 </form>
 
+<!-- Invite All -->
+{% if unlinked_count %}
+<div class="mb-4 flex items-center justify-between p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+    <div>
+        <p class="text-sm font-semibold text-indigo-800">{{ unlinked_count }} contact{{ unlinked_count|pluralize }} not yet registered</p>
+        <p class="text-xs text-indigo-600 mt-0.5">Send a registration invitation email to all of them at once.</p>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="invite_all">
+        <button type="submit"
+                onclick="return confirm('Send invitation emails to all {{ unlinked_count }} unregistered contacts?')"
+                class="shrink-0 ml-4 px-4 py-2 bg-owner text-white rounded-lg text-sm font-bold hover:bg-indigo-600 transition">
+            ✉ Invite All
+        </button>
+    </form>
+</div>
+{% endif %}
+
 <!-- Contacts table -->
 <div class="bg-white rounded-xl shadow-md overflow-hidden">
     <div class="px-6 py-3 border-b flex justify-between items-center bg-gray-50 text-xs text-gray-500 font-semibold uppercase tracking-wide">
