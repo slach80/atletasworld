@@ -51,6 +51,9 @@
                                 {% csrf_token %}
                                 {{ form|crispy }}
 
+                                <!-- Hidden referral code field (populated from session via JavaScript) -->
+                                <input type="hidden" name="referral_code" id="referral_code" value="">
+
                                 <div class="form-check mb-3">
                                     <input type="checkbox" class="form-check-input" id="terms" required>
                                     <label class="form-check-label small text-muted" for="terms">
@@ -77,4 +80,14 @@
         </div>
     </main>
 </div>
+
+<script>
+    // Pre-fill referral_code field from URL parameter if present
+    // The middleware already stores it in session, but this provides fallback
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+        document.getElementById('referral_code').value = refCode.trim().toUpperCase();
+    }
+</script>
 {% endblock body %}
