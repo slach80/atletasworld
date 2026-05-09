@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="stylesheet" href="/static/gymlife/css/bilgen.css?v=7">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Program - Coach Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Archivo Condensed', system-ui, sans-serif; font-weight: 400; }
+        h1, h2, h3 { font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif; font-weight: 700; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <div class="bg-primary text-white py-6 mb-8">
+            <div class="container mx-auto px-4">
+                <h1 class="text-4xl font-bold mb-2">Coach Referral Program</h1>
+                <p class="text-gray-300">Earn 20% cash rewards for every referral!</p>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-4 pb-12">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-secondary">
+                    <div class="text-gray-500 text-sm uppercase mb-1">Total Referrals</div>
+                    <div class="text-3xl font-bold text-gray-900">{{ total_referrals }}</div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                    <div class="text-gray-500 text-sm uppercase mb-1">Activated</div>
+                    <div class="text-3xl font-bold text-green-600">{{ activated_referrals }}</div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                    <div class="text-gray-500 text-sm uppercase mb-1">Total Earned</div>
+                    <div class="text-3xl font-bold text-blue-600">${{ total_earned|floatformat:2 }}</div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                    <div class="text-gray-500 text-sm uppercase mb-1">Pending Payouts</div>
+                    <div class="text-3xl font-bold text-yellow-600">${{ pending_amount|floatformat:2 }}</div>
+                </div>
+            </div>
+
+            <!-- Referral Code Card -->
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-gray-900">Your Referral Code</h2>
+                <div class="bg-gray-100 p-6 rounded-lg border-2 border-dashed border-gray-300 mb-6">
+                    <div class="text-center">
+                        <div class="text-sm text-gray-600 mb-2">Share this code:</div>
+                        <div class="text-4xl font-bold text-primary tracking-wider mb-4">{{ referral_code.code }}</div>
+                        <button onclick="copyCode()" class="bg-secondary hover:bg-yellow-400 text-primary font-bold py-2 px-6 rounded transition">
+                            Copy Code
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Share Link:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="shareLink" value="{{ share_link }}" readonly
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded bg-gray-50 text-gray-700 font-mono text-sm">
+                        <button onclick="copyLink()" class="bg-primary hover:bg-gray-800 text-white font-bold py-2 px-6 rounded transition">
+                            Copy Link
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <h3 class="font-bold text-blue-900 mb-2">Coach Rewards Program</h3>
+                    <ol class="list-decimal list-inside text-blue-800 space-y-1">
+                        <li>Share your referral code or link with potential clients</li>
+                        <li>They sign up using your code</li>
+                        <li>When they make their first purchase, you earn <strong>20% cash payout</strong></li>
+                        <li>Payouts are reviewed and processed by the owner</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Referral History -->
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-gray-900">Referral History</h2>
+                {% if referrals_given %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Referred User</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Reward</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for referral in referrals_given %}
+                            <tr>
+                                <td class="px-4 py-3 text-sm text-gray-900">
+                                    {{ referral.referred_user.get_full_name|default:referral.referred_user.username }}
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    {% if referral.status == 'activated' %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Activated</span>
+                                    {% elif referral.status == 'pending' %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Expired</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-900 font-semibold">
+                                    {% if referral.reward_amount %}
+                                    ${{ referral.reward_amount|floatformat:2 }}
+                                    {% else %}
+                                    —
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-500">
+                                    {{ referral.created_at|date:"M d, Y" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No referrals yet. Start sharing your code today!</p>
+                {% endif %}
+            </div>
+
+            <!-- Payouts -->
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <h2 class="text-2xl font-bold mb-4 text-gray-900">Payout History</h2>
+                {% if payouts %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Amount</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Referred User</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for payout in payouts %}
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-semibold text-green-600">
+                                    ${{ payout.amount|floatformat:2 }}
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    {% if payout.status == 'paid' %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Paid</span>
+                                    {% elif payout.status == 'approved' %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Approved</span>
+                                    {% elif payout.status == 'pending' %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending Review</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    {{ payout.referral.referred_user.get_full_name|default:payout.referral.referred_user.username }}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-500">
+                                    {{ payout.created_at|date:"M d, Y" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No payouts yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Back Button -->
+            <div class="mt-8 text-center">
+                <a href="{% url 'coaches:dashboard' %}" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded transition">
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            const code = "{{ referral_code.code }}";
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Referral code copied to clipboard!');
+            });
+        }
+
+        function copyLink() {
+            const link = document.getElementById('shareLink');
+            link.select();
+            link.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(link.value).then(() => {
+                alert('Share link copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
