@@ -870,11 +870,14 @@ def booking_page(request):
         SessionReservation.cleanup_expired()
         cache.set(_cleanup_key, True, 300)
 
-    # Get client's active package
-    active_package = client.packages.filter(
+    # Get client's active packages (may have multiple for different players)
+    active_packages_qs = client.packages.filter(
         status='active',
         expiry_date__gte=timezone.localdate()
-    ).first()
+    ).select_related('package', 'player')
+
+    # For backward compatibility, keep active_package as first one
+    active_package = active_packages_qs.first()
 
     # Get coaches
     coaches = Coach.objects.filter(is_active=True)
@@ -963,9 +966,24 @@ def booking_page(request):
                 for i in range(days_diff)
             ])
 
+    # Build player → package mapping for frontend
+    import json
+    player_packages = {}
+    for pkg in active_packages_qs:
+        if pkg.player_id:
+            player_packages[str(pkg.player_id)] = {
+                'id': pkg.id,
+                'name': pkg.package.name,
+                'sessions_remaining': pkg.sessions_remaining,
+                'sessions_included': pkg.package.sessions_included,
+            }
+    player_packages_json = json.dumps(player_packages)
+
     context = {
         'client': client,
         'active_package': active_package,
+        'active_packages': list(active_packages_qs),  # All packages
+        'player_packages_json': player_packages_json,  # JSON string of player_id → package
         'players': players,
         'coaches': coaches,
         'programs': programs,
@@ -1040,13 +1058,30 @@ def reserve_session(request):
     )
 
     # Check if client has an active package with sessions remaining
+    # First, try to find a package assigned to this specific player
     active_package = client.packages.filter(
         status='active',
-        expiry_date__gte=timezone.localdate()
+        expiry_date__gte=timezone.localdate(),
+        player=player
     ).first()
 
-    if not block_is_free and (not active_package or (active_package.package.sessions_included > 0 and active_package.sessions_remaining <= 0)):
-        return JsonResponse({'success': False, 'error': 'No available sessions in your package'})
+    # If no player-specific package, fallback to unassigned packages with sessions
+    if not active_package:
+        active_package = client.packages.filter(
+            status='active',
+            expiry_date__gte=timezone.localdate(),
+            player__isnull=True
+        ).exclude(
+            package__sessions_included__gt=0,
+            sessions_remaining=0
+        ).first()
+
+    # Check if we have a valid package
+    if not block_is_free:
+        if not active_package:
+            return JsonResponse({'success': False, 'error': 'No active package found for this player'})
+        if active_package.package.sessions_included > 0 and active_package.sessions_remaining <= 0:
+            return JsonResponse({'success': False, 'error': 'No sessions remaining in package'})
 
     # Check if already reserved by this client
     existing = SessionReservation.objects.filter(
@@ -1136,29 +1171,53 @@ def confirm_booking(request):
         else:
             paid_reservations.append(res)
 
-    # Get active package (only required if there are paid reservations)
-    active_package = client.packages.filter(
-        status='active',
-        expiry_date__gte=timezone.localdate()
-    ).first()
-
-    if paid_reservations and not active_package:
-        return JsonResponse({'success': False, 'error': 'No active package'})
-
-    # Check if enough sessions remain for paid reservations
-    if active_package and active_package.package.sessions_included > 0:
-        if active_package.sessions_remaining < len(paid_reservations):
-            return JsonResponse({
-                'success': False,
-                'error': f'Only {active_package.sessions_remaining} sessions remaining in your package'
-            })
-
     # Get program (default to first active program for now)
     program = Program.objects.filter(is_active=True).first()
+
+    # Helper function to find the right package for a player
+    def get_package_for_player(player):
+        """Get active package for player (player-specific or unassigned fallback)."""
+        # Try player-specific package first
+        pkg = client.packages.filter(
+            status='active',
+            expiry_date__gte=timezone.localdate(),
+            player=player
+        ).first()
+
+        # Fallback to unassigned package with sessions
+        if not pkg:
+            pkg = client.packages.filter(
+                status='active',
+                expiry_date__gte=timezone.localdate(),
+                player__isnull=True
+            ).exclude(
+                package__sessions_included__gt=0,
+                sessions_remaining=0
+            ).first()
+
+        return pkg
+
+    # Validate all paid reservations have packages before proceeding
+    player_package_map = {}
+    for res in paid_reservations:
+        pkg = get_package_for_player(res.player)
+        if not pkg:
+            return JsonResponse({
+                'success': False,
+                'error': f'No active package found for {res.player.first_name}'
+            })
+        if pkg.package.sessions_included > 0 and pkg.sessions_remaining <= 0:
+            return JsonResponse({
+                'success': False,
+                'error': f'No sessions remaining in package for {res.player.first_name}'
+            })
+        player_package_map[res.player.id] = pkg
 
     bookings_created = 0
     for reservation in reservations:
         is_free_res = reservation in free_reservations
+        pkg_to_use = player_package_map.get(reservation.player.id) if not is_free_res else None
+
         booking = Booking.objects.create(
             client=client,
             player=reservation.player,
@@ -1166,12 +1225,12 @@ def confirm_booking(request):
             program=program,
             scheduled_date=reservation.schedule_block.date,
             scheduled_time=reservation.schedule_block.start_time,
-            client_package=active_package if not is_free_res else None,
+            client_package=pkg_to_use,
             status='confirmed'
         )
 
-        if not is_free_res and active_package:
-            active_package.use_session()
+        if not is_free_res and pkg_to_use:
+            pkg_to_use.use_session()
 
         reservation.is_confirmed = True
         reservation.save()
@@ -1190,11 +1249,17 @@ def confirm_booking(request):
 
         bookings_created += 1
 
-    sessions_left = active_package.sessions_remaining if active_package else 0
+    # Return total sessions remaining across all packages
+    total_sessions = sum(
+        pkg.sessions_remaining for pkg in client.packages.filter(
+            status='active',
+            expiry_date__gte=timezone.localdate()
+        ) if pkg.package.sessions_included > 0
+    )
     return JsonResponse({
         'success': True,
         'bookings_created': bookings_created,
-        'sessions_remaining': sessions_left,
+        'sessions_remaining': total_sessions,
     })
 
 

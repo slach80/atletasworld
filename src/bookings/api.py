@@ -438,7 +438,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 if not Player.objects.filter(pk=player_id, client=client, is_active=True).exists():
                     return Response({'error': 'Player not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            # Check package if provided
+            # Check or auto-select package (player-aware)
             package = None
             if package_id:
                 try:
@@ -454,6 +454,25 @@ class BookingViewSet(viewsets.ModelViewSet):
                                       status=status.HTTP_400_BAD_REQUEST)
                 except ClientPackage.DoesNotExist:
                     return Response({'error': 'Package not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                # Auto-select package if not provided: prefer player-specific, fallback to unassigned
+                if player_id:
+                    package = client.packages.filter(
+                        status='active',
+                        expiry_date__gte=timezone.localdate(),
+                        player_id=player_id
+                    ).first()
+
+                    # Fallback to unassigned package with sessions
+                    if not package:
+                        package = client.packages.filter(
+                            status='active',
+                            expiry_date__gte=timezone.localdate(),
+                            player__isnull=True
+                        ).exclude(
+                            package__sessions_included__gt=0,
+                            sessions_remaining=0
+                        ).first()
 
             if slot_type == 'schedule_block':
                 # Book against a ScheduleBlock — only fetch publicly available slots
@@ -848,13 +867,16 @@ class ClientPackageViewSet(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request):
         """Get client's active packages with remaining sessions."""
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().select_related('player')
         data = [{
             'id': pkg.id,
             'package_id': pkg.package_id,
             'package_name': pkg.package.name,
+            'player_id': pkg.player_id,
+            'player_name': pkg.player.first_name if pkg.player else None,
             'sessions_remaining': pkg.sessions_remaining,
             'sessions_used': pkg.sessions_used,
+            'sessions_included': pkg.package.sessions_included,
             'expiry_date': str(pkg.expiry_date),
             'is_valid': pkg.is_valid,
             'can_book': pkg.sessions_remaining > 0 and pkg.is_valid,

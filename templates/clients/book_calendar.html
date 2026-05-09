@@ -418,6 +418,19 @@ if(!existingBookingsByPlayer["{{ b.player_id }}"]) existingBookingsByPlayer["{{ 
 existingBookingsByPlayer["{{ b.player_id }}"].push({"date":"{{ b.scheduled_date|date:'Y-m-d' }}","time":"{{ b.scheduled_time|time:'H:i' }}"});
 {% endfor %}
 
+// Player → package mapping (for player-specific packages)
+const playerPackages = {{ player_packages_json|safe }};
+
+// Helper: Get package for a specific player
+function getPackageForPlayer(playerId) {
+    // Try player-specific package first
+    if (playerPackages[playerId]) {
+        return playerPackages[playerId];
+    }
+    // Fallback to first unassigned package with sessions
+    return packages.find(p => !p.player_id && (p.sessions_included === 0 || p.sessions_remaining > 0));
+}
+
 // Startup
 document.addEventListener('DOMContentLoaded',()=>{
     fitPanels();
