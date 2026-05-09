@@ -91,6 +91,7 @@
                         <a href="{% url 'clients:bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'bookings' %}text-gray-900 font-semibold{% endif %} rounded-t-lg">📅 My Bookings</a>
                         <a href="{% url 'clients:packages' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'packages' %}text-gray-900 font-semibold{% endif %}">📦 Packages</a>
                         <a href="{% url 'clients:field_rental_list' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'field_rental_list' %}text-gray-900 font-semibold{% endif %}">🏟️ Facility Rental</a>
+                        <a href="{% url 'clients:referral' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'referral' %}text-gray-900 font-semibold{% endif %}">🎁 Referral Program</a>
                         <a href="{% url 'clients:profile' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'profile' %}text-gray-900 font-semibold{% endif %}">👤 My Profile</a>
                         <a href="{% url 'clients:notification_settings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'notification_settings' or request.resolver_match.url_name == 'notification_history' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">🔔 Notifications</a>
                     </div>
@@ -125,6 +126,7 @@
             <a href="{% url 'clients:profile' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👤 My Profile</a>
             <a href="{% url 'clients:notification_settings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🔔 Notifications</a>
             <a href="{% url 'clients:field_rental_list' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🏟️ Facility Rental</a>
+            <a href="{% url 'clients:referral' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">🎁 Referral Program</a>
             <a href="{% url 'clients:book' %}" class="block mx-3 my-2 px-4 py-2 bg-accent text-gray-900 rounded-full hover:bg-[#b8e000] font-semibold text-center">Book Session</a>
             <hr class="my-1 border-gray-700">
             <a href="/accounts/logout/" class="block px-3 py-2 text-gray-300 hover:text-accent rounded">Logout</a>
