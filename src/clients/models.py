@@ -1399,3 +1399,133 @@ class NotificationOutbox(models.Model):
     def __str__(self):
         types = ', '.join({e.get('type', '?') for e in self.events})
         return f'{self.group_key} [{types}] → {self.client}'
+
+
+class ReferralCode(models.Model):
+    """Unique referral code for each user. Generated on account creation or on-demand."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='referral_code')
+    code = models.CharField(max_length=20, unique=True, db_index=True,
+                           help_text="8-character uppercase alphanumeric code")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['code'])]
+
+    def __str__(self):
+        return f'{self.user.get_full_name()} — {self.code}'
+
+
+class Referral(models.Model):
+    """Tracks a single referral relationship between referrer and referred user."""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),       # Referred signed up, hasn't purchased yet
+        ('activated', 'Activated'),   # First purchase made, reward granted
+        ('expired', 'Expired'),       # Window expired without purchase
+    ]
+    REFERRER_TYPE_CHOICES = [
+        ('client', 'Client'),
+        ('coach', 'Coach'),
+    ]
+
+    referrer_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrals_given')
+    referred_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrals_received')
+    referral_code = models.CharField(max_length=20, db_index=True,
+                                     help_text="Code used for this referral (audit trail)")
+    referrer_type = models.CharField(max_length=10, choices=REFERRER_TYPE_CHOICES,
+                                    help_text="Determines reward percentage: client=10%, coach=20%")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+    # Activation details
+    activated_at = models.DateTimeField(null=True, blank=True)
+    activation_purchase_amount = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+                                                     help_text="Amount of first purchase that triggered activation")
+    reward_amount = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+                                       help_text="Calculated reward (10% or 20% of purchase)")
+
+    # Expiry tracking
+    referral_window_expires = models.DateTimeField(
+        help_text="Referred user must make first purchase by this date (signup + 60 days)"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['referrer_user', 'status']),
+            models.Index(fields=['referred_user', 'status']),
+            models.Index(fields=['status', 'referral_window_expires']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['referred_user'], name='one_referral_per_user')
+        ]
+
+    def __str__(self):
+        return f'{self.referrer_user.get_full_name()} → {self.referred_user.get_full_name()} ({self.status})'
+
+    @property
+    def is_within_window(self):
+        """Check if referral window is still open."""
+        return timezone.now() < self.referral_window_expires
+
+
+class ReferralPayout(models.Model):
+    """Payout request for coach referrals. Owner-reviewed before payment."""
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('paid', 'Paid'),
+        ('rejected', 'Rejected'),
+    ]
+
+    referral = models.OneToOneField(Referral, on_delete=models.CASCADE, related_name='payout')
+    coach_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referral_payouts')
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
+
+    # Review details
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='reviewed_payouts')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True)
+
+    # Payment details
+    paid_at = models.DateTimeField(null=True, blank=True)
+    payment_notes = models.TextField(blank=True,
+                                    help_text="Check number, Venmo reference, bank transfer details, etc.")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['coach_user', 'status']),
+            models.Index(fields=['status', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.coach_user.get_full_name()} — ${self.amount} ({self.get_status_display()})'
+
+    def approve(self, reviewed_by):
+        """Approve payout for payment."""
+        self.status = 'approved'
+        self.reviewed_by = reviewed_by
+        self.reviewed_at = timezone.now()
+        self.save()
+
+    def reject(self, reviewed_by, reason=''):
+        """Reject payout."""
+        self.status = 'rejected'
+        self.reviewed_by = reviewed_by
+        self.reviewed_at = timezone.now()
+        self.rejection_reason = reason
+        self.save()
+
+    def mark_paid(self, payment_notes=''):
+        """Mark payout as paid."""
+        self.status = 'paid'
+        self.paid_at = timezone.now()
+        if payment_notes:
+            self.payment_notes = payment_notes
+        self.save()

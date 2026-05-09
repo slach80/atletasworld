@@ -574,3 +574,101 @@ class NotificationService:
             results.append(('push', success, msg))
 
         return results
+
+
+class ReferralService:
+    """
+    Service class for referral program logic.
+
+    Handles referral activation on first purchase and credit/payout distribution.
+    """
+    from decimal import Decimal
+
+    REWARD_RATES = {
+        'client': Decimal('0.10'),  # 10% for client referrers
+        'coach': Decimal('0.20'),   # 20% for coach referrers
+    }
+    CREDIT_EXPIRY_DAYS = 60  # 2 months
+
+    @classmethod
+    def check_and_activate(cls, client, purchase_amount):
+        """
+        Check if this client was referred and activate the referral on first purchase.
+
+        Called from payments webhook after package activation.
+
+        Args:
+            client: Client instance who made the purchase
+            purchase_amount: Decimal amount of the first package purchase
+
+        Returns:
+            Referral instance if activated, None otherwise
+        """
+        from clients.models import Referral, ClientPackage
+        from django.db import transaction
+        from decimal import Decimal
+
+        # Use select_for_update to prevent race conditions from duplicate webhooks
+        with transaction.atomic():
+            referral = Referral.objects.select_for_update().filter(
+                referred_user=client.user,
+                status='pending',
+                referral_window_expires__gt=timezone.now(),
+            ).first()
+
+            if not referral:
+                return None
+
+            # Verify this is genuinely the first purchase
+            # The new package is already created, so count > 1 means this is NOT the first
+            purchase_count = ClientPackage.objects.filter(
+                client=client
+            ).exclude(status='cancelled').count()
+
+            if purchase_count > 1:
+                return None  # Not first purchase
+
+            # Calculate reward based on referrer type
+            rate = cls.REWARD_RATES[referral.referrer_type]
+            reward = (purchase_amount * rate).quantize(Decimal('0.01'))
+
+            # Update referral record
+            referral.status = 'activated'
+            referral.activated_at = timezone.now()
+            referral.activation_purchase_amount = purchase_amount
+            referral.reward_amount = reward
+            referral.save()
+
+        # Dispatch async task to grant reward (outside transaction)
+        from clients.tasks import grant_referral_reward
+        grant_referral_reward.delay(referral.pk)
+
+        return referral
+
+    @classmethod
+    def get_or_create_code(cls, user):
+        """
+        Get or create referral code for a user (for existing users without codes).
+
+        Args:
+            user: User instance
+
+        Returns:
+            ReferralCode instance
+        """
+        from clients.models import ReferralCode
+        import secrets
+
+        # Try to get existing code
+        try:
+            return ReferralCode.objects.get(user=user)
+        except ReferralCode.DoesNotExist:
+            pass
+
+        # Generate unique code
+        while True:
+            code = secrets.token_urlsafe(6).upper().replace('-', '').replace('_', '')[:8]
+            if not ReferralCode.objects.filter(code=code).exists():
+                break
+
+        return ReferralCode.objects.create(user=user, code=code)

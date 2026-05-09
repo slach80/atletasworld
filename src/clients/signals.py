@@ -51,3 +51,75 @@ def update_password_expiry(sender, request, user, **kwargs):
         user=user,
         defaults={'password_changed_at': timezone.now()}
     )
+
+
+@receiver(post_save, sender='auth.User')
+def generate_referral_code(sender, instance, created, **kwargs):
+    """
+    Auto-generate a unique referral code for every new user.
+
+    Code format: 8-character uppercase alphanumeric (e.g., 'AB3XZ8K9').
+    For existing users, codes are generated on-demand when they visit the referral page.
+    """
+    if not created:
+        return
+
+    from clients.models import ReferralCode
+    import secrets
+
+    # Generate unique code
+    while True:
+        code = secrets.token_urlsafe(6).upper().replace('-', '').replace('_', '')[:8]
+        if not ReferralCode.objects.filter(code=code).exists():
+            break
+
+    ReferralCode.objects.create(user=instance, code=code)
+
+
+@receiver(user_signed_up)
+def track_referral_on_signup(sender, request, user, **kwargs):
+    """
+    Track referral relationship when a new user signs up with a referral code.
+
+    The code can come from:
+    1. Session (captured by ReferralCodeMiddleware from ?ref=CODE URL param)
+    2. Form field (if added to signup template)
+
+    Creates a pending Referral record with 60-day window for first purchase.
+    """
+    from clients.models import ReferralCode, Referral
+    from datetime import timedelta
+
+    # Check session first (from middleware)
+    ref_code = request.session.pop('referral_code', None)
+
+    # Fallback to form field
+    if not ref_code:
+        ref_code = request.POST.get('referral_code', '').strip().upper()
+
+    if not ref_code:
+        return
+
+    # Look up referrer by code
+    try:
+        referrer_code = ReferralCode.objects.select_related('user').get(code=ref_code)
+    except ReferralCode.DoesNotExist:
+        return
+
+    # Prevent self-referral
+    if referrer_code.user == user:
+        return
+
+    # Determine referrer type (client vs coach)
+    is_coach = referrer_code.user.groups.filter(name='Coach').exists()
+    referrer_type = 'coach' if is_coach else 'client'
+
+    # Create pending referral with 60-day window
+    Referral.objects.create(
+        referrer_user=referrer_code.user,
+        referred_user=user,
+        referral_code=ref_code,
+        referrer_type=referrer_type,
+        status='pending',
+        referral_window_expires=timezone.now() + timedelta(days=60),
+    )
