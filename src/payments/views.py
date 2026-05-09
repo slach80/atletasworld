@@ -389,6 +389,13 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
             )
         logger.info('APC Select: 6 monthly credits created for %s', client)
 
+    # Referral activation: check if this is the referred user's first purchase
+    try:
+        from clients.services import ReferralService
+        ReferralService.check_and_activate(client, package.price)
+    except Exception:
+        logger.exception('_activate_package: referral activation failed for client %s', client.pk)
+
 
 def _mark_rental_paid(slot_id, payment_intent_id):
     """Mark a FieldRentalSlot as paid after successful payment."""
