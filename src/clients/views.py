@@ -1929,7 +1929,7 @@ def referral_page(request):
     referral_code = ReferralService.get_or_create_code(request.user)
 
     # Build share link
-    site_url = getattr(timezone.get_default_timezone(), 'SITE_URL', settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'https://atletasperformancecenter.com')
+    site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
     share_link = f"{site_url}/signup?ref={referral_code.code}"
 
     # Referrals given by this user
