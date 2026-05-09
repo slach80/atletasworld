@@ -13,7 +13,8 @@ Tests cover:
 - On-demand code generation for existing users
 """
 import pytest
-from django.test import TestCase, RequestFactory
+from unittest.mock import patch, MagicMock
+from django.test import TestCase, RequestFactory, override_settings
 from django.contrib.auth.models import User, Group
 from django.utils import timezone
 from datetime import timedelta
@@ -146,7 +147,8 @@ class ReferralActivationTests(TestCase):
         self.client_group, _ = Group.objects.get_or_create(name='Client')
         self.coach_group, _ = Group.objects.get_or_create(name='Coach')
 
-    def test_activation_on_first_purchase_client(self):
+    @patch('clients.services.run_task')
+    def test_activation_on_first_purchase_client(self, mock_run_task):
         """Verify client referrer receives 10% credit on referred user's first purchase."""
         # Create referrer (client)
         referrer = User.objects.create_user(username='referrer', email='referrer@example.com', password='pass')
@@ -178,7 +180,11 @@ class ReferralActivationTests(TestCase):
         self.assertEqual(referral.status, 'activated')
         self.assertEqual(referral.reward_amount, Decimal('10.00'))  # 10% of 100
 
-    def test_activation_on_first_purchase_coach(self):
+        # Verify async task was dispatched
+        mock_run_task.assert_called_once()
+
+    @patch('clients.services.run_task')
+    def test_activation_on_first_purchase_coach(self, mock_run_task):
         """Verify coach referrer receives 20% payout request on referred user's first purchase."""
         # Create referrer (coach)
         referrer = User.objects.create_user(username='coach', email='coach@example.com', password='pass')
@@ -209,6 +215,9 @@ class ReferralActivationTests(TestCase):
         referral.refresh_from_db()
         self.assertEqual(referral.status, 'activated')
         self.assertEqual(referral.reward_amount, Decimal('20.00'))  # 20% of 100
+
+        # Verify async task was dispatched
+        mock_run_task.assert_called_once()
 
     def test_activation_skipped_if_window_expired(self):
         """Verify activation is skipped if referral window has expired."""
@@ -242,7 +251,8 @@ class ReferralActivationTests(TestCase):
         referral.refresh_from_db()
         self.assertEqual(referral.status, 'pending')
 
-    def test_duplicate_activation_prevented(self):
+    @patch('clients.services.run_task')
+    def test_duplicate_activation_prevented(self, mock_run_task):
         """Verify referral cannot be activated twice."""
         # Create referrer
         referrer = User.objects.create_user(username='referrer', email='referrer@example.com', password='pass')
@@ -277,6 +287,9 @@ class ReferralActivationTests(TestCase):
         referral.refresh_from_db()
         self.assertEqual(referral.status, 'activated')
         self.assertEqual(referral.reward_amount, Decimal('10.00'))  # Still original amount
+
+        # Verify task only dispatched once
+        self.assertEqual(mock_run_task.call_count, 1)
 
 
 class OnDemandCodeGenerationTests(TestCase):
