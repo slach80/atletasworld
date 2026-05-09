@@ -70,4 +70,7 @@ urlpatterns = [
     path('assessments/', views.assessments_view, name='assessments'),
     path('players/<int:player_id>/assessments/', views.player_assessments, name='player_assessments'),
     path('api/players/<int:player_id>/assessment-data/', views.player_assessment_chart_data, name='player_assessment_data'),
+
+    # Referral Program
+    path('referral/', views.referral_page, name='referral'),
 ]

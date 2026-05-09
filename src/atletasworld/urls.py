@@ -34,6 +34,11 @@ from .admin_views import (
     owner_waivers,
     owner_contacts,
     owner_contact_edit,
+    owner_referrals,
+    owner_referral_payouts,
+    owner_payout_approve,
+    owner_payout_reject,
+    owner_payout_mark_paid,
     owner_guide,
 )
 
@@ -163,6 +168,14 @@ urlpatterns = [
     path('owner-portal/waivers/', owner_waivers, name='owner_waivers'),
     path('owner-portal/contacts/', owner_contacts, name='owner_contacts'),
     path('owner-portal/contacts/<int:pk>/edit/', owner_contact_edit, name='owner_contact_edit'),
+
+    # Owner - Referral Program
+    path('owner-portal/referrals/', owner_referrals, name='owner_referrals'),
+    path('owner-portal/referrals/payouts/', owner_referral_payouts, name='owner_referral_payouts'),
+    path('owner-portal/referrals/payouts/<int:payout_id>/approve/', owner_payout_approve, name='owner_payout_approve'),
+    path('owner-portal/referrals/payouts/<int:payout_id>/reject/', owner_payout_reject, name='owner_payout_reject'),
+    path('owner-portal/referrals/payouts/<int:payout_id>/mark-paid/', owner_payout_mark_paid, name='owner_payout_mark_paid'),
+
     path('owner-portal/guide/', owner_guide, name='owner_guide'),
 
     # Owner - Service Catalog

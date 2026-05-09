@@ -42,4 +42,7 @@ urlpatterns = [
 
     # Profile management
     path('profile/edit/', views.edit_profile, name='edit_profile'),
+
+    # Referral Program
+    path('referral/', views.referral_page, name='referral'),
 ]

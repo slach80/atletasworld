@@ -1915,3 +1915,47 @@ def unsubscribe_landing(request, token):
         'token': token,
         'reasons': reasons,
     })
+
+
+@login_required
+def referral_page(request):
+    """Client referral page — show code, share link, history, rewards."""
+    from .models import ReferralCode, Referral, ClientCredit
+    from .services import ReferralService
+
+    client, _ = Client.objects.get_or_create(user=request.user)
+
+    # Get or create referral code for this user
+    referral_code = ReferralService.get_or_create_code(request.user)
+
+    # Build share link
+    site_url = getattr(timezone.get_default_timezone(), 'SITE_URL', settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'https://atletasperformancecenter.com')
+    share_link = f"{site_url}/signup?ref={referral_code.code}"
+
+    # Referrals given by this user
+    referrals_given = Referral.objects.filter(
+        referrer_user=request.user
+    ).select_related('referred_user').order_by('-created_at')
+
+    # Referral credits earned
+    referral_credits = ClientCredit.objects.filter(
+        client=client,
+        referral__isnull=False
+    ).select_related('referral').order_by('-created_at')
+
+    # Stats
+    total_referrals = referrals_given.count()
+    activated_referrals = referrals_given.filter(status='activated').count()
+    total_rewards = referral_credits.aggregate(total=Sum('amount'))['total'] or 0
+
+    context = {
+        'client': client,
+        'referral_code': referral_code,
+        'share_link': share_link,
+        'referrals_given': referrals_given,
+        'referral_credits': referral_credits,
+        'total_referrals': total_referrals,
+        'activated_referrals': activated_referrals,
+        'total_rewards': total_rewards,
+    }
+    return render(request, 'clients/referral.html', context)
