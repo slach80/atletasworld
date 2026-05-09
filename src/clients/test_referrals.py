@@ -61,9 +61,10 @@ class ReferralMiddlewareTests(TestCase):
 
     def test_middleware_captures_ref_param(self):
         """Verify middleware captures ?ref=CODE from URL and stores in session."""
+        from django.contrib.auth.models import AnonymousUser
+
         request = self.factory.get('/?ref=TESTCODE123')
-        request.user = User()  # Anonymous user
-        request.user.is_authenticated = False
+        request.user = AnonymousUser()
         request.session = {}
 
         self.middleware(request)
