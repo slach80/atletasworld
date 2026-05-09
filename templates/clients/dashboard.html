@@ -343,13 +343,23 @@
                     <div class="space-y-4">
                         {% for pkg in active_packages %}
                         <div class="border border-[#D7FF00]/30 bg-[#D7FF00]/5 rounded-lg p-4">
-                            <div class="flex justify-between items-start">
-                                <div>
+                            <div class="flex justify-between items-start gap-4">
+                                <div class="flex-1">
                                     <h3 class="font-semibold text-gray-800">{{ pkg.package.name }}</h3>
                                     <p class="text-sm text-gray-600">{{ pkg.package.get_package_type_display }}</p>
-                                    {% if pkg.player %}
-                                    <p class="text-xs text-gray-500 mt-1">Assigned to: {{ pkg.player }}</p>
-                                    {% endif %}
+                                    <div class="mt-2">
+                                        <label class="block text-xs text-gray-500 mb-1">Assigned to:</label>
+                                        <select class="text-sm px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary package-assign-dropdown bg-white"
+                                                data-package-id="{{ pkg.id }}"
+                                                onchange="assignPackageToPlayer({{ pkg.id }}, this.value)">
+                                            <option value="">Select player...</option>
+                                            {% for player in players %}
+                                            <option value="{{ player.id }}" {% if pkg.player_id == player.id %}selected{% endif %}>
+                                                {{ player.first_name }} {{ player.last_name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="text-right">
                                     <div class="text-2xl font-bold text-primary">
@@ -481,6 +491,45 @@
 {% include "includes/public_footer.html" %}
 <script>
 function toggleClientDark(){var d=document.documentElement.classList.toggle("dark");localStorage.setItem("apc-dark",d?"1":"");var b=document.getElementById("client-dark-btn");if(b)b.textContent=d?"☀️":"🌙";}
+
+function getCookie(name) {
+    let value = "; " + document.cookie;
+    let parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+}
+
+async function assignPackageToPlayer(packageId, playerId) {
+    try {
+        const url = '{% url "clients:package_assign" 0 %}'.replace('0', packageId);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ player_id: playerId || null })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            // Show success feedback
+            const dropdown = document.querySelector(`select[data-package-id="${packageId}"]`);
+            const originalBg = dropdown.style.backgroundColor;
+            dropdown.style.backgroundColor = '#d1fae5';
+            dropdown.style.transition = 'background-color 0.3s';
+            setTimeout(() => {
+                dropdown.style.backgroundColor = originalBg;
+            }, 1500);
+        } else {
+            alert(data.error || 'Failed to assign package');
+            location.reload();
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Network error — please try again');
+        location.reload();
+    }
+}
 </script>
 </body>
 </html>

@@ -391,6 +391,37 @@ def package_subscribe(request, package_id):
 
 
 @login_required
+@require_POST
+def package_assign(request, package_id):
+    """Assign or reassign a package to a specific player (AJAX endpoint for client portal)."""
+    import json
+
+    try:
+        client, _ = Client.objects.get_or_create(user=request.user)
+        package = get_object_or_404(ClientPackage, pk=package_id, client=client)
+        data = json.loads(request.body)
+        player_id = data.get('player_id')
+
+        if player_id:
+            # Verify player belongs to the same client
+            player = get_object_or_404(Player, pk=player_id, client=client, is_active=True)
+            package.player = player
+        else:
+            # Unassign package
+            package.player = None
+
+        package.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Package assigned to {package.player.first_name}' if package.player else 'Package unassigned'
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
 def packages_list(request):
     """List all packages for the client."""
     client, created = Client.objects.get_or_create(user=request.user)
