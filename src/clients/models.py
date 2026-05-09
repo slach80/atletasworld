@@ -1034,6 +1034,12 @@ class ClientCredit(models.Model):
         null=True, blank=True, related_name='granted_credits',
         help_text='The APC Select ClientPackage that generated this credit'
     )
+    # For referral credits — which Referral generated this
+    referral = models.ForeignKey(
+        'Referral', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='credits',
+        help_text='The Referral that generated this credit'
+    )
     # What package purchase this was applied toward
     applied_to = models.ForeignKey(
         'ClientPackage', on_delete=models.SET_NULL,
