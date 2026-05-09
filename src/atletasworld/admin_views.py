@@ -1537,6 +1537,40 @@ def owner_client_reject(request, pk):
 
 @login_required
 @user_passes_test(is_owner)
+@require_POST
+def owner_package_assign(request, pk):
+    """Assign or reassign a package to a specific player (AJAX endpoint)."""
+    import json
+    from django.shortcuts import get_object_or_404
+    from clients.models import ClientPackage, Player
+    from django.http import JsonResponse
+
+    try:
+        package = get_object_or_404(ClientPackage, pk=pk)
+        data = json.loads(request.body)
+        player_id = data.get('player_id')
+
+        if player_id:
+            # Verify player belongs to the same client
+            player = get_object_or_404(Player, pk=player_id, client=package.client, is_active=True)
+            package.player = player
+        else:
+            # Unassign package
+            package.player = None
+
+        package.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Package assigned to {package.player.first_name}' if package.player else 'Package unassigned'
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@user_passes_test(is_owner)
 def owner_players(request):
     """List all players with session-type / package filters and CSV/XLSX/PDF export."""
     from clients.models import ClientPackage
