@@ -24,6 +24,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.core.cache import cache
+from django.conf import settings
 from datetime import datetime, timedelta
 
 from clients.utils import validate_photo as _validate_photo, _MAX_PHOTO_BYTES, _ALLOWED_PHOTO_EXTENSIONS
@@ -1930,7 +1931,7 @@ def referral_page(request):
 
     # Build share link
     site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
-    share_link = f"{site_url}/signup?ref={referral_code.code}"
+    share_link = f"{site_url}/accounts/signup/?ref={referral_code.code}"
 
     # Referrals given by this user
     referrals_given = Referral.objects.filter(
