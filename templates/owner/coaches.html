@@ -19,8 +19,9 @@
             <tr>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coach</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Email</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Sessions (Active Clients)</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Total Bookings</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Referral Code</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Sessions</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Bookings</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
@@ -44,10 +45,26 @@
                 </td>
                 <td class="py-4 px-6 text-sm text-gray-600">{{ coach.user.email }}</td>
                 <td class="py-4 px-6">
+                    {% with code=coach_codes|get_item:coach.user.id %}
+                    {% if code %}
+                    <div class="flex items-center gap-2">
+                        <code class="px-2 py-1 bg-purple-100 text-purple-800 rounded font-mono text-sm font-bold">{{ code }}</code>
+                        <button onclick="copyToClipboard('{{ code }}')" class="text-purple-600 hover:text-purple-800" title="Copy code">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </button>
+                    </div>
+                    {% else %}
+                    <span class="text-gray-400 text-sm">—</span>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+                <td class="py-4 px-6">
                     <div class="text-sm leading-tight">
-                        <span class="font-bold {% if coach.today_sessions > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ coach.today_sessions }} today</span>
+                        <span class="font-bold {% if coach.today_sessions > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ coach.today_sessions }}</span>
+                        <span class="text-gray-400 text-xs">today</span>
                         <span class="text-gray-300 mx-1">/</span>
-                        <span class="font-semibold {% if coach.upcoming_sessions > 0 %}text-gray-700{% else %}text-gray-400{% endif %}">{{ coach.upcoming_sessions }} upcoming</span>
+                        <span class="font-semibold {% if coach.upcoming_sessions > 0 %}text-gray-700{% else %}text-gray-400{% endif %}">{{ coach.upcoming_sessions }}</span>
+                        <span class="text-gray-400 text-xs">upcoming</span>
                     </div>
                 </td>
                 <td class="py-4 px-6 font-semibold">{{ coach.total_bookings }}</td>
@@ -74,10 +91,26 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="py-8 text-center text-gray-500">No coaches found.</td>
+                <td colspan="8" class="py-8 text-center text-gray-500">No coaches found.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Show brief success feedback
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+        }, 1500);
+    }).catch(err => {
+        alert('Failed to copy: ' + err);
+    });
+}
+</script>
 {% endblock %}

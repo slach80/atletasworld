@@ -864,6 +864,7 @@ def owner_session_type_duplicate(request, pk):
 def owner_coaches(request):
     """List all coaches with management options."""
     from django.contrib.auth.models import Group
+    from clients.models import ReferralCode
 
     today = timezone.localdate()
     active_client_q = Q(bookings__client__approval_status__in=['approved', 'not_required'])
@@ -878,10 +879,17 @@ def owner_coaches(request):
         )),
         total_bookings=Count('bookings'),
         total_players=Count('bookings__player', distinct=True)
-    ).order_by('-is_active', 'user__first_name')
+    ).select_related('user').order_by('-is_active', 'user__first_name')
+
+    # Get referral codes for all coaches
+    coach_codes = {
+        rc.user_id: rc.code
+        for rc in ReferralCode.objects.filter(user__in=[c.user for c in coaches])
+    }
 
     context = {
         'coaches': coaches,
+        'coach_codes': coach_codes,
     }
     return render(request, 'owner/coaches.html', context)
 

@@ -7,15 +7,15 @@ from .models import Coach, Availability, ScheduleBlock, SessionAttendance, Playe
 class CoachAdmin(admin.ModelAdmin):
     """Admin configuration for Coach model with organized fieldsets."""
 
-    list_display = ['get_full_name', 'user', 'slug', 'is_active', 'profile_enabled', 'hourly_rate']
+    list_display = ['get_full_name', 'user', 'slug', 'get_referral_code', 'is_active', 'profile_enabled', 'hourly_rate']
     list_filter = ['is_active', 'profile_enabled']
     search_fields = ['user__first_name', 'user__last_name', 'user__email', 'slug']
     prepopulated_fields = {'slug': ('user',)}
-    readonly_fields = ['created_at', 'updated_at', 'profile_preview']
+    readonly_fields = ['created_at', 'updated_at', 'profile_preview', 'get_referral_code_display']
 
     fieldsets = (
         ('Basic Information (Admin Only)', {
-            'fields': ('user', 'slug', 'is_active', 'hourly_rate', 'sessions_display_floor'),
+            'fields': ('user', 'slug', 'is_active', 'hourly_rate', 'sessions_display_floor', 'get_referral_code_display'),
             'description': 'Core settings managed by admin only.'
         }),
         ('Profile Access Control (Admin Only)', {
@@ -56,6 +56,34 @@ class CoachAdmin(admin.ModelAdmin):
         return obj.user.get_full_name() or obj.user.username
     get_full_name.short_description = 'Name'
     get_full_name.admin_order_field = 'user__first_name'
+
+    def get_referral_code(self, obj):
+        """Display referral code in list view."""
+        try:
+            from clients.models import ReferralCode
+            code = ReferralCode.objects.get(user=obj.user)
+            return code.code
+        except ReferralCode.DoesNotExist:
+            return '—'
+    get_referral_code.short_description = 'Referral Code'
+
+    def get_referral_code_display(self, obj):
+        """Display referral code with copy button in detail view."""
+        try:
+            from clients.models import ReferralCode
+            code = ReferralCode.objects.get(user=obj.user)
+            share_link = f"https://atletasperformancecenter.com/accounts/signup/?ref={code.code}"
+            return format_html(
+                '<div style="font-family: monospace; font-size: 18px; font-weight: bold; color: #6366f1; margin-bottom: 10px;">{}</div>'
+                '<div><strong>Share Link:</strong> <a href="{}" target="_blank">{}</a></div>'
+                '<div style="margin-top: 10px; color: #666;">Coach receives 20% payout when referred user makes first purchase.</div>',
+                code.code,
+                share_link,
+                share_link
+            )
+        except ReferralCode.DoesNotExist:
+            return format_html('<span style="color: #999;">No referral code generated yet.</span>')
+    get_referral_code_display.short_description = 'Referral Code & Link'
 
     def profile_preview(self, obj):
         if obj.slug and obj.profile_enabled:
