@@ -868,7 +868,7 @@ def owner_coaches(request):
 
     today = timezone.localdate()
     active_client_q = Q(bookings__client__approval_status__in=['approved', 'not_required'])
-    coaches = Coach.objects.annotate(
+    coaches_qs = Coach.objects.annotate(
         today_sessions=Count('bookings', filter=active_client_q & Q(
             bookings__scheduled_date=today,
             bookings__status__in=['pending', 'confirmed'],
@@ -881,15 +881,20 @@ def owner_coaches(request):
         total_players=Count('bookings__player', distinct=True)
     ).select_related('user').order_by('-is_active', 'user__first_name')
 
-    # Get referral codes for all coaches
+    # Get referral codes for all coaches and attach to coach objects
+    coaches = list(coaches_qs)
+    coach_user_ids = [c.user_id for c in coaches]
     coach_codes = {
         rc.user_id: rc.code
-        for rc in ReferralCode.objects.filter(user__in=[c.user for c in coaches])
+        for rc in ReferralCode.objects.filter(user_id__in=coach_user_ids)
     }
+
+    # Attach referral code to each coach object for easy template access
+    for coach in coaches:
+        coach.referral_code = coach_codes.get(coach.user_id, None)
 
     context = {
         'coaches': coaches,
-        'coach_codes': coach_codes,
     }
     return render(request, 'owner/coaches.html', context)
 
