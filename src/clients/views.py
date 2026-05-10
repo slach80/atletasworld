@@ -1933,6 +1933,9 @@ def referral_page(request):
     site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
     share_link = f"{site_url}/accounts/signup/?ref={referral_code.code}"
 
+    # Check if user was referred by someone
+    was_referred = Referral.objects.filter(referred_user=request.user).exists()
+
     # Referrals given by this user
     referrals_given = Referral.objects.filter(
         referrer_user=request.user
@@ -1953,6 +1956,7 @@ def referral_page(request):
         'client': client,
         'referral_code': referral_code,
         'share_link': share_link,
+        'was_referred': was_referred,
         'referrals_given': referrals_given,
         'referral_credits': referral_credits,
         'total_referrals': total_referrals,
@@ -1960,3 +1964,63 @@ def referral_page(request):
         'total_rewards': total_rewards,
     }
     return render(request, 'clients/referral.html', context)
+
+
+@login_required
+@require_POST
+def add_referral_code(request):
+    """Allow user to retroactively add a referral code if they signed up without one."""
+    from .models import ReferralCode, Referral
+    from django.db import transaction
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    # Check if user already has a referral
+    if Referral.objects.filter(referred_user=request.user).exists():
+        messages.error(request, "You already have a referral on your account.")
+        return redirect('clients:referral')
+
+    code = request.POST.get('referral_code', '').strip().upper()
+
+    if not code:
+        messages.error(request, "Please enter a referral code.")
+        return redirect('clients:referral')
+
+    try:
+        referral_code = ReferralCode.objects.get(code=code)
+    except ReferralCode.DoesNotExist:
+        messages.error(request, "Invalid referral code. Please check and try again.")
+        return redirect('clients:referral')
+
+    # Prevent self-referral
+    if referral_code.user == request.user:
+        messages.error(request, "You cannot use your own referral code.")
+        return redirect('clients:referral')
+
+    # Create referral
+    try:
+        with transaction.atomic():
+            referrer_type = 'coach' if referral_code.user.groups.filter(name='Coach').exists() else 'client'
+
+            Referral.objects.create(
+                referrer_user=referral_code.user,
+                referred_user=request.user,
+                referral_code=code,
+                referrer_type=referrer_type,
+                status='pending',
+                referral_window_expires=timezone.now() + timedelta(days=60)
+            )
+
+            messages.success(
+                request,
+                f"Referral code applied! When you make your first purchase, "
+                f"{referral_code.user.get_full_name() or referral_code.user.username} will receive their reward."
+            )
+            logger.info(f"Retroactive referral added: {request.user.username} referred by {referral_code.user.username}")
+
+    except Exception as e:
+        logger.exception(f"Error creating retroactive referral: {e}")
+        messages.error(request, "An error occurred. Please try again or contact support.")
+
+    return redirect('clients:referral')

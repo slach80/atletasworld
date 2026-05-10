@@ -73,4 +73,5 @@ urlpatterns = [
 
     # Referral Program
     path('referral/', views.referral_page, name='referral'),
+    path('referral/add-code/', views.add_referral_code, name='add_referral_code'),
 ]

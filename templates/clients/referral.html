@@ -9,6 +9,34 @@
         <p class="text-gray-300">Share Atletas Performance Center and earn rewards!</p>
     </div>
 
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Add Referral Code (if not referred) -->
+    {% if not was_referred %}
+    <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-6 mb-8">
+        <h3 class="text-lg font-bold text-amber-900 mb-3">Were You Referred?</h3>
+        <p class="text-amber-800 mb-4">If someone referred you to Atletas Performance Center, enter their code below to give them credit when you make your first purchase!</p>
+        <form method="post" action="{% url 'clients:add_referral_code' %}" class="flex gap-2">
+            {% csrf_token %}
+            <input type="text" name="referral_code" placeholder="Enter referral code"
+                   class="flex-1 px-4 py-2 border border-amber-300 rounded bg-white text-gray-900 uppercase"
+                   pattern="[A-Z0-9]+" maxlength="20" required>
+            <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-6 rounded transition">
+                Apply Code
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-secondary">
