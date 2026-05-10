@@ -140,3 +140,31 @@ See `docs/site-audit-2026-03-18.md` for full audit. Open items:
 4. ~~Client dashboard "Session today" banner triggered on Sunday for Monday sessions~~ ✅ fixed (check `scheduled_date == today` before datetime math)
 
 **Next up**: Google OAuth setup — domain + SSL are live at `atletasperformancecenter.com`. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to EC2 `.env`, then enable the social login buttons.
+
+## Session Close Checklist
+
+Run these checks before closing a development session:
+
+### Required
+- [ ] **Django check passes**: `cd src && python manage.py check` → must report 0 issues
+- [ ] **All changes committed**: `git status` → working tree clean
+- [ ] **Tests passing**: CI build green (or run locally if needed)
+- [ ] **Pushed to main**: `git push origin main` → triggers auto-deploy
+
+### Optional (if applicable)
+- [ ] **Update hustle modules**: If you implemented a reusable feature (auth, payments, referrals, etc.), update the corresponding template in `/home/slach/Projects/hustle/modules/`. Sync new features, edge cases, and production checklist items.
+- [ ] **Migration check**: If models changed, verify migration created: `python manage.py makemigrations --check --dry-run`
+- [ ] **Documentation**: Update README or docs/ if architecture changed
+- [ ] **Memory updated**: If user gave important feedback or context, save to `~/.claude/projects/-home-slach-Projects-atletasworld/memory/`
+
+### Hustle Module Sync Workflow
+When a feature maps to a hustle module:
+1. Identify the module: `/home/slach/Projects/hustle/modules/<feature>.md`
+2. Add sections for any new capabilities (retroactive flows, admin views, edge cases)
+3. Update the Production Checklist with optional features
+4. Commit locally: `cd /home/slach/Projects/hustle && git add modules/<feature>.md && git commit -m "docs: sync <feature> module with atletasworld implementation"`
+
+**Current hustle modules:**
+- `referral_program.md` ✅ (synced 2026-05-09)
+- `stripe_integration.md`
+- Others as created...
