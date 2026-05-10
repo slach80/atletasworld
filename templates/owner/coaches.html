@@ -13,75 +13,72 @@
     </a>
 </div>
 
-<div class="bg-white rounded-xl shadow-md overflow-hidden">
-    <table class="w-full">
+<div class="bg-white rounded-xl shadow-md overflow-x-auto">
+    <table class="w-full min-w-max">
         <thead class="bg-gray-50 border-b">
             <tr>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coach</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Email</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Referral Code</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Sessions</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Bookings</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 whitespace-nowrap">Coach</th>
+                <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 whitespace-nowrap">Email</th>
+                <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 whitespace-nowrap">Referral Code</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 whitespace-nowrap">Sessions</th>
+                <th class="text-center py-3 px-3 text-xs font-semibold text-gray-600 whitespace-nowrap">Bookings</th>
+                <th class="text-center py-3 px-3 text-xs font-semibold text-gray-600 whitespace-nowrap">Players</th>
+                <th class="text-center py-3 px-3 text-xs font-semibold text-gray-600 whitespace-nowrap">Status</th>
+                <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 whitespace-nowrap">Actions</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             {% for coach in coaches %}
             <tr class="hover:bg-gray-50 {% if not coach.is_active %}opacity-50{% endif %}">
-                <td class="py-4 px-6">
-                    <div class="flex items-center space-x-3">
+                <td class="py-3 px-4">
+                    <div class="flex items-center space-x-2">
                         {% if coach.photo %}
-                        <img src="{{ coach.photo.url }}" class="w-10 h-10 rounded-full object-cover">
+                        <img src="{{ coach.photo.url }}" class="w-8 h-8 rounded-full object-cover">
                         {% else %}
-                        <div class="w-10 h-10 rounded-full bg-owner flex items-center justify-center text-white font-bold">{{ coach.user.first_name|slice:":1" }}</div>
+                        <div class="w-8 h-8 rounded-full bg-owner flex items-center justify-center text-white font-bold text-sm">{{ coach.user.first_name|slice:":1" }}</div>
                         {% endif %}
-                        <div>
-                            <div class="font-semibold text-gray-800">{{ coach.user.first_name }} {{ coach.user.last_name }}</div>
-                            {% if coach.specializations %}<div class="text-sm text-gray-500">{{ coach.specializations|truncatechars:30 }}</div>{% endif %}
+                        <div class="min-w-0">
+                            <div class="font-semibold text-gray-800 text-sm whitespace-nowrap">{{ coach.user.first_name }} {{ coach.user.last_name }}</div>
+                            {% if coach.specializations %}<div class="text-xs text-gray-500 truncate max-w-xs">{{ coach.specializations|truncatechars:25 }}</div>{% endif %}
                         </div>
                     </div>
                 </td>
-                <td class="py-4 px-6 text-sm text-gray-600">{{ coach.user.email }}</td>
-                <td class="py-4 px-6">
+                <td class="py-3 px-4 text-xs text-gray-600">{{ coach.user.email }}</td>
+                <td class="py-3 px-4">
                     {% if coach.referral_code %}
-                    <div class="flex items-center gap-2">
-                        <code class="px-2 py-1 bg-purple-100 text-purple-800 rounded font-mono text-sm font-bold">{{ coach.referral_code }}</code>
-                        <button onclick="copyToClipboard('{{ coach.referral_code }}')" class="text-purple-600 hover:text-purple-800" title="Copy code">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    <div class="flex items-center gap-1 whitespace-nowrap">
+                        <code class="px-2 py-1 bg-purple-100 text-purple-800 rounded font-mono text-xs font-bold">{{ coach.referral_code }}</code>
+                        <button onclick="copyToClipboard('{{ coach.referral_code }}')" class="text-purple-600 hover:text-purple-800 flex-shrink-0" title="Copy code">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         </button>
                     </div>
                     {% else %}
-                    <span class="text-gray-400 text-sm">—</span>
+                    <span class="text-gray-400 text-xs">—</span>
                     {% endif %}
                 </td>
-                <td class="py-4 px-6">
-                    <div class="text-sm leading-tight">
-                        <span class="font-bold {% if coach.today_sessions > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ coach.today_sessions }}</span>
-                        <span class="text-gray-400 text-xs">today</span>
-                        <span class="text-gray-300 mx-1">/</span>
-                        <span class="font-semibold {% if coach.upcoming_sessions > 0 %}text-gray-700{% else %}text-gray-400{% endif %}">{{ coach.upcoming_sessions }}</span>
-                        <span class="text-gray-400 text-xs">upcoming</span>
+                <td class="py-3 px-3">
+                    <div class="text-xs leading-tight whitespace-nowrap">
+                        <div><span class="font-bold {% if coach.today_sessions > 0 %}text-secondary{% else %}text-gray-400{% endif %}">{{ coach.today_sessions }}</span> <span class="text-gray-400">today</span></div>
+                        <div><span class="font-semibold {% if coach.upcoming_sessions > 0 %}text-gray-700{% else %}text-gray-400{% endif %}">{{ coach.upcoming_sessions }}</span> <span class="text-gray-400">upcoming</span></div>
                     </div>
                 </td>
-                <td class="py-4 px-6 font-semibold">{{ coach.total_bookings }}</td>
-                <td class="py-4 px-6">{{ coach.total_players }}</td>
-                <td class="py-4 px-6">
+                <td class="py-3 px-3 font-semibold text-sm text-center">{{ coach.total_bookings }}</td>
+                <td class="py-3 px-3 text-sm text-center">{{ coach.total_players }}</td>
+                <td class="py-3 px-3 text-center">
                     {% if coach.is_active %}
-                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full whitespace-nowrap">Active</span>
                     {% else %}
-                    <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Inactive</span>
+                    <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full whitespace-nowrap">Inactive</span>
                     {% endif %}
                 </td>
-                <td class="py-4 px-6">
-                    <div class="flex space-x-2">
-                        <a href="{% url 'owner_coach_edit' coach.pk %}" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">Edit</a>
-                        <a href="{% url 'owner_coach_schedule' coach.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-600 transition">Schedule</a>
+                <td class="py-3 px-4">
+                    <div class="flex space-x-1.5 whitespace-nowrap">
+                        <a href="{% url 'owner_coach_edit' coach.pk %}" class="px-2.5 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">Edit</a>
+                        <a href="{% url 'owner_coach_schedule' coach.pk %}" class="px-2.5 py-1 text-xs bg-owner text-white rounded hover:bg-indigo-600 transition">Schedule</a>
                         {% if coach.is_active %}
-                        <form method="post" action="{% url 'owner_coach_delete' coach.pk %}" onsubmit="return confirm('Deactivate this coach?');">
+                        <form method="post" action="{% url 'owner_coach_delete' coach.pk %}" onsubmit="return confirm('Deactivate this coach?');" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Deactivate</button>
+                            <button type="submit" class="px-2.5 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Deactivate</button>
                         </form>
                         {% endif %}
                     </div>

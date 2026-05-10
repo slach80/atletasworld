@@ -884,10 +884,13 @@ def owner_coaches(request):
     # Get referral codes for all coaches and attach to coach objects
     coaches = list(coaches_qs)
     coach_user_ids = [c.user_id for c in coaches]
-    coach_codes = {
-        rc.user_id: rc.code
-        for rc in ReferralCode.objects.filter(user_id__in=coach_user_ids)
-    }
+
+    # Get or create referral codes for all coaches
+    from clients.services import ReferralService
+    coach_codes = {}
+    for coach in coaches:
+        code_obj = ReferralService.get_or_create_code(coach.user)
+        coach_codes[coach.user_id] = code_obj.code if code_obj else None
 
     # Attach referral code to each coach object for easy template access
     for coach in coaches:
