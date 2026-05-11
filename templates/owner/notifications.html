@@ -254,6 +254,9 @@
                         <!-- Individual Selection (hidden by default) -->
                         <div id="individualSelection" class="mb-4 hidden">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Select Individual Recipients</label>
+                            <div class="mb-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                                ⚠️ <strong>Note:</strong> If a contact has registered as a client, they appear in both lists. Select them in <strong>one list only</strong> to avoid confusion. (Duplicates are automatically removed.)
+                            </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <!-- Clients -->
                                 <div class="border rounded-lg p-3 max-h-48 overflow-y-auto">
@@ -382,9 +385,9 @@
                                 <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 Emails will be sent individually to each recipient
                             </p>
-                            <button type="submit" class="px-6 py-2 bg-owner text-white rounded-lg font-medium hover:bg-indigo-700 transition flex items-center">
+                            <button type="submit" id="sendEmailBtn" class="px-6 py-2 bg-owner text-white rounded-lg font-medium hover:bg-indigo-700 transition flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                Send Emails
+                                <span id="sendBtnText">Send Emails</span>
                             </button>
                         </div>
                     </form>
@@ -586,6 +589,27 @@ Atletas Performance Center Team`
                     listContainer.appendChild(item);
                 }
             }
+        });
+
+        // Form submission protection (prevent double-submit)
+        document.getElementById('notificationForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('sendEmailBtn');
+            const btnText = document.getElementById('sendBtnText');
+
+            if (submitBtn.disabled) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            btnText.textContent = 'Sending...';
+
+            // Re-enable after 5 seconds in case of error/redirect failure
+            setTimeout(function() {
+                submitBtn.disabled = false;
+                btnText.textContent = 'Send Emails';
+            }, 5000);
         });
     </script>
 </body>

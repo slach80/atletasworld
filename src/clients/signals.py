@@ -22,24 +22,42 @@ def add_user_to_client_group(sender, request, user, **kwargs):
 @receiver(user_signed_up)
 def link_contact_import_on_signup(sender, request, user, **kwargs):
     """
-    When a new user signs up, check if their email matches a ContactParent.
-    If found, link the contact → client so the owner can see the history.
+    When a new user signs up:
+    1. Check if their email matches an existing ContactParent (from CSV import)
+       → If found, link it to the new Client profile
+    2. If NOT found, create a new ContactParent record so owner's "All Contacts" list grows
     """
     from django.utils import timezone as tz
     from clients.models import ContactParent, Client
     if not user.email:
         return
+
+    # Get or create the Client profile for this user
+    client, _ = Client.objects.get_or_create(user=user)
+
+    # Check if this email exists in ContactParent (CSV import)
     contact = ContactParent.objects.filter(
         email__iexact=user.email.strip(),
         client__isnull=True,
     ).first()
-    if not contact:
-        return
-    # Get or create the Client profile for this user
-    client, _ = Client.objects.get_or_create(user=user)
-    contact.client    = client
-    contact.linked_at = tz.now()
-    contact.save(update_fields=['client', 'linked_at'])
+
+    if contact:
+        # Link existing ContactParent to new Client
+        contact.client = client
+        contact.linked_at = tz.now()
+        contact.save(update_fields=['client', 'linked_at'])
+    else:
+        # Create new ContactParent so this signup appears in owner's "All Contacts" list
+        ContactParent.objects.get_or_create(
+            email=user.email.strip().lower(),
+            defaults={
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'source': 'signup',
+                'client': client,
+                'linked_at': tz.now(),
+            }
+        )
 
 
 @receiver(password_changed)
