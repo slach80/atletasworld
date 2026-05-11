@@ -141,6 +141,21 @@ PRODUCTION_EMAIL_ENABLED=True</pre>
                     </ul>
                 </div>
             </div>
+            <div class="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                <h3 class="font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                    <span>👨‍👩‍👧</span> Family Multi-Child (Sibling) Discount
+                </h3>
+                <p class="text-indigo-800 text-sm mb-2">Families automatically get <strong>50% off</strong> when purchasing the same package for multiple children.</p>
+                <ul class="space-y-1 text-indigo-700 text-sm">
+                    <li><strong>How it works:</strong> When a client buys the same package for a second child, the discount applies automatically — no promo code needed</li>
+                    <li><strong>Example:</strong> Family has "10-Session Package" for Child 1 → purchases same package for Child 2 → Child 2's package is 50% off</li>
+                    <li><strong>Requirements:</strong> Same package, still active (not expired), different player</li>
+                    <li><strong>Badge shown:</strong> Clients see "👨‍👩‍👧 Sibling discount applied — 50% off!" during checkout</li>
+                    <li><strong>Tracking:</strong> Appears as <code class="bg-indigo-100 px-1 rounded">SIBLING-AUTO</code> in <a href="{% url 'owner_discount_codes' %}" class="text-indigo-900 underline">Discount Codes</a></li>
+                    <li><strong>Priority:</strong> Takes precedence over promo codes (uses whichever discount is larger)</li>
+                    <li><strong>Stacking:</strong> Can combine with APC Select credits (discount applied first, then credit)</li>
+                </ul>
+            </div>
         </div>
     </div>
 </section>
