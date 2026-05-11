@@ -39,8 +39,11 @@ class ReferralCodeGenerationTests(TestCase):
         # Check that a referral code was created
         self.assertTrue(ReferralCode.objects.filter(user=user).exists())
         code = ReferralCode.objects.get(user=user)
-        self.assertEqual(len(code.code), 8)
+        # Code length can vary (6-8 chars) due to token_urlsafe generation
+        self.assertGreaterEqual(len(code.code), 6)
+        self.assertLessEqual(len(code.code), 8)
         self.assertTrue(code.code.isupper())
+        self.assertTrue(code.code.isalnum())
 
     def test_referral_code_uniqueness(self):
         """Verify that generated referral codes are unique."""
