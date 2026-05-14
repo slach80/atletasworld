@@ -1,0 +1,464 @@
+{% extends "clients/base.html" %}
+{% block title %}Book a Session{% endblock %}
+
+{% block content %}
+<!-- Desktop: 3-column layout. Mobile: stacked with bottom sheet -->
+<div class="min-h-screen bg-gray-50">
+
+    <!-- Desktop Filter Sidebar (hidden on mobile/tablet) -->
+    <aside id="filter-sidebar" class="hidden xl:block fixed left-0 top-16 w-72 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 overflow-y-auto z-30">
+        <div class="p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-900">Filters</h2>
+                <button onclick="clearAllFilters()" id="clear-filters-desktop" class="text-xs font-semibold text-gray-400 hover:text-red-500 transition">Clear</button>
+            </div>
+
+            <!-- Players -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Players</label>
+                <div id="playerCheckboxes" class="space-y-2">
+                    {% for player in players %}
+                    <label class="flex items-center gap-2 text-sm cursor-pointer select-none text-gray-700 hover:text-gray-900">
+                        <input type="checkbox" class="player-check accent-yellow-400 w-4 h-4 rounded"
+                               value="{{ player.id }}" {% if forloop.first %}checked{% endif %}
+                               onchange="updateCartBadge(); renderCart();">
+                        <span>{{ player.first_name }} {{ player.last_name }}</span>
+                    </label>
+                    {% empty %}
+                    <span class="text-sm text-gray-400">No players</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Coach -->
+            <div>
+                <label for="coachSelect" class="block text-sm font-semibold text-gray-700 mb-2">Coach</label>
+                <select id="coachSelect" onchange="setCoachFilter(this.value)" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+                    <option value="">Any Coach</option>
+                    {% for coach in coaches %}
+                    <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Session Type (Grouped) -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Session Type</label>
+                <div id="type-pills-sidebar" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Date Range -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                <div class="flex flex-wrap gap-2">
+                    <button data-date="" onclick="setDateFilter('')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">All</button>
+                    <button data-date="today" onclick="setDateFilter('today')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">Today</button>
+                    <button data-date="this_week" onclick="setDateFilter('this_week')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">This Week</button>
+                    <button data-date="next_week" onclick="setDateFilter('next_week')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">Next Week</button>
+                </div>
+            </div>
+
+            <!-- Time Range -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-semibold text-gray-700">Time</label>
+                    <span id="time-range-label" class="text-xs font-medium text-yellow-600">All day</span>
+                </div>
+                <div class="relative h-2 bg-gray-200 rounded-full">
+                    <div id="dual-range-fill" class="absolute h-full bg-yellow-400 rounded-full"></div>
+                </div>
+                <div class="relative -mt-2">
+                    <input id="time-start" type="range" min="6" max="23" step="0.5" value="6" oninput="onTimeSlider()"
+                           class="absolute w-full h-2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-yellow-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none">
+                    <input id="time-end" type="range" min="6" max="23" step="0.5" value="23" oninput="onTimeSlider()"
+                           class="absolute w-full h-2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-yellow-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none">
+                </div>
+                <div class="flex justify-between mt-3 text-xs text-gray-500">
+                    <span>6 AM</span><span>11 PM</span>
+                </div>
+            </div>
+
+            <!-- Location -->
+            <div>
+                <label for="locationSelect" class="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                <select id="locationSelect" onchange="setLocationFilter(this.value)" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-yellow-400">
+                    <option value="">Any Location</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile/Tablet Filter Button -->
+    <div class="xl:hidden sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <div class="px-4 py-3 flex items-center justify-between">
+            <button onclick="toggleMobileFilters()" id="mobile-filter-btn" class="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+                <span>Filters</span>
+                <span id="filter-badge-mobile" class="hidden ml-1 px-2 py-0.5 bg-yellow-400 text-gray-900 rounded-full text-xs font-bold"></span>
+            </button>
+            <button onclick="clearAllFilters()" class="text-xs font-semibold text-gray-500 hover:text-red-500">Clear all</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="xl:ml-72">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+
+            <!-- Package Banner -->
+            {% if active_package %}
+            <div class="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-gray-900">{{ active_package.package.name }}</p>
+                        <p class="text-xs text-gray-600 mt-1">Expires {{ active_package.expiry_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p id="sessions-remaining-display" class="text-3xl font-bold text-yellow-600">{{ active_package.sessions_remaining }}</p>
+                        <p class="text-xs text-gray-600">sessions left</p>
+                    </div>
+                </div>
+            </div>
+            {% elif not has_package %}
+            <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-yellow-800">No active package</p>
+                        <p class="text-xs text-yellow-700 mt-1">Purchase a package to book sessions</p>
+                    </div>
+                    <a href="{% url 'clients:packages' %}" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-bold hover:bg-yellow-600 transition">Get Package</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 2-column grid: Sessions + Cart -->
+            <div class="grid lg:grid-cols-3 gap-6">
+
+                <!-- Sessions List (2/3) -->
+                <div class="lg:col-span-2">
+                    <div id="slots-loading" class="py-16 text-center text-gray-400">
+                        <div class="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin mb-3"></div>
+                        <p class="text-sm">Loading sessions…</p>
+                    </div>
+                    <div id="slots-container" class="hidden space-y-6"></div>
+                </div>
+
+                <!-- Cart Sidebar (1/3) -->
+                <aside class="hidden lg:block">
+                    <div class="sticky top-24">
+                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Your Cart</h3>
+                            <div id="cart-desktop"></div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Mobile Cart (full-width) -->
+                <div class="lg:hidden">
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Your Cart</h3>
+                        <div id="cart-mobile"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filter Bottom Sheet -->
+<div id="mobile-filter-sheet" class="hidden fixed inset-0 z-50">
+    <div onclick="toggleMobileFilters()" class="absolute inset-0 bg-black/50"></div>
+    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-gray-900">Filters</h2>
+            <button onclick="toggleMobileFilters()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-6">
+            <!-- Same filter content as desktop sidebar -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Players</label>
+                <div id="playerCheckboxesMobile" class="space-y-2"></div>
+            </div>
+            <div>
+                <label for="coachSelectMobile" class="block text-sm font-semibold text-gray-700 mb-2">Coach</label>
+                <select id="coachSelectMobile" onchange="setCoachFilter(this.value)" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700">
+                    <option value="">Any Coach</option>
+                    {% for coach in coaches %}
+                    <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Session Type</label>
+                <div id="type-pills-mobile" class="space-y-3"></div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                <div class="flex flex-wrap gap-2" id="date-filters-mobile"></div>
+            </div>
+            <div>
+                <button onclick="toggleMobileFilters()" class="w-full py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="success-overlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div class="text-5xl mb-3">🎉</div>
+        <h2 class="text-xl font-bold mb-2">Sessions Booked!</h2>
+        <div id="success-details" class="text-sm text-gray-600 mb-5 space-y-1"></div>
+        <div class="flex gap-3">
+            <button onclick="closeSuccess()" class="flex-1 py-2.5 bg-gray-100 rounded-xl text-sm font-semibold hover:bg-gray-200 transition">Book More</button>
+            <a href="{% url 'clients:bookings' %}" class="flex-1 py-2.5 bg-yellow-500 text-white rounded-xl text-sm font-bold hover:bg-yellow-600 transition text-center">View Bookings</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// State
+let slotMap={}, cart=[], packages=[], sessionTypes=[], activeTypes=new Set(), activeCoach='', activeDateFilter='', activeDays=new Set(), activeLocation='';
+let timeStart=6, timeEnd=23;
+let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
+const hasPackage={{ has_package|yesno:"true,false" }};
+
+// Startup
+document.addEventListener('DOMContentLoaded',()=>{
+    Promise.all([loadSessionTypes(),loadPackages()]).then(()=>loadSlots());
+});
+
+function toggleMobileFilters(){
+    document.getElementById('mobile-filter-sheet').classList.toggle('hidden');
+}
+
+async function loadSessionTypes(){
+    try{
+        sessionTypes=await fetch('/api/bookings/session-types/').then(r=>r.json());
+        renderTypePills();
+    }catch(e){ console.error('ST:',e); }
+}
+
+async function loadPackages(){
+    try{
+        const d=await fetch('/api/bookings/packages/').then(r=>r.json());
+        packages=d.packages||[];
+    }catch(e){ console.error('Pkg:',e); }
+}
+
+async function loadSlots(){
+    const t=new Date(); t.setHours(0,0,0,0);
+    const e=new Date(t); e.setDate(e.getDate()+90);
+    try{
+        const events=await fetch(`/api/bookings/availability/?start=${isoDate(t)}&end=${isoDate(e)}`).then(r=>r.json());
+        slotMap={};
+        for(const ev of events){
+            if((ev.raw?.spots_remaining||0)<=0) continue;
+            const k=`${ev.raw.slot_type}_${ev.raw.slot_id}`;
+            slotMap[k]={
+                key:k,
+                slot_id:ev.raw.slot_id,
+                slot_type:ev.raw.slot_type,
+                coach_name:ev.raw.coach_name,
+                session_type_name:ev.raw.session_type_name,
+                spots_remaining:ev.raw.spots_remaining,
+                price:ev.raw.price,
+                duration:ev.raw.duration,
+                location:ev.raw.location||'',
+                start:ev.start,
+                color:ev.backgroundColor||'#D7FF00'
+            };
+        }
+        document.getElementById('slots-loading').classList.add('hidden');
+        document.getElementById('slots-container').classList.remove('hidden');
+        renderSlots();
+    }catch(e){
+        document.getElementById('slots-loading').innerHTML='<p class="text-red-500 text-sm text-center py-8">Failed to load sessions</p>';
+    }
+}
+
+function renderSlots(){
+    const c=document.getElementById('slots-container');
+    const byDate={};
+    for(const [k,s] of Object.entries(slotMap)){
+        const d=s.start.split('T')[0];
+        (byDate[d]||(byDate[d]=[])).push(s);
+    }
+    const dates=Object.keys(byDate).sort();
+    if(!dates.length){ c.innerHTML='<div class="text-center py-16 text-gray-400"><p class="text-5xl mb-3">📭</p><p class="font-semibold text-gray-600">No sessions found</p></div>'; return; }
+
+    let html='';
+    for(const d of dates){
+        const slots=byDate[d].sort((a,b)=>a.start.localeCompare(b.start));
+        const dt=new Date(d+'T12:00:00');
+        const label=dt.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+        html+=`<div><h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">${label}</h3><div class="space-y-2">`;
+        for(const s of slots){
+            const inCart=cart.some(c=>c.key===s.key);
+            const time=fmtTime(s.start);
+            const price=parseFloat(s.price||0);
+            html+=`<div class="flex items-center justify-between p-4 bg-white rounded-xl border ${inCart?'border-yellow-400 bg-yellow-50':'border-gray-200'} hover:border-yellow-300 transition">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-1 h-12 rounded-full" style="background:${s.color}"></div>
+                    <div class="min-w-0">
+                        <p class="font-semibold text-sm text-gray-900">${time} · ${s.duration} min</p>
+                        <p class="text-xs text-gray-600">${s.session_type_name}</p>
+                        <p class="text-xs text-gray-500">${s.coach_name} · ${s.spots_remaining} spots</p>
+                        <p class="text-xs ${price>0?'text-yellow-600 font-semibold':'text-gray-400'}">${price>0?'$'+price.toFixed(2):'Free'}</p>
+                    </div>
+                </div>
+                ${inCart
+                    ?`<button onclick="removeFromCart('${s.key}')" class="px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-bold">✓ Added</button>`
+                    :`<button onclick="addToCart('${s.key}')" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-xs font-bold hover:bg-yellow-600">+ Add</button>`
+                }
+            </div>`;
+        }
+        html+=`</div></div>`;
+    }
+    c.innerHTML=html;
+}
+
+function renderTypePills(){
+    // Group session types
+    const groups={Training:[],Events:[],Special:[]};
+    for(const st of sessionTypes){
+        const n=st.name.toLowerCase();
+        if(n.includes('camp')||n.includes('clinic')) groups.Events.push(st);
+        else if(n.includes('tryout')||n.includes('tournament')) groups.Special.push(st);
+        else groups.Training.push(st);
+    }
+
+    let html='';
+    html+=`<div><button onclick="toggleTypeFilter('')" class="type-pill-all w-full px-3 py-2 text-sm font-medium border-2 border-yellow-400 bg-yellow-50 text-gray-900 rounded-lg hover:bg-yellow-100">All Sessions</button></div>`;
+
+    for(const [label,types] of Object.entries(groups)){
+        if(!types.length) continue;
+        html+=`<div><p class="text-xs font-bold text-gray-500 uppercase mb-2">${label}</p><div class="space-y-1.5">`;
+        for(const st of types){
+            html+=`<button onclick="toggleTypeFilter('${st.id}')" data-type-pill="${st.id}" class="type-pill w-full px-3 py-2 text-xs font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-left">${st.name}</button>`;
+        }
+        html+=`</div></div>`;
+    }
+
+    document.getElementById('type-pills-sidebar').innerHTML=html;
+    document.getElementById('type-pills-mobile').innerHTML=html;
+}
+
+function toggleTypeFilter(id){
+    if(id===''){
+        activeTypes.clear();
+    }else{
+        activeTypes.has(id)?activeTypes.delete(id):activeTypes.add(id);
+    }
+    updateTypePillStates();
+    renderSlots();
+}
+
+function updateTypePillStates(){
+    const allOn=activeTypes.size===0;
+    document.querySelectorAll('.type-pill-all').forEach(el=>{
+        if(allOn){
+            el.classList.add('border-yellow-400','bg-yellow-50');
+            el.classList.remove('border-gray-300','bg-white');
+        }else{
+            el.classList.remove('border-yellow-400','bg-yellow-50');
+            el.classList.add('border-gray-300','bg-white');
+        }
+    });
+    document.querySelectorAll('.type-pill').forEach(el=>{
+        const on=activeTypes.has(el.dataset.typePill);
+        if(on){
+            el.classList.add('border-yellow-400','bg-yellow-50','text-gray-900');
+            el.classList.remove('border-gray-300','text-gray-700');
+        }else{
+            el.classList.remove('border-yellow-400','bg-yellow-50','text-gray-900');
+            el.classList.add('border-gray-300','text-gray-700');
+        }
+    });
+}
+
+function addToCart(key){
+    if(cart.some(c=>c.key===key)) return;
+    const s=slotMap[key]; if(!s) return;
+    cart.push({key,slot:s});
+    renderSlots(); renderCart();
+}
+
+function removeFromCart(key){
+    cart=cart.filter(c=>c.key!==key);
+    renderSlots(); renderCart();
+}
+
+function renderCart(){
+    const html=buildCartHtml();
+    document.getElementById('cart-mobile').innerHTML=html;
+    document.getElementById('cart-desktop').innerHTML=html;
+}
+
+function buildCartHtml(){
+    if(!cart.length) return`<div class="text-center py-10 text-gray-400"><p class="text-4xl mb-2">🛒</p><p class="text-sm">Cart is empty</p></div>`;
+
+    let html='<div class="space-y-3 mb-4">';
+    cart.forEach(({slot})=>{
+        const price=parseFloat(slot.price||0);
+        html+=`<div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold text-gray-900">${fmtTime(slot.start)}</p>
+                    <p class="text-xs text-gray-600">${slot.session_type_name}</p>
+                    <p class="text-xs text-gray-500">${slot.coach_name}</p>
+                    <p class="text-xs font-semibold ${price>0?'text-yellow-600':'text-gray-400'} mt-1">${price>0?'$'+price.toFixed(2):'Free'}</p>
+                </div>
+                <button onclick="removeFromCart('${slot.key}')" class="text-gray-400 hover:text-red-500 text-xl">&times;</button>
+            </div>
+        </div>`;
+    });
+    html+='</div>';
+
+    const total=cart.reduce((s,{slot})=>s+parseFloat(slot.price||0),0);
+    if(total>0){
+        html+=`<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex justify-between font-bold text-sm"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+        </div>`;
+    }
+
+    html+=`<button onclick="confirmBookings()" class="w-full py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600">Confirm Booking${cart.length>1?'s':''}</button>`;
+    return html;
+}
+
+function confirmBookings(){
+    alert('Booking logic here - integrate with existing API');
+}
+
+function clearAllFilters(){
+    activeTypes.clear();
+    activeCoach='';
+    activeDateFilter='';
+    updateTypePillStates();
+    renderSlots();
+}
+
+function setCoachFilter(v){ activeCoach=v; renderSlots(); }
+function setDateFilter(v){ activeDateFilter=v; renderSlots(); }
+function setLocationFilter(v){ activeLocation=v; renderSlots(); }
+function updateCartBadge(){}
+function onTimeSlider(){}
+function closeSuccess(){ document.getElementById('success-overlay').classList.add('hidden'); }
+
+function isoDate(d){ return d.toISOString().split('T')[0]; }
+function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
+</script>
+
+<style>
+.type-pill, .type-pill-all, .date-pill {
+    transition: all 0.15s ease;
+}
+</style>
+
+{% endblock %}
