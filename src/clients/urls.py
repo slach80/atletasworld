@@ -32,6 +32,7 @@ urlpatterns = [
 
     # Book new sessions
     path('book/', views.booking_page, name='book'),
+    path('book-v2/', views.booking_page_v2, name='book_v2'),  # New responsive layout
     path('book/reserve/', views.reserve_session, name='reserve_session'),
     path('book/cancel-reservation/', views.cancel_reservation, name='cancel_reservation'),
     path('book/confirm/', views.confirm_booking, name='confirm_booking'),

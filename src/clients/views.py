@@ -1049,6 +1049,36 @@ def booking_page(request):
 
 
 @login_required
+def booking_page_v2(request):
+    """New responsive booking page with platform-optimized layouts."""
+    client, created = Client.objects.get_or_create(user=request.user)
+
+    # Reuse same context as original booking_page
+    # Get active packages
+    today = timezone.localdate()
+    active_packages_qs = client.packages.filter(
+        status='active',
+        expiry_date__gte=today
+    ).select_related('package', 'player')
+    active_package = active_packages_qs.first()
+
+    # Get players
+    players = list(client.players.filter(is_active=True))
+
+    # Get coaches
+    coaches = Coach.objects.filter(is_active=True)
+
+    context = {
+        'client': client,
+        'active_package': active_package,
+        'players': players,
+        'coaches': coaches,
+        'has_package': active_package is not None,
+    }
+    return render(request, 'clients/book_calendar_v2.html', context)
+
+
+@login_required
 @require_POST
 def reserve_session(request):
     """Reserve a session slot (temporary hold for 10 minutes)."""
