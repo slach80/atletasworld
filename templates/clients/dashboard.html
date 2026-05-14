@@ -50,7 +50,7 @@
 
         <!-- Quick Actions -->
         <div class="flex flex-wrap gap-2 mb-6">
-            <a href="{% url 'clients:book' %}" class="flex items-center gap-1.5 px-4 py-2 bg-secondary text-gray-900 rounded-full text-sm font-semibold hover:bg-[#b8e000] transition">📅 Book Session</a>
+            <a href="{% url 'clients:book_v2' %}" class="flex items-center gap-1.5 px-4 py-2 bg-secondary text-gray-900 rounded-full text-sm font-semibold hover:bg-[#b8e000] transition">📅 Book Session</a>
             <a href="{% url 'clients:packages' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📦 My Packages</a>
             <a href="{% url 'clients:players' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">👥 My Players</a>
             <a href="{% url 'clients:bookings' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📋 All Bookings</a>
@@ -301,7 +301,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
                         <p class="text-gray-500 mb-4">No upcoming sessions</p>
-                        <a href="{% url 'clients:book' %}" class="bg-accent text-gray-900 px-6 py-2 rounded-lg hover:bg-[#b8e000] transition">
+                        <a href="{% url 'clients:book_v2' %}" class="bg-accent text-gray-900 px-6 py-2 rounded-lg hover:bg-[#b8e000] transition">
                             Book a Session
                         </a>
                     </div>
