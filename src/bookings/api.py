@@ -671,6 +671,23 @@ class BookingViewSet(viewsets.ModelViewSet):
                     pass  # never block a booking due to promo code failure
 
             if package:
+                # CRITICAL VALIDATION: Prevent special event packages from booking other special events
+                # Special event packages (camps, clinics) should only be used for that specific event
+                # If the session is a camp/clinic/special event, require payment instead of allowing package use
+                is_special_event_session = _st and _st.session_format in ('camp', 'clinic')
+                is_special_event_package = package.package.is_special or package.package.package_type == 'special'
+
+                if is_special_event_package and is_special_event_session:
+                    # Block: special event package cannot pay for another special event
+                    # Force drop-in payment for this camp/clinic
+                    booking.delete()
+                    return Response({
+                        'error': f'Special event packages cannot be used to book other camps or clinics. '
+                                 f'Please purchase a separate package or pay the drop-in price of ${amount_due}.',
+                        'amount_due': str(amount_due),
+                        'payment_required': True,
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
                 # Package booking — session deducted, no separate payment
                 booking.use_package(package)
                 booking.confirm()
@@ -685,8 +702,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                         context={
                             'booking_id': booking.id,
                             'payment_method': 'package',
-                            'package_name': package.name,
-                            'sessions_remaining': client_package.sessions_remaining,
+                            'package_name': package.package.name,
+                            'sessions_remaining': package.sessions_remaining,
                         },
                         group_key=f'booking_{booking.id}',
                         window_seconds=45,
