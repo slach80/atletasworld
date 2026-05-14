@@ -18,15 +18,17 @@ async def test_booking_layouts():
         # Test 1: Desktop Layout (1920x1080)
         print("Testing desktop layout...")
         desktop = await browser.new_page(viewport={'width': 1920, 'height': 1080})
-        await desktop.goto('http://localhost:8001/login/')
 
-        # Login as test user
-        await desktop.fill('input[name="login"]', 'slach80@gmail.com')
+        # Login first
+        print("Logging in...")
+        await desktop.goto('http://localhost:8001/accounts/login/')
+        await desktop.fill('input[name="login"]', 'test@example.com')
         await desktop.fill('input[name="password"]', 'test123')
         await desktop.click('button[type="submit"]')
-        await desktop.wait_for_url('**/portal/**', timeout=30000)
+        await asyncio.sleep(2)
+        print("✓ Logged in successfully")
 
-        # Navigate to booking page (new v2 template)
+        # Navigate to new booking page
         await desktop.goto('http://localhost:8001/portal/book-v2/')
         await asyncio.sleep(2)
 
@@ -47,6 +49,14 @@ async def test_booking_layouts():
         # Test 2: Mobile Layout (390x844 - iPhone 12/13/14)
         print("\nTesting mobile layout...")
         mobile = await browser.new_page(viewport={'width': 390, 'height': 844})
+
+        # Login on mobile
+        await mobile.goto('http://localhost:8001/accounts/login/')
+        await mobile.fill('input[name="login"]', 'test@example.com')
+        await mobile.fill('input[name="password"]', 'test123')
+        await mobile.click('button[type="submit"]')
+        await asyncio.sleep(2)
+
         await mobile.goto('http://localhost:8001/portal/book-v2/')
         await asyncio.sleep(2)
 
@@ -74,6 +84,14 @@ async def test_booking_layouts():
         # Test 3: iPad/Tablet Layout (1024x768)
         print("\nTesting tablet layout...")
         tablet = await browser.new_page(viewport={'width': 1024, 'height': 768})
+
+        # Login on tablet
+        await tablet.goto('http://localhost:8001/accounts/login/')
+        await tablet.fill('input[name="login"]', 'test@example.com')
+        await tablet.fill('input[name="password"]', 'test123')
+        await tablet.click('button[type="submit"]')
+        await asyncio.sleep(2)
+
         await tablet.goto('http://localhost:8001/portal/book-v2/')
         await asyncio.sleep(2)
 
