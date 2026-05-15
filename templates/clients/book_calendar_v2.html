@@ -706,6 +706,13 @@ async function confirmBookings(){
         // Check if payment is required for any bookings
         if(data.requires_payment && data.pending_payment && data.pending_payment.length>0){
             const items=data.pending_payment;
+            // Keep only the payment-required items in the cart
+            const paymentKeys=new Set(items.map(i=>`${i.block_id}_${i.player_id}`));
+            cart=cart.filter(c=>paymentKeys.has(`${c.block_id}_${c.player_id}`));
+            localStorage.setItem('bookingCart',JSON.stringify(cart));
+            updateCartBadge();
+            renderCart();
+
             const total=items.reduce((sum,i)=>sum+parseFloat(i.amount),0).toFixed(2);
             // Group by session_type + player_name
             const grouped={};
@@ -856,11 +863,12 @@ function closeBookingPayModal(){
 }
 function cancelPaymentAndShowCart(){
     closeBookingPayModal();
-    // Re-open the cart so user can make changes
-    document.getElementById('mobile-cart-modal').classList.remove('hidden');
-    // Re-enable the confirm button
-    const btn=document.querySelector('[onclick="confirmBookings()"]');
-    if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
+    // Re-render cart to restore confirm button state
+    renderCart();
+    // On mobile, re-open the cart modal
+    if(window.innerWidth<1024){
+        document.getElementById('mobile-cart-modal').classList.remove('hidden');
+    }
 }
 function showBookingPayError(msg){
     const el=document.getElementById('booking-pay-error');
