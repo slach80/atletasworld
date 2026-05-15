@@ -183,11 +183,22 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-        <div class="p-6 space-y-6">
+        <div class="p-4 space-y-4 pb-20">
             <!-- Same filter content as desktop sidebar -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Players</label>
-                <div id="playerCheckboxesMobile" class="space-y-2"></div>
+                <div id="playerCheckboxesMobile" class="space-y-2">
+                    {% for player in players %}
+                    <label class="flex items-center gap-2 text-sm cursor-pointer select-none text-gray-700 hover:text-gray-900">
+                        <input type="checkbox" class="player-check accent-yellow-400 w-4 h-4 rounded"
+                               value="{{ player.id }}" {% if forloop.first %}checked{% endif %}
+                               onchange="updateCartBadge(); renderCart();">
+                        <span>{{ player.first_name }} {{ player.last_name }}</span>
+                    </label>
+                    {% empty %}
+                    <span class="text-sm text-gray-400">No players</span>
+                    {% endfor %}
+                </div>
             </div>
             <div>
                 <label for="coachSelectMobile" class="block text-sm font-semibold text-gray-700 mb-2">Coach</label>
