@@ -1233,9 +1233,6 @@ def confirm_booking(request):
         else:
             paid_reservations.append(res)
 
-    # Get program (default to first active program for now)
-    program = Program.objects.filter(is_active=True).first()
-
     # Helper function to find the right package for a player
     def get_package_for_player(player):
         """Get active package for player (player-specific or unassigned fallback)."""
@@ -1284,7 +1281,6 @@ def confirm_booking(request):
             client=client,
             player=reservation.player,
             coach=reservation.schedule_block.coach,
-            program=program,
             scheduled_date=reservation.schedule_block.date,
             scheduled_time=reservation.schedule_block.start_time,
             client_package=pkg_to_use,
