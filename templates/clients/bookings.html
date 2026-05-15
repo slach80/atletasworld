@@ -38,110 +38,134 @@
             {% if upcoming_bookings %}
             <div class="space-y-4">
                 {% for booking in upcoming_bookings %}
-                <div class="border border-gray-200 rounded-xl p-6 hover:shadow-md transition">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                        <div class="flex items-start mb-4 md:mb-0">
-                            <div class="bg-purple-100 rounded-xl p-4 mr-4">
-                                <div class="text-center">
-                                    <div class="text-2xl font-bold text-purple-600">{{ booking.scheduled_date|date:"d" }}</div>
-                                    <div class="text-xs text-purple-500 uppercase">{{ booking.scheduled_date|date:"M" }}</div>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-gray-800">{{ booking.session_type.name }}</h3>
-                                <p class="text-gray-600">{{ booking.scheduled_date|date:"l" }} at {{ booking.scheduled_time|time:"g:i A" }}</p>
-                                <div class="flex items-center mt-2 text-sm text-gray-500 flex-wrap gap-x-4">
-                                    <span>Coach: {{ booking.coach }}</span>
-                                    {% if booking.player %}<span>Player: {{ booking.player }}</span>{% endif %}
-                                    {% if booking.session_type.location %}<a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="hover:text-secondary transition">📍 {{ booking.session_type.location }}</a>{% endif %}
-                                </div>
-                                {% if booking.client_package %}
-                                <p class="text-xs text-green-600 mt-1.5">📦 Using: {{ booking.client_package.package.name }}</p>
-                                {% elif booking.session_type.requires_package %}
+                <div class="border-2 border-gray-200 rounded-xl p-4 hover:shadow-md transition bg-white">
+                    <!-- Header: Date badge + Session name -->
+                    <div class="flex items-start gap-3 mb-3">
+                        <div class="bg-purple-100 rounded-lg px-3 py-2 text-center min-w-[50px]">
+                            <div class="text-xl font-bold text-purple-600">{{ booking.scheduled_date|date:"d" }}</div>
+                            <div class="text-xs text-purple-600 font-semibold uppercase">{{ booking.scheduled_date|date:"M" }}</div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-base text-gray-900 leading-tight">{{ booking.session_type.name }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">{{ booking.scheduled_date|date:"l" }} • {{ booking.scheduled_time|time:"g:i A" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Details section -->
+                    <div class="space-y-2 mb-3 pl-[62px]">
+                        <div class="flex items-center gap-2 text-sm text-gray-700">
+                            <span class="text-base">👤</span>
+                            <span>Coach {{ booking.coach }}</span>
+                        </div>
+                        {% if booking.player %}
+                        <div class="flex items-center gap-2 text-sm text-gray-700">
+                            <span class="text-base">⚽</span>
+                            <span>{{ booking.player }}</span>
+                        </div>
+                        {% endif %}
+                        {% if booking.session_type.location %}
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="text-base">📍</span>
+                            <a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">{{ booking.session_type.location }}</a>
+                        </div>
+                        {% endif %}
+                        {% if booking.client_package %}
+                        <div class="flex items-center gap-2 text-sm text-green-700 font-medium">
+                            <span class="text-base">📦</span>
+                            <span>Using: {{ booking.client_package.package.name }}</span>
+                        </div>
+                        {% elif booking.session_type.requires_package %}
                                 {% if booking.session_type.drop_in_price %}
-                                <div class="mt-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-                                    <p class="font-bold mb-0.5">💳 Payment required to confirm</p>
-                                    <p class="mb-1.5">Pay ${{ booking.session_type.get_drop_in_price|floatformat:2 }} as a drop-in, or purchase a package to save:</p>
+                                <div class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg text-sm">
+                                    <p class="font-bold text-blue-900 mb-1">💳 Payment Required</p>
+                                    <p class="text-blue-800 mb-2">Drop-in: ${{ booking.session_type.get_drop_in_price|floatformat:2 }}</p>
                                     {% with pkgs=booking.session_type.linked_packages.all %}
                                     {% if pkgs %}
-                                    <p class="mb-1.5">Eligible packages: {% for p in pkgs %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                                    <p class="text-blue-700 text-xs mb-2">Or get a package: {% for p in pkgs %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                                     {% endif %}
                                     {% endwith %}
-                                    <a href="{% url 'clients:packages' %}" class="inline-block px-3 py-1 bg-blue-500 text-white rounded-lg font-bold hover:opacity-90 transition text-xs">
-                                        Purchase Package →
-                                    </a>
                                 </div>
                                 {% else %}
-                                <div class="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-                                    <p class="font-bold mb-0.5">📦 Package required to confirm this session</p>
+                                <div class="p-3 bg-amber-50 border-2 border-amber-200 rounded-lg text-sm">
+                                    <p class="font-bold text-amber-900 mb-1">📦 Package Required</p>
                                     {% with pkgs=booking.session_type.linked_packages.all %}
                                     {% if pkgs %}
-                                    <p class="mb-1">Eligible: {% for p in pkgs %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                                    <p class="text-amber-800 text-xs">Eligible: {% for p in pkgs %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                                     {% endif %}
                                     {% endwith %}
-                                    <a href="{% url 'clients:packages' %}" class="inline-block mt-1 px-3 py-1 bg-amber-500 text-white rounded-lg font-bold hover:opacity-90 transition text-xs">
-                                        Purchase a Package →
-                                    </a>
                                 </div>
                                 {% endif %}
                                 {% elif booking.payment_status == 'pending' and booking.amount_paid > 0 %}
-                                <p class="text-xs text-orange-600 mt-1.5 font-semibold">💳 Drop-in: ${{ booking.amount_paid|floatformat:2 }} due</p>
+                                <div class="flex items-center gap-2 text-sm text-orange-700 font-semibold">
+                                    <span class="text-base">💳</span>
+                                    <span>Drop-in: ${{ booking.amount_paid|floatformat:2 }} due</span>
+                                </div>
                                 {% endif %}
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <!-- Status and Actions -->
+                        <div class="border-t border-gray-200 pt-3 mt-3 flex flex-col gap-2">
                             <!-- Status badge -->
-                            {% if booking.session_type.requires_package and not booking.client_package %}
-                                {% if booking.session_type.drop_in_price %}
-                                <span class="px-3 py-1 text-sm font-bold rounded-full bg-orange-100 text-orange-700 animate-pulse">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-gray-500 uppercase">Status</span>
+                                {% if booking.session_type.requires_package and not booking.client_package %}
+                                    {% if booking.session_type.drop_in_price %}
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full bg-orange-100 text-orange-700">
+                                        ⏳ Payment Required
+                                    </span>
+                                    {% else %}
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700">
+                                        📦 Package Needed
+                                    </span>
+                                    {% endif %}
+                                {% elif booking.payment_status == 'pending' and booking.amount_paid > 0 %}
+                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-orange-100 text-orange-700">
                                     ⏳ Payment Required
                                 </span>
                                 {% else %}
-                                <span class="px-3 py-1 text-sm font-bold rounded-full bg-amber-100 text-amber-700">
-                                    📦 Package Needed
+                                <span class="px-3 py-1 text-xs font-bold rounded-full
+                                    {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
+                                    {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ booking.get_status_display }}
                                 </span>
                                 {% endif %}
-                            {% elif booking.payment_status == 'pending' and booking.amount_paid > 0 %}
-                            <span class="px-3 py-1 text-sm font-bold rounded-full bg-orange-100 text-orange-700 animate-pulse">
-                                ⏳ Payment Required
-                            </span>
-                            {% else %}
-                            <span class="px-3 py-1 text-sm font-medium rounded-full
-                                {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
-                                {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ booking.get_status_display }}
-                            </span>
-                            {% endif %}
+                            </div>
 
-                            <!-- Pay Now button: for pending drop-in payments (with or without package option) -->
-                            {% if stripe_public_key and booking.payment_status == 'pending' and booking.status == 'pending' and not booking.client_package %}
-                                {% if booking.amount_paid > 0 %}
-                                <button onclick="payBooking({{ booking.id }}, '${{ booking.amount_paid|floatformat:2 }}')"
-                                        class="px-4 py-2 bg-primary text-secondary rounded-lg font-bold hover:bg-gray-800 transition text-sm">
-                                    💳 Pay ${{ booking.amount_paid|floatformat:2 }}
-                                </button>
-                                {% elif booking.session_type.requires_package and booking.session_type.drop_in_price %}
-                                <button onclick="payBooking({{ booking.id }}, '${{ booking.session_type.get_drop_in_price|floatformat:2 }}')"
-                                        class="px-4 py-2 bg-primary text-secondary rounded-lg font-bold hover:bg-gray-800 transition text-sm">
-                                    💳 Pay ${{ booking.session_type.get_drop_in_price|floatformat:2 }} Drop-in
-                                </button>
+                            <!-- Action buttons -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <!-- Pay Now button -->
+                                {% if stripe_public_key and booking.payment_status == 'pending' and booking.status == 'pending' and not booking.client_package %}
+                                    {% if booking.amount_paid > 0 %}
+                                    <button onclick="payBooking({{ booking.id }}, '${{ booking.amount_paid|floatformat:2 }}')"
+                                            class="px-4 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition text-sm">
+                                        💳 Pay ${{ booking.amount_paid|floatformat:2 }}
+                                    </button>
+                                    {% elif booking.session_type.requires_package and booking.session_type.drop_in_price %}
+                                    <button onclick="payBooking({{ booking.id }}, '${{ booking.session_type.get_drop_in_price|floatformat:2 }}')"
+                                            class="px-4 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition text-sm">
+                                        💳 Pay ${{ booking.session_type.get_drop_in_price|floatformat:2 }}
+                                    </button>
+                                    {% endif %}
+                                    <a href="{% url 'clients:packages' %}" class="px-4 py-2.5 bg-blue-50 border-2 border-blue-200 text-blue-700 text-center rounded-lg font-semibold hover:bg-blue-100 transition text-sm">
+                                        📦 Get Package
+                                    </a>
                                 {% endif %}
-                            {% endif %}
 
-                            {% if booking.status == 'pending' or booking.status == 'confirmed' %}
-                            <a href="{% url 'clients:booking_reschedule' booking.id %}"
-                               class="px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition text-sm">
-                                Reschedule
-                            </a>
-                            <form method="POST" action="{% url 'clients:booking_cancel' booking.id %}" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
-                                {% csrf_token %}
-                                <button type="submit" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition text-sm">
-                                    Cancel
-                                </button>
-                            </form>
-                            {% endif %}
+                                {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                                <a href="{% url 'clients:booking_reschedule' booking.id %}"
+                                   class="px-4 py-2.5 bg-blue-50 border-2 border-blue-200 text-blue-700 text-center rounded-lg font-semibold hover:bg-blue-100 transition text-sm">
+                                    Reschedule
+                                </a>
+                                <form method="POST" action="{% url 'clients:booking_cancel' booking.id %}" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full px-4 py-2.5 bg-red-50 border-2 border-red-200 text-red-700 rounded-lg font-semibold hover:bg-red-100 transition text-sm">
+                                        Cancel
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
