@@ -1327,7 +1327,6 @@ def create_booking_direct(request):
     """Create booking directly with immediate package validation (no reservation step)."""
     import json
     import logging
-    from bookings.models import FieldRentalSlot
     logger = logging.getLogger(__name__)
 
     try:
@@ -1344,11 +1343,8 @@ def create_booking_direct(request):
             return JsonResponse({'success': False, 'error': 'Annual waiver required. Please sign it in your Profile before booking.'})
 
         # Parse request body
-        try:
-            data = json.loads(request.body)
-            bookings_data = data.get('bookings', [])
-        except (json.JSONDecodeError, KeyError):
-            return JsonResponse({'success': False, 'error': 'Invalid request data'})
+        data = json.loads(request.body)
+        bookings_data = data.get('bookings', [])
 
         if not bookings_data:
             return JsonResponse({'success': False, 'error': 'No bookings provided'})
