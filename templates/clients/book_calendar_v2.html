@@ -670,9 +670,12 @@ async function confirmBookings(){
 
         // Check if payment is required for any bookings
         if(data.requires_payment && data.pending_payment && data.pending_payment.length>0){
-            const pp=data.pending_payment[0];
-            const label=`${pp.session_type} — ${pp.player_name} ($${pp.amount})`;
-            payBooking(pp.booking_id, label);
+            const items=data.pending_payment;
+            const total=items.reduce((sum,i)=>sum+parseFloat(i.amount),0).toFixed(2);
+            const lines=items.map(i=>`• ${i.session_type} — ${i.player_name} ($${i.amount})`).join('\n');
+            const label=`${items.length} session${items.length>1?'s':''} · Total: $${total}\n${lines}`;
+            const ids=items.map(i=>i.booking_id);
+            payBookings(ids, label, total);
             return;
         }
 
@@ -740,19 +743,21 @@ function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,
 {% if stripe_public_key %}
 let _stripeJs=null, _bookingElements=null;
 
-async function payBooking(bookingId, label){
+async function payBookings(bookingIds, label, total){
     if(!_stripeJs) _stripeJs=Stripe('{{ stripe_public_key }}');
-    document.getElementById('booking-pay-label').textContent=label;
+    document.getElementById('booking-pay-label').innerText=label;
+    document.getElementById('booking-pay-total').textContent=`$${total}`;
     document.getElementById('booking-pay-modal').classList.remove('hidden');
     document.getElementById('booking-pay-loading').classList.remove('hidden');
     document.getElementById('booking-pay-element').classList.add('hidden');
     document.getElementById('booking-pay-btn').classList.add('hidden');
     document.getElementById('booking-pay-error').classList.add('hidden');
-    document.getElementById('booking-pay-btn').dataset.bookingId=bookingId;
 
     try{
-        const res=await fetch(`/payments/booking/${bookingId}/pay/`,{
-            method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}
+        const res=await fetch('/payments/bookings/pay/',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+            body:JSON.stringify({booking_ids:bookingIds})
         });
         const data=await res.json();
         if(!res.ok){showBookingPayError(data.error||'Could not initialize payment.');return;}
@@ -816,8 +821,12 @@ function showBookingPayError(msg){
 <!-- Booking payment modal -->
 <div id="booking-pay-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
-        <h2 class="text-xl font-bold mb-0.5">Complete Payment</h2>
-        <p id="booking-pay-label" class="text-gray-500 text-sm mb-4"></p>
+        <h2 class="text-xl font-bold mb-1">Complete Payment</h2>
+        <p id="booking-pay-label" class="text-gray-600 text-sm mb-2 whitespace-pre-line"></p>
+        <div class="flex justify-between items-center mb-4 px-3 py-2 bg-gray-50 rounded-lg">
+            <span class="text-sm font-medium text-gray-700">Total</span>
+            <span id="booking-pay-total" class="text-lg font-bold text-gray-900"></span>
+        </div>
         <div id="booking-pay-loading" class="py-8 text-center text-gray-400">
             <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
             <p class="text-sm">Loading payment options…</p>

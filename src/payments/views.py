@@ -304,6 +304,17 @@ def _handle_payment_succeeded(intent):
             payment_intent_id=intent['id'],
         )
 
+    elif metadata.get('booking_ids'):
+        # Batch payment — multiple bookings
+        ids = metadata['booking_ids'].split(',')
+        per_booking_amount = intent.get('amount', 0) // len(ids) if ids else 0
+        for bid in ids:
+            _confirm_booking_paid(
+                booking_id=bid.strip(),
+                payment_intent_id=intent['id'],
+                amount=per_booking_amount,
+            )
+
     elif metadata.get('booking_id'):
         _confirm_booking_paid(
             booking_id=metadata.get('booking_id'),
@@ -500,6 +511,78 @@ def create_booking_payment_intent(request, booking_id):
         })
     except stripe.error.StripeError as e:
         logger.error('Booking payment intent error: %s', e)
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def create_batch_booking_payment_intent(request):
+    """Create a single Stripe PaymentIntent for multiple pending drop-in bookings."""
+    import json
+    from bookings.models import Booking
+    from decimal import Decimal
+
+    if not settings.STRIPE_SECRET_KEY:
+        return JsonResponse({'error': 'Stripe is not configured.'}, status=400)
+
+    client = get_object_or_404(Client, user=request.user)
+
+    data = json.loads(request.body)
+    booking_ids = data.get('booking_ids', [])
+    if not booking_ids:
+        return JsonResponse({'error': 'No booking IDs provided.'}, status=400)
+
+    bookings = list(Booking.objects.filter(
+        pk__in=booking_ids, client=client, payment_status='pending'
+    ).select_related('session_type', 'player'))
+
+    if not bookings:
+        return JsonResponse({'error': 'No pending bookings found.'}, status=400)
+
+    total = Decimal('0')
+    for b in bookings:
+        amt = b.amount_paid
+        if not amt and b.session_type:
+            amt = b.session_type.get_drop_in_price()
+        if amt:
+            total += amt
+
+    if total <= 0:
+        return JsonResponse({'error': 'Cannot determine payment amount.'}, status=400)
+
+    s = _stripe()
+    customer_id = _get_or_create_stripe_customer(client)
+
+    # Store all booking IDs as comma-separated in metadata
+    descriptions = []
+    for b in bookings:
+        name = b.session_type.name if b.session_type else 'Session'
+        player = f"{b.player.first_name} {b.player.last_name}" if b.player else ''
+        descriptions.append(f"{name} ({player})")
+
+    try:
+        pi = s.PaymentIntent.create(
+            amount=int(total * 100),
+            currency='usd',
+            customer=customer_id,
+            metadata={
+                'booking_ids': ','.join(str(b.pk) for b in bookings),
+                'client_id': client.pk,
+            },
+            description=f"Drop-in: {'; '.join(descriptions)}",
+        )
+
+        for b in bookings:
+            if not b.amount_paid and b.session_type:
+                b.amount_paid = b.session_type.get_drop_in_price()
+                b.save(update_fields=['amount_paid'])
+
+        return JsonResponse({
+            'client_secret': pi.client_secret,
+            'amount': str(total),
+        })
+    except stripe.error.StripeError as e:
+        logger.error('Batch booking payment intent error: %s', e)
         return JsonResponse({'error': str(e)}, status=400)
 
 
