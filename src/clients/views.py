@@ -1360,9 +1360,6 @@ def create_booking_direct(request):
     if not bookings_data:
         return JsonResponse({'success': False, 'error': 'No bookings provided'})
 
-    # Get program
-    program = Program.objects.filter(is_active=True).first()
-
     # Helper to get package for player
     def get_package_for_player(player):
         pkg = client.packages.filter(
@@ -1446,7 +1443,6 @@ def create_booking_direct(request):
                 client=client,
                 player=item['player'],
                 coach=item['block'].coach,
-                program=program,
                 session_type=session_type,
                 scheduled_date=item['block'].date,
                 scheduled_time=item['block'].start_time,
