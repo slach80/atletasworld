@@ -602,7 +602,10 @@ async function confirmBookings(){
     const invalidItems=cart.filter(item=>!item.block_id||!item.player_id);
     if(invalidItems.length>0){
         console.error('Invalid cart items:',invalidItems);
-        alert('Some cart items are missing block_id or player_id. Please clear cart (refresh page) and try again.');
+        alert('Cart validation failed!\n\n'+
+              'Cart items: '+cart.length+'\n'+
+              'Invalid items: '+invalidItems.length+'\n\n'+
+              'Cart data:\n'+JSON.stringify(cart,null,2).substring(0,500));
         if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
         return;
     }
@@ -629,12 +632,21 @@ async function confirmBookings(){
         if(!contentType||!contentType.includes('application/json')){
             const text=await res.text();
             console.error('Non-JSON response:',text);
-            throw new Error('Server error: '+text.substring(0,100));
+            alert('Server returned non-JSON response!\n\n'+
+                  'Status: '+res.status+'\n'+
+                  'Content-Type: '+contentType+'\n\n'+
+                  'Response preview:\n'+text.substring(0,300));
+            throw new Error('Server error');
         }
 
         const data=await res.json();
         console.log('Response data:',data);
-        if(!data.success)throw new Error(data.error||'Booking failed');
+        if(!data.success){
+            alert('Booking failed from server!\n\n'+
+                  'Error: '+(data.error||'Unknown')+'\n\n'+
+                  'Response:\n'+JSON.stringify(data,null,2));
+            throw new Error(data.error||'Booking failed');
+        }
 
         // Success!
         const bookedCount=data.bookings_created||0;
@@ -660,11 +672,8 @@ async function confirmBookings(){
         console.error('Booking error:',e);
         const errMsg=e.message||'Unknown error';
 
-        // Show detailed error in alert
-        alert('Booking failed:\n\n'+errMsg+'\n\nCheck browser console for details (F12)');
-
         if(errMsg.includes('No active package')||errMsg.includes('No sessions remaining')){
-            if(confirm('Would you like to purchase a package now?')){
+            if(confirm(errMsg+'\n\nWould you like to purchase a package now?')){
                 window.location.href='{% url "clients:packages" %}';
                 return;
             }
