@@ -443,7 +443,8 @@ function renderSlots(){
         const label=dt.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
         html+=`<div><h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">${label}</h3><div class="space-y-2">`;
         for(const s of slots){
-            const inCart=cart.some(c=>c.key===s.key);
+            // Check if any cart item matches this slot (key format: slotkey_player_id)
+            const inCart=cart.some(c=>c.key.startsWith(s.key+'_player_'));
             const time=fmtTime(s.start);
             const price=parseFloat(s.price||0);
             html+=`<div class="flex items-center justify-between p-4 bg-white rounded-xl border ${inCart?'border-yellow-400 bg-yellow-50':'border-gray-200'} hover:border-yellow-300 transition">
@@ -457,7 +458,7 @@ function renderSlots(){
                     </div>
                 </div>
                 ${inCart
-                    ?`<button onclick="removeFromCart('${s.key}')" class="px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-bold">✓ Added</button>`
+                    ?`<button onclick="removeSlotFromCart('${s.key}')" class="px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-bold">✓ Added</button>`
                     :`<button onclick="addToCart('${s.key}')" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-xs font-bold hover:bg-yellow-600">+ Add</button>`
                 }
             </div>`;
@@ -565,6 +566,14 @@ function addToCart(key){
 
 function removeFromCart(key){
     cart=cart.filter(c=>c.key!==key);
+    localStorage.setItem('bookingCart',JSON.stringify(cart));
+    updateCartBadge();
+    renderSlots(); renderCart();
+}
+
+function removeSlotFromCart(slotKey){
+    // Remove all cart items for this slot (all players)
+    cart=cart.filter(c=>!c.key.startsWith(slotKey+'_player_'));
     localStorage.setItem('bookingCart',JSON.stringify(cart));
     updateCartBadge();
     renderSlots(); renderCart();
