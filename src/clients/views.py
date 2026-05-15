@@ -1368,6 +1368,9 @@ def create_booking_direct(request):
                 ).first()
             return pkg
 
+        # Track sessions consumed during this batch to prevent over-booking
+        package_sessions_used = {}  # {client_package_id: count_used_in_this_batch}
+
         # Validate all bookings first (fail fast)
         validated_bookings = []
         for item in bookings_data:
@@ -1423,11 +1426,16 @@ def create_booking_direct(request):
                         if linked.exists() and pkg.package not in linked:
                             pkg = None  # Package doesn't cover this session type
 
-                    if pkg and pkg.package.sessions_included > 0 and pkg.sessions_remaining <= 0:
-                        pkg = None  # Package exhausted
+                    if pkg and pkg.package.sessions_included > 0:
+                        # Account for sessions already claimed in this batch
+                        batch_used = package_sessions_used.get(pkg.id, 0)
+                        if pkg.sessions_remaining - batch_used <= 0:
+                            pkg = None  # Package exhausted (including batch claims)
 
-                    if not pkg:
-                        # No valid package — require drop-in payment
+                    if pkg:
+                        # Reserve one session in this batch
+                        package_sessions_used[pkg.id] = package_sessions_used.get(pkg.id, 0) + 1
+                    else:
                         requires_payment = True
                 else:
                     # Session type doesn't allow packages — always requires payment
@@ -1447,27 +1455,7 @@ def create_booking_direct(request):
         payment_items = [i for i in validated_bookings if i['requires_payment']]
         covered_items = [i for i in validated_bookings if not i['requires_payment']]
 
-        # If any items require payment, don't create any bookings yet —
-        # return payment info so frontend can collect payment first,
-        # and the webhook will create all bookings on success.
-        if payment_items:
-            pending_payment = []
-            for item in payment_items:
-                pending_payment.append({
-                    'block_id': item['block'].id,
-                    'player_id': item['player'].id,
-                    'amount': str(item['price']),
-                    'session_type': item['session_type'].name,
-                    'player_name': f"{item['player'].first_name} {item['player'].last_name}",
-                })
-
-            return JsonResponse({
-                'success': True,
-                'requires_payment': True,
-                'pending_payment': pending_payment,
-            })
-
-        # All items covered by package or free — create bookings immediately
+        # Always create bookings for covered items (package/free) immediately
         created_bookings = []
         for item in covered_items:
             booking = Booking.objects.create(
@@ -1506,6 +1494,25 @@ def create_booking_direct(request):
                 )
             except Exception:
                 pass
+
+        # If some items require payment, return payment info alongside confirmed bookings
+        if payment_items:
+            pending_payment = []
+            for item in payment_items:
+                pending_payment.append({
+                    'block_id': item['block'].id,
+                    'player_id': item['player'].id,
+                    'amount': str(item['price']),
+                    'session_type': item['session_type'].name,
+                    'player_name': f"{item['player'].first_name} {item['player'].last_name}",
+                })
+
+            return JsonResponse({
+                'success': True,
+                'requires_payment': True,
+                'bookings_created': len(created_bookings),
+                'pending_payment': pending_payment,
+            })
 
         return JsonResponse({
             'success': True,
