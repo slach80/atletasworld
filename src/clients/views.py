@@ -1384,7 +1384,7 @@ def create_booking_direct(request):
             return JsonResponse({'success': False, 'error': 'Missing block_id or player_id'})
 
         try:
-            block = ScheduleBlock.objects.select_related('coach', 'session_type').get(id=block_id)
+            block = ScheduleBlock.objects.select_related('coach').prefetch_related('catalog_session_types').get(id=block_id)
             player = Player.objects.get(id=player_id, client=client)
         except (ScheduleBlock.DoesNotExist, Player.DoesNotExist):
             return JsonResponse({'success': False, 'error': 'Invalid block or player'})
