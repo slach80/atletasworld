@@ -21,7 +21,7 @@
                     <label class="flex items-center gap-2 text-sm cursor-pointer select-none text-gray-700 hover:text-gray-900">
                         <input type="checkbox" class="player-check accent-yellow-400 w-4 h-4 rounded"
                                value="{{ player.id }}" {% if forloop.first %}checked{% endif %}
-                               onchange="updateCartBadge(); renderCart();">
+                               onchange="updateCartBadge(); renderCart(); renderSlots();">
                         <span>{{ player.first_name }} {{ player.last_name }}</span>
                     </label>
                     {% empty %}
@@ -207,7 +207,7 @@
                     <label class="flex items-center gap-2 text-sm cursor-pointer select-none text-gray-700 hover:text-gray-900">
                         <input type="checkbox" class="player-check accent-yellow-400 w-4 h-4 rounded"
                                value="{{ player.id }}" {% if forloop.first %}checked{% endif %}
-                               onchange="updateCartBadge(); renderCart();">
+                               onchange="updateCartBadge(); renderCart(); renderSlots();">
                         <span>{{ player.first_name }} {{ player.last_name }}</span>
                     </label>
                     {% empty %}
@@ -271,6 +271,7 @@ let slotMap={}, cart=[], packages=[], sessionTypes=[], activeTypes=new Set(), ac
 let timeStart=6, timeEnd=23;
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
+const bookedSet=new Set({{ booked_set_json|safe }});
 
 // Restore cart from localStorage
 try{
@@ -453,9 +454,25 @@ function renderSlots(){
             const inCart=cart.some(c=>c.key.startsWith(s.key+'_player_'));
             const time=fmtTime(s.start);
             const price=parseFloat(s.price||0);
-            html+=`<div class="flex items-center justify-between p-4 bg-white rounded-xl border ${inCart?'border-yellow-400 bg-yellow-50':'border-gray-200'} hover:border-yellow-300 transition">
+
+            // Check if all selected players are already booked for this slot
+            const slotDate=s.start.split('T')[0];
+            const slotTime=s.start.split('T')[1]?.substring(0,5)||'';
+            const selectedPlayers=Array.from(document.querySelectorAll('.player-check:checked'));
+            const allBooked=selectedPlayers.length>0&&selectedPlayers.every(cb=>bookedSet.has(`${cb.value}|${slotDate}|${slotTime}`));
+
+            let btnHtml;
+            if(inCart){
+                btnHtml=`<button onclick="removeSlotFromCart('${s.key}')" class="px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-bold">✓ Added</button>`;
+            }else if(allBooked){
+                btnHtml=`<span class="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg text-xs font-bold">Booked</span>`;
+            }else{
+                btnHtml=`<button onclick="addToCart('${s.key}')" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-xs font-bold hover:bg-yellow-600">+ Add</button>`;
+            }
+
+            html+=`<div class="flex items-center justify-between p-4 ${allBooked?'bg-gray-50':'bg-white'} rounded-xl border ${inCart?'border-yellow-400 bg-yellow-50':allBooked?'border-gray-200 opacity-60':'border-gray-200'} hover:border-yellow-300 transition">
                 <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-1 h-12 rounded-full" style="background:${s.color}"></div>
+                    <div class="w-1 h-12 rounded-full" style="background:${allBooked?'#d1d5db':s.color}"></div>
                     <div class="min-w-0">
                         <p class="font-semibold text-sm text-gray-900">${time} · ${s.duration} min</p>
                         <p class="text-xs text-gray-600">${s.session_type_name}</p>
@@ -463,10 +480,7 @@ function renderSlots(){
                         <p class="text-xs ${price>0?'text-yellow-600 font-semibold':'text-gray-400'}">${price>0?'$'+price.toFixed(2):'Free'}</p>
                     </div>
                 </div>
-                ${inCart
-                    ?`<button onclick="removeSlotFromCart('${s.key}')" class="px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-bold">✓ Added</button>`
-                    :`<button onclick="addToCart('${s.key}')" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-xs font-bold hover:bg-yellow-600">+ Add</button>`
-                }
+                ${btnHtml}
             </div>`;
         }
         html+=`</div></div>`;
@@ -551,8 +565,28 @@ function addToCart(key){
         return;
     }
 
-    // Add one cart item per player for this slot
+    // Check which players are already booked for this slot
+    const slotDate=s.start.split('T')[0];
+    const slotTime=s.start.split('T')[1]?.substring(0,5)||'';
+    const alreadyBooked=[];
+    const eligible=[];
+
     selectedPlayers.forEach(player=>{
+        const lookupKey=`${player.id}|${slotDate}|${slotTime}`;
+        if(bookedSet.has(lookupKey)){
+            alreadyBooked.push(player.name);
+        }else{
+            eligible.push(player);
+        }
+    });
+
+    if(alreadyBooked.length>0){
+        alert(`Already booked for this session:\n${alreadyBooked.join(', ')}`);
+    }
+    if(eligible.length===0) return;
+
+    // Add one cart item per eligible player for this slot
+    eligible.forEach(player=>{
         const itemKey=`${key}_player_${player.id}`;
         if(!cart.some(c=>c.key===itemKey)){
             cart.push({

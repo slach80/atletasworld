@@ -25,6 +25,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.core.cache import cache
 from django.conf import settings
+import json
 from datetime import datetime, timedelta
 
 from clients.utils import validate_photo as _validate_photo, _MAX_PHOTO_BYTES, _ALLOWED_PHOTO_EXTENSIONS
@@ -1068,6 +1069,18 @@ def booking_page_v2(request):
     # Get coaches
     coaches = Coach.objects.filter(is_active=True)
 
+    # Get existing bookings for duplicate check on frontend
+    existing_bookings = Booking.objects.filter(
+        client=client,
+        status__in=['confirmed', 'pending'],
+        scheduled_date__gte=today,
+    ).values_list('player_id', 'scheduled_date', 'scheduled_time')
+    # Format as set of "player_id|date|time" for quick JS lookup
+    booked_set = [
+        f"{pid}|{d.isoformat()}|{t.strftime('%H:%M')}"
+        for pid, d, t in existing_bookings
+    ]
+
     context = {
         'client': client,
         'active_package': active_package,
@@ -1075,6 +1088,7 @@ def booking_page_v2(request):
         'coaches': coaches,
         'has_package': active_package is not None,
         'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+        'booked_set_json': json.dumps(booked_set),
     }
     return render(request, 'clients/book_calendar_v2.html', context)
 
