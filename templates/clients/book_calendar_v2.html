@@ -375,12 +375,24 @@ function validateCart(){
 }
 
 function populateLocationFilter(){
-    // Get unique non-empty locations, excluding "Any Location"
-    const locs=[...new Set(
-        Object.values(slotMap)
-            .map(s=>s.location)
-            .filter(l=>l&&l.trim()&&l.toLowerCase()!=='any location')
-    )].sort();
+    // Get unique non-empty locations, split comma-separated, normalize case
+    const allLocations=Object.values(slotMap)
+        .map(s=>s.location)
+        .filter(l=>l&&l.trim()&&l.toLowerCase()!=='any location')
+        .flatMap(l=>l.split(',').map(x=>x.trim())) // Split comma-separated
+        .filter(l=>l); // Remove empty after split
+
+    // Deduplicate using lowercase comparison, keep original case
+    const seenLower=new Set();
+    const locs=[];
+    for(const loc of allLocations){
+        const lower=loc.toLowerCase();
+        if(!seenLower.has(lower)){
+            seenLower.add(lower);
+            locs.push(loc);
+        }
+    }
+    locs.sort();
 
     const selDesktop=document.getElementById('locationSelect');
     const selMobile=document.getElementById('locationSelectMobile');
