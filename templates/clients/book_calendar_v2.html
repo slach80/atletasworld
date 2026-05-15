@@ -379,10 +379,13 @@ function populateLocationFilter(){
     const allLocations=Object.values(slotMap)
         .map(s=>s.location)
         .filter(l=>l&&l.trim()&&l.toLowerCase()!=='any location')
-        .flatMap(l=>l.split(',').map(x=>x.trim())) // Split comma-separated
-        .filter(l=>l); // Remove empty after split
+        .flatMap(l=>{
+            // Split by comma, semicolon, or pipe
+            return l.split(/[,;|]/).map(x=>x.trim());
+        })
+        .filter(l=>l&&l.length>0); // Remove empty after split
 
-    // Deduplicate using lowercase comparison, keep original case
+    // Deduplicate using lowercase comparison, keep first occurrence
     const seenLower=new Set();
     const locs=[];
     for(const loc of allLocations){
@@ -392,7 +395,7 @@ function populateLocationFilter(){
             locs.push(loc);
         }
     }
-    locs.sort();
+    locs.sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
 
     const selDesktop=document.getElementById('locationSelect');
     const selMobile=document.getElementById('locationSelectMobile');
@@ -413,8 +416,8 @@ function renderSlots(){
         // Filter by coach
         if(activeCoach && String(s.coach_id) !== String(activeCoach)) continue;
 
-        // Filter by location
-        if(activeLocation && String(s.location_id) !== String(activeLocation)) continue;
+        // Filter by location (check if slot's location contains the selected location)
+        if(activeLocation && (!s.location || !s.location.includes(activeLocation))) continue;
 
         // Filter by date
         const slotDate = new Date(s.start.split('T')[0]+'T12:00:00');
