@@ -375,7 +375,13 @@ function validateCart(){
 }
 
 function populateLocationFilter(){
-    const locs=[...new Set(Object.values(slotMap).map(s=>s.location).filter(Boolean))].sort();
+    // Get unique non-empty locations, excluding "Any Location"
+    const locs=[...new Set(
+        Object.values(slotMap)
+            .map(s=>s.location)
+            .filter(l=>l&&l.trim()&&l.toLowerCase()!=='any location')
+    )].sort();
+
     const selDesktop=document.getElementById('locationSelect');
     const selMobile=document.getElementById('locationSelectMobile');
     const html='<option value="">Any Location</option>'+locs.map(l=>`<option value="${l}">${l}</option>`).join('');
