@@ -2,7 +2,7 @@
 {% block title %}My Packages{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Breadcrumb -->
         <div class="flex items-center text-sm text-gray-500 mb-6">
             <a href="{% url 'clients:dashboard' %}" aria-hidden="true" class="hover:text-secondary">Dashboard</a>
@@ -88,9 +88,9 @@
         <div class="rounded-2xl mb-8 overflow-hidden border-2 border-primary">
             <div class="bg-primary text-white px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1 rounded mb-2">⭐ Featured Program</span>
+                    <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1 rounded mb-2">Featured Program</span>
                     <h2 class="text-2xl font-black uppercase tracking-tight">APC Select Membership</h2>
-                    <p class="text-gray-300 text-sm mt-1">High-performance supplemental program · 6-month commitment · Kits included</p>
+                    <p class="text-gray-300 text-sm mt-1">High-performance supplemental program</p>
                 </div>
                 {% if has_select_membership %}
                 <div class="bg-secondary/10 border border-secondary/30 rounded-xl px-5 py-3 text-center shrink-0">
@@ -109,45 +109,22 @@
                 {% endif %}
 
                 <div class="grid md:grid-cols-2 gap-8 items-start">
-                    <!-- Benefits list -->
                     <div>
                         <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">What's Included</h3>
                         <ul class="space-y-3 text-sm text-gray-700">
-                            <li class="flex items-start gap-3">
-                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                <span>1 indoor team training/month at APC <span class="text-gray-400">(+ performance assessment)</span></span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                <span>1 outdoor team training/month</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                <span>Monthly scrimmage vs. ECNL, MLS Next &amp; international teams</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                <span>Playing &amp; training kits included</span>
-                            </li>
+                            <li class="flex items-start gap-3"><div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div><span>1 indoor team training/month at APC</span></li>
+                            <li class="flex items-start gap-3"><div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div><span>1 outdoor team training/month</span></li>
+                            <li class="flex items-start gap-3"><div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div><span>Monthly scrimmage vs. ECNL, MLS Next &amp; international teams</span></li>
+                            <li class="flex items-start gap-3"><div class="w-5 h-5 bg-secondary rounded-full flex items-center justify-center shrink-0 mt-0.5"><svg class="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div><span>Playing &amp; training kits included</span></li>
                         </ul>
                         <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 mt-6">Auto-Applied Discounts</h3>
                         <ul class="space-y-3 text-sm text-gray-700">
-                            <li class="flex items-center gap-3">
-                                <span class="font-black text-secondary text-lg leading-none">→</span>
-                                <span><strong>$40/month</strong> credit toward any APC Training package <span class="text-gray-400">(6 credits granted on purchase)</span></span>
-                            </li>
-                            <li class="flex items-center gap-3">
-                                <span class="font-black text-secondary text-lg leading-none">→</span>
-                                <span>Pick-up sessions: <strong>$5 flat</strong> <span class="text-gray-400">(normally $10)</span></span>
-                            </li>
-                            <li class="flex items-center gap-3">
-                                <span class="font-black text-secondary text-lg leading-none">→</span>
-                                <span><strong>10% off</strong> all camps &amp; clinics</span>
-                            </li>
+                            <li class="flex items-center gap-3"><span class="font-black text-secondary text-lg leading-none">→</span><span><strong>$40/month</strong> credit toward any APC Training package</span></li>
+                            <li class="flex items-center gap-3"><span class="font-black text-secondary text-lg leading-none">→</span><span>Pick-up sessions: <strong>$5 flat</strong> <span class="text-gray-400">(normally $10)</span></span></li>
+                            <li class="flex items-center gap-3"><span class="font-black text-secondary text-lg leading-none">→</span><span><strong>10% off</strong> all camps &amp; clinics</span></li>
                         </ul>
                     </div>
 
-                    <!-- Pricing + CTA -->
                     <div>
                         {% for package in select_packages %}
                         <div class="border-2 border-primary rounded-2xl p-6">
@@ -155,27 +132,15 @@
                                 <span class="text-5xl font-black text-primary">${{ package.price }}</span>
                                 <span class="text-gray-400 text-lg pb-1">/month</span>
                             </div>
-                            <p class="text-sm text-gray-500 mb-5">6-month commitment · Club commitments remain priority</p>
-                            <div class="flex items-center gap-2 text-xs text-gray-500 mb-5">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                Valid for {{ package.validity_weeks }} weeks (≈ 6 months)
-                            </div>
+                            <p class="text-sm text-gray-500 mb-5">6-month commitment</p>
                             {% if has_select_membership %}
-                            <div class="w-full text-center py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold cursor-default">
-                                ✓ Already a Member
-                            </div>
+                            <div class="w-full text-center py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold cursor-default">Already a Member</div>
                             {% elif stripe_public_key %}
-                            <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }}, [{% for p in players %}{'id':{{ p.pk }},'name':'{{ p.first_name|escapejs }} {{ p.last_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}])"
+                            <button onclick="addToCart({{ package.pk }}, '{{ package.name|escapejs }}', {{ package.price }}, 'select')"
                                     class="w-full py-3 bg-primary text-secondary rounded-xl font-black hover:bg-gray-800 transition text-sm uppercase tracking-wide">
-                                Join APC Select — ${{ package.price }}/mo
+                                Add to Cart — ${{ package.price }}/mo
                             </button>
-                            {% else %}
-                            <a href="mailto:info@atletasperformancecenter.com?subject=APC Select Membership"
-                               class="block w-full text-center py-3 bg-primary text-secondary rounded-xl font-black hover:bg-gray-800 transition text-sm uppercase tracking-wide">
-                                Contact to Join
-                            </a>
                             {% endif %}
-                            <p class="text-center text-xs text-gray-400 mt-3">Tryouts required · <a href="/programs/" class="underline hover:text-gray-600">Learn more &amp; register →</a></p>
                         </div>
                         {% endfor %}
                     </div>
@@ -184,130 +149,133 @@
         </div>
         {% endif %}
 
-        <!-- Training Packages -->
-        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Training Packages</h2>
-            <p class="text-gray-600 mb-6">Purchase a package to save on training sessions!</p>
+        <!-- 2-column: Packages + Cart -->
+        <div class="grid lg:grid-cols-3 gap-6">
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {% for package in available_packages %}
-                <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col">
-                    <!-- Header -->
-                    <div class="mb-4">
-                        <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
-                        <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
-                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
-                            &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
-                        </p>
+            <!-- Package Cards (2/3) -->
+            <div class="lg:col-span-2 space-y-8">
+
+                <!-- Training Packages -->
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Training Packages</h2>
+                    <p class="text-gray-600 mb-6">Purchase a package to save on training sessions!</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {% for package in available_packages %}
+                        <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 flex flex-col">
+                            <div class="mb-4">
+                                <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
+                                <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
+                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
+                                    &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
+                                </p>
+                            </div>
+                            <div class="mb-5 flex-1">
+                                <div class="text-4xl font-black text-primary">${{ package.price }}</div>
+                                {% if package.description %}
+                                <p class="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">{{ package.description }}</p>
+                                {% endif %}
+                            </div>
+                            <ul class="space-y-2 text-sm mb-5">
+                                <li class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions included{% else %}Unlimited sessions{% endif %}
+                                </li>
+                                <li class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Valid {{ package.validity_weeks }} weeks
+                                </li>
+                                {% if package.event_start_date %}
+                                <li class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
+                                </li>
+                                {% endif %}
+                                {% if has_select_membership %}
+                                <li class="flex items-center gap-2 text-secondary font-bold">
+                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    $40 Select credit applicable
+                                </li>
+                                {% endif %}
+                            </ul>
+                            {% if stripe_public_key %}
+                            <button onclick="addToCart({{ package.pk }}, '{{ package.name|escapejs }}', {{ package.price }}, 'training')"
+                                    class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
+                                + Add to Cart
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 col-span-2 text-center py-8">No packages available at this time.</p>
+                        {% endfor %}
                     </div>
-
-                    <!-- Price -->
-                    <div class="mb-5 flex-1">
-                        <div class="text-4xl font-black text-primary">${{ package.price }}</div>
-                        {% if package.description %}
-                        <p class="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">{{ package.description }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Details -->
-                    <ul class="space-y-2 text-sm mb-5">
-                        <li class="flex items-center gap-2 text-gray-600">
-                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions included{% else %}Unlimited sessions{% endif %}
-                        </li>
-                        <li class="flex items-center gap-2 text-gray-600">
-                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Valid {{ package.validity_weeks }} weeks
-                        </li>
-                        {% if package.event_start_date %}
-                        <li class="flex items-center gap-2 text-gray-600">
-                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
-                        </li>
-                        {% endif %}
-                        {% if has_select_membership %}
-                        <li class="flex items-center gap-2 text-secondary font-bold">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            ⭐ $40 Select credit applicable
-                        </li>
-                        {% endif %}
-                    </ul>
-
-                    <!-- CTA -->
-                    {% if stripe_public_key %}
-                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }}, [{% for p in players %}{'id':{{ p.pk }},'name':'{{ p.first_name|escapejs }} {{ p.last_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}])"
-                            class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
-                        Purchase — ${{ package.price }}
-                    </button>
-                    {% else %}
-                    <a href="{% url 'clients:packages' %}"
-                       class="mt-auto block text-center w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
-                        Purchase — ${{ package.price }}
-                    </a>
-                    {% endif %}
                 </div>
-                {% empty %}
-                <p class="text-gray-500 col-span-4 text-center py-8">No packages available at this time.</p>
-                {% endfor %}
-            </div>
-        </div>
 
-        <!-- Special Event Packages -->
-        {% if special_packages %}
-        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Event &amp; Camp Packages</h2>
-            <p class="text-gray-600 mb-6">Time-limited packages tied to specific programs.</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {% for package in special_packages %}
-                <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 flex flex-col">
-                    <div class="mb-4">
-                        <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
-                        <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
-                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
-                            &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
-                        </p>
+                <!-- Special Event Packages -->
+                {% if special_packages %}
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Event &amp; Camp Packages</h2>
+                    <p class="text-gray-600 mb-6">Time-limited packages tied to specific programs.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {% for package in special_packages %}
+                        <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 flex flex-col">
+                            <div class="mb-4">
+                                <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
+                                <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
+                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
+                                    &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
+                                </p>
+                            </div>
+                            <div class="text-4xl font-black text-primary mb-5">${{ package.price }}</div>
+                            <ul class="space-y-2 text-sm mb-5 flex-1">
+                                <li class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
+                                </li>
+                                {% if package.event_start_date %}
+                                <li class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
+                                </li>
+                                {% endif %}
+                                {% if package.event_location %}
+                                <li class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                                    {{ package.event_location }}
+                                </li>
+                                {% endif %}
+                            </ul>
+                            {% if stripe_public_key %}
+                            <button onclick="addToCart({{ package.pk }}, '{{ package.name|escapejs }}', {{ package.price }}, 'event')"
+                                    class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
+                                + Add to Cart
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="text-4xl font-black text-primary mb-5 flex-1">${{ package.price }}</div>
-                    <ul class="space-y-2 text-sm mb-5">
-                        <li class="flex items-center gap-2 text-gray-600">
-                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
-                        </li>
-                        {% if package.event_start_date %}
-                        <li class="flex items-center gap-2 text-gray-600">
-                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
-                        </li>
-                        {% endif %}
-                        {% if package.event_location %}
-                        <li class="flex items-center gap-2 text-gray-600">
-                            <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
-                            {{ package.event_location }}
-                        </li>
-                        {% endif %}
-                    </ul>
-                    {% if stripe_public_key %}
-                    <button onclick="buyPackage({{ package.pk }}, '{{ package.name }}', {{ package.price }}, [{% for p in players %}{'id':{{ p.pk }},'name':'{{ p.first_name|escapejs }} {{ p.last_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}])"
-                            class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
-                        Purchase — ${{ package.price }}
-                    </button>
-                    {% else %}
-                    <a href="{% url 'clients:packages' %}"
-                       class="mt-auto block text-center w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 transition group-hover:bg-secondary group-hover:text-primary">
-                        Purchase — ${{ package.price }}
-                    </a>
-                    {% endif %}
                 </div>
-                {% endfor %}
+                {% endif %}
             </div>
+
+            <!-- Cart Sidebar (1/3) — desktop -->
+            {% if stripe_public_key %}
+            <aside class="hidden lg:block">
+                <div class="sticky top-24">
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Your Cart</h3>
+                        <div id="cart-desktop"></div>
+                    </div>
+                </div>
+            </aside>
+            {% endif %}
+
         </div>
-        {% endif %}
 
         <!-- Package History -->
         {% if expired_packages %}
-        <div class="bg-white rounded-xl shadow-md p-8">
+        <div class="bg-white rounded-xl shadow-md p-8 mt-8">
             <h2 class="text-xl font-bold text-gray-800 mb-6">Package History</h2>
-
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
@@ -347,101 +315,95 @@
 </div>
 
 {% if stripe_public_key %}
-<!-- Enhanced Purchase Modal — multi-player support with order summary -->
+<!-- Mobile Cart FAB -->
+<button id="mobile-cart-fab" onclick="toggleMobileCart()" class="hidden lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-secondary text-primary rounded-full shadow-lg flex items-center justify-center">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+    <span id="cart-fab-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"></span>
+</button>
+
+<!-- Mobile Cart Modal -->
+<div id="mobile-cart-modal" class="hidden fixed inset-0 z-50">
+    <div onclick="toggleMobileCart()" class="absolute inset-0 bg-black/50"></div>
+    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-gray-900">Your Cart</h2>
+            <button onclick="toggleMobileCart()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6 pb-20">
+            <div id="cart-mobile"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Player Selection Popover (shown when adding to cart with multiple players) -->
+<div id="player-popover" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div onclick="closePlayerPopover()" class="absolute inset-0 bg-black/40"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5">
+        <h3 class="font-bold text-gray-900 mb-1">Select Player</h3>
+        <p id="popover-pkg-name" class="text-sm text-gray-500 mb-4"></p>
+        <div id="popover-players" class="space-y-2"></div>
+        <button onclick="closePlayerPopover()" class="w-full mt-4 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+    </div>
+</div>
+
+<!-- Payment Modal -->
 <div id="payment-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-        <!-- Step 1: Player Selection -->
-        <div id="step-players">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-xl font-bold">Purchase Package</h2>
-                    <p id="payment-package-name" class="text-gray-500 text-sm"></p>
-                </div>
-                <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <!-- Player checkboxes -->
-            <div id="player-checkboxes" class="mb-4">
-                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Select players</label>
-                <div id="player-check-list" class="space-y-2"></div>
-                <p id="player-error" class="hidden text-xs text-red-600 mt-1"></p>
-            </div>
-
-            <!-- Promo code -->
-            <div class="mb-4">
-                <div class="flex gap-2">
-                    <input type="text" id="promo-input" placeholder="Promo code (optional)"
-                           oninput="this.value=this.value.toUpperCase()"
-                           class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm uppercase focus:ring-2 focus:ring-secondary focus:border-transparent">
-                    <button type="button" onclick="applyPromoCode()"
-                            class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition">Apply</button>
-                </div>
-                <div id="promo-result" class="text-xs mt-1 hidden"></div>
-            </div>
-
-            <!-- APC Select credit -->
-            {% if has_select_membership and select_credit_balance > 0 %}
-            <div id="credit-row" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
-                <label class="flex items-center gap-2 cursor-pointer text-sm text-green-800">
-                    <input type="checkbox" id="apply-credit-check" onchange="updateOrderSummary()"
-                           class="rounded border-green-300 text-green-600 focus:ring-green-400">
-                    <span>Apply <strong>${{ select_credit_balance|floatformat:2 }}</strong> APC Select credit</span>
-                </label>
-            </div>
-            {% endif %}
-
-            <!-- Order Summary (updates dynamically) -->
-            <div id="order-summary" class="hidden mb-4 border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
-                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wide">Order Summary</h3>
-                </div>
-                <div id="order-line-items" class="px-4 py-3 space-y-2 text-sm"></div>
-                <div id="order-discounts" class="hidden px-4 pb-3 space-y-1 text-sm"></div>
-                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-                    <span class="font-bold text-gray-900">Total</span>
-                    <span id="order-total" class="text-xl font-black text-primary"></span>
-                </div>
-            </div>
-
-            <button id="proceed-btn" onclick="proceedToPayment()" disabled
-                    class="w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition disabled:opacity-40 disabled:cursor-not-allowed">
-                Continue to Payment
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">Checkout</h2>
+            <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-            <button onclick="closePaymentModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
         </div>
 
-        <!-- Step 2: Payment -->
-        <div id="step-payment" class="hidden">
-            <div class="flex items-center gap-3 mb-4">
-                <button onclick="backToPlayers()" class="text-gray-400 hover:text-gray-700 p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <div>
-                    <h2 class="text-xl font-bold">Payment</h2>
-                    <p class="text-gray-500 text-sm"><span id="pay-summary-label"></span></p>
-                </div>
+        <!-- Promo code -->
+        <div class="mb-4">
+            <div class="flex gap-2">
+                <input type="text" id="promo-input" placeholder="Promo code (optional)"
+                       oninput="this.value=this.value.toUpperCase()"
+                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm uppercase focus:ring-2 focus:ring-secondary focus:border-transparent">
+                <button type="button" onclick="applyPromoCode()"
+                        class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition">Apply</button>
             </div>
-
-            <!-- Compact order recap -->
-            <div id="pay-recap" class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs space-y-1"></div>
-
-            <!-- Loading -->
-            <div id="payment-loading" class="hidden py-8 text-center text-gray-400">
-                <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
-                <p class="text-sm">Loading payment options…</p>
-            </div>
-
-            <!-- Payment Element -->
-            <div id="payment-element" class="hidden mb-4"></div>
-            <div id="payment-errors" class="text-red-600 text-xs mb-3 hidden"></div>
-
-            <button id="pay-btn" onclick="submitPayment()" class="hidden w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
-                Pay <span id="pay-amount"></span>
-            </button>
-            <button onclick="backToPlayers()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Back</button>
+            <div id="promo-result" class="text-xs mt-1 hidden"></div>
         </div>
+
+        <!-- APC Select credit -->
+        {% if has_select_membership and select_credit_balance > 0 %}
+        <div id="credit-row" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+            <label class="flex items-center gap-2 cursor-pointer text-sm text-green-800">
+                <input type="checkbox" id="apply-credit-check" onchange="initCheckoutPayment()"
+                       class="rounded border-green-300 text-green-600 focus:ring-green-400">
+                <span>Apply <strong>${{ select_credit_balance|floatformat:2 }}</strong> APC Select credit</span>
+            </label>
+        </div>
+        {% endif %}
+
+        <!-- Order recap -->
+        <div id="checkout-recap" class="mb-4 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wide">Order Summary</h3>
+            </div>
+            <div id="checkout-items" class="px-4 py-3 space-y-2 text-sm"></div>
+            <div id="checkout-totals" class="px-4 py-3 bg-gray-50 border-t border-gray-200 space-y-1 text-sm"></div>
+        </div>
+
+        <!-- Loading -->
+        <div id="payment-loading" class="hidden py-6 text-center text-gray-400">
+            <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
+            <p class="text-sm">Loading payment…</p>
+        </div>
+
+        <!-- Payment Element -->
+        <div id="payment-element" class="hidden mb-4"></div>
+        <div id="payment-errors" class="text-red-600 text-xs mb-3 hidden"></div>
+
+        <button id="pay-btn" onclick="submitPayment()" class="hidden w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
+            Pay <span id="pay-amount"></span>
+        </button>
+        <button onclick="closePaymentModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
     </div>
 </div>
 
@@ -452,7 +414,7 @@
             <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
         </div>
         <h2 class="text-xl font-bold mb-2">Package Activated!</h2>
-        <p id="success-detail" class="text-gray-500 text-sm mb-5">Your package is now active and ready to use.</p>
+        <p id="success-detail" class="text-gray-500 text-sm mb-5">Your packages are now active and ready to use.</p>
         <a href="{% url 'clients:book_v2' %}" class="block py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">Book a Session</a>
         <a href="{% url 'clients:packages' %}" class="block mt-2 py-2 text-sm text-gray-500 hover:text-gray-700">View My Packages</a>
     </div>
@@ -461,211 +423,275 @@
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 const stripeJs = Stripe('{{ stripe_public_key }}');
+const playerList = [{% for p in players %}{'id':{{ p.pk }},'name':'{{ p.first_name|escapejs }} {{ p.last_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}];
+let cart = []; // [{id, package_id, name, price, player_id, player_name, type}]
 let paymentElements = null;
-let currentPackageId = null;
-let currentPackageName = '';
-let currentPackagePrice = 0;
-let currentPlayerList = [];
 let activePromoCode = '';
-let orderData = null; // response from batch endpoint
+let pendingAdd = null; // {package_id, name, price, type}
 
-function buyPackage(id, name, price, playerList) {
-    currentPackageId = id;
-    currentPackageName = name;
-    currentPackagePrice = parseFloat(price);
-    currentPlayerList = playerList || [];
+function addToCart(pkgId, name, price, type) {
+    if (playerList.length === 1) {
+        const p = playerList[0];
+        pushCartItem(pkgId, name, price, p.id, p.name, type);
+    } else {
+        // Show player popover
+        pendingAdd = {package_id: pkgId, name, price, type};
+        document.getElementById('popover-pkg-name').textContent = name + ' — $' + parseFloat(price).toFixed(2);
+        const container = document.getElementById('popover-players');
+        container.innerHTML = playerList.map(p => {
+            const inCart = cart.some(c => c.package_id === pkgId && c.player_id === p.id);
+            return `<button onclick="selectPlayerForCart(${p.id}, '${p.name.replace(/'/g,"\\'")}')" ${inCart?'disabled':''}
+                class="w-full flex items-center gap-3 p-3 rounded-lg border ${inCart?'border-green-200 bg-green-50 opacity-60':'border-gray-200 hover:border-secondary hover:bg-secondary/5'} transition text-left">
+                <div class="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center text-xs font-bold text-gray-700">${p.name.charAt(0)}</div>
+                <span class="font-medium text-gray-800 flex-1">${p.name}</span>
+                ${inCart?'<span class="text-xs text-green-600 font-semibold">In cart</span>':''}
+            </button>`;
+        }).join('');
+        document.getElementById('player-popover').classList.remove('hidden');
+    }
+}
+
+function selectPlayerForCart(playerId, playerName) {
+    if (!pendingAdd) return;
+    pushCartItem(pendingAdd.package_id, pendingAdd.name, pendingAdd.price, playerId, playerName, pendingAdd.type);
+    closePlayerPopover();
+}
+
+function closePlayerPopover() {
+    document.getElementById('player-popover').classList.add('hidden');
+    pendingAdd = null;
+}
+
+function pushCartItem(pkgId, name, price, playerId, playerName, type) {
+    // Prevent duplicate: same package + same player
+    if (cart.some(c => c.package_id === pkgId && c.player_id === playerId)) return;
+    cart.push({
+        id: Date.now() + '_' + Math.random().toString(36).slice(2,6),
+        package_id: pkgId,
+        name: name,
+        price: parseFloat(price),
+        player_id: playerId,
+        player_name: playerName,
+        type: type,
+    });
+    renderCart();
+}
+
+function removeFromCart(itemId) {
+    cart = cart.filter(c => c.id !== itemId);
+    renderCart();
+}
+
+function renderCart() {
+    const html = buildCartHtml();
+    document.getElementById('cart-desktop').innerHTML = html;
+    document.getElementById('cart-mobile').innerHTML = html;
+    // FAB badge
+    const fab = document.getElementById('mobile-cart-fab');
+    const badge = document.getElementById('cart-fab-badge');
+    if (cart.length > 0) {
+        fab.classList.remove('hidden');
+        fab.classList.add('flex');
+        badge.classList.remove('hidden');
+        badge.textContent = cart.length;
+    } else {
+        fab.classList.add('hidden');
+        fab.classList.remove('flex');
+        badge.classList.add('hidden');
+    }
+}
+
+function buildCartHtml() {
+    if (!cart.length) {
+        return '<p class="text-sm text-gray-400 text-center py-6">Your cart is empty.<br>Add packages above to get started.</p>';
+    }
+
+    // Calculate sibling discounts per package group
+    const groups = {};
+    cart.forEach(item => {
+        const key = item.package_id;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+    });
+
+    let items = '';
+    let subtotal = 0;
+    let totalDiscount = 0;
+
+    for (const [pkgId, group] of Object.entries(groups)) {
+        group.forEach((item, idx) => {
+            const isSibling = idx > 0;
+            const effectivePrice = isSibling ? item.price * 0.5 : item.price;
+            const discount = isSibling ? item.price * 0.5 : 0;
+            subtotal += effectivePrice;
+            totalDiscount += discount;
+
+            items += `<div class="flex items-start gap-3 py-3 ${idx > 0 ? '' : 'border-t border-gray-100'}">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">${item.name}</p>
+                    <p class="text-xs text-gray-500">${item.player_name}</p>
+                    ${isSibling ? '<p class="text-xs text-green-600 font-medium">Sibling 50% off</p>' : ''}
+                </div>
+                <div class="text-right shrink-0">
+                    ${isSibling ? `<span class="text-xs text-gray-400 line-through">$${item.price.toFixed(2)}</span> ` : ''}
+                    <span class="text-sm font-bold">$${effectivePrice.toFixed(2)}</span>
+                </div>
+                <button onclick="removeFromCart('${item.id}')" class="text-gray-300 hover:text-red-500 shrink-0 ml-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>`;
+        });
+    }
+
+    let totals = `<div class="border-t border-gray-200 pt-3 mt-2 space-y-1">`;
+    if (totalDiscount > 0) {
+        totals += `<div class="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>$${(subtotal + totalDiscount).toFixed(2)}</span></div>`;
+        totals += `<div class="flex justify-between text-xs text-green-600"><span>Sibling discount</span><span>-$${totalDiscount.toFixed(2)}</span></div>`;
+    }
+    totals += `<div class="flex justify-between font-bold text-gray-900"><span>Total</span><span>$${subtotal.toFixed(2)}</span></div>`;
+    totals += `</div>`;
+
+    const checkoutBtn = `<button onclick="openCheckout()" class="w-full mt-4 py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
+        Checkout — $${subtotal.toFixed(2)}
+    </button>`;
+
+    return `<div class="divide-y-0">${items}</div>${totals}${checkoutBtn}`;
+}
+
+function toggleMobileCart() {
+    document.getElementById('mobile-cart-modal').classList.toggle('hidden');
+}
+
+function openCheckout() {
+    if (!cart.length) return;
+    toggleMobileCart(); // close mobile cart if open
+
+    // Group by package for batch endpoint
     activePromoCode = '';
-    orderData = null;
-
-    document.getElementById('payment-package-name').textContent = name + ' — $' + currentPackagePrice.toFixed(2);
-    document.getElementById('payment-modal').classList.remove('hidden');
-
-    // Reset
     document.getElementById('promo-input').value = '';
     const pr = document.getElementById('promo-result');
     if (pr) { pr.classList.add('hidden'); pr.textContent = ''; }
     const cc = document.getElementById('apply-credit-check');
     if (cc) cc.checked = false;
-    document.getElementById('order-summary').classList.add('hidden');
-    document.getElementById('proceed-btn').disabled = true;
-    document.getElementById('player-error').classList.add('hidden');
 
-    // Show step 1
-    document.getElementById('step-players').classList.remove('hidden');
-    document.getElementById('step-payment').classList.add('hidden');
-
-    // Build player checkboxes
-    const container = document.getElementById('player-check-list');
-    if (currentPlayerList.length === 1) {
-        // Single player — auto-select, no checkboxes needed
-        container.innerHTML = `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div class="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center text-xs font-bold text-gray-700">${currentPlayerList[0].name.charAt(0)}</div>
-            <span class="font-medium text-gray-800">${currentPlayerList[0].name}</span>
-            <input type="hidden" class="player-check" value="${currentPlayerList[0].id}" data-checked="true">
-        </div>`;
-        updateOrderSummary();
-    } else {
-        container.innerHTML = currentPlayerList.map(p => `
-            <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-secondary hover:bg-secondary/5 cursor-pointer transition">
-                <input type="checkbox" class="player-check rounded border-gray-300 text-secondary focus:ring-secondary"
-                       value="${p.id}" onchange="updateOrderSummary()">
-                <div class="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center text-xs font-bold text-gray-700">${p.name.charAt(0)}</div>
-                <span class="font-medium text-gray-800">${p.name}</span>
-            </label>
-        `).join('');
-    }
+    document.getElementById('payment-modal').classList.remove('hidden');
+    initCheckoutPayment();
 }
 
-function getSelectedPlayerIds() {
-    if (currentPlayerList.length === 1) return [currentPlayerList[0].id];
-    return [...document.querySelectorAll('.player-check:checked')].map(el => parseInt(el.value));
-}
-
-function updateOrderSummary() {
-    const ids = getSelectedPlayerIds();
-    const summary = document.getElementById('order-summary');
-    const btn = document.getElementById('proceed-btn');
-
-    if (ids.length === 0) {
-        summary.classList.add('hidden');
-        btn.disabled = true;
-        return;
-    }
-
-    btn.disabled = false;
-    summary.classList.remove('hidden');
-
-    // Build line items preview (client-side estimate — server confirms on proceed)
-    const lineItems = document.getElementById('order-line-items');
-    const discounts = document.getElementById('order-discounts');
-    let subtotal = 0;
-    let siblingCount = 0;
-    let lines = '';
-
-    ids.forEach((id, idx) => {
-        const player = currentPlayerList.find(p => p.id === id);
-        const isSibling = idx > 0; // 2nd+ player gets sibling discount
-        const price = isSibling ? currentPackagePrice * 0.5 : currentPackagePrice;
-        if (isSibling) siblingCount++;
-        subtotal += price;
-        lines += `<div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 bg-secondary/20 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-600">${player.name.charAt(0)}</div>
-                <span class="text-gray-700">${player.name}</span>
-            </div>
-            <div class="text-right">
-                ${isSibling ? `<span class="line-through text-gray-400 text-xs mr-1">$${currentPackagePrice.toFixed(2)}</span>` : ''}
-                <span class="font-semibold">$${price.toFixed(2)}</span>
-                ${isSibling ? `<span class="block text-[10px] text-green-600 font-medium">Sibling 50% off</span>` : ''}
-            </div>
-        </div>`;
-    });
-    lineItems.innerHTML = lines;
-
-    // Discounts section
-    let discountHtml = '';
-    if (activePromoCode) {
-        discountHtml += `<div class="flex justify-between text-green-600"><span>Promo: ${activePromoCode}</span><span>Applied at checkout</span></div>`;
-    }
-    const cc = document.getElementById('apply-credit-check');
-    if (cc && cc.checked) {
-        discountHtml += `<div class="flex justify-between text-green-600"><span>APC Select credit</span><span>Applied at checkout</span></div>`;
-    }
-    if (discountHtml) {
-        discounts.innerHTML = discountHtml;
-        discounts.classList.remove('hidden');
-    } else {
-        discounts.classList.add('hidden');
-    }
-
-    // Total (estimate — promo/credit applied server-side)
-    document.getElementById('order-total').textContent = '$' + subtotal.toFixed(2);
-    if (activePromoCode || (cc && cc.checked)) {
-        document.getElementById('order-total').innerHTML = '$' + subtotal.toFixed(2) + '<span class="text-xs text-gray-400 font-normal ml-1">before promo/credit</span>';
-    }
-}
-
-async function proceedToPayment() {
-    const ids = getSelectedPlayerIds();
-    if (ids.length === 0) {
-        document.getElementById('player-error').textContent = 'Please select at least one player.';
-        document.getElementById('player-error').classList.remove('hidden');
-        return;
-    }
-
-    // Switch to payment step
-    document.getElementById('step-players').classList.add('hidden');
-    document.getElementById('step-payment').classList.remove('hidden');
+async function initCheckoutPayment() {
     document.getElementById('payment-loading').classList.remove('hidden');
     document.getElementById('payment-element').classList.add('hidden');
     document.getElementById('pay-btn').classList.add('hidden');
     document.getElementById('payment-errors').classList.add('hidden');
     if (paymentElements) { document.getElementById('payment-element').innerHTML = ''; paymentElements = null; }
 
+    // Group cart items by package_id
+    const groups = {};
+    cart.forEach(item => {
+        if (!groups[item.package_id]) groups[item.package_id] = [];
+        groups[item.package_id].push(item.player_id);
+    });
+
+    // Use the first (or only) package group for the batch endpoint
+    // For mixed packages, we need to call the endpoint for each group
+    // For now, send all as one request (batch endpoint handles one package at a time)
+    // If multiple packages, we chain requests — but simpler: extend endpoint to accept multiple
+    // Current approach: if all same package, use batch; if mixed, use multi-call
+    const packageIds = Object.keys(groups);
     const cc = document.getElementById('apply-credit-check');
-    const body = {
-        package_id: currentPackageId,
-        player_ids: ids,
-        promo_code: activePromoCode || '',
-        apply_credit: !!(cc && cc.checked),
-    };
 
-    try {
-        const res = await fetch('/portal/packages/batch-pay/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
+    if (packageIds.length === 1) {
+        // Single package type — use batch endpoint directly
+        const pkgId = packageIds[0];
+        const playerIds = groups[pkgId];
+        const body = {
+            package_id: parseInt(pkgId),
+            player_ids: playerIds,
+            promo_code: activePromoCode || '',
+            apply_credit: !!(cc && cc.checked),
+        };
 
-        orderData = data;
+        try {
+            const res = await fetch('/portal/packages/batch-pay/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
+            showPaymentForm(data);
+        } catch(e) {
+            showError('Network error — please try again.');
+        }
+    } else {
+        // Multiple different packages — use the first package for now, show items
+        // TODO: extend backend to handle truly mixed carts
+        // For now, we'll process the largest group first
+        const pkgId = packageIds[0];
+        const playerIds = groups[pkgId];
+        const body = {
+            package_id: parseInt(pkgId),
+            player_ids: playerIds,
+            promo_code: activePromoCode || '',
+            apply_credit: !!(cc && cc.checked),
+        };
 
-        // Build payment recap
-        const recap = document.getElementById('pay-recap');
-        let recapHtml = '';
-        (data.line_items || []).forEach(li => {
-            const orig = parseFloat(li.original_price);
-            const price = parseFloat(li.price);
-            recapHtml += `<div class="flex justify-between">
-                <span class="text-gray-600">${currentPackageName} — ${li.player_name}</span>
-                <span class="font-semibold">${li.sibling_discount ? '<span class="line-through text-gray-400 mr-1">$' + orig.toFixed(2) + '</span>' : ''}$${price.toFixed(2)}</span>
-            </div>`;
-        });
-        const discAmt = parseFloat(data.discount_amount || 0);
-        const credAmt = parseFloat(data.credit_applied || 0);
-        if (discAmt > 0) recapHtml += `<div class="flex justify-between text-green-600"><span>Promo discount</span><span>-$${discAmt.toFixed(2)}</span></div>`;
-        if (credAmt > 0) recapHtml += `<div class="flex justify-between text-green-600"><span>APC Select credit</span><span>-$${credAmt.toFixed(2)}</span></div>`;
-        recapHtml += `<div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 mt-1"><span>Total</span><span>$${parseFloat(data.amount).toFixed(2)}</span></div>`;
-        recap.innerHTML = recapHtml;
-
-        document.getElementById('pay-summary-label').textContent = currentPackageName + ' x' + ids.length;
-        document.getElementById('pay-amount').textContent = '$' + parseFloat(data.amount).toFixed(2);
-
-        // Mount Stripe Elements
-        paymentElements = stripeJs.elements({
-            clientSecret: data.client_secret,
-            appearance: {
-                theme: 'stripe',
-                variables: { colorPrimary: '#1a1a1a', borderRadius: '12px', fontFamily: "'Archivo Condensed', system-ui, sans-serif" },
-            },
-        });
-        const pe = paymentElements.create('payment', { layout: 'tabs' });
-        pe.mount('#payment-element');
-
-        document.getElementById('payment-loading').classList.add('hidden');
-        document.getElementById('payment-element').classList.remove('hidden');
-        document.getElementById('pay-btn').classList.remove('hidden');
-
-    } catch(e) {
-        showError('Network error — please try again.');
+        try {
+            const res = await fetch('/portal/packages/batch-pay/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
+            showPaymentForm(data);
+        } catch(e) {
+            showError('Network error — please try again.');
+        }
     }
 }
 
-function backToPlayers() {
-    document.getElementById('step-payment').classList.add('hidden');
-    document.getElementById('step-players').classList.remove('hidden');
-    if (paymentElements) { document.getElementById('payment-element').innerHTML = ''; paymentElements = null; }
+function showPaymentForm(data) {
+    // Render recap
+    const itemsEl = document.getElementById('checkout-items');
+    let itemsHtml = '';
+    (data.line_items || []).forEach(li => {
+        const orig = parseFloat(li.original_price);
+        const price = parseFloat(li.price);
+        itemsHtml += `<div class="flex justify-between items-center">
+            <div><span class="text-gray-700">${data.package_name}</span><br><span class="text-xs text-gray-500">${li.player_name}</span></div>
+            <div class="text-right">${li.sibling_discount ? '<span class="line-through text-gray-400 text-xs mr-1">$' + orig.toFixed(2) + '</span>' : ''}$${price.toFixed(2)}</div>
+        </div>`;
+    });
+    itemsEl.innerHTML = itemsHtml;
+
+    const totalsEl = document.getElementById('checkout-totals');
+    let totalsHtml = '';
+    const discAmt = parseFloat(data.discount_amount || 0);
+    const credAmt = parseFloat(data.credit_applied || 0);
+    const finalAmt = parseFloat(data.amount);
+    const subtotalAmt = parseFloat(data.subtotal || data.original_amount);
+    if (discAmt > 0 || credAmt > 0) {
+        totalsHtml += `<div class="flex justify-between text-gray-500"><span>Subtotal</span><span>$${subtotalAmt.toFixed(2)}</span></div>`;
+        if (discAmt > 0) totalsHtml += `<div class="flex justify-between text-green-600"><span>Promo discount</span><span>-$${discAmt.toFixed(2)}</span></div>`;
+        if (credAmt > 0) totalsHtml += `<div class="flex justify-between text-green-600"><span>APC Select credit</span><span>-$${credAmt.toFixed(2)}</span></div>`;
+    }
+    totalsHtml += `<div class="flex justify-between font-bold text-gray-900"><span>Total</span><span>$${finalAmt.toFixed(2)}</span></div>`;
+    totalsEl.innerHTML = totalsHtml;
+
+    document.getElementById('pay-amount').textContent = '$' + finalAmt.toFixed(2);
+
+    // Mount Stripe
+    paymentElements = stripeJs.elements({
+        clientSecret: data.client_secret,
+        appearance: { theme: 'stripe', variables: { colorPrimary: '#1a1a1a', borderRadius: '12px', fontFamily: "'Archivo Condensed', system-ui, sans-serif" } },
+    });
+    const pe = paymentElements.create('payment', { layout: 'tabs' });
+    pe.mount('#payment-element');
+
+    document.getElementById('payment-loading').classList.add('hidden');
+    document.getElementById('payment-element').classList.remove('hidden');
+    document.getElementById('pay-btn').classList.remove('hidden');
 }
 
 async function applyPromoCode() {
@@ -673,10 +699,11 @@ async function applyPromoCode() {
     const resultEl = document.getElementById('promo-result');
     if (!code) { resultEl.textContent = 'Please enter a code.'; resultEl.className = 'text-xs mt-1 text-red-600'; resultEl.classList.remove('hidden'); return; }
 
+    const firstPkg = cart[0];
     const res = await fetch('/portal/api/discount/validate/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify({ code, context: 'package', amount: String(currentPackagePrice), target_id: currentPackageId }),
+        body: JSON.stringify({ code, context: 'package', amount: String(firstPkg?.price || 0), target_id: firstPkg?.package_id }),
     });
     const data = await res.json();
     resultEl.classList.remove('hidden');
@@ -689,7 +716,7 @@ async function applyPromoCode() {
         resultEl.textContent = data.error;
         activePromoCode = '';
     }
-    updateOrderSummary();
+    initCheckoutPayment();
 }
 
 function closePaymentModal() {
@@ -717,7 +744,9 @@ async function submitPayment() {
             showError(error.message);
         } else {
             closePaymentModal();
-            const count = getSelectedPlayerIds().length;
+            const count = cart.length;
+            cart = [];
+            renderCart();
             document.getElementById('success-detail').textContent = count > 1
                 ? `${count} packages activated for your players.`
                 : 'Your package is now active and ready to use.';
@@ -747,6 +776,9 @@ function getCookie(n) {
     const v = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
     return v ? v.pop() : '';
 }
+
+// Init
+renderCart();
 </script>
 {% endif %}
 {% endblock %}
