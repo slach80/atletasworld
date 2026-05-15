@@ -1331,11 +1331,8 @@ def create_booking_direct(request):
     """Create booking directly with immediate package validation (no reservation step)."""
     import json
     from bookings.models import FieldRentalSlot
-    import logging
-    logger = logging.getLogger(__name__)
 
-    try:
-        client, created = Client.objects.get_or_create(user=request.user)
+    client, created = Client.objects.get_or_create(user=request.user)
 
     # Waiver check
     is_exempt = (
@@ -1475,18 +1472,11 @@ def create_booking_direct(request):
         except Exception:
             pass
 
-        return JsonResponse({
-            'success': True,
-            'bookings_created': len(created_bookings),
-            'booking_ids': [b.id for b in created_bookings]
-        })
-
-    except Exception as e:
-        logger.exception('create_booking_direct failed')
-        return JsonResponse({
-            'success': False,
-            'error': f'Server error: {str(e)}'
-        })
+    return JsonResponse({
+        'success': True,
+        'bookings_created': len(created_bookings),
+        'booking_ids': [b.id for b in created_bookings]
+    })
 
 
 # ============================================================================
