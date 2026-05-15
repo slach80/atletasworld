@@ -116,8 +116,10 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                 'isReadOnly': slot.status == 'fully_booked',
                 'raw': {
                     'slot_id': slot.id,
+                    'slot_type': 'schedule',
                     'coach_id': slot.coach_id,
                     'coach_name': str(slot.coach),
+                    'location_id': slot.location_id if hasattr(slot, 'location_id') else None,
                     'session_type_id': slot.session_type_id,
                     'session_type_name': slot.session_type.name,
                     'status': slot.status,
