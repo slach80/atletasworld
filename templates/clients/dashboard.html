@@ -49,25 +49,43 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="flex flex-wrap gap-2 mb-6">
-            <a href="{% url 'clients:book_v2' %}" class="flex items-center gap-1.5 px-4 py-2 bg-secondary text-gray-900 rounded-full text-sm font-semibold hover:bg-[#b8e000] transition">📅 Book Session</a>
-            <a href="{% url 'clients:packages' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📦 My Packages</a>
-            <a href="{% url 'clients:players' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">👥 My Players</a>
-            <a href="{% url 'clients:bookings' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">📋 All Bookings</a>
-            <a href="{% url 'clients:field_rental_list' %}" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:border-secondary transition">🏟️ Facility Rental</a>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-6">
+            <a href="{% url 'clients:book_v2' %}" class="flex flex-col items-center justify-center gap-2 px-4 py-3 bg-secondary text-gray-900 rounded-xl text-sm font-semibold hover:bg-[#b8e000] transition shadow-sm">
+                <span class="text-2xl">📅</span>
+                <span>Book Session</span>
+            </a>
+            <a href="{% url 'clients:packages' %}" class="flex flex-col items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:border-secondary transition shadow-sm">
+                <span class="text-2xl">📦</span>
+                <span>Packages</span>
+            </a>
+            <a href="{% url 'clients:players' %}" class="flex flex-col items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:border-secondary transition shadow-sm">
+                <span class="text-2xl">👥</span>
+                <span>Players</span>
+            </a>
+            <a href="{% url 'clients:bookings' %}" class="flex flex-col items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:border-secondary transition shadow-sm">
+                <span class="text-2xl">📋</span>
+                <span>Bookings</span>
+            </a>
+            <a href="{% url 'clients:field_rental_list' %}" class="flex flex-col items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:border-secondary transition shadow-sm">
+                <span class="text-2xl">🏟️</span>
+                <span>Rental</span>
+            </a>
         </div>
 
         <!-- Upcoming session reminder (within 24h) -->
         {% if next_booking_soon %}
-        <div class="mb-6 flex items-center justify-between p-4 bg-secondary/10 border border-secondary/40 rounded-xl">
-            <div class="flex items-center gap-3">
-                <span class="text-2xl">⏰</span>
-                <div>
-                    <p class="font-semibold text-gray-800">Session today — {{ next_booking_soon.session_type.name|default:"Training" }}</p>
-                    <p class="text-sm text-gray-600">{{ next_booking_soon.scheduled_date|date:"l" }} at {{ next_booking_soon.scheduled_time|time:"g:i A" }} with {{ next_booking_soon.coach }}</p>
+        <div class="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">⏰</span>
+                    <p class="font-bold text-gray-900 text-base">Session Today</p>
                 </div>
+                <span class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold">Today</span>
             </div>
-            <span class="px-3 py-1 bg-secondary text-gray-900 rounded-full text-xs font-bold">Today</span>
+            <div class="ml-8 space-y-1">
+                <p class="font-semibold text-gray-800">{{ next_booking_soon.session_type.name|default:"Training" }}</p>
+                <p class="text-sm text-gray-600">{{ next_booking_soon.scheduled_time|time:"g:i A" }} • Coach {{ next_booking_soon.coach }}</p>
+            </div>
         </div>
         {% endif %}
 
@@ -257,41 +275,55 @@
                     </div>
 
                     {% if upcoming_bookings %}
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         {% for booking in upcoming_bookings %}
-                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <div class="bg-purple-100 rounded-lg p-3 mr-4">
-                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-semibold text-gray-800">{{ booking.session_type.name }}</h3>
-                                        <p class="text-sm text-gray-600">{{ booking.scheduled_date|date:"l, M d" }} at {{ booking.scheduled_time|time:"g:i A" }}</p>
-                                        <p class="text-xs text-gray-500">
-                                            Coach: {{ booking.coach }}
-                                            {% if booking.player %}| Player: {{ booking.player }}{% endif %}
-                                        </p>
-                                        {% if booking.session_type.location %}<p class="text-xs mt-0.5"><a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-secondary transition">📍 {{ booking.session_type.location }}</a></p>{% endif %}
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="px-3 py-1 text-xs font-medium rounded-full
-                                        {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
-                                        {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        {{ booking.get_status_display }}
-                                    </span>
-                                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
-                                    <a href="{% url 'clients:booking_reschedule' booking.id %}"
-                                       class="px-3 py-1 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition text-xs">
-                                        Reschedule
-                                    </a>
-                                    {% endif %}
-                                </div>
+                        <div class="border-2 border-gray-200 rounded-xl p-4 hover:shadow-md transition">
+                            <!-- Header: Session name + Status badge -->
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-gray-900 text-base">{{ booking.session_type.name }}</h3>
+                                <span class="px-3 py-1 text-xs font-bold rounded-full
+                                    {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
+                                    {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ booking.get_status_display }}
+                                </span>
                             </div>
+
+                            <!-- Details -->
+                            <div class="space-y-2 mb-3">
+                                <div class="flex items-center gap-2 text-sm text-gray-700">
+                                    <span class="text-lg">📅</span>
+                                    <span class="font-medium">{{ booking.scheduled_date|date:"l, M d" }}</span>
+                                    <span class="text-gray-400">•</span>
+                                    <span class="font-medium">{{ booking.scheduled_time|time:"g:i A" }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-gray-700">
+                                    <span class="text-lg">👤</span>
+                                    <span>Coach {{ booking.coach }}</span>
+                                </div>
+                                {% if booking.player %}
+                                <div class="flex items-center gap-2 text-sm text-gray-700">
+                                    <span class="text-lg">⚽</span>
+                                    <span>{{ booking.player }}</span>
+                                </div>
+                                {% endif %}
+                                {% if booking.session_type.location %}
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span class="text-lg">📍</span>
+                                    <a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">{{ booking.session_type.location }}</a>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Actions -->
+                            {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                            <div class="flex gap-2">
+                                <a href="{% url 'clients:booking_reschedule' booking.id %}"
+                                   class="flex-1 text-center px-4 py-2 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-semibold">
+                                    Reschedule
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
