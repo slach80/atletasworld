@@ -84,7 +84,7 @@
             </div>
             <div class="ml-8 space-y-1">
                 <p class="font-semibold text-gray-800">{{ next_booking_soon.session_type.name|default:"Training" }}</p>
-                <p class="text-sm text-gray-600">{{ next_booking_soon.scheduled_time|time:"g:i A" }} • Coach {{ next_booking_soon.coach }}</p>
+                <p class="text-sm text-gray-600">{{ next_booking_soon.scheduled_time|time:"g:i A" }} • {{ next_booking_soon.coach }}</p>
             </div>
         </div>
         {% endif %}
@@ -299,7 +299,7 @@
                                 </div>
                                 <div class="flex items-center gap-2 text-sm text-gray-700">
                                     <span class="text-lg">👤</span>
-                                    <span>Coach {{ booking.coach }}</span>
+                                    <span>{{ booking.coach }}</span>
                                 </div>
                                 {% if booking.player %}
                                 <div class="flex items-center gap-2 text-sm text-gray-700">

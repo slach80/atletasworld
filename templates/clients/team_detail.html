@@ -188,7 +188,7 @@
                             <div>
                                 <h3 class="font-semibold text-gray-800">{{ booking.session_type.name }}</h3>
                                 <p class="text-sm text-gray-600">{{ booking.scheduled_date|date:"l" }} at {{ booking.scheduled_time|time:"g:i A" }}</p>
-                                <p class="text-xs text-gray-500">Coach: {{ booking.coach }}</p>
+                                <p class="text-xs text-gray-500">{{ booking.coach }}</p>
                             </div>
                         </div>
                         <span class="px-3 py-1 text-xs font-medium rounded-full
