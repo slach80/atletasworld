@@ -598,9 +598,11 @@ async function confirmBookings(){
     if(btn){btn.disabled=true;btn.textContent='Processing...';}
 
     // Validate all cart items before proceeding
+    console.log('Cart contents:',cart);
     const invalidItems=cart.filter(item=>!item.block_id||!item.player_id);
     if(invalidItems.length>0){
-        alert('Some cart items are invalid. Please clear cart and add sessions again.');
+        console.error('Invalid cart items:',invalidItems);
+        alert('Some cart items are missing block_id or player_id. Please clear cart (refresh page) and try again.');
         if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
         return;
     }
@@ -612,13 +614,26 @@ async function confirmBookings(){
             player_id:item.player_id
         }));
 
+        console.log('Sending bookings:',bookingsData);
+
         const res=await fetch('{% url "clients:create_booking_direct" %}',{
             method:'POST',
             headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
             body:JSON.stringify({bookings:bookingsData})
         });
 
+        console.log('Response status:',res.status);
+
+        // Check if response is JSON
+        const contentType=res.headers.get('content-type');
+        if(!contentType||!contentType.includes('application/json')){
+            const text=await res.text();
+            console.error('Non-JSON response:',text);
+            throw new Error('Server error: '+text.substring(0,100));
+        }
+
         const data=await res.json();
+        console.log('Response data:',data);
         if(!data.success)throw new Error(data.error||'Booking failed');
 
         // Success!
@@ -642,15 +657,19 @@ async function confirmBookings(){
         // Reload calendar after 3 seconds
         setTimeout(()=>location.reload(),3000);
     }catch(e){
+        console.error('Booking error:',e);
         const errMsg=e.message||'Unknown error';
+
+        // Show detailed error in alert
+        alert('Booking failed:\n\n'+errMsg+'\n\nCheck browser console for details (F12)');
+
         if(errMsg.includes('No active package')||errMsg.includes('No sessions remaining')){
-            if(confirm(errMsg+'\n\nWould you like to purchase a package now?')){
+            if(confirm('Would you like to purchase a package now?')){
                 window.location.href='{% url "clients:packages" %}';
                 return;
             }
-        }else{
-            alert('Error: '+errMsg);
         }
+
         if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
     }
 }
