@@ -1167,6 +1167,8 @@ def owner_coach_schedule(request, pk):
                     if first_st and first_st.session_format == 'private':
                         session_type_str = 'private'
 
+                location_override = request.POST.get('location_override', '').strip()
+
                 block, created = ScheduleBlock.objects.get_or_create(
                     coach=coach,
                     date=request.POST.get('date'),
@@ -1176,6 +1178,7 @@ def owner_coach_schedule(request, pk):
                         session_type=session_type_str,
                         max_participants=request.POST.get('max_participants', 1),
                         price_override=price_override,
+                        location_override=location_override,
                         notes=request.POST.get('notes', ''),
                     )
                 )
@@ -1185,6 +1188,7 @@ def owner_coach_schedule(request, pk):
                     block.session_type = session_type_str
                     block.max_participants = request.POST.get('max_participants', 1)
                     block.price_override = price_override
+                    block.location_override = location_override
                     if request.POST.get('notes'):
                         block.notes = request.POST.get('notes', '')
                     block.save()
@@ -1208,6 +1212,31 @@ def owner_coach_schedule(request, pk):
                     messages.error(request, 'Cannot delete block with existing bookings.')
             except ScheduleBlock.DoesNotExist:
                 messages.error(request, 'Block not found.')
+
+        elif action == 'bulk_set_location':
+            location_val = request.POST.get('bulk_location', '').strip()
+            day_filter = request.POST.get('bulk_day', '')
+            time_filter = request.POST.get('bulk_time', '')
+            session_type_filter = request.POST.get('bulk_session_type', '')
+
+            blocks_qs = ScheduleBlock.objects.filter(coach=coach, date__gte=today)
+            if day_filter:
+                from django.db.models.functions import ExtractWeekDay
+                django_dow = int(day_filter) + 2
+                if django_dow > 7:
+                    django_dow = 1
+                blocks_qs = blocks_qs.annotate(dow=ExtractWeekDay('date')).filter(dow=django_dow)
+            if time_filter == 'morning':
+                blocks_qs = blocks_qs.filter(start_time__lt='12:00')
+            elif time_filter == 'afternoon':
+                blocks_qs = blocks_qs.filter(start_time__gte='12:00', start_time__lt='17:00')
+            elif time_filter == 'evening':
+                blocks_qs = blocks_qs.filter(start_time__gte='17:00')
+            if session_type_filter:
+                blocks_qs = blocks_qs.filter(catalog_session_types__id=session_type_filter)
+
+            count = blocks_qs.update(location_override=location_val)
+            messages.success(request, f'Location updated on {count} blocks.')
 
         return redirect('owner_coach_schedule', pk=pk)
 

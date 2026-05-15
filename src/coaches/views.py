@@ -289,6 +289,7 @@ def add_bulk_schedule(request):
         catalog_ids = request.POST.getlist('catalog_session_type')
         duration = int(request.POST.get('duration', 60))
         max_participants = int(request.POST.get('max_participants', 1))
+        location_override = request.POST.get('location_override', '').strip()
 
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
@@ -326,6 +327,7 @@ def add_bulk_schedule(request):
                                 session_type=session_type,
                                 duration_minutes=duration,
                                 max_participants=max_participants,
+                                location_override=location_override,
                             )
                             if catalog_session_types:
                                 new_block.catalog_session_types.set(catalog_session_types)
