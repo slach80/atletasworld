@@ -85,10 +85,11 @@ def generate_referral_code(sender, instance, created, **kwargs):
     from clients.models import ReferralCode
     import secrets
 
-    # Generate unique code
+    # Generate unique code (loop until we get 6-8 alphanumeric chars)
     while True:
-        code = secrets.token_urlsafe(6).upper().replace('-', '').replace('_', '')[:8]
-        if not ReferralCode.objects.filter(code=code).exists():
+        raw = secrets.token_urlsafe(8).upper().replace('-', '').replace('_', '')
+        code = raw[:8]
+        if len(code) >= 6 and not ReferralCode.objects.filter(code=code).exists():
             break
 
     ReferralCode.objects.create(user=instance, code=code)
