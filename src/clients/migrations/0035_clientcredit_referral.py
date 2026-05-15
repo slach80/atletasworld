@@ -1,24 +1,12 @@
-from django.db import migrations, models
-import django.db.models.deletion
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
+    """No-op: the referral FK on ClientCredit is already added by 0033_referral_program.
+    This migration existed on production only — kept as empty to satisfy the migration graph."""
 
     dependencies = [
         ('clients', '0033_referral_program'),
     ]
 
-    operations = [
-        migrations.AddField(
-            model_name='clientcredit',
-            name='referral',
-            field=models.ForeignKey(
-                blank=True,
-                help_text='The Referral that generated this credit',
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name='credits',
-                to='clients.referral',
-            ),
-        ),
-    ]
+    operations = []
