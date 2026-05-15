@@ -592,6 +592,11 @@ function renderCart(){
     updateCartBadge();
 }
 
+function fmtDateShort(iso){
+    const d=new Date(iso.split('T')[0]+'T12:00:00');
+    return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+}
+
 function buildCartHtml(){
     if(!cart.length) return`<div class="text-center py-10 text-gray-400"><p class="text-4xl mb-2">🛒</p><p class="text-sm">Cart is empty</p></div>`;
 
@@ -601,7 +606,7 @@ function buildCartHtml(){
         html+=`<div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-sm font-semibold text-gray-900">${fmtTime(slot.start)}</p>
+                    <p class="text-sm font-semibold text-gray-900">${fmtDateShort(slot.start)} · ${fmtTime(slot.start)}</p>
                     <p class="text-xs text-gray-600">${slot.session_type_name}</p>
                     <p class="text-xs text-gray-500">${slot.coach_name}</p>
                     ${player_name?`<p class="text-xs text-blue-600 mt-0.5">⚽ ${player_name}</p>`:''}
@@ -662,10 +667,6 @@ async function confirmBookings(){
             throw new Error(data.error||'Booking failed');
         }
 
-        // Clear cart
-        cart=[];
-        localStorage.removeItem('bookingCart');
-        updateCartBadge();
         closeMobileCart();
 
         // Check if payment is required for any bookings
@@ -689,7 +690,10 @@ async function confirmBookings(){
             return;
         }
 
-        // Pure success (all covered by package or free)
+        // Pure success (all covered by package or free) — clear cart
+        cart=[];
+        localStorage.removeItem('bookingCart');
+        updateCartBadge();
         const bookedCount=data.bookings_created||0;
         const successEl=document.getElementById('success-overlay');
         const detailsEl=document.getElementById('success-details');
@@ -797,6 +801,10 @@ async function submitBookingPayment(){
         showBookingPayError(error.message);
         btn.disabled=false;btn.textContent='Pay Now';
     }else{
+        // Payment succeeded — clear cart and show success
+        cart=[];
+        localStorage.removeItem('bookingCart');
+        updateCartBadge();
         closeBookingPayModal();
         const successEl=document.getElementById('success-overlay');
         const detailsEl=document.getElementById('success-details');
@@ -811,6 +819,14 @@ async function submitBookingPayment(){
 function closeBookingPayModal(){
     document.getElementById('booking-pay-modal').classList.add('hidden');
     if(_bookingElements){document.getElementById('booking-pay-element').innerHTML='';_bookingElements=null;}
+}
+function cancelPaymentAndShowCart(){
+    closeBookingPayModal();
+    // Re-open the cart so user can make changes
+    document.getElementById('mobile-cart-modal').classList.remove('hidden');
+    // Re-enable the confirm button
+    const btn=document.querySelector('[onclick="confirmBookings()"]');
+    if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
 }
 function showBookingPayError(msg){
     const el=document.getElementById('booking-pay-error');
@@ -847,7 +863,7 @@ function showBookingPayError(msg){
                 class="hidden w-full py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600 transition">
             Pay Now
         </button>
-        <button onclick="closeBookingPayModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+        <button onclick="cancelPaymentAndShowCart()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
     </div>
 </div>
 {% endif %}
