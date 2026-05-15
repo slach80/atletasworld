@@ -565,6 +565,138 @@ def _handle_payment_succeeded(intent):
             amount=intent.get('amount', 0),
         )
 
+    # Send payment receipt for all successful payments
+    _send_payment_receipt(intent, metadata)
+
+
+def _send_payment_receipt(intent, metadata):
+    """Send a payment receipt email after any successful PaymentIntent."""
+    import json
+    from decimal import Decimal
+    from django.template.loader import render_to_string
+    from clients.models import Client
+    from clients.services import NotificationService
+
+    client_id = metadata.get('client_id')
+    if not client_id:
+        return
+
+    try:
+        client = Client.objects.select_related('user').get(pk=client_id)
+    except Client.DoesNotExist:
+        return
+
+    amount_cents = intent.get('amount', 0)
+    amount = Decimal(amount_cents) / 100
+    description = intent.get('description', 'Payment')
+    payment_intent_id = intent['id']
+    charge_id = intent.get('latest_charge', '')
+
+    # Try to get payment method details from Stripe
+    payment_method_str = ''
+    try:
+        s = _stripe()
+        if charge_id:
+            charge = s.Charge.retrieve(charge_id)
+            pm = charge.get('payment_method_details', {})
+            card = pm.get('card', {})
+            if card:
+                brand = (card.get('brand') or '').capitalize()
+                last4 = card.get('last4', '')
+                payment_method_str = f'{brand} ending in {last4}' if brand else f'Card ending in {last4}'
+    except Exception:
+        pass
+
+    # Build line items from metadata
+    line_items = []
+    discount_total = ''
+    credit_applied = ''
+
+    items_json = metadata.get('items') or metadata.get('players')
+    if items_json:
+        try:
+            items_data = json.loads(items_json)
+            for item in items_data:
+                li = {'amount': f"{Decimal(item.get('price', '0')):.2f}"}
+                if 'player_id' in item:
+                    from clients.models import Player
+                    try:
+                        p = Player.objects.get(pk=item['player_id'])
+                        li['player'] = f'{p.first_name} {p.last_name}'
+                    except Player.DoesNotExist:
+                        pass
+                if 'package_id' in item:
+                    try:
+                        pkg = Package.objects.get(pk=item['package_id'])
+                        li['name'] = pkg.name
+                    except Package.DoesNotExist:
+                        li['name'] = description
+                else:
+                    pkg_id = metadata.get('package_id')
+                    if pkg_id:
+                        try:
+                            li['name'] = Package.objects.get(pk=pkg_id).name
+                        except Package.DoesNotExist:
+                            li['name'] = description
+                    else:
+                        li['name'] = description
+                line_items.append(li)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    if metadata.get('discount_amount'):
+        try:
+            da = Decimal(metadata['discount_amount'])
+            if da > 0:
+                discount_total = f'{da:.2f}'
+        except Exception:
+            pass
+
+    if metadata.get('credit_applied'):
+        try:
+            ca = Decimal(metadata['credit_applied'])
+            if ca > 0:
+                credit_applied = f'{ca:.2f}'
+        except Exception:
+            pass
+
+    site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+    ctx = {
+        'amount_paid': f'{amount:.2f}',
+        'description': description,
+        'payment_date': timezone.localtime().strftime('%B %-d, %Y at %-I:%M %p'),
+        'payment_method': payment_method_str,
+        'transaction_id': payment_intent_id,
+        'line_items': line_items,
+        'discount_total': discount_total,
+        'credit_applied': credit_applied,
+        'packages_url': f'{site_url}/portal/packages/',
+        'client_name': client.user.first_name or client.user.username,
+        'site_url': site_url,
+        'current_year': timezone.now().year,
+    }
+
+    try:
+        html_content = render_to_string('emails/payment_receipt.html', ctx)
+        text_content = (
+            f"Payment Receipt\n\n"
+            f"Amount: ${amount:.2f}\n"
+            f"Description: {description}\n"
+            f"Date: {ctx['payment_date']}\n"
+            f"Transaction: {payment_intent_id}\n\n"
+            f"View your packages: {site_url}/portal/packages/"
+        )
+        NotificationService.send_email(
+            to_email=client.user.email,
+            subject=f'🧾 Payment Receipt — ${amount:.2f}',
+            html_content=html_content,
+            text_content=text_content,
+            context=ctx,
+        )
+        logger.info('Payment receipt sent to %s for %s', client.user.email, payment_intent_id)
+    except Exception:
+        logger.exception('Failed to send payment receipt for %s', payment_intent_id)
+
 
 def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
     """Create an active ClientPackage after successful payment."""
