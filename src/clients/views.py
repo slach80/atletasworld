@@ -1331,8 +1331,14 @@ def create_booking_direct(request):
     """Create booking directly with immediate package validation (no reservation step)."""
     import json
     from bookings.models import FieldRentalSlot
+    import logging
+    logger = logging.getLogger(__name__)
 
-    client, created = Client.objects.get_or_create(user=request.user)
+    try:
+        client, created = Client.objects.get_or_create(user=request.user)
+    except Exception as e:
+        logger.exception('Failed to get/create client')
+        return JsonResponse({'success': False, 'error': f'Client error: {str(e)}'})
 
     # Waiver check
     is_exempt = (
@@ -1431,21 +1437,22 @@ def create_booking_direct(request):
 
     # Create all bookings
     created_bookings = []
-    for item in validated_bookings:
-        # Get session_type from block's catalog (guaranteed to exist after validation)
-        session_type = item['block'].catalog_session_types.first()
+    try:
+        for item in validated_bookings:
+            # Get session_type from block's catalog (guaranteed to exist after validation)
+            session_type = item['block'].catalog_session_types.first()
 
-        booking = Booking.objects.create(
-            client=client,
-            player=item['player'],
-            coach=item['block'].coach,
-            program=program,
-            session_type=session_type,
-            scheduled_date=item['block'].date,
-            scheduled_time=item['block'].start_time,
-            client_package=item['package'],
-            status='confirmed'
-        )
+            booking = Booking.objects.create(
+                client=client,
+                player=item['player'],
+                coach=item['block'].coach,
+                program=program,
+                session_type=session_type,
+                scheduled_date=item['block'].date,
+                scheduled_time=item['block'].start_time,
+                client_package=item['package'],
+                status='confirmed'
+            )
 
         # Deduct session from package
         if item['package']:
@@ -1472,11 +1479,17 @@ def create_booking_direct(request):
         except Exception:
             pass
 
-    return JsonResponse({
-        'success': True,
-        'bookings_created': len(created_bookings),
-        'booking_ids': [b.id for b in created_bookings]
-    })
+        return JsonResponse({
+            'success': True,
+            'bookings_created': len(created_bookings),
+            'booking_ids': [b.id for b in created_bookings]
+        })
+    except Exception as e:
+        logger.exception('Booking creation failed')
+        return JsonResponse({
+            'success': False,
+            'error': f'Booking failed: {str(e)}'
+        })
 
 
 # ============================================================================
