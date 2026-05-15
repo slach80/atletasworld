@@ -477,6 +477,7 @@ function renderSlots(){
                         <p class="font-semibold text-sm text-gray-900">${time} · ${s.duration} min</p>
                         <p class="text-xs text-gray-600">${s.session_type_name}</p>
                         <p class="text-xs text-gray-500">${s.coach_name} · ${s.spots_remaining} spots</p>
+                        ${s.location?`<p class="text-xs text-gray-400">📍 ${s.location}</p>`:''}
                         <p class="text-xs ${price>0?'text-yellow-600 font-semibold':'text-gray-400'}">${price>0?'$'+price.toFixed(2):'Free'}</p>
                     </div>
                 </div>

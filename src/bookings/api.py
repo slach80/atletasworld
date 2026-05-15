@@ -120,6 +120,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'coach_id': slot.coach_id,
                     'coach_name': str(slot.coach),
                     'location_id': getattr(slot, 'location_id', None),
+                    'location': slot.session_type.location or '',
                     'session_type_id': slot.session_type.id,
                     'session_type_name': slot.session_type.name,
                     'status': slot.status,

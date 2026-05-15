@@ -182,6 +182,196 @@ def create_package_payment_intent(request, package_id):
         return JsonResponse({'error': str(e.user_message)}, status=400)
 
 
+# ── Multi-player batch package purchase ──────────────────────────────────────
+
+@login_required
+@require_POST
+def create_batch_package_payment_intent(request):
+    """Create a single Stripe PaymentIntent for purchasing the same package for multiple players.
+
+    Automatically applies sibling discount (50% off) for the 2nd+ player when the same
+    package is already active for another player on the account.
+
+    Request body (JSON):
+        package_id: int
+        player_ids: [int, ...]
+        promo_code: str (optional)
+        apply_credit: bool (optional)
+    """
+    import json
+    from decimal import Decimal
+    from clients.models import DiscountCode, DiscountCodeUse, Player
+
+    if not settings.STRIPE_SECRET_KEY:
+        return JsonResponse({'error': 'Payments not yet configured.'}, status=503)
+
+    data = json.loads(request.body)
+    package_id = data.get('package_id')
+    player_ids = data.get('player_ids', [])
+    promo_code_str = (data.get('promo_code') or '').strip().upper()
+    apply_credit = data.get('apply_credit', False)
+
+    if not package_id or not player_ids:
+        return JsonResponse({'error': 'Package and at least one player required.'}, status=400)
+
+    package = get_object_or_404(Package, pk=package_id, is_active=True)
+    client, _ = Client.objects.get_or_create(user=request.user)
+    s = _stripe()
+
+    players = list(Player.objects.filter(pk__in=player_ids, client=client, is_active=True))
+    if len(players) != len(player_ids):
+        return JsonResponse({'error': 'One or more players not found.'}, status=400)
+
+    # Build line items with sibling discount detection
+    line_items = []
+    existing_active_player_ids = set(
+        client.packages.filter(package=package, status='active').values_list('player_id', flat=True)
+    )
+    subtotal = Decimal('0')
+
+    for player in players:
+        price = package.price
+        sibling = False
+        # Sibling discount: player already has this package active, OR another player in this
+        # same batch/existing set already has it (2nd+ player gets 50% off)
+        has_existing = player.pk in existing_active_player_ids
+        # Check if another player in this order already covers the "first" purchase
+        other_in_batch = any(
+            li['player_id'] != player.pk and not li['sibling_discount']
+            for li in line_items
+        )
+        another_active = existing_active_player_ids - {player.pk}
+        if has_existing or another_active or other_in_batch:
+            sibling = True
+            price = (package.price * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+
+        line_items.append({
+            'player_id': player.pk,
+            'player_name': f'{player.first_name} {player.last_name}',
+            'price': str(price),
+            'original_price': str(package.price),
+            'sibling_discount': sibling,
+        })
+        subtotal += price
+
+    # Promo code (applied to subtotal after sibling discounts)
+    discount_code = None
+    discount_amount = Decimal('0')
+    if promo_code_str:
+        try:
+            dc = DiscountCode.objects.get(code=promo_code_str, is_active=True)
+            ok, _ = dc.is_valid_now()
+            if ok and dc.scope in ('all', 'packages'):
+                if dc.specific_packages.exists() and not dc.specific_packages.filter(pk=package.pk).exists():
+                    pass
+                elif dc.min_purchase_amount and subtotal < dc.min_purchase_amount:
+                    pass
+                else:
+                    client_uses = dc.uses.filter(client=client, status='applied').count()
+                    if client_uses < dc.max_uses_per_client:
+                        discount_amount = dc.compute_discount(subtotal)
+                        discount_code = dc
+        except DiscountCode.DoesNotExist:
+            pass
+
+    # APC Select credit
+    credit_applied = Decimal('0')
+    if apply_credit:
+        remaining = subtotal - discount_amount
+        for credit in client.credits.filter(status='available').order_by('expires_at'):
+            if credit.is_usable and remaining > 0:
+                use_amount = min(credit.amount, remaining)
+                credit_applied += use_amount
+                remaining -= use_amount
+
+    final_amount = max(subtotal - discount_amount - credit_applied, Decimal('0'))
+    amount_cents = max(int(final_amount * 100), 50)
+
+    # Metadata for webhook
+    players_meta = json.dumps([{'player_id': li['player_id'], 'price': li['price']} for li in line_items])
+
+    try:
+        customer_id = _get_or_create_stripe_customer(client)
+        intent = s.PaymentIntent.create(
+            amount=amount_cents,
+            currency='usd',
+            customer=customer_id,
+            metadata={
+                'type': 'batch_package_purchase',
+                'package_id': str(package.pk),
+                'client_id': str(client.pk),
+                'players': players_meta,
+                'discount_code': promo_code_str or '',
+                'discount_amount': str(discount_amount),
+                'credit_applied': str(credit_applied),
+            },
+            description=f'Package: {package.name} x{len(players)}',
+        )
+
+        Payment.objects.create(
+            client=client,
+            amount=final_amount,
+            stripe_payment_intent_id=intent.id,
+            description=f'Package: {package.name} x{len(players)}',
+            status='pending',
+        )
+
+        # Track discount use
+        if discount_code and discount_amount > 0:
+            DiscountCodeUse.objects.create(
+                code=discount_code,
+                client=client,
+                discount_amount=discount_amount,
+                original_amount=subtotal,
+                final_amount=final_amount,
+                status='pending',
+                stripe_payment_intent_id=intent.id,
+            )
+
+        # Track sibling discount uses
+        sibling_items = [li for li in line_items if li['sibling_discount']]
+        if sibling_items:
+            sibling_dc, _ = DiscountCode.objects.get_or_create(
+                code='SIBLING-AUTO',
+                defaults={
+                    'description': 'Automatic sibling discount (50% off same package)',
+                    'discount_type': 'percent',
+                    'value': Decimal('50.00'),
+                    'scope': 'all',
+                    'max_uses': None,
+                    'max_uses_per_client': 99,
+                    'is_active': True,
+                }
+            )
+            sibling_total = sum(
+                package.price - Decimal(li['price']) for li in sibling_items
+            )
+            DiscountCodeUse.objects.create(
+                code=sibling_dc,
+                client=client,
+                discount_amount=sibling_total,
+                original_amount=package.price * len(players),
+                final_amount=final_amount,
+                status='pending',
+                stripe_payment_intent_id=intent.id,
+            )
+
+        return JsonResponse({
+            'client_secret': intent.client_secret,
+            'amount': str(final_amount),
+            'original_amount': str(package.price * len(players)),
+            'subtotal': str(subtotal),
+            'discount_amount': str(discount_amount),
+            'credit_applied': str(credit_applied),
+            'line_items': line_items,
+            'package_name': package.name,
+        })
+
+    except stripe.error.StripeError as e:
+        logger.exception('Batch package PaymentIntent creation failed')
+        return JsonResponse({'error': str(e.user_message)}, status=400)
+
+
 # ── Recurring subscription ────────────────────────────────────────────────────
 
 @login_required
@@ -294,6 +484,15 @@ def _handle_payment_succeeded(intent):
         _activate_package(
             client_id=metadata.get('client_id'),
             package_id=metadata.get('package_id'),
+            payment_intent_id=intent['id'],
+            metadata=metadata,
+        )
+
+    elif payment_type == 'batch_package_purchase':
+        _activate_batch_packages(
+            client_id=metadata.get('client_id'),
+            package_id=metadata.get('package_id'),
+            players_json=metadata.get('players', '[]'),
             payment_intent_id=intent['id'],
             metadata=metadata,
         )
@@ -412,6 +611,95 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
         ReferralService.check_and_activate(client, package.price)
     except Exception:
         logger.exception('_activate_package: referral activation failed for client %s', client.pk)
+
+
+def _activate_batch_packages(client_id, package_id, players_json, payment_intent_id, metadata=None):
+    """Create multiple ClientPackages (one per player) after successful batch payment."""
+    import json
+    from datetime import timedelta
+    from decimal import Decimal
+    from clients.models import Player, DiscountCodeUse
+
+    try:
+        client = Client.objects.get(pk=client_id)
+        package = Package.objects.get(pk=package_id)
+        players_data = json.loads(players_json)
+    except (Client.DoesNotExist, Package.DoesNotExist, json.JSONDecodeError) as e:
+        logger.error('_activate_batch_packages: invalid data — %s', e)
+        return
+
+    expiry = package.event_end_date if package.event_end_date else timezone.localdate() + timedelta(weeks=package.validity_weeks)
+    created_packages = []
+
+    for item in players_data:
+        try:
+            player = Player.objects.get(pk=item['player_id'], client=client)
+        except Player.DoesNotExist:
+            logger.error('_activate_batch_packages: player %s not found', item.get('player_id'))
+            continue
+
+        cp = ClientPackage.objects.create(
+            client=client,
+            package=package,
+            player=player,
+            status='active',
+            start_date=timezone.localdate(),
+            expiry_date=expiry,
+            sessions_remaining=package.sessions_included,
+            stripe_payment_id=payment_intent_id,
+        )
+        created_packages.append(cp)
+        logger.info('Batch: ClientPackage #%s activated for %s (%s)', cp.pk, player, package.name)
+
+        try:
+            from clients.notification_utils import queue_grouped_notification
+            queue_grouped_notification(
+                client=client,
+                event_type='package_activated',
+                context={
+                    'package_id': cp.id,
+                    'package_name': package.name,
+                    'player_name': f'{player.first_name} {player.last_name}',
+                    'price': float(item.get('price', package.price)),
+                },
+                group_key=f'pkg_{cp.id}',
+                window_seconds=45,
+            )
+        except Exception:
+            pass
+
+    # Finalize discount code uses
+    if created_packages:
+        DiscountCodeUse.objects.filter(
+            stripe_payment_intent_id=payment_intent_id, status='pending'
+        ).update(status='applied', applied_to_package=created_packages[0])
+
+    # Finalize APC Select credits
+    if metadata and created_packages:
+        credit_applied_str = metadata.get('credit_applied', '0')
+        try:
+            remaining = Decimal(credit_applied_str)
+        except Exception:
+            remaining = Decimal('0')
+        if remaining > 0:
+            from clients.models import ClientCredit
+            for credit in client.credits.filter(status='available').order_by('expires_at'):
+                if credit.is_usable and remaining > 0:
+                    use_amount = min(credit.amount, remaining)
+                    credit.status = 'applied'
+                    credit.applied_to = created_packages[0]
+                    credit.applied_at = timezone.now()
+                    credit.save(update_fields=['status', 'applied_to', 'applied_at'])
+                    remaining -= use_amount
+
+    # Referral activation (uses total purchase amount)
+    if created_packages:
+        total_paid = sum(Decimal(item.get('price', str(package.price))) for item in players_data)
+        try:
+            from clients.services import ReferralService
+            ReferralService.check_and_activate(client, total_paid)
+        except Exception:
+            logger.exception('_activate_batch_packages: referral activation failed for client %s', client.pk)
 
 
 def _mark_rental_paid(slot_id, payment_intent_id):

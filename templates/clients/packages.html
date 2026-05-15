@@ -347,198 +347,311 @@
 </div>
 
 {% if stripe_public_key %}
-<!-- Payment modal — uses Payment Element (Apple Pay + Google Pay + card) -->
+<!-- Enhanced Purchase Modal — multi-player support with order summary -->
 <div id="payment-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
-        <h2 class="text-xl font-bold mb-0.5">Complete Purchase</h2>
-        <p id="payment-package-name" class="text-gray-500 text-sm mb-4"></p>
-
-        <!-- Loading state while creating PaymentIntent -->
-        <div id="payment-loading" class="py-8 text-center text-gray-400">
-            <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
-            <p class="text-sm">Loading payment options…</p>
-        </div>
-
-        <!-- Player selection (shown when multiple players, for sibling discount) -->
-        <div id="player-select-row" class="hidden mb-3">
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Who is this package for?</label>
-            <select id="pkg-player-select" onchange="reinitPayment(); this.style.borderColor=''; const lbl=this.closest('[id=player-select-row]')?.querySelector('label'); if(lbl){lbl.style.color='';lbl.textContent='Who is this package for?';}"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-secondary focus:border-transparent">
-                <option value="">Select player…</option>
-            </select>
-        </div>
-
-        <!-- Sibling discount badge -->
-        <div id="sibling-discount-badge" class="hidden mb-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-800 font-semibold">
-            👨‍👩‍👧 Sibling discount applied — 50% off!
-        </div>
-
-        <!-- Promo code -->
-        <div id="promo-row" class="hidden mb-3">
-            <div class="flex gap-2">
-                <input type="text" id="promo-input" placeholder="Promo code"
-                       oninput="this.value=this.value.toUpperCase()"
-                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm uppercase focus:ring-2 focus:ring-secondary focus:border-transparent">
-                <button type="button" onclick="applyPromoCode()"
-                        class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition">Apply</button>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+        <!-- Step 1: Player Selection -->
+        <div id="step-players">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-bold">Purchase Package</h2>
+                    <p id="payment-package-name" class="text-gray-500 text-sm"></p>
+                </div>
+                <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
-            <div id="promo-result" class="text-xs mt-1 hidden"></div>
+
+            <!-- Player checkboxes -->
+            <div id="player-checkboxes" class="mb-4">
+                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Select players</label>
+                <div id="player-check-list" class="space-y-2"></div>
+                <p id="player-error" class="hidden text-xs text-red-600 mt-1"></p>
+            </div>
+
+            <!-- Promo code -->
+            <div class="mb-4">
+                <div class="flex gap-2">
+                    <input type="text" id="promo-input" placeholder="Promo code (optional)"
+                           oninput="this.value=this.value.toUpperCase()"
+                           class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm uppercase focus:ring-2 focus:ring-secondary focus:border-transparent">
+                    <button type="button" onclick="applyPromoCode()"
+                            class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition">Apply</button>
+                </div>
+                <div id="promo-result" class="text-xs mt-1 hidden"></div>
+            </div>
+
+            <!-- APC Select credit -->
+            {% if has_select_membership and select_credit_balance > 0 %}
+            <div id="credit-row" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+                <label class="flex items-center gap-2 cursor-pointer text-sm text-green-800">
+                    <input type="checkbox" id="apply-credit-check" onchange="updateOrderSummary()"
+                           class="rounded border-green-300 text-green-600 focus:ring-green-400">
+                    <span>Apply <strong>${{ select_credit_balance|floatformat:2 }}</strong> APC Select credit</span>
+                </label>
+            </div>
+            {% endif %}
+
+            <!-- Order Summary (updates dynamically) -->
+            <div id="order-summary" class="hidden mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wide">Order Summary</h3>
+                </div>
+                <div id="order-line-items" class="px-4 py-3 space-y-2 text-sm"></div>
+                <div id="order-discounts" class="hidden px-4 pb-3 space-y-1 text-sm"></div>
+                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                    <span class="font-bold text-gray-900">Total</span>
+                    <span id="order-total" class="text-xl font-black text-primary"></span>
+                </div>
+            </div>
+
+            <button id="proceed-btn" onclick="proceedToPayment()" disabled
+                    class="w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition disabled:opacity-40 disabled:cursor-not-allowed">
+                Continue to Payment
+            </button>
+            <button onclick="closePaymentModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
         </div>
 
-        <!-- APC Select credit -->
-        {% if has_select_membership and select_credit_balance > 0 %}
-        <div id="credit-row" class="hidden mb-3 p-3 bg-green-50 border border-green-200 rounded-xl">
-            <label class="flex items-center gap-2 cursor-pointer text-sm text-green-800">
-                <input type="checkbox" id="apply-credit-check" onchange="reinitPayment()"
-                       class="rounded border-green-300 text-green-600 focus:ring-green-400">
-                <span>Apply <strong>${{ select_credit_balance|floatformat:2 }}</strong> APC Select credit</span>
-            </label>
+        <!-- Step 2: Payment -->
+        <div id="step-payment" class="hidden">
+            <div class="flex items-center gap-3 mb-4">
+                <button onclick="backToPlayers()" class="text-gray-400 hover:text-gray-700 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div>
+                    <h2 class="text-xl font-bold">Payment</h2>
+                    <p class="text-gray-500 text-sm"><span id="pay-summary-label"></span></p>
+                </div>
+            </div>
+
+            <!-- Compact order recap -->
+            <div id="pay-recap" class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs space-y-1"></div>
+
+            <!-- Loading -->
+            <div id="payment-loading" class="hidden py-8 text-center text-gray-400">
+                <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
+                <p class="text-sm">Loading payment options…</p>
+            </div>
+
+            <!-- Payment Element -->
+            <div id="payment-element" class="hidden mb-4"></div>
+            <div id="payment-errors" class="text-red-600 text-xs mb-3 hidden"></div>
+
+            <button id="pay-btn" onclick="submitPayment()" class="hidden w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
+                Pay <span id="pay-amount"></span>
+            </button>
+            <button onclick="backToPlayers()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Back</button>
         </div>
-        {% endif %}
-
-        <!-- Price breakdown (shown when discount/credit applied) -->
-        <div id="price-breakdown" class="hidden mb-3 p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs space-y-1">
-            <div class="flex justify-between text-gray-500"><span>Subtotal</span><span id="breakdown-subtotal"></span></div>
-            <div id="breakdown-discount-row" class="hidden flex justify-between text-green-600"><span id="breakdown-discount-label">Promo code</span><span id="breakdown-discount"></span></div>
-            <div id="breakdown-credit-row" class="hidden flex justify-between text-green-600"><span>APC Select credit</span><span id="breakdown-credit"></span></div>
-            <div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200"><span>Total</span><span id="breakdown-total"></span></div>
-        </div>
-
-        <!-- Payment Element (Apple Pay / Google Pay / Card) -->
-        <div id="payment-element" class="hidden mb-4"></div>
-        <div id="payment-errors" class="text-red-600 text-xs mb-3 hidden"></div>
-
-        <button id="pay-btn" onclick="submitPayment()" class="hidden w-full py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">
-            Pay <span id="pay-amount"></span>
-        </button>
-        <button onclick="closePaymentModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
     </div>
 </div>
 
 <!-- Success overlay -->
 <div id="payment-success" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-        <div class="text-5xl mb-3">🎉</div>
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        </div>
         <h2 class="text-xl font-bold mb-2">Package Activated!</h2>
-        <p class="text-gray-500 text-sm mb-5">Your package is now active and ready to use.</p>
-        <a href="{% url 'clients:book_v2' %}" class="block py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">Book a Session →</a>
+        <p id="success-detail" class="text-gray-500 text-sm mb-5">Your package is now active and ready to use.</p>
+        <a href="{% url 'clients:book_v2' %}" class="block py-3 bg-secondary text-gray-900 rounded-xl font-bold hover:bg-[#b8e000] transition">Book a Session</a>
+        <a href="{% url 'clients:packages' %}" class="block mt-2 py-2 text-sm text-gray-500 hover:text-gray-700">View My Packages</a>
     </div>
 </div>
 
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 const stripeJs = Stripe('{{ stripe_public_key }}');
-let paymentElements = null;   // stripe.elements() instance, created per payment
+let paymentElements = null;
 let currentPackageId = null;
+let currentPackageName = '';
 let currentPackagePrice = 0;
-let activePromoCode = '';
 let currentPlayerList = [];
+let activePromoCode = '';
+let orderData = null; // response from batch endpoint
 
-// Step 1: user taps "Buy Now" → show modal + init payment
-async function buyPackage(id, name, price, playerList) {
+function buyPackage(id, name, price, playerList) {
     currentPackageId = id;
+    currentPackageName = name;
     currentPackagePrice = parseFloat(price);
-    activePromoCode = '';
     currentPlayerList = playerList || [];
-    document.getElementById('payment-package-name').textContent = name;
+    activePromoCode = '';
+    orderData = null;
+
+    document.getElementById('payment-package-name').textContent = name + ' — $' + currentPackagePrice.toFixed(2);
     document.getElementById('payment-modal').classList.remove('hidden');
-    // Reset promo fields
-    const promoInput = document.getElementById('promo-input');
-    const promoResult = document.getElementById('promo-result');
-    if (promoInput) { promoInput.value = ''; }
-    if (promoResult) { promoResult.classList.add('hidden'); promoResult.textContent = ''; }
-    const creditCheck = document.getElementById('apply-credit-check');
-    if (creditCheck) creditCheck.checked = false;
-    // Show player select if multiple players
-    const psr = document.getElementById('player-select-row');
-    const psel = document.getElementById('pkg-player-select');
-    if (psr && psel && currentPlayerList.length > 1) {
-        psel.innerHTML = '<option value="">Select player…</option>' +
-            currentPlayerList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-        psr.classList.remove('hidden');
-    } else if (psr) {
-        psr.classList.add('hidden');
+
+    // Reset
+    document.getElementById('promo-input').value = '';
+    const pr = document.getElementById('promo-result');
+    if (pr) { pr.classList.add('hidden'); pr.textContent = ''; }
+    const cc = document.getElementById('apply-credit-check');
+    if (cc) cc.checked = false;
+    document.getElementById('order-summary').classList.add('hidden');
+    document.getElementById('proceed-btn').disabled = true;
+    document.getElementById('player-error').classList.add('hidden');
+
+    // Show step 1
+    document.getElementById('step-players').classList.remove('hidden');
+    document.getElementById('step-payment').classList.add('hidden');
+
+    // Build player checkboxes
+    const container = document.getElementById('player-check-list');
+    if (currentPlayerList.length === 1) {
+        // Single player — auto-select, no checkboxes needed
+        container.innerHTML = `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center text-xs font-bold text-gray-700">${currentPlayerList[0].name.charAt(0)}</div>
+            <span class="font-medium text-gray-800">${currentPlayerList[0].name}</span>
+            <input type="hidden" class="player-check" value="${currentPlayerList[0].id}" data-checked="true">
+        </div>`;
+        updateOrderSummary();
+    } else {
+        container.innerHTML = currentPlayerList.map(p => `
+            <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-secondary hover:bg-secondary/5 cursor-pointer transition">
+                <input type="checkbox" class="player-check rounded border-gray-300 text-secondary focus:ring-secondary"
+                       value="${p.id}" onchange="updateOrderSummary()">
+                <div class="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center text-xs font-bold text-gray-700">${p.name.charAt(0)}</div>
+                <span class="font-medium text-gray-800">${p.name}</span>
+            </label>
+        `).join('');
     }
-    document.getElementById('sibling-discount-badge')?.classList.add('hidden');
-    await initPackagePayment(id, price);
 }
 
-async function reinitPayment() {
-    if (currentPackageId) await initPackagePayment(currentPackageId, currentPackagePrice);
+function getSelectedPlayerIds() {
+    if (currentPlayerList.length === 1) return [currentPlayerList[0].id];
+    return [...document.querySelectorAll('.player-check:checked')].map(el => parseInt(el.value));
 }
 
-async function initPackagePayment(id, price) {
+function updateOrderSummary() {
+    const ids = getSelectedPlayerIds();
+    const summary = document.getElementById('order-summary');
+    const btn = document.getElementById('proceed-btn');
+
+    if (ids.length === 0) {
+        summary.classList.add('hidden');
+        btn.disabled = true;
+        return;
+    }
+
+    btn.disabled = false;
+    summary.classList.remove('hidden');
+
+    // Build line items preview (client-side estimate — server confirms on proceed)
+    const lineItems = document.getElementById('order-line-items');
+    const discounts = document.getElementById('order-discounts');
+    let subtotal = 0;
+    let siblingCount = 0;
+    let lines = '';
+
+    ids.forEach((id, idx) => {
+        const player = currentPlayerList.find(p => p.id === id);
+        const isSibling = idx > 0; // 2nd+ player gets sibling discount
+        const price = isSibling ? currentPackagePrice * 0.5 : currentPackagePrice;
+        if (isSibling) siblingCount++;
+        subtotal += price;
+        lines += `<div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-secondary/20 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-600">${player.name.charAt(0)}</div>
+                <span class="text-gray-700">${player.name}</span>
+            </div>
+            <div class="text-right">
+                ${isSibling ? `<span class="line-through text-gray-400 text-xs mr-1">$${currentPackagePrice.toFixed(2)}</span>` : ''}
+                <span class="font-semibold">$${price.toFixed(2)}</span>
+                ${isSibling ? `<span class="block text-[10px] text-green-600 font-medium">Sibling 50% off</span>` : ''}
+            </div>
+        </div>`;
+    });
+    lineItems.innerHTML = lines;
+
+    // Discounts section
+    let discountHtml = '';
+    if (activePromoCode) {
+        discountHtml += `<div class="flex justify-between text-green-600"><span>Promo: ${activePromoCode}</span><span>Applied at checkout</span></div>`;
+    }
+    const cc = document.getElementById('apply-credit-check');
+    if (cc && cc.checked) {
+        discountHtml += `<div class="flex justify-between text-green-600"><span>APC Select credit</span><span>Applied at checkout</span></div>`;
+    }
+    if (discountHtml) {
+        discounts.innerHTML = discountHtml;
+        discounts.classList.remove('hidden');
+    } else {
+        discounts.classList.add('hidden');
+    }
+
+    // Total (estimate — promo/credit applied server-side)
+    document.getElementById('order-total').textContent = '$' + subtotal.toFixed(2);
+    if (activePromoCode || (cc && cc.checked)) {
+        document.getElementById('order-total').innerHTML = '$' + subtotal.toFixed(2) + '<span class="text-xs text-gray-400 font-normal ml-1">before promo/credit</span>';
+    }
+}
+
+async function proceedToPayment() {
+    const ids = getSelectedPlayerIds();
+    if (ids.length === 0) {
+        document.getElementById('player-error').textContent = 'Please select at least one player.';
+        document.getElementById('player-error').classList.remove('hidden');
+        return;
+    }
+
+    // Switch to payment step
+    document.getElementById('step-players').classList.add('hidden');
+    document.getElementById('step-payment').classList.remove('hidden');
     document.getElementById('payment-loading').classList.remove('hidden');
     document.getElementById('payment-element').classList.add('hidden');
     document.getElementById('pay-btn').classList.add('hidden');
     document.getElementById('payment-errors').classList.add('hidden');
-    // Destroy previous element if any
     if (paymentElements) { document.getElementById('payment-element').innerHTML = ''; paymentElements = null; }
 
-    const formData = new FormData();
-    if (activePromoCode) formData.append('promo_code', activePromoCode);
-    const creditCheck = document.getElementById('apply-credit-check');
-    if (creditCheck && creditCheck.checked) formData.append('apply_credit', '1');
-    const psel = document.getElementById('pkg-player-select');
-    if (psel && psel.value) formData.append('player_id', psel.value);
+    const cc = document.getElementById('apply-credit-check');
+    const body = {
+        package_id: currentPackageId,
+        player_ids: ids,
+        promo_code: activePromoCode || '',
+        apply_credit: !!(cc && cc.checked),
+    };
 
     try {
-        const res = await fetch(`/portal/packages/${id}/pay/`, {
+        const res = await fetch('/portal/packages/batch-pay/', {
             method: 'POST',
-            headers: { 'X-CSRFToken': getCookie('csrftoken') },
-            body: formData,
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
 
-        // Sibling discount badge
-        const sibBadge = document.getElementById('sibling-discount-badge');
-        if (sibBadge) sibBadge.classList.toggle('hidden', !data.sibling_discount);
+        orderData = data;
 
-        // Show promo/credit rows (hide promo when sibling discount applies)
-        const promoRow = document.getElementById('promo-row');
-        if (promoRow) promoRow.classList.toggle('hidden', !!data.sibling_discount);
-        const creditRow = document.getElementById('credit-row');
-        if (creditRow) creditRow.classList.remove('hidden');
+        // Build payment recap
+        const recap = document.getElementById('pay-recap');
+        let recapHtml = '';
+        (data.line_items || []).forEach(li => {
+            const orig = parseFloat(li.original_price);
+            const price = parseFloat(li.price);
+            recapHtml += `<div class="flex justify-between">
+                <span class="text-gray-600">${currentPackageName} — ${li.player_name}</span>
+                <span class="font-semibold">${li.sibling_discount ? '<span class="line-through text-gray-400 mr-1">$' + orig.toFixed(2) + '</span>' : ''}$${price.toFixed(2)}</span>
+            </div>`;
+        });
+        const discAmt = parseFloat(data.discount_amount || 0);
+        const credAmt = parseFloat(data.credit_applied || 0);
+        if (discAmt > 0) recapHtml += `<div class="flex justify-between text-green-600"><span>Promo discount</span><span>-$${discAmt.toFixed(2)}</span></div>`;
+        if (credAmt > 0) recapHtml += `<div class="flex justify-between text-green-600"><span>APC Select credit</span><span>-$${credAmt.toFixed(2)}</span></div>`;
+        recapHtml += `<div class="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200 mt-1"><span>Total</span><span>$${parseFloat(data.amount).toFixed(2)}</span></div>`;
+        recap.innerHTML = recapHtml;
 
-        // Price breakdown
-        const discountAmt = parseFloat(data.discount_amount || 0);
-        const creditAmt   = parseFloat(data.credit_applied || 0);
-        const finalAmt    = parseFloat(data.amount);
-        const origAmt     = parseFloat(data.original_amount || price);
-        document.getElementById('pay-amount').textContent = '$' + finalAmt.toFixed(2);
-        if (discountAmt > 0 || creditAmt > 0) {
-            document.getElementById('breakdown-subtotal').textContent = '$' + origAmt.toFixed(2);
-            const discRow = document.getElementById('breakdown-discount-row');
-            if (discountAmt > 0 && discRow) {
-                discRow.classList.remove('hidden');
-                document.getElementById('breakdown-discount').textContent = '-$' + discountAmt.toFixed(2);
-            }
-            const credRow = document.getElementById('breakdown-credit-row');
-            if (creditAmt > 0 && credRow) {
-                credRow.classList.remove('hidden');
-                document.getElementById('breakdown-credit').textContent = '-$' + creditAmt.toFixed(2);
-            }
-            document.getElementById('breakdown-total').textContent = '$' + finalAmt.toFixed(2);
-            document.getElementById('price-breakdown').classList.remove('hidden');
-        } else {
-            document.getElementById('price-breakdown').classList.add('hidden');
-        }
+        document.getElementById('pay-summary-label').textContent = currentPackageName + ' x' + ids.length;
+        document.getElementById('pay-amount').textContent = '$' + parseFloat(data.amount).toFixed(2);
 
-        // Create Elements with clientSecret
+        // Mount Stripe Elements
         paymentElements = stripeJs.elements({
             clientSecret: data.client_secret,
             appearance: {
                 theme: 'stripe',
-                variables: {
-                    colorPrimary: '#1a1a1a',
-                    borderRadius: '12px',
-                    fontFamily: "'Archivo Condensed', system-ui, sans-serif",
-                },
+                variables: { colorPrimary: '#1a1a1a', borderRadius: '12px', fontFamily: "'Archivo Condensed', system-ui, sans-serif" },
             },
         });
-        const paymentElement = paymentElements.create('payment', { layout: 'tabs' });
-        paymentElement.mount('#payment-element');
+        const pe = paymentElements.create('payment', { layout: 'tabs' });
+        pe.mount('#payment-element');
 
         document.getElementById('payment-loading').classList.add('hidden');
         document.getElementById('payment-element').classList.remove('hidden');
@@ -549,10 +662,15 @@ async function initPackagePayment(id, price) {
     }
 }
 
+function backToPlayers() {
+    document.getElementById('step-payment').classList.add('hidden');
+    document.getElementById('step-players').classList.remove('hidden');
+    if (paymentElements) { document.getElementById('payment-element').innerHTML = ''; paymentElements = null; }
+}
+
 async function applyPromoCode() {
     const code = (document.getElementById('promo-input')?.value || '').trim().toUpperCase();
     const resultEl = document.getElementById('promo-result');
-    if (!resultEl) return;
     if (!code) { resultEl.textContent = 'Please enter a code.'; resultEl.className = 'text-xs mt-1 text-red-600'; resultEl.classList.remove('hidden'); return; }
 
     const res = await fetch('/portal/api/discount/validate/', {
@@ -564,40 +682,23 @@ async function applyPromoCode() {
     resultEl.classList.remove('hidden');
     if (data.valid) {
         resultEl.className = 'text-xs mt-1 text-green-700 font-semibold';
-        resultEl.textContent = '✓ ' + data.message;
+        resultEl.textContent = data.message;
         activePromoCode = code;
-        await initPackagePayment(currentPackageId, currentPackagePrice);
     } else {
         resultEl.className = 'text-xs mt-1 text-red-600';
         resultEl.textContent = data.error;
         activePromoCode = '';
-        await initPackagePayment(currentPackageId, currentPackagePrice);
     }
+    updateOrderSummary();
 }
 
 function closePaymentModal() {
     document.getElementById('payment-modal').classList.add('hidden');
-    if (paymentElements) {
-        // Clean up mounted element
-        document.getElementById('payment-element').innerHTML = '';
-        paymentElements = null;
-    }
+    if (paymentElements) { document.getElementById('payment-element').innerHTML = ''; paymentElements = null; }
 }
 
-// Step 2: user clicks Pay → confirm via Payment Element (handles all methods)
 async function submitPayment() {
     if (!paymentElements) return;
-    // Require player selection when multiple players exist
-    const psel = document.getElementById('pkg-player-select');
-    const psr = document.getElementById('player-select-row');
-    if (psr && !psr.classList.contains('hidden') && psel && !psel.value) {
-        psel.focus();
-        psel.style.borderColor = '#ef4444';
-        psel.title = 'Please select which player this package is for';
-        const label = psr.querySelector('label');
-        if (label) { label.style.color = '#ef4444'; label.textContent = '⚠️ Who is this package for? (required)'; }
-        return;
-    }
     const btn = document.getElementById('pay-btn');
     btn.disabled = true;
     btn.textContent = 'Processing…';
@@ -607,28 +708,29 @@ async function submitPayment() {
             elements: paymentElements,
             confirmParams: {
                 return_url: window.location.origin + '/portal/packages/?purchased=1',
-                payment_method_data: {
-                    billing_details: { name: '{{ request.user.get_full_name }}' },
-                },
+                payment_method_data: { billing_details: { name: '{{ request.user.get_full_name }}' } },
             },
-            redirect: 'if_required',  // stay on page for card payments; redirect for wallets
+            redirect: 'if_required',
         });
 
         if (error) {
             showError(error.message);
         } else {
             closePaymentModal();
+            const count = getSelectedPlayerIds().length;
+            document.getElementById('success-detail').textContent = count > 1
+                ? `${count} packages activated for your players.`
+                : 'Your package is now active and ready to use.';
             document.getElementById('payment-success').classList.remove('hidden');
         }
     } catch(e) {
         showError('Network error — please try again.');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Pay <span id="pay-amount">' + document.getElementById('pay-amount').textContent + '</span>';
+        btn.innerHTML = 'Pay <span id="pay-amount">' + (document.getElementById('pay-amount')?.textContent || '') + '</span>';
     }
 }
 
-// Handle return from Apple Pay / Google Pay redirect
 if (window.location.search.includes('purchased=1')) {
     document.getElementById('payment-success').classList.remove('hidden');
 }
@@ -637,7 +739,8 @@ function showError(msg) {
     const el = document.getElementById('payment-errors');
     el.textContent = msg; el.classList.remove('hidden');
     document.getElementById('payment-loading').classList.add('hidden');
-    document.getElementById('pay-btn').disabled = false;
+    const btn = document.getElementById('pay-btn');
+    if (btn) btn.disabled = false;
 }
 
 function getCookie(n) {

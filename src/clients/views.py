@@ -49,11 +49,13 @@ def dashboard(request):
         expiry_date__gte=timezone.localdate()
     )
 
-    # Get upcoming bookings
+    # Get upcoming bookings (exclude orphaned pending-payment bookings from old flow)
     upcoming_bookings = Booking.objects.filter(
         client=client,
         scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
+    ).exclude(
+        payment_status='pending', client_package__isnull=True
     ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')[:5]
 
     # Get recent bookings (past)
@@ -386,6 +388,14 @@ def package_payment_intent(request, package_id):
 
 @login_required
 @require_POST
+def batch_package_payment_intent(request):
+    """Proxy to payments app — create PaymentIntent for batch package purchase (multiple players)."""
+    from payments.views import create_batch_package_payment_intent
+    return create_batch_package_payment_intent(request)
+
+
+@login_required
+@require_POST
 def package_subscribe(request, package_id):
     """Proxy to payments app — create Stripe Subscription for recurring package."""
     from payments.views import create_package_subscription
@@ -460,9 +470,12 @@ def packages_list(request):
         Q(expires_at__isnull=True) | Q(expires_at__gte=today)
     ).aggregate(total=Sum('amount'))['total'] or 0 if has_select_membership else 0
 
+    players = client.players.filter(is_active=True)
+
     from django.conf import settings as django_settings
     context = {
         'client': client,
+        'players': players,
         'active_packages': active_packages,
         'expired_packages': expired_packages,
         'available_packages': available_packages,
@@ -484,6 +497,8 @@ def bookings_list(request):
         client=client,
         scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
+    ).exclude(
+        payment_status='pending', client_package__isnull=True
     ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')
 
     past_bookings = Booking.objects.filter(
