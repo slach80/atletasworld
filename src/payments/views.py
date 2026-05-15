@@ -304,8 +304,14 @@ def _handle_payment_succeeded(intent):
             payment_intent_id=intent['id'],
         )
 
+    elif metadata.get('type') == 'drop_in_booking':
+        _create_paid_bookings(
+            client_id=metadata.get('client_id'),
+            items_json=metadata.get('items', '[]'),
+            payment_intent_id=intent['id'],
+        )
+
     elif metadata.get('booking_ids'):
-        # Batch payment — multiple bookings
         ids = metadata['booking_ids'].split(',')
         per_booking_amount = intent.get('amount', 0) // len(ids) if ids else 0
         for bid in ids:
@@ -517,9 +523,14 @@ def create_booking_payment_intent(request, booking_id):
 @login_required
 @require_POST
 def create_batch_booking_payment_intent(request):
-    """Create a single Stripe PaymentIntent for multiple pending drop-in bookings."""
+    """Create a Stripe PaymentIntent for drop-in sessions (no booking created yet).
+
+    Accepts block_id/player_id pairs, validates availability, calculates total,
+    and stores the items in metadata so the webhook can create bookings on payment success.
+    """
     import json
-    from bookings.models import Booking
+    from coaches.models import ScheduleBlock
+    from clients.models import Player
     from decimal import Decimal
 
     if not settings.STRIPE_SECRET_KEY:
@@ -528,24 +539,40 @@ def create_batch_booking_payment_intent(request):
     client = get_object_or_404(Client, user=request.user)
 
     data = json.loads(request.body)
-    booking_ids = data.get('booking_ids', [])
-    if not booking_ids:
-        return JsonResponse({'error': 'No booking IDs provided.'}, status=400)
-
-    bookings = list(Booking.objects.filter(
-        pk__in=booking_ids, client=client, payment_status='pending'
-    ).select_related('session_type', 'player'))
-
-    if not bookings:
-        return JsonResponse({'error': 'No pending bookings found.'}, status=400)
+    items = data.get('items', [])
+    if not items:
+        return JsonResponse({'error': 'No items provided.'}, status=400)
 
     total = Decimal('0')
-    for b in bookings:
-        amt = b.amount_paid
-        if not amt and b.session_type:
-            amt = b.session_type.get_drop_in_price()
-        if amt:
-            total += amt
+    descriptions = []
+    validated = []
+
+    for item in items:
+        block_id = item.get('block_id')
+        player_id = item.get('player_id')
+        amount = Decimal(item.get('amount', '0'))
+
+        try:
+            block = ScheduleBlock.objects.select_related('coach').prefetch_related('catalog_session_types').get(id=block_id)
+            player = Player.objects.get(id=player_id, client=client)
+        except (ScheduleBlock.DoesNotExist, Player.DoesNotExist):
+            return JsonResponse({'error': 'Invalid session or player.'}, status=400)
+
+        if not block.is_available:
+            return JsonResponse({'error': f'Session at {block.date} {block.start_time} is no longer available.'}, status=400)
+
+        catalog_types = list(block.catalog_session_types.all())
+        session_type = catalog_types[0] if catalog_types else None
+        if not session_type:
+            return JsonResponse({'error': 'Session has no type configured.'}, status=400)
+
+        price = amount or (block.price_override if block.price_override is not None else session_type.get_drop_in_price())
+        if not price:
+            return JsonResponse({'error': f'Cannot determine price for {session_type.name}.'}, status=400)
+
+        total += price
+        descriptions.append(f"{session_type.name} ({player.first_name} {player.last_name})")
+        validated.append({'block_id': block_id, 'player_id': player_id, 'amount': str(price)})
 
     if total <= 0:
         return JsonResponse({'error': 'Cannot determine payment amount.'}, status=400)
@@ -553,12 +580,8 @@ def create_batch_booking_payment_intent(request):
     s = _stripe()
     customer_id = _get_or_create_stripe_customer(client)
 
-    # Store all booking IDs as comma-separated in metadata
-    descriptions = []
-    for b in bookings:
-        name = b.session_type.name if b.session_type else 'Session'
-        player = f"{b.player.first_name} {b.player.last_name}" if b.player else ''
-        descriptions.append(f"{name} ({player})")
+    # Store items as JSON in metadata so webhook can create bookings
+    items_json = json.dumps(validated)
 
     try:
         pi = s.PaymentIntent.create(
@@ -566,16 +589,12 @@ def create_batch_booking_payment_intent(request):
             currency='usd',
             customer=customer_id,
             metadata={
-                'booking_ids': ','.join(str(b.pk) for b in bookings),
+                'type': 'drop_in_booking',
                 'client_id': client.pk,
+                'items': items_json,
             },
             description=f"Drop-in: {'; '.join(descriptions)}",
         )
-
-        for b in bookings:
-            if not b.amount_paid and b.session_type:
-                b.amount_paid = b.session_type.get_drop_in_price()
-                b.save(update_fields=['amount_paid'])
 
         return JsonResponse({
             'client_secret': pi.client_secret,
@@ -620,3 +639,62 @@ def _confirm_booking_paid(booking_id, payment_intent_id, amount):
             logger.exception('_confirm_booking_paid: notification queuing failed for booking %s', booking_id)
     except Booking.DoesNotExist:
         logger.warning('_confirm_booking_paid: booking %s not found or already paid', booking_id)
+
+
+def _create_paid_bookings(client_id, items_json, payment_intent_id):
+    """Create confirmed bookings after successful drop-in payment (no pending state)."""
+    import json
+    from decimal import Decimal
+    from bookings.models import Booking
+    from coaches.models import ScheduleBlock
+    from clients.models import Client, Player
+
+    try:
+        items = json.loads(items_json)
+        client = Client.objects.get(pk=client_id)
+    except (json.JSONDecodeError, Client.DoesNotExist) as e:
+        logger.error('_create_paid_bookings: invalid data — %s', e)
+        return
+
+    for item in items:
+        try:
+            block = ScheduleBlock.objects.select_related('coach').prefetch_related('catalog_session_types').get(id=item['block_id'])
+            player = Player.objects.get(id=item['player_id'], client=client)
+            catalog_types = list(block.catalog_session_types.all())
+            session_type = catalog_types[0] if catalog_types else None
+
+            booking = Booking.objects.create(
+                client=client,
+                player=player,
+                coach=block.coach,
+                session_type=session_type,
+                scheduled_date=block.date,
+                scheduled_time=block.start_time,
+                client_package=None,
+                status='confirmed',
+                payment_status='paid',
+                amount_paid=Decimal(item.get('amount', '0')),
+            )
+
+            # Update block availability
+            block.current_participants += 1
+            if block.current_participants >= block.max_participants:
+                block.status = 'booked'
+            block.save()
+
+            logger.info('Drop-in booking #%s created after payment %s', booking.id, payment_intent_id)
+
+            try:
+                from clients.notification_utils import queue_grouped_notification
+                queue_grouped_notification(
+                    client=client,
+                    event_type='booking_confirmed_paid',
+                    context={'booking_id': booking.id, 'amount': float(booking.amount_paid)},
+                    group_key=f'booking_{booking.id}',
+                    window_seconds=45,
+                )
+            except Exception:
+                pass
+
+        except Exception as e:
+            logger.exception('_create_paid_bookings: failed to create booking for item %s — %s', item, e)

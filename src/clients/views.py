@@ -1443,86 +1443,73 @@ def create_booking_direct(request):
                 'price': block.price_override if block.price_override is not None else drop_in_price,
             })
 
-        # Create all bookings
-        created_bookings = []
-        pending_payment_bookings = []
-        for item in validated_bookings:
-            if item['requires_payment']:
-                # Create pending booking awaiting payment
-                booking = Booking.objects.create(
-                    client=client,
-                    player=item['player'],
-                    coach=item['block'].coach,
-                    session_type=item['session_type'],
-                    scheduled_date=item['block'].date,
-                    scheduled_time=item['block'].start_time,
-                    client_package=None,
-                    status='confirmed',
-                    payment_status='pending',
-                    amount_paid=item['price'] or 0,
-                )
-                # Update block availability
-                item['block'].current_participants += 1
-                if item['block'].current_participants >= item['block'].max_participants:
-                    item['block'].status = 'booked'
-                item['block'].save()
+        # Separate items requiring payment from those covered by package/free
+        payment_items = [i for i in validated_bookings if i['requires_payment']]
+        covered_items = [i for i in validated_bookings if not i['requires_payment']]
 
-                pending_payment_bookings.append({
-                    'booking_id': booking.id,
+        # If any items require payment, don't create any bookings yet —
+        # return payment info so frontend can collect payment first,
+        # and the webhook will create all bookings on success.
+        if payment_items:
+            pending_payment = []
+            for item in payment_items:
+                pending_payment.append({
+                    'block_id': item['block'].id,
+                    'player_id': item['player'].id,
                     'amount': str(item['price']),
                     'session_type': item['session_type'].name,
                     'player_name': f"{item['player'].first_name} {item['player'].last_name}",
                 })
-            else:
-                booking = Booking.objects.create(
-                    client=client,
-                    player=item['player'],
-                    coach=item['block'].coach,
-                    session_type=item['session_type'],
-                    scheduled_date=item['block'].date,
-                    scheduled_time=item['block'].start_time,
-                    client_package=item['package'],
-                    status='confirmed',
-                    payment_status='package' if item['package'] else 'paid',
-                )
 
-                # Deduct session from package
-                if item['package']:
-                    item['package'].use_session()
-
-                # Update block availability
-                item['block'].current_participants += 1
-                if item['block'].current_participants >= item['block'].max_participants:
-                    item['block'].status = 'booked'
-                item['block'].save()
-
-                created_bookings.append(booking)
-
-                # Queue notification
-                try:
-                    from clients.notification_utils import queue_grouped_notification
-                    queue_grouped_notification(
-                        client=client,
-                        event_type='booking_confirmed',
-                        context={'booking_id': booking.id, 'payment_method': 'free' if item['is_free'] else 'package'},
-                        group_key=f'booking_{booking.id}',
-                        window_seconds=30,
-                    )
-                except Exception:
-                    pass
-
-        # If any bookings require payment, return payment info
-        if pending_payment_bookings:
             return JsonResponse({
                 'success': True,
                 'requires_payment': True,
-                'bookings_created': len(created_bookings),
-                'pending_payment': pending_payment_bookings,
+                'pending_payment': pending_payment,
             })
+
+        # All items covered by package or free — create bookings immediately
+        created_bookings = []
+        for item in covered_items:
+            booking = Booking.objects.create(
+                client=client,
+                player=item['player'],
+                coach=item['block'].coach,
+                session_type=item['session_type'],
+                scheduled_date=item['block'].date,
+                scheduled_time=item['block'].start_time,
+                client_package=item['package'],
+                status='confirmed',
+                payment_status='package' if item['package'] else 'paid',
+            )
+
+            # Deduct session from package
+            if item['package']:
+                item['package'].use_session()
+
+            # Update block availability
+            item['block'].current_participants += 1
+            if item['block'].current_participants >= item['block'].max_participants:
+                item['block'].status = 'booked'
+            item['block'].save()
+
+            created_bookings.append(booking)
+
+            # Queue notification
+            try:
+                from clients.notification_utils import queue_grouped_notification
+                queue_grouped_notification(
+                    client=client,
+                    event_type='booking_confirmed',
+                    context={'booking_id': booking.id, 'payment_method': 'free' if item['is_free'] else 'package'},
+                    group_key=f'booking_{booking.id}',
+                    window_seconds=30,
+                )
+            except Exception:
+                pass
 
         return JsonResponse({
             'success': True,
-            'bookings_created': len(created_bookings) + len(pending_payment_bookings),
+            'bookings_created': len(created_bookings),
             'booking_ids': [b.id for b in created_bookings]
         })
 

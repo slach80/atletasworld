@@ -673,9 +673,8 @@ async function confirmBookings(){
             const items=data.pending_payment;
             const total=items.reduce((sum,i)=>sum+parseFloat(i.amount),0).toFixed(2);
             const lines=items.map(i=>`• ${i.session_type} — ${i.player_name} ($${i.amount})`).join('\n');
-            const label=`${items.length} session${items.length>1?'s':''} · Total: $${total}\n${lines}`;
-            const ids=items.map(i=>i.booking_id);
-            payBookings(ids, label, total);
+            const label=`${items.length} session${items.length>1?'s':''}\n${lines}`;
+            payBookings(items, label, total);
             return;
         }
 
@@ -743,7 +742,7 @@ function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,
 {% if stripe_public_key %}
 let _stripeJs=null, _bookingElements=null;
 
-async function payBookings(bookingIds, label, total){
+async function payBookings(items, label, total){
     if(!_stripeJs) _stripeJs=Stripe('{{ stripe_public_key }}');
     document.getElementById('booking-pay-label').innerText=label;
     document.getElementById('booking-pay-total').textContent=`$${total}`;
@@ -757,7 +756,7 @@ async function payBookings(bookingIds, label, total){
         const res=await fetch('/payments/bookings/pay/',{
             method:'POST',
             headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
-            body:JSON.stringify({booking_ids:bookingIds})
+            body:JSON.stringify({items:items})
         });
         const data=await res.json();
         if(!res.ok){showBookingPayError(data.error||'Could not initialize payment.');return;}
