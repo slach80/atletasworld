@@ -24,20 +24,25 @@
         {% endif %}
 
         {% if not client.user.first_name or not client.phone or not client.emergency_contact or not current_waiver %}
-        <div class="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-xl text-sm text-yellow-800">
-            <p class="font-bold mb-1">⚠️ Complete your profile before booking</p>
-            <ul class="list-disc ml-4 space-y-0.5">
-                {% if not client.user.first_name or not client.user.last_name %}<li>First and last name required</li>{% endif %}
-                {% if not client.phone %}<li>Phone number required</li>{% endif %}
-                {% if not client.emergency_contact %}<li>Emergency contact required</li>{% endif %}
-                {% if not current_waiver %}<li>Annual waiver must be signed</li>{% endif %}
-            </ul>
+        <div class="mb-6 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl shadow-sm">
+            <div class="flex items-start gap-3">
+                <span class="text-2xl">⚠️</span>
+                <div class="flex-1">
+                    <p class="font-bold text-yellow-900 mb-2">Complete your profile before booking</p>
+                    <ul class="space-y-1.5 text-sm text-yellow-800">
+                        {% if not client.user.first_name or not client.user.last_name %}<li class="flex items-center gap-2"><span class="text-yellow-600">•</span><span>First and last name required</span></li>{% endif %}
+                        {% if not client.phone %}<li class="flex items-center gap-2"><span class="text-yellow-600">•</span><span>Phone number required</span></li>{% endif %}
+                        {% if not client.emergency_contact %}<li class="flex items-center gap-2"><span class="text-yellow-600">•</span><span>Emergency contact required</span></li>{% endif %}
+                        {% if not current_waiver %}<li class="flex items-center gap-2"><span class="text-yellow-600">•</span><span>Annual waiver must be signed</span></li>{% endif %}
+                    </ul>
+                </div>
+            </div>
         </div>
         {% endif %}
 
-        <div class="bg-white rounded-xl shadow-md p-8">
-            <h1 class="text-2xl font-bold text-gray-800 mb-2">My Profile</h1>
-            <p class="text-sm text-gray-400 mb-6">Fields marked <span class="text-red-500 font-bold">*</span> are required before booking.</p>
+        <div class="bg-white rounded-xl shadow-md p-4 sm:p-8">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800 mb-2">My Profile</h1>
+            <p class="text-sm text-gray-500 mb-6"><span class="text-red-500 font-bold">*</span> = Required before booking</p>
 
             <form method="POST" class="space-y-6">
                 {% csrf_token %}
@@ -179,11 +184,11 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-4 pt-4">
-                    <a href="{% url 'clients:dashboard' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                <div class="grid grid-cols-2 gap-3 pt-4">
+                    <a href="{% url 'clients:dashboard' %}" class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 text-center font-semibold hover:bg-gray-50 transition">
                         Cancel
                     </a>
-                    <button type="submit" class="px-6 py-3 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000] transition">
+                    <button type="submit" class="px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">
                         Save Changes
                     </button>
                 </div>
@@ -193,23 +198,23 @@
         <!-- ============================================================ -->
         <!-- DISPLAY PREFERENCES -->
         <!-- ============================================================ -->
-        <div class="bg-white rounded-xl shadow-md p-8 mt-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-1">Display</h2>
-            <p class="text-sm text-gray-500 mb-6">Appearance settings saved to this device.</p>
-            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
+        <div class="bg-white rounded-xl shadow-md p-4 sm:p-8 mt-6">
+            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1">Display</h2>
+            <p class="text-sm text-gray-500 mb-4">Appearance settings saved to this device.</p>
+            <div class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl hover:border-gray-300 transition">
                 <div class="flex items-center gap-3">
-                    <span id="dark-icon" class="text-2xl">🌙</span>
+                    <span id="dark-icon" class="text-2xl sm:text-3xl">🌙</span>
                     <div>
-                        <p class="font-semibold text-gray-800" id="dark-label">Dark Mode</p>
+                        <p class="font-bold text-gray-800 text-base" id="dark-label">Dark Mode</p>
                         <p class="text-xs text-gray-500" id="dark-sub">Currently: Light</p>
                     </div>
                 </div>
                 <button onclick="toggleClientDark()" id="dark-toggle-btn"
-                        class="relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-300 focus:outline-none"
-                        style="width:3.25rem;background:#e5e7eb;">
+                        class="relative inline-flex h-8 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        style="width:3.5rem;background:#e5e7eb;">
                     <span id="dark-toggle-thumb"
-                          class="inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-300"
-                          style="margin-left:3px;"></span>
+                          class="inline-block h-6 w-6 rounded-full bg-white shadow-md transform transition-transform duration-300"
+                          style="margin-left:4px;"></span>
                 </button>
             </div>
         </div>
