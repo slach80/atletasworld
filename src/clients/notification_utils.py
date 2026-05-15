@@ -76,12 +76,17 @@ def queue_grouped_notification(client, event_type, context, group_key, window_se
             logger.debug('Appended %s to outbox group %s', event_type, group_key)
         else:
             # Schedule the flush task
-            from clients.tasks import flush_notification_group
-            flush_notification_group.apply_async(
-                args=[group_key],
-                countdown=window_seconds,
-            )
-            logger.debug('Queued %s for group %s (flush in %ds)', event_type, group_key, window_seconds)
+            from clients.tasks import flush_notification_group, is_celery_enabled
+            if is_celery_enabled():
+                flush_notification_group.apply_async(
+                    args=[group_key],
+                    countdown=window_seconds,
+                )
+                logger.debug('Queued %s for group %s (flush in %ds)', event_type, group_key, window_seconds)
+            else:
+                # Run synchronously (no Celery worker)
+                flush_notification_group(group_key)
+                logger.debug('Flushed %s for group %s synchronously', event_type, group_key)
 
     except Exception:
         # Never let notification queuing break the booking/payment flow
