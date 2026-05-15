@@ -322,6 +322,12 @@
                                    class="flex-1 text-center px-4 py-2 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-semibold">
                                     Reschedule
                                 </a>
+                                <form method="POST" action="{% url 'clients:booking_cancel' booking.id %}" onsubmit="return confirm('Are you sure you want to cancel this booking?');" class="flex-1">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full px-4 py-2 bg-red-50 border-2 border-red-200 text-red-700 rounded-lg font-semibold hover:bg-red-100 transition text-sm">
+                                        Cancel
+                                    </button>
+                                </form>
                             </div>
                             {% endif %}
                         </div>
