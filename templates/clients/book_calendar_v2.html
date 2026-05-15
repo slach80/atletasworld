@@ -296,6 +296,9 @@ function toggleMobileFilters(){
 function toggleMobileCart(){
     document.getElementById('mobile-cart-modal').classList.toggle('hidden');
 }
+function closeMobileCart(){
+    document.getElementById('mobile-cart-modal').classList.add('hidden');
+}
 
 function updateCartBadge(){
     const badge=document.getElementById('cart-badge');
