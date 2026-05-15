@@ -260,12 +260,10 @@
 
             <!-- Cart Sidebar — desktop -->
             {% if stripe_public_key %}
-            <aside class="hidden lg:block w-80 shrink-0">
-                <div class="sticky top-24">
-                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Your Cart</h3>
-                        <div id="cart-desktop"></div>
-                    </div>
+            <aside class="hidden lg:block w-80 shrink-0 self-start sticky top-24">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Your Cart</h3>
+                    <div id="cart-desktop"></div>
                 </div>
             </aside>
             {% endif %}
