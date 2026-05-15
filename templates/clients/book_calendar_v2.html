@@ -272,6 +272,18 @@ let timeStart=6, timeEnd=23;
 let sessionsLeft={{ active_package.sessions_remaining|default:0 }};
 const hasPackage={{ has_package|yesno:"true,false" }};
 
+// Restore cart from localStorage
+try{
+    const saved=localStorage.getItem('bookingCart');
+    if(saved){
+        cart=JSON.parse(saved);
+        updateCartBadge();
+        renderCart();
+    }
+}catch(e){
+    localStorage.removeItem('bookingCart');
+}
+
 // Startup
 document.addEventListener('DOMContentLoaded',()=>{
     Promise.all([loadSessionTypes(),loadPackages()]).then(()=>loadSlots());
@@ -479,15 +491,41 @@ function updateTypePillStates(){
 }
 
 function addToCart(key){
-    if(cart.some(c=>c.key===key)) return;
     const s=slotMap[key]; if(!s) return;
-    cart.push({key,slot:s});
+
+    // Get selected players
+    const selectedPlayers=Array.from(document.querySelectorAll('.player-check:checked')).map(cb=>({
+        id:cb.value,
+        name:cb.closest('label').textContent.trim()
+    }));
+
+    if(selectedPlayers.length===0){
+        alert('Please select at least one player');
+        return;
+    }
+
+    // Add one cart item per player for this slot
+    selectedPlayers.forEach(player=>{
+        const itemKey=`${key}_player_${player.id}`;
+        if(!cart.some(c=>c.key===itemKey)){
+            cart.push({
+                key:itemKey,
+                slot:s,
+                block_id:s.slot_id,
+                player_id:player.id,
+                player_name:player.name
+            });
+        }
+    });
+
     updateCartBadge();
     renderSlots(); renderCart();
+    localStorage.setItem('bookingCart',JSON.stringify(cart));
 }
 
 function removeFromCart(key){
     cart=cart.filter(c=>c.key!==key);
+    localStorage.setItem('bookingCart',JSON.stringify(cart));
     updateCartBadge();
     renderSlots(); renderCart();
 }
@@ -503,7 +541,7 @@ function buildCartHtml(){
     if(!cart.length) return`<div class="text-center py-10 text-gray-400"><p class="text-4xl mb-2">🛒</p><p class="text-sm">Cart is empty</p></div>`;
 
     let html='<div class="space-y-3 mb-4">';
-    cart.forEach(({slot})=>{
+    cart.forEach(({key,slot,player_name})=>{
         const price=parseFloat(slot.price||0);
         html+=`<div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div class="flex justify-between items-start">
@@ -511,9 +549,10 @@ function buildCartHtml(){
                     <p class="text-sm font-semibold text-gray-900">${fmtTime(slot.start)}</p>
                     <p class="text-xs text-gray-600">${slot.session_type_name}</p>
                     <p class="text-xs text-gray-500">${slot.coach_name}</p>
+                    ${player_name?`<p class="text-xs text-blue-600 mt-0.5">⚽ ${player_name}</p>`:''}
                     <p class="text-xs font-semibold ${price>0?'text-yellow-600':'text-gray-400'} mt-1">${price>0?'$'+price.toFixed(2):'Free'}</p>
                 </div>
-                <button onclick="removeFromCart('${slot.key}')" class="text-gray-400 hover:text-red-500 text-xl">&times;</button>
+                <button onclick="removeFromCart('${key}')" class="text-gray-400 hover:text-red-500 text-xl">&times;</button>
             </div>
         </div>`;
     });
@@ -530,8 +569,76 @@ function buildCartHtml(){
     return html;
 }
 
-function confirmBookings(){
-    alert('Booking logic here - integrate with existing API');
+async function confirmBookings(){
+    if(cart.length===0){alert('Cart is empty');return;}
+
+    const btn=document.querySelector('[onclick="confirmBookings()"]');
+    if(btn){btn.disabled=true;btn.textContent='Processing...';}
+
+    // Step 1: Create reservations for each cart item
+    try{
+        const reservations=await Promise.all(cart.map(async item=>{
+            const formData=new FormData();
+            formData.append('block_id',item.block_id);
+            formData.append('player_id',item.player_id);
+
+            const res=await fetch('{% url "clients:reserve_session" %}',{
+                method:'POST',
+                headers:{'X-CSRFToken':getCookie('csrftoken')},
+                body:formData
+            });
+            const data=await res.json();
+            if(!data.success)throw new Error(data.error||'Reservation failed');
+            return data;
+        }));
+
+        // Step 2: Confirm all reservations as bookings
+        const confirmRes=await fetch('{% url "clients:confirm_booking" %}',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+            body:JSON.stringify({})
+        });
+        const confirmData=await confirmRes.json();
+
+        if(!confirmData.success)throw new Error(confirmData.error||'Booking confirmation failed');
+
+        // Success!
+        const bookedCount=confirmData.bookings_created||reservations.length;
+        cart=[];
+        localStorage.removeItem('bookingCart');
+        closeMobileCart();
+        updateCartBadge();
+        renderCart();
+
+        // Show success overlay
+        const successEl=document.getElementById('success-overlay');
+        const detailsEl=document.getElementById('success-details');
+        if(successEl){
+            if(detailsEl){
+                detailsEl.innerHTML=`<p>Successfully booked ${bookedCount} session${bookedCount>1?'s':''}!</p>`;
+            }
+            successEl.classList.remove('hidden');
+        }
+
+        // Reload calendar after 3 seconds
+        setTimeout(()=>location.reload(),3000);
+    }catch(e){
+        const errMsg=e.message||'Unknown error';
+        if(errMsg.includes('No active package')||errMsg.includes('No sessions remaining')){
+            if(confirm(errMsg+'\n\nWould you like to purchase a package now?')){
+                window.location.href='{% url "clients:packages" %}';
+                return;
+            }
+        }else{
+            alert('Error: '+errMsg);
+        }
+        if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
+    }
+}
+
+function getCookie(name){
+    const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
+    return v?v.pop():'';
 }
 
 function clearAllFilters(){
