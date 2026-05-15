@@ -84,9 +84,19 @@ def queue_grouped_notification(client, event_type, context, group_key, window_se
                 )
                 logger.debug('Queued %s for group %s (flush in %ds)', event_type, group_key, window_seconds)
             else:
-                # Run synchronously (no Celery worker)
-                flush_notification_group(group_key)
-                logger.debug('Flushed %s for group %s synchronously', event_type, group_key)
+                # Run synchronously — call the underlying function directly
+                # (shared_task with bind=True expects 'self' as first arg via Celery)
+                from clients.services import NotificationService
+                from clients.models import NotificationOutbox
+                try:
+                    ob = NotificationOutbox.objects.get(group_key=group_key)
+                    NotificationService.send_grouped(ob.client, ob.events)
+                    ob.delete()
+                    logger.info('Flushed notification group %s synchronously (%d events)', group_key, len(ob.events))
+                except NotificationOutbox.DoesNotExist:
+                    pass
+                except Exception:
+                    logger.exception('Sync flush failed for group %s', group_key)
 
     except Exception:
         # Never let notification queuing break the booking/payment flow
