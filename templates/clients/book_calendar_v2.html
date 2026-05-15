@@ -193,12 +193,23 @@
                 </select>
             </div>
             <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                <select id="locationSelectMobile" onchange="setLocationFilter(this.value)" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700">
+                    <option value="">Any Location</option>
+                </select>
+            </div>
+            <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Session Type</label>
                 <div id="type-pills-mobile" class="space-y-3"></div>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                <div class="flex flex-wrap gap-2" id="date-filters-mobile"></div>
+                <div class="flex flex-wrap gap-2">
+                    <button data-date="" onclick="setDateFilter('')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">All</button>
+                    <button data-date="today" onclick="setDateFilter('today')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">Today</button>
+                    <button data-date="this_week" onclick="setDateFilter('this_week')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">This Week</button>
+                    <button data-date="next_week" onclick="setDateFilter('next_week')" class="date-pill px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">Next Week</button>
+                </div>
             </div>
             <div>
                 <button onclick="toggleMobileFilters()" class="w-full py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600">
@@ -286,7 +297,32 @@ async function loadSlots(){
 function renderSlots(){
     const c=document.getElementById('slots-container');
     const byDate={};
+
+    // Apply filters
     for(const [k,s] of Object.entries(slotMap)){
+        // Filter by session type
+        if(activeTypes.size > 0 && !activeTypes.has(String(s.session_type_id))) continue;
+
+        // Filter by coach
+        if(activeCoach && String(s.coach_id) !== String(activeCoach)) continue;
+
+        // Filter by location
+        if(activeLocation && String(s.location_id) !== String(activeLocation)) continue;
+
+        // Filter by date
+        const slotDate = new Date(s.start.split('T')[0]+'T12:00:00');
+        const today = new Date(); today.setHours(0,0,0,0);
+        if(activeDateFilter === 'today' && slotDate.toDateString() !== today.toDateString()) continue;
+        if(activeDateFilter === 'this_week'){
+            const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 7);
+            if(slotDate < today || slotDate > weekEnd) continue;
+        }
+        if(activeDateFilter === 'next_week'){
+            const weekStart = new Date(today); weekStart.setDate(today.getDate() + 7);
+            const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 14);
+            if(slotDate < weekStart || slotDate > weekEnd) continue;
+        }
+
         const d=s.start.split('T')[0];
         (byDate[d]||(byDate[d]=[])).push(s);
     }
@@ -445,7 +481,19 @@ function clearAllFilters(){
 }
 
 function setCoachFilter(v){ activeCoach=v; renderSlots(); }
-function setDateFilter(v){ activeDateFilter=v; renderSlots(); }
+function setDateFilter(v){
+    activeDateFilter=v;
+    document.querySelectorAll('.date-pill').forEach(el=>{
+        if(el.getAttribute('data-date')===v){
+            el.classList.add('border-yellow-400','bg-yellow-50','text-gray-900');
+            el.classList.remove('border-gray-300','text-gray-700');
+        }else{
+            el.classList.remove('border-yellow-400','bg-yellow-50','text-gray-900');
+            el.classList.add('border-gray-300','text-gray-700');
+        }
+    });
+    renderSlots();
+}
 function setLocationFilter(v){ activeLocation=v; renderSlots(); }
 function updateCartBadge(){}
 function onTimeSlider(){}
