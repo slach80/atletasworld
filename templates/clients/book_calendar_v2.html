@@ -672,7 +672,18 @@ async function confirmBookings(){
         if(data.requires_payment && data.pending_payment && data.pending_payment.length>0){
             const items=data.pending_payment;
             const total=items.reduce((sum,i)=>sum+parseFloat(i.amount),0).toFixed(2);
-            const lines=items.map(i=>`• ${i.session_type} — ${i.player_name} ($${i.amount})`).join('\n');
+            // Group by session_type + player_name
+            const grouped={};
+            items.forEach(i=>{
+                const key=`${i.session_type}|${i.player_name}`;
+                if(!grouped[key]) grouped[key]={type:i.session_type,player:i.player_name,count:0,subtotal:0};
+                grouped[key].count++;
+                grouped[key].subtotal+=parseFloat(i.amount);
+            });
+            const lines=Object.values(grouped).map(g=>{
+                const qty=g.count>1?` × ${g.count}`:'';
+                return `• ${g.type}${qty} — ${g.player} ($${g.subtotal.toFixed(2)})`;
+            }).join('\n');
             const label=`${items.length} session${items.length>1?'s':''}\n${lines}`;
             payBookings(items, label, total);
             return;
