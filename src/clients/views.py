@@ -1401,8 +1401,12 @@ def create_booking_direct(request):
         if not block.is_available:
             return JsonResponse({'success': False, 'error': f'Session at {block.date} {block.start_time} is no longer available'})
 
-        # Check if free session
+        # Check if block has session types
         catalog_types = block.catalog_session_types.all()
+        if not catalog_types.exists():
+            return JsonResponse({'success': False, 'error': f'Session block has no session type configured'})
+
+        # Check if free session
         is_free = (
             block.price_override is not None and block.price_override == 0
         ) or (
@@ -1431,7 +1435,7 @@ def create_booking_direct(request):
     # Create all bookings
     created_bookings = []
     for item in validated_bookings:
-        # Get session_type from block's catalog
+        # Get session_type from block's catalog (guaranteed to exist after validation)
         session_type = item['block'].catalog_session_types.first()
 
         booking = Booking.objects.create(
