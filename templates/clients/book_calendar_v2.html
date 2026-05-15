@@ -448,7 +448,7 @@ function renderTypePills(){
         if(!types.length) continue;
         html+=`<div><p class="text-xs font-bold text-gray-500 uppercase mb-2">${label}</p><div class="space-y-1.5">`;
         for(const st of types){
-            html+=`<button onclick="toggleTypeFilter('${st.id}')" data-type-pill="${st.id}" class="type-pill w-full px-3 py-2 text-xs font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-left">${st.name}</button>`;
+            html+=`<button onclick="toggleTypeFilter('${st.id}')" data-type-pill="${st.id}" class="type-pill w-full px-3 py-2 text-xs font-medium border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 active:scale-95 transition-all text-left">${st.name}</button>`;
         }
         html+=`</div></div>`;
     }
@@ -463,8 +463,12 @@ function toggleTypeFilter(id){
     }else{
         activeTypes.has(id)?activeTypes.delete(id):activeTypes.add(id);
     }
+    // Force immediate visual update
     updateTypePillStates();
-    renderSlots();
+    // Use requestAnimationFrame to ensure repaint happens before renderSlots
+    requestAnimationFrame(()=>{
+        renderSlots();
+    });
 }
 
 function updateTypePillStates(){
