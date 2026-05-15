@@ -682,9 +682,10 @@ async function confirmBookings(){
         const bookedCount=data.bookings_created||0;
         cart=[];
         localStorage.removeItem('bookingCart');
-        closeMobileCart();
         updateCartBadge();
-        renderCart();
+
+        // Close mobile cart and show success
+        closeMobileCart();
 
         // Show success overlay
         const successEl=document.getElementById('success-overlay');
@@ -694,10 +695,12 @@ async function confirmBookings(){
                 detailsEl.innerHTML=`<p>Successfully booked ${bookedCount} session${bookedCount>1?'s':''}!</p>`;
             }
             successEl.classList.remove('hidden');
+        } else {
+            alert('Booking confirmed! ' + bookedCount + ' session(s) booked.');
         }
 
-        // Reload calendar after 3 seconds
-        setTimeout(()=>location.reload(),3000);
+        // Reload page after 2 seconds
+        setTimeout(()=>location.reload(),2000);
     }catch(e){
         console.error('Booking error:',e);
         const errMsg=e.message||'Unknown error';
