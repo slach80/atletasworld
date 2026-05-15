@@ -585,69 +585,36 @@ async function initCheckoutPayment() {
     document.getElementById('payment-errors').classList.add('hidden');
     if (paymentElements) { document.getElementById('payment-element').innerHTML = ''; paymentElements = null; }
 
-    // Group cart items by package_id
+    // Build items array grouped by package_id
     const groups = {};
     cart.forEach(item => {
         if (!groups[item.package_id]) groups[item.package_id] = [];
         groups[item.package_id].push(item.player_id);
     });
 
-    // Use the first (or only) package group for the batch endpoint
-    // For mixed packages, we need to call the endpoint for each group
-    // For now, send all as one request (batch endpoint handles one package at a time)
-    // If multiple packages, we chain requests — but simpler: extend endpoint to accept multiple
-    // Current approach: if all same package, use batch; if mixed, use multi-call
-    const packageIds = Object.keys(groups);
+    const items = Object.entries(groups).map(([pkgId, playerIds]) => ({
+        package_id: parseInt(pkgId),
+        player_ids: playerIds,
+    }));
+
     const cc = document.getElementById('apply-credit-check');
+    const body = {
+        items: items,
+        promo_code: activePromoCode || '',
+        apply_credit: !!(cc && cc.checked),
+    };
 
-    if (packageIds.length === 1) {
-        // Single package type — use batch endpoint directly
-        const pkgId = packageIds[0];
-        const playerIds = groups[pkgId];
-        const body = {
-            package_id: parseInt(pkgId),
-            player_ids: playerIds,
-            promo_code: activePromoCode || '',
-            apply_credit: !!(cc && cc.checked),
-        };
-
-        try {
-            const res = await fetch('/portal/packages/batch-pay/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-                body: JSON.stringify(body),
-            });
-            const data = await res.json();
-            if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
-            showPaymentForm(data);
-        } catch(e) {
-            showError('Network error — please try again.');
-        }
-    } else {
-        // Multiple different packages — use the first package for now, show items
-        // TODO: extend backend to handle truly mixed carts
-        // For now, we'll process the largest group first
-        const pkgId = packageIds[0];
-        const playerIds = groups[pkgId];
-        const body = {
-            package_id: parseInt(pkgId),
-            player_ids: playerIds,
-            promo_code: activePromoCode || '',
-            apply_credit: !!(cc && cc.checked),
-        };
-
-        try {
-            const res = await fetch('/portal/packages/batch-pay/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-                body: JSON.stringify(body),
-            });
-            const data = await res.json();
-            if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
-            showPaymentForm(data);
-        } catch(e) {
-            showError('Network error — please try again.');
-        }
+    try {
+        const res = await fetch('/portal/packages/batch-pay/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Could not initialize payment.'); return; }
+        showPaymentForm(data);
+    } catch(e) {
+        showError('Network error — please try again.');
     }
 }
 
@@ -658,8 +625,9 @@ function showPaymentForm(data) {
     (data.line_items || []).forEach(li => {
         const orig = parseFloat(li.original_price);
         const price = parseFloat(li.price);
+        const pkgName = li.package_name || data.package_name || 'Package';
         itemsHtml += `<div class="flex justify-between items-center">
-            <div><span class="text-gray-700">${data.package_name}</span><br><span class="text-xs text-gray-500">${li.player_name}</span></div>
+            <div><span class="text-gray-700">${pkgName}</span><br><span class="text-xs text-gray-500">${li.player_name}</span></div>
             <div class="text-right">${li.sibling_discount ? '<span class="line-through text-gray-400 text-xs mr-1">$' + orig.toFixed(2) + '</span>' : ''}$${price.toFixed(2)}</div>
         </div>`;
     });
