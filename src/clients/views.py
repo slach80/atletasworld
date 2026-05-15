@@ -1074,6 +1074,8 @@ def booking_page_v2(request):
         client=client,
         status__in=['confirmed', 'pending'],
         scheduled_date__gte=today,
+    ).exclude(
+        payment_status='pending'
     ).values_list('player_id', 'scheduled_date', 'scheduled_time')
     # Format as set of "player_id|date|time" for quick JS lookup
     booked_set = [
