@@ -1355,11 +1355,36 @@ def owner_booking_detail(request, pk):
             reason = request.POST.get('reason', 'other')
             notes = request.POST.get('notes', '')
             try:
+                # Bypass can_cancel check for owner cancellations
                 booking.status = 'cancelled'
                 booking.cancellation_reason = reason
                 booking.cancellation_notes = notes
                 booking.cancelled_at = timezone.now()
+                booking.cancelled_by = request.user
                 booking.save()
+
+                # Restore schedule block availability
+                from coaches.models import ScheduleBlock as CoachBlock
+                try:
+                    block = CoachBlock.objects.get(
+                        coach=booking.coach,
+                        date=booking.scheduled_date,
+                        start_time=booking.scheduled_time,
+                    )
+                    if block.current_participants > 0:
+                        block.current_participants -= 1
+                        if block.status == 'booked':
+                            block.status = 'available'
+                        block.save()
+                except CoachBlock.DoesNotExist:
+                    pass
+
+                # Return session to package if applicable
+                if booking.client_package and booking.payment_status == 'package':
+                    booking.client_package.sessions_remaining += 1
+                    booking.client_package.sessions_used -= 1
+                    booking.client_package.save()
+
                 messages.success(request, 'Booking cancelled.')
             except Exception as e:
                 messages.error(request, f'Error: {str(e)}')
