@@ -607,6 +607,7 @@ async function confirmBookings(){
 
     // Step 1: Create reservations for each cart item
     try{
+        let alreadyReservedCount=0;
         const reservations=await Promise.all(cart.map(async item=>{
             // Validate cart item has required IDs
             if(!item.block_id || !item.player_id){
@@ -632,15 +633,26 @@ async function confirmBookings(){
             }
 
             const data=await res.json();
-            if(!data.success)throw new Error(data.error||'Reservation failed');
+            // If already reserved, that's OK - we'll confirm it in the next step
+            if(data.error==='Already reserved'){
+                alreadyReservedCount++;
+                return {success:true,already_reserved:true};
+            }
+            if(!data.success){
+                throw new Error(data.error||'Reservation failed');
+            }
             return data;
         }));
+
+        if(alreadyReservedCount>0){
+            console.log(`${alreadyReservedCount} items already reserved, proceeding to confirm`);
+        }
 
         // Step 2: Confirm all reservations as bookings
         const confirmRes=await fetch('{% url "clients:confirm_booking" %}',{
             method:'POST',
-            headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
-            body:JSON.stringify({})
+            headers:{'X-CSRFToken':getCookie('csrftoken')},
+            body:new FormData() // Empty FormData for POST requirement
         });
         const confirmData=await confirmRes.json();
 
