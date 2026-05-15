@@ -1325,6 +1325,152 @@ def confirm_booking(request):
     })
 
 
+@login_required
+@require_POST
+def create_booking_direct(request):
+    """Create booking directly with immediate package validation (no reservation step)."""
+    import json
+    from bookings.models import FieldRentalSlot
+
+    client, created = Client.objects.get_or_create(user=request.user)
+
+    # Waiver check
+    is_exempt = (
+        request.user.is_staff
+        or request.user.is_superuser
+        or request.user.groups.filter(name__in=['Owner', 'Coach']).exists()
+        or hasattr(request.user, 'coach')
+    )
+    if not is_exempt and not get_current_waiver(client):
+        return JsonResponse({'success': False, 'error': 'Annual waiver required. Please sign it in your Profile before booking.'})
+
+    # Parse request body
+    try:
+        data = json.loads(request.body)
+        bookings_data = data.get('bookings', [])
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'success': False, 'error': 'Invalid request data'})
+
+    if not bookings_data:
+        return JsonResponse({'success': False, 'error': 'No bookings provided'})
+
+    # Get program
+    program = Program.objects.filter(is_active=True).first()
+
+    # Helper to get package for player
+    def get_package_for_player(player):
+        pkg = client.packages.filter(
+            status='active',
+            expiry_date__gte=timezone.localdate(),
+            player=player
+        ).first()
+        if not pkg:
+            pkg = client.packages.filter(
+                status='active',
+                expiry_date__gte=timezone.localdate(),
+                player__isnull=True
+            ).exclude(
+                package__sessions_included__gt=0,
+                sessions_remaining=0
+            ).first()
+        return pkg
+
+    # Validate all bookings first (fail fast)
+    validated_bookings = []
+    for item in bookings_data:
+        block_id = item.get('block_id')
+        player_id = item.get('player_id')
+
+        if not block_id or not player_id:
+            return JsonResponse({'success': False, 'error': 'Missing block_id or player_id'})
+
+        try:
+            block = ScheduleBlock.objects.select_related('coach', 'session_type').get(id=block_id)
+            player = Player.objects.get(id=player_id, client=client)
+        except (ScheduleBlock.DoesNotExist, Player.DoesNotExist):
+            return JsonResponse({'success': False, 'error': 'Invalid block or player'})
+
+        # Check field not blocked
+        if FieldRentalSlot.check_field_blocked(block.date, block.start_time, block.end_time):
+            return JsonResponse({'success': False, 'error': f'Field is exclusively reserved during {block.date} {block.start_time}'})
+
+        # Check availability
+        if not block.is_available:
+            return JsonResponse({'success': False, 'error': f'Session at {block.date} {block.start_time} is no longer available'})
+
+        # Check if free session
+        catalog_types = block.catalog_session_types.all()
+        is_free = (
+            block.price_override is not None and block.price_override == 0
+        ) or (
+            catalog_types.exists() and all(
+                (st.drop_in_price is not None and st.drop_in_price == 0) or st.price == 0
+                for st in catalog_types
+            )
+        )
+
+        # Validate package if not free
+        pkg = None
+        if not is_free:
+            pkg = get_package_for_player(player)
+            if not pkg:
+                return JsonResponse({'success': False, 'error': f'No active package found for {player.first_name}'})
+            if pkg.package.sessions_included > 0 and pkg.sessions_remaining <= 0:
+                return JsonResponse({'success': False, 'error': f'No sessions remaining in package for {player.first_name}'})
+
+        validated_bookings.append({
+            'block': block,
+            'player': player,
+            'package': pkg,
+            'is_free': is_free
+        })
+
+    # Create all bookings
+    created_bookings = []
+    for item in validated_bookings:
+        booking = Booking.objects.create(
+            client=client,
+            player=item['player'],
+            coach=item['block'].coach,
+            program=program,
+            scheduled_date=item['block'].date,
+            scheduled_time=item['block'].start_time,
+            client_package=item['package'],
+            status='confirmed'
+        )
+
+        # Deduct session from package
+        if item['package']:
+            item['package'].use_session()
+
+        # Update block availability
+        item['block'].current_participants += 1
+        if item['block'].current_participants >= item['block'].max_participants:
+            item['block'].status = 'booked'
+        item['block'].save()
+
+        created_bookings.append(booking)
+
+        # Queue notification
+        try:
+            from clients.notification_utils import queue_grouped_notification
+            queue_grouped_notification(
+                client=client,
+                event_type='booking_confirmed',
+                context={'booking_id': booking.id, 'payment_method': 'free' if item['is_free'] else 'package'},
+                group_key=f'booking_{booking.id}',
+                window_seconds=30,
+            )
+        except Exception:
+            pass
+
+    return JsonResponse({
+        'success': True,
+        'bookings_created': len(created_bookings),
+        'booking_ids': [b.id for b in created_bookings]
+    })
+
+
 # ============================================================================
 # TEAM MANAGEMENT VIEWS (for Team Coaches)
 # ============================================================================

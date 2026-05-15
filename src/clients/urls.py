@@ -36,6 +36,7 @@ urlpatterns = [
     path('book/reserve/', views.reserve_session, name='reserve_session'),
     path('book/cancel-reservation/', views.cancel_reservation, name='cancel_reservation'),
     path('book/confirm/', views.confirm_booking, name='confirm_booking'),
+    path('book/create-direct/', views.create_booking_direct, name='create_booking_direct'),
 
     # Team Management (for team coaches)
     path('teams/', views.team_list, name='team_list'),

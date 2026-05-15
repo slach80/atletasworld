@@ -605,61 +605,24 @@ async function confirmBookings(){
         return;
     }
 
-    // Step 1: Create reservations for each cart item
+    // Create bookings directly with immediate package validation
     try{
-        let alreadyReservedCount=0;
-        const reservations=await Promise.all(cart.map(async item=>{
-            // Validate cart item has required IDs
-            if(!item.block_id || !item.player_id){
-                throw new Error('Cart item missing block_id or player_id. Please clear cart and try again.');
-            }
-
-            const formData=new FormData();
-            formData.append('block_id',String(item.block_id));
-            formData.append('player_id',String(item.player_id));
-
-            const res=await fetch('{% url "clients:reserve_session" %}',{
-                method:'POST',
-                headers:{'X-CSRFToken':getCookie('csrftoken')},
-                body:formData
-            });
-
-            // Check if response is JSON
-            const contentType=res.headers.get('content-type');
-            if(!contentType||!contentType.includes('application/json')){
-                const text=await res.text();
-                console.error('Non-JSON response:',text);
-                throw new Error('Server error. Please try again.');
-            }
-
-            const data=await res.json();
-            // If already reserved, that's OK - we'll confirm it in the next step
-            if(data.error==='Already reserved'){
-                alreadyReservedCount++;
-                return {success:true,already_reserved:true};
-            }
-            if(!data.success){
-                throw new Error(data.error||'Reservation failed');
-            }
-            return data;
+        const bookingsData=cart.map(item=>({
+            block_id:item.block_id,
+            player_id:item.player_id
         }));
 
-        if(alreadyReservedCount>0){
-            console.log(`${alreadyReservedCount} items already reserved, proceeding to confirm`);
-        }
-
-        // Step 2: Confirm all reservations as bookings
-        const confirmRes=await fetch('{% url "clients:confirm_booking" %}',{
+        const res=await fetch('{% url "clients:create_booking_direct" %}',{
             method:'POST',
-            headers:{'X-CSRFToken':getCookie('csrftoken')},
-            body:new FormData() // Empty FormData for POST requirement
+            headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+            body:JSON.stringify({bookings:bookingsData})
         });
-        const confirmData=await confirmRes.json();
 
-        if(!confirmData.success)throw new Error(confirmData.error||'Booking confirmation failed');
+        const data=await res.json();
+        if(!data.success)throw new Error(data.error||'Booking failed');
 
         // Success!
-        const bookedCount=confirmData.bookings_created||reservations.length;
+        const bookedCount=data.bookings_created||0;
         cart=[];
         localStorage.removeItem('bookingCart');
         closeMobileCart();
