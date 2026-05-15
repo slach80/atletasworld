@@ -350,9 +350,27 @@ async function loadSlots(){
         document.getElementById('slots-loading').classList.add('hidden');
         document.getElementById('slots-container').classList.remove('hidden');
         populateLocationFilter();
+        validateCart(); // Clean stale cart items
         renderSlots();
     }catch(e){
         document.getElementById('slots-loading').innerHTML='<p class="text-red-500 text-sm text-center py-8">Failed to load sessions</p>';
+    }
+}
+
+function validateCart(){
+    // Remove cart items for slots that no longer exist
+    const validKeys=Object.keys(slotMap);
+    const before=cart.length;
+    cart=cart.filter(item=>{
+        // Extract slot key from cart item key (format: slotkey_player_id)
+        const slotKey=item.key.split('_player_')[0];
+        return validKeys.includes(slotKey) && item.block_id && item.player_id;
+    });
+    if(cart.length<before){
+        console.log(`Removed ${before-cart.length} stale cart items`);
+        localStorage.setItem('bookingCart',JSON.stringify(cart));
+        updateCartBadge();
+        renderCart();
     }
 }
 
@@ -569,7 +587,7 @@ function buildCartHtml(){
         </div>`;
     }
 
-    html+=`<button onclick="confirmBookings()" class="w-full py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600">Confirm Booking${cart.length>1?'s':''}</button>`;
+    html+=`<button type="button" onclick="confirmBookings()" class="w-full py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600 transition">Confirm Booking${cart.length>1?'s':''}</button>`;
     return html;
 }
 
@@ -579,18 +597,40 @@ async function confirmBookings(){
     const btn=document.querySelector('[onclick="confirmBookings()"]');
     if(btn){btn.disabled=true;btn.textContent='Processing...';}
 
+    // Validate all cart items before proceeding
+    const invalidItems=cart.filter(item=>!item.block_id||!item.player_id);
+    if(invalidItems.length>0){
+        alert('Some cart items are invalid. Please clear cart and add sessions again.');
+        if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
+        return;
+    }
+
     // Step 1: Create reservations for each cart item
     try{
         const reservations=await Promise.all(cart.map(async item=>{
+            // Validate cart item has required IDs
+            if(!item.block_id || !item.player_id){
+                throw new Error('Cart item missing block_id or player_id. Please clear cart and try again.');
+            }
+
             const formData=new FormData();
-            formData.append('block_id',item.block_id);
-            formData.append('player_id',item.player_id);
+            formData.append('block_id',String(item.block_id));
+            formData.append('player_id',String(item.player_id));
 
             const res=await fetch('{% url "clients:reserve_session" %}',{
                 method:'POST',
                 headers:{'X-CSRFToken':getCookie('csrftoken')},
                 body:formData
             });
+
+            // Check if response is JSON
+            const contentType=res.headers.get('content-type');
+            if(!contentType||!contentType.includes('application/json')){
+                const text=await res.text();
+                console.error('Non-JSON response:',text);
+                throw new Error('Server error. Please try again.');
+            }
+
             const data=await res.json();
             if(!data.success)throw new Error(data.error||'Reservation failed');
             return data;
