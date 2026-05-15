@@ -1484,8 +1484,9 @@ def create_booking_direct(request):
                 payment_status='package' if item['package'] else 'paid',
             )
 
-            # Deduct session from package
+            # Deduct session from package (refresh to avoid stale state in batch)
             if item['package']:
+                item['package'].refresh_from_db()
                 item['package'].use_session()
 
             # Update block availability
