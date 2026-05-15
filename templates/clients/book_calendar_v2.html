@@ -90,7 +90,7 @@
         </div>
     </aside>
 
-    <!-- Mobile/Tablet Filter Button -->
+    <!-- Mobile/Tablet Filter Button + Cart Button -->
     <div class="xl:hidden sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div class="px-4 py-3 flex items-center justify-between">
             <button onclick="toggleMobileFilters()" id="mobile-filter-btn" class="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
@@ -98,7 +98,13 @@
                 <span>Filters</span>
                 <span id="filter-badge-mobile" class="hidden ml-1 px-2 py-0.5 bg-yellow-400 text-gray-900 rounded-full text-xs font-bold"></span>
             </button>
-            <button onclick="clearAllFilters()" class="text-xs font-semibold text-gray-500 hover:text-red-500">Clear all</button>
+            <div class="flex items-center gap-2">
+                <button onclick="clearAllFilters()" class="text-xs font-semibold text-gray-500 hover:text-red-500">Clear all</button>
+                <button onclick="toggleMobileCart()" class="relative px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span id="cart-badge" class="hidden absolute -top-1 -right-1 px-2 py-0.5 bg-red-500 text-white rounded-full text-xs font-bold"></span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -160,15 +166,24 @@
                     </div>
                 </aside>
 
-                <!-- Mobile Cart (full-width) -->
-                <div class="lg:hidden">
-                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Your Cart</h3>
-                        <div id="cart-mobile"></div>
-                    </div>
-                </div>
 
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Cart Modal -->
+<div id="mobile-cart-modal" class="hidden fixed inset-0 z-50">
+    <div onclick="toggleMobileCart()" class="absolute inset-0 bg-black/50"></div>
+    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-gray-900">Your Cart</h2>
+            <button onclick="toggleMobileCart()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6 pb-20">
+            <div id="cart-mobile"></div>
         </div>
     </div>
 </div>
@@ -264,6 +279,20 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function toggleMobileFilters(){
     document.getElementById('mobile-filter-sheet').classList.toggle('hidden');
+}
+
+function toggleMobileCart(){
+    document.getElementById('mobile-cart-modal').classList.toggle('hidden');
+}
+
+function updateCartBadge(){
+    const badge=document.getElementById('cart-badge');
+    if(cart.length>0){
+        badge.textContent=cart.length;
+        badge.classList.remove('hidden');
+    }else{
+        badge.classList.add('hidden');
+    }
 }
 
 async function loadSessionTypes(){
@@ -453,11 +482,13 @@ function addToCart(key){
     if(cart.some(c=>c.key===key)) return;
     const s=slotMap[key]; if(!s) return;
     cart.push({key,slot:s});
+    updateCartBadge();
     renderSlots(); renderCart();
 }
 
 function removeFromCart(key){
     cart=cart.filter(c=>c.key!==key);
+    updateCartBadge();
     renderSlots(); renderCart();
 }
 
@@ -465,6 +496,7 @@ function renderCart(){
     const html=buildCartHtml();
     document.getElementById('cart-mobile').innerHTML=html;
     document.getElementById('cart-desktop').innerHTML=html;
+    updateCartBadge();
 }
 
 function buildCartHtml(){
@@ -525,7 +557,6 @@ function setDateFilter(v){
     renderSlots();
 }
 function setLocationFilter(v){ activeLocation=v; renderSlots(); }
-function updateCartBadge(){}
 function onTimeSlider(){}
 function closeSuccess(){ document.getElementById('success-overlay').classList.add('hidden'); }
 
