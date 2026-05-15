@@ -1074,6 +1074,7 @@ def booking_page_v2(request):
         'players': players,
         'coaches': coaches,
         'has_package': active_package is not None,
+        'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
     }
     return render(request, 'clients/book_calendar_v2.html', context)
 
@@ -1403,65 +1404,125 @@ def create_booking_direct(request):
                 for st in catalog_types
             )
 
-            # Validate package if not free
+            # Determine if this session type allows package usage
+            session_type = catalog_types[0]
+            allows_package = session_type.allow_package
+            drop_in_price = session_type.drop_in_price or session_type.price or block.price_override
+
+            # Validate package or require payment
             pkg = None
+            requires_payment = False
+
             if not is_free:
-                pkg = get_package_for_player(player)
-                if not pkg:
-                    return JsonResponse({'success': False, 'error': f'No active package found for {player.first_name}'})
-                if pkg.package.sessions_included > 0 and pkg.sessions_remaining <= 0:
-                    return JsonResponse({'success': False, 'error': f'No sessions remaining in package for {player.first_name}'})
+                if allows_package:
+                    # Check if client has a valid package for this session type
+                    pkg = get_package_for_player(player)
+                    if pkg:
+                        # Check if package is linked to this session type (if linked_packages exist)
+                        linked = session_type.linked_packages.all()
+                        if linked.exists() and pkg.package not in linked:
+                            pkg = None  # Package doesn't cover this session type
+
+                    if pkg and pkg.package.sessions_included > 0 and pkg.sessions_remaining <= 0:
+                        pkg = None  # Package exhausted
+
+                    if not pkg:
+                        # No valid package — require drop-in payment
+                        requires_payment = True
+                else:
+                    # Session type doesn't allow packages — always requires payment
+                    requires_payment = True
 
             validated_bookings.append({
                 'block': block,
                 'player': player,
                 'package': pkg,
                 'is_free': is_free,
-                'session_type': catalog_types[0],
+                'session_type': session_type,
+                'requires_payment': requires_payment,
+                'price': block.price_override if block.price_override is not None else drop_in_price,
             })
 
         # Create all bookings
         created_bookings = []
+        pending_payment_bookings = []
         for item in validated_bookings:
-            booking = Booking.objects.create(
-                client=client,
-                player=item['player'],
-                coach=item['block'].coach,
-                session_type=item['session_type'],
-                scheduled_date=item['block'].date,
-                scheduled_time=item['block'].start_time,
-                client_package=item['package'],
-                status='confirmed'
-            )
-
-            # Deduct session from package
-            if item['package']:
-                item['package'].use_session()
-
-            # Update block availability
-            item['block'].current_participants += 1
-            if item['block'].current_participants >= item['block'].max_participants:
-                item['block'].status = 'booked'
-            item['block'].save()
-
-            created_bookings.append(booking)
-
-            # Queue notification
-            try:
-                from clients.notification_utils import queue_grouped_notification
-                queue_grouped_notification(
+            if item['requires_payment']:
+                # Create pending booking awaiting payment
+                booking = Booking.objects.create(
                     client=client,
-                    event_type='booking_confirmed',
-                    context={'booking_id': booking.id, 'payment_method': 'free' if item['is_free'] else 'package'},
-                    group_key=f'booking_{booking.id}',
-                    window_seconds=30,
+                    player=item['player'],
+                    coach=item['block'].coach,
+                    session_type=item['session_type'],
+                    scheduled_date=item['block'].date,
+                    scheduled_time=item['block'].start_time,
+                    client_package=None,
+                    status='confirmed',
+                    payment_status='pending',
+                    amount_paid=item['price'] or 0,
                 )
-            except Exception:
-                pass
+                # Update block availability
+                item['block'].current_participants += 1
+                if item['block'].current_participants >= item['block'].max_participants:
+                    item['block'].status = 'booked'
+                item['block'].save()
+
+                pending_payment_bookings.append({
+                    'booking_id': booking.id,
+                    'amount': str(item['price']),
+                    'session_type': item['session_type'].name,
+                    'player_name': f"{item['player'].first_name} {item['player'].last_name}",
+                })
+            else:
+                booking = Booking.objects.create(
+                    client=client,
+                    player=item['player'],
+                    coach=item['block'].coach,
+                    session_type=item['session_type'],
+                    scheduled_date=item['block'].date,
+                    scheduled_time=item['block'].start_time,
+                    client_package=item['package'],
+                    status='confirmed',
+                    payment_status='package' if item['package'] else 'paid',
+                )
+
+                # Deduct session from package
+                if item['package']:
+                    item['package'].use_session()
+
+                # Update block availability
+                item['block'].current_participants += 1
+                if item['block'].current_participants >= item['block'].max_participants:
+                    item['block'].status = 'booked'
+                item['block'].save()
+
+                created_bookings.append(booking)
+
+                # Queue notification
+                try:
+                    from clients.notification_utils import queue_grouped_notification
+                    queue_grouped_notification(
+                        client=client,
+                        event_type='booking_confirmed',
+                        context={'booking_id': booking.id, 'payment_method': 'free' if item['is_free'] else 'package'},
+                        group_key=f'booking_{booking.id}',
+                        window_seconds=30,
+                    )
+                except Exception:
+                    pass
+
+        # If any bookings require payment, return payment info
+        if pending_payment_bookings:
+            return JsonResponse({
+                'success': True,
+                'requires_payment': True,
+                'bookings_created': len(created_bookings),
+                'pending_payment': pending_payment_bookings,
+            })
 
         return JsonResponse({
             'success': True,
-            'bookings_created': len(created_bookings),
+            'bookings_created': len(created_bookings) + len(pending_payment_bookings),
             'booking_ids': [b.id for b in created_bookings]
         })
 

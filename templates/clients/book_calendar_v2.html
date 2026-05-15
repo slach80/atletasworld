@@ -628,14 +628,9 @@ async function confirmBookings(){
     if(btn){btn.disabled=true;btn.textContent='Processing...';}
 
     // Validate all cart items before proceeding
-    console.log('Cart contents:',cart);
     const invalidItems=cart.filter(item=>!item.block_id||!item.player_id);
     if(invalidItems.length>0){
-        console.error('Invalid cart items:',invalidItems);
-        alert('Cart validation failed!\n\n'+
-              'Cart items: '+cart.length+'\n'+
-              'Invalid items: '+invalidItems.length+'\n\n'+
-              'Cart data:\n'+JSON.stringify(cart,null,2).substring(0,500));
+        alert('Some cart items are invalid. Please clear your cart and try again.');
         if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
         return;
     }
@@ -647,71 +642,59 @@ async function confirmBookings(){
             player_id:item.player_id
         }));
 
-        console.log('Sending bookings:',bookingsData);
-
         const res=await fetch('{% url "clients:create_booking_direct" %}',{
             method:'POST',
             headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
             body:JSON.stringify({bookings:bookingsData})
         });
 
-        console.log('Response status:',res.status);
-
         // Check if response is JSON
         const contentType=res.headers.get('content-type');
         if(!contentType||!contentType.includes('application/json')){
-            const text=await res.text();
-            console.error('Non-JSON response:',text);
-            alert('Server returned non-JSON response!\n\n'+
-                  'Status: '+res.status+'\n'+
-                  'Content-Type: '+contentType+'\n\n'+
-                  'Response preview:\n'+text.substring(0,300));
-            throw new Error('Server error');
+            throw new Error('Server error. Please try again.');
         }
 
         const data=await res.json();
-        console.log('Response data:',data);
         if(!data.success){
-            alert('Booking failed from server!\n\n'+
-                  'Error: '+(data.error||'Unknown')+'\n\n'+
-                  'Response:\n'+JSON.stringify(data,null,2));
             throw new Error(data.error||'Booking failed');
         }
 
-        // Success!
-        const bookedCount=data.bookings_created||0;
+        // Clear cart
         cart=[];
         localStorage.removeItem('bookingCart');
         updateCartBadge();
-
-        // Close mobile cart and show success
         closeMobileCart();
 
-        // Show success overlay
+        // Check if payment is required for any bookings
+        if(data.requires_payment && data.pending_payment && data.pending_payment.length>0){
+            const pp=data.pending_payment[0];
+            const label=`${pp.session_type} — ${pp.player_name} ($${pp.amount})`;
+            payBooking(pp.booking_id, label);
+            return;
+        }
+
+        // Pure success (all covered by package or free)
+        const bookedCount=data.bookings_created||0;
         const successEl=document.getElementById('success-overlay');
         const detailsEl=document.getElementById('success-details');
         if(successEl){
-            if(detailsEl){
-                detailsEl.innerHTML=`<p>Successfully booked ${bookedCount} session${bookedCount>1?'s':''}!</p>`;
-            }
+            if(detailsEl) detailsEl.innerHTML=`<p>Successfully booked ${bookedCount} session${bookedCount>1?'s':''}!</p>`;
             successEl.classList.remove('hidden');
         } else {
-            alert('Booking confirmed! ' + bookedCount + ' session(s) booked.');
+            alert('Booking confirmed! '+bookedCount+' session(s) booked.');
         }
-
-        // Reload page after 2 seconds
         setTimeout(()=>location.reload(),2000);
     }catch(e){
         console.error('Booking error:',e);
         const errMsg=e.message||'Unknown error';
-
-        if(errMsg.includes('No active package')||errMsg.includes('No sessions remaining')){
+        if(errMsg.includes('No active package')||errMsg.includes('No sessions remaining')||errMsg.includes('Payment required')){
             if(confirm(errMsg+'\n\nWould you like to purchase a package now?')){
                 window.location.href='{% url "clients:packages" %}';
                 return;
             }
+        } else {
+            alert(errMsg);
         }
-
         if(btn){btn.disabled=false;btn.textContent='Confirm Booking'+(cart.length>1?'s':'');}
     }
 }
@@ -749,6 +732,74 @@ function closeSuccess(){ document.getElementById('success-overlay').classList.ad
 
 function isoDate(d){ return d.toISOString().split('T')[0]; }
 function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
+
+// ── Drop-in payment via Stripe ──────────────────────────────────────────────
+{% if stripe_public_key %}
+let _stripeJs=null, _bookingElements=null;
+
+async function payBooking(bookingId, label){
+    if(!_stripeJs) _stripeJs=Stripe('{{ stripe_public_key }}');
+    document.getElementById('booking-pay-label').textContent=label;
+    document.getElementById('booking-pay-modal').classList.remove('hidden');
+    document.getElementById('booking-pay-loading').classList.remove('hidden');
+    document.getElementById('booking-pay-element').classList.add('hidden');
+    document.getElementById('booking-pay-btn').classList.add('hidden');
+    document.getElementById('booking-pay-error').classList.add('hidden');
+    document.getElementById('booking-pay-btn').dataset.bookingId=bookingId;
+
+    try{
+        const res=await fetch(`/payments/booking/${bookingId}/pay/`,{
+            method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}
+        });
+        const data=await res.json();
+        if(!res.ok){showBookingPayError(data.error||'Could not initialize payment.');return;}
+
+        _bookingElements=_stripeJs.elements({
+            clientSecret:data.client_secret,
+            appearance:{theme:'stripe',variables:{colorPrimary:'#eab308',borderRadius:'12px'}}
+        });
+        _bookingElements.create('payment',{layout:'tabs'}).mount('#booking-pay-element');
+        document.getElementById('booking-pay-loading').classList.add('hidden');
+        document.getElementById('booking-pay-element').classList.remove('hidden');
+        document.getElementById('booking-pay-btn').classList.remove('hidden');
+    }catch(e){
+        showBookingPayError('Network error — please try again.');
+    }
+}
+
+async function submitBookingPayment(){
+    const btn=document.getElementById('booking-pay-btn');
+    btn.disabled=true;btn.textContent='Processing…';
+    const{error}=await _stripeJs.confirmPayment({
+        elements:_bookingElements,
+        confirmParams:{return_url:window.location.href},
+        redirect:'if_required'
+    });
+    if(error){
+        showBookingPayError(error.message);
+        btn.disabled=false;btn.textContent='Pay Now';
+    }else{
+        closeBookingPayModal();
+        const successEl=document.getElementById('success-overlay');
+        const detailsEl=document.getElementById('success-details');
+        if(successEl){
+            if(detailsEl) detailsEl.innerHTML='<p class="text-green-700 font-bold">Payment successful — session confirmed!</p>';
+            successEl.classList.remove('hidden');
+        }
+        setTimeout(()=>location.reload(),2000);
+    }
+}
+
+function closeBookingPayModal(){
+    document.getElementById('booking-pay-modal').classList.add('hidden');
+    if(_bookingElements){document.getElementById('booking-pay-element').innerHTML='';_bookingElements=null;}
+}
+function showBookingPayError(msg){
+    const el=document.getElementById('booking-pay-error');
+    el.textContent=msg;el.classList.remove('hidden');
+    document.getElementById('booking-pay-loading').classList.add('hidden');
+}
+{% endif %}
 </script>
 
 <style>
@@ -756,5 +807,27 @@ function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,
     transition: all 0.15s ease;
 }
 </style>
+
+{% if stripe_public_key %}
+<script src="https://js.stripe.com/v3/"></script>
+<!-- Booking payment modal -->
+<div id="booking-pay-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
+        <h2 class="text-xl font-bold mb-0.5">Complete Payment</h2>
+        <p id="booking-pay-label" class="text-gray-500 text-sm mb-4"></p>
+        <div id="booking-pay-loading" class="py-8 text-center text-gray-400">
+            <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin mb-2"></div>
+            <p class="text-sm">Loading payment options…</p>
+        </div>
+        <div id="booking-pay-element" class="hidden mb-4"></div>
+        <div id="booking-pay-error" class="text-red-600 text-xs mb-3 hidden"></div>
+        <button id="booking-pay-btn" onclick="submitBookingPayment()"
+                class="hidden w-full py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600 transition">
+            Pay Now
+        </button>
+        <button onclick="closeBookingPayModal()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
