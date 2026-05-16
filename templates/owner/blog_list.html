@@ -1,0 +1,94 @@
+{% extends 'owner/base.html' %}
+{% block title %}Blog Posts{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Blog Posts</h1>
+        <p class="text-gray-500">{{ posts.count }} post{{ posts.count|pluralize }}</p>
+    </div>
+    <a href="{% url 'owner_blog_new' %}"
+       class="px-4 py-2 bg-owner text-white rounded-lg hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150 font-semibold">
+        + New Post
+    </a>
+</div>
+
+{% if messages %}
+<div class="mb-4 space-y-2">
+    {% for message in messages %}
+    <div class="px-4 py-2 rounded-lg text-sm font-medium
+        {% if message.tags == 'success' %}bg-green-100 text-green-800
+        {% elif message.tags == 'error' %}bg-red-100 text-red-800
+        {% else %}bg-blue-100 text-blue-800{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    {% if posts %}
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600">Title</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Category</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Published</th>
+                <th class="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
+                <th class="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for post in posts %}
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3">
+                    <div class="font-semibold text-gray-800 leading-tight">{{ post.title }}</div>
+                    <div class="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{{ post.excerpt|truncatechars:80 }}</div>
+                </td>
+                <td class="px-4 py-3 hidden sm:table-cell">
+                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">{{ post.category_label }}</span>
+                    {% if post.is_featured %}<span class="ml-1 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">Featured</span>{% endif %}
+                </td>
+                <td class="px-4 py-3 hidden md:table-cell text-gray-500 text-xs">
+                    {% if post.published_at %}{{ post.published_at|date:"N j, Y" }}{% else %}—{% endif %}
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <form method="post" action="{% url 'owner_blog_toggle_publish' post.pk %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="text-xs px-2.5 py-1 rounded-full font-semibold transition
+                                       {% if post.is_published %}bg-green-100 text-green-700 hover:bg-green-200{% else %}bg-gray-100 text-gray-500 hover:bg-gray-200{% endif %}">
+                            {% if post.is_published %}Live{% else %}Draft{% endif %}
+                        </button>
+                    </form>
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        {% if post.is_published %}
+                        <a href="{{ post.get_absolute_url }}" target="_blank"
+                           class="text-xs text-gray-400 hover:text-gray-700 transition px-2 py-1 rounded hover:bg-gray-100" title="View live">↗</a>
+                        {% endif %}
+                        <a href="{% url 'owner_blog_edit' post.pk %}"
+                           class="text-xs px-3 py-1.5 bg-owner/10 text-owner rounded-lg hover:bg-owner/20 transition font-medium">Edit</a>
+                        <form method="post" action="{% url 'owner_blog_delete' post.pk %}"
+                              onsubmit="return confirm('Delete «{{ post.title }}»? This cannot be undone.')">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="text-xs px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-center py-16 text-gray-400">
+        <p class="text-lg font-semibold mb-2">No posts yet</p>
+        <a href="{% url 'owner_blog_new' %}" class="text-owner hover:underline text-sm">Write the first post →</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

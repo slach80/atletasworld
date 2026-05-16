@@ -45,4 +45,8 @@ urlpatterns = [
 
     # Referral Program
     path('referral/', views.referral_page, name='referral'),
+
+    # Blog — submit drafts for owner to publish
+    path('blog/', views.coach_blog_posts, name='blog_posts'),
+    path('blog/submit/', views.coach_blog_submit, name='blog_submit'),
 ]

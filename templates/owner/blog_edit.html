@@ -1,0 +1,139 @@
+{% extends 'owner/base.html' %}
+{% block title %}{% if post %}Edit Post{% else %}New Post{% endif %}{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+    <a href="{% url 'owner_blog_list' %}" class="text-gray-400 hover:text-gray-700 transition text-sm">← Blog Posts</a>
+    <span class="text-gray-300">/</span>
+    <h1 class="text-2xl font-bold text-gray-800">{% if post %}Edit Post{% else %}New Post{% endif %}</h1>
+</div>
+
+{% if messages %}
+<div class="mb-4 space-y-2">
+    {% for message in messages %}
+    <div class="px-4 py-2 rounded-lg text-sm font-medium
+        {% if message.tags == 'success' %}bg-green-100 text-green-800
+        {% elif message.tags == 'error' %}bg-red-100 text-red-800
+        {% else %}bg-blue-100 text-blue-800{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Main content -->
+        <div class="lg:col-span-2 space-y-5">
+
+            <div class="bg-white rounded-xl shadow-md p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Title <span class="text-red-500">*</span></label>
+                    <input type="text" name="title" value="{{ post.title|default:'' }}" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner text-base font-semibold"
+                           placeholder="e.g. What Happens at an APC Trial Session?">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Excerpt <span class="text-red-500">*</span>
+                        <span class="text-gray-400 font-normal ml-1">— shown in list view (1–2 sentences, max 300 chars)</span>
+                    </label>
+                    <textarea name="excerpt" rows="3" required maxlength="300"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner resize-none text-sm"
+                              placeholder="Short teaser shown on the blog list page...">{{ post.excerpt|default:'' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Body <span class="text-red-500">*</span>
+                        <span class="text-gray-400 font-normal ml-1">— HTML supported (h2, p, ul, ol, strong, blockquote)</span>
+                    </label>
+                    <textarea name="body" rows="20"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner font-mono text-sm resize-y"
+                              placeholder="<p>Your article content here...</p>">{{ post.body|default:'' }}</textarea>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-5">
+
+            <!-- Publishing -->
+            <div class="bg-white rounded-xl shadow-md p-5 space-y-4">
+                <h2 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Publishing</h2>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="is_published" {% if post.is_published %}checked{% endif %}
+                           class="w-4 h-4 rounded accent-owner">
+                    <span class="text-sm font-medium text-gray-700">Published (live on site)</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="is_featured" {% if post.is_featured %}checked{% endif %}
+                           class="w-4 h-4 rounded accent-owner">
+                    <span class="text-sm font-medium text-gray-700">Featured (large hero on blog page)</span>
+                </label>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                    <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner text-sm">
+                        {% for value, label in categories %}
+                        <option value="{{ value }}" {% if post.category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2.5 bg-owner text-white rounded-lg hover:bg-indigo-700 font-semibold text-sm transition">
+                        {% if post %}Save Changes{% else %}Create Post{% endif %}
+                    </button>
+                    <a href="{% url 'owner_blog_list' %}"
+                       class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 font-semibold text-sm transition">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+
+            <!-- Image -->
+            <div class="bg-white rounded-xl shadow-md p-5 space-y-3">
+                <h2 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Featured Image</h2>
+                {% if post.image %}
+                <div class="rounded-lg overflow-hidden aspect-video bg-gray-100">
+                    <img src="{{ post.image.url }}" alt="Current image" class="w-full h-full object-cover">
+                </div>
+                <p class="text-xs text-gray-400">Upload a new image to replace the current one.</p>
+                {% endif %}
+                <input type="file" name="image" accept="image/*"
+                       class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-owner/10 file:text-owner file:font-semibold hover:file:bg-owner/20 cursor-pointer">
+                <p class="text-xs text-gray-400">Shown as hero on detail page + thumbnail in list. Recommended: 1200×630px.</p>
+            </div>
+
+            <!-- SEO -->
+            <div class="bg-white rounded-xl shadow-md p-5 space-y-3">
+                <h2 class="font-bold text-gray-700 text-sm uppercase tracking-wide">SEO / Meta</h2>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Meta description override
+                        <span class="text-gray-400 font-normal">(max 160 chars — falls back to excerpt)</span>
+                    </label>
+                    <textarea name="og_description" rows="3" maxlength="160"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner resize-none text-xs"
+                              placeholder="Leave blank to use the excerpt">{{ post.og_description|default:'' }}</textarea>
+                </div>
+                {% if post %}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Slug (URL)</label>
+                    <p class="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-1.5 rounded border border-gray-200">{{ post.slug }}</p>
+                    <p class="text-xs text-gray-400 mt-1">Slug is set on first save and cannot be changed here (edit in Django admin if needed).</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+</form>
+{% endblock %}

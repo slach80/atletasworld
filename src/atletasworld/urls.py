@@ -43,6 +43,10 @@ from .admin_views import (
     owner_payout_reject,
     owner_payout_mark_paid,
     owner_guide,
+    owner_blog_list,
+    owner_blog_edit,
+    owner_blog_delete,
+    owner_blog_toggle_publish,
 )
 
 
@@ -193,6 +197,13 @@ urlpatterns = [
     path('owner-portal/referrals/payouts/<int:payout_id>/mark-paid/', owner_payout_mark_paid, name='owner_payout_mark_paid'),
 
     path('owner-portal/guide/', owner_guide, name='owner_guide'),
+
+    # Owner - Blog management
+    path('owner-portal/blog/', owner_blog_list, name='owner_blog_list'),
+    path('owner-portal/blog/new/', owner_blog_edit, name='owner_blog_new'),
+    path('owner-portal/blog/<int:pk>/edit/', owner_blog_edit, name='owner_blog_edit'),
+    path('owner-portal/blog/<int:pk>/delete/', owner_blog_delete, name='owner_blog_delete'),
+    path('owner-portal/blog/<int:pk>/toggle-publish/', owner_blog_toggle_publish, name='owner_blog_toggle_publish'),
 
     # Owner - Service Catalog
     path('owner-portal/services/', owner_services, name='owner_services'),

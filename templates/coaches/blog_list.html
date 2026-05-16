@@ -1,0 +1,66 @@
+{% extends 'coaches/base.html' %}
+{% block title %}Blog Posts{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-xl font-bold text-gray-800">Blog Posts</h1>
+        <p class="text-gray-500 text-sm">Submit drafts — the owner reviews and publishes them.</p>
+    </div>
+    <a href="{% url 'coaches:blog_submit' %}"
+       class="px-4 py-2 bg-secondary text-gray-900 rounded-lg hover:bg-yellow-300 font-bold text-sm transition">
+        + Write a Post
+    </a>
+</div>
+
+{% if messages %}
+<div class="mb-4 space-y-2">
+    {% for message in messages %}
+    <div class="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-800">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    {% if posts %}
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600">Title</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Category</th>
+                <th class="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Date</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for post in posts %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3">
+                    <div class="font-semibold text-gray-800">{{ post.title }}</div>
+                    <div class="text-xs text-gray-400 truncate max-w-xs">{{ post.excerpt|truncatechars:70 }}</div>
+                </td>
+                <td class="px-4 py-3 hidden sm:table-cell">
+                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ post.category_label }}</span>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    {% if post.is_published %}
+                    <span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-semibold">Live</span>
+                    {% else %}
+                    <span class="text-xs bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full font-semibold">Draft</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 hidden md:table-cell text-gray-500 text-xs">
+                    {{ post.created_at|date:"N j, Y" }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-center py-14 text-gray-400">
+        <p class="font-semibold mb-2">No posts yet</p>
+        <a href="{% url 'coaches:blog_submit' %}" class="text-sm text-secondary hover:underline">Write your first post →</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
