@@ -267,7 +267,7 @@ def sign_waiver(request):
 def players_list(request):
     """List all players for the client."""
     client, created = Client.objects.get_or_create(user=request.user)
-    players = client.players.all()
+    players = client.players.filter(is_active=True)
 
     context = {
         'client': client,
