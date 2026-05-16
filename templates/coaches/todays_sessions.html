@@ -43,11 +43,11 @@
                     {% if item.bookings %}
                     <div class="flex flex-col xs:flex-row sm:flex-row gap-2 shrink-0">
                         <a href="{% url 'coaches:session_attendance' item.block.id %}"
-                           class="flex-1 sm:flex-none text-center bg-secondary text-gray-900 px-4 py-2.5 rounded-lg hover:bg-[#b8e000] text-sm font-bold transition">
+                           class="flex-1 sm:flex-none text-center bg-secondary text-gray-900 px-4 py-2.5 rounded-lg hover:bg-[#b8e000] hover:text-gray-900 hover:scale-[1.02] active:scale-100 text-sm font-bold transition-all duration-150">
                             ✓ Attendance
                         </a>
                         <a href="{% url 'coaches:quick_assess_session' item.block.id %}"
-                           class="flex-1 sm:flex-none text-center bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 text-sm font-bold transition">
+                           class="flex-1 sm:flex-none text-center bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 hover:scale-[1.02] active:scale-100 text-sm font-bold transition-all duration-150">
                             📋 Assess
                         </a>
                     </div>

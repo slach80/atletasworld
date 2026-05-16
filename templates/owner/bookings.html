@@ -59,10 +59,10 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
             <input type="date" name="date_to" value="{{ date_to_filter }}" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner">
         </div>
-        <button type="submit" class="px-4 py-2 bg-owner text-white rounded-lg hover:bg-indigo-600 transition">Filter</button>
-        <a href="{% url 'owner_bookings' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Clear</a>
+        <button type="submit" class="px-4 py-2 bg-owner text-white rounded-lg hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">Filter</button>
+        <a href="{% url 'owner_bookings' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-150">Clear</a>
         <a href="?q={{ search }}&status={{ status_filter }}&coach={{ coach_filter }}&session_type={{ session_type_filter }}&package_type={{ package_type_filter }}&date_from={{ date_from_filter }}&date_to={{ date_to_filter }}&export=csv"
-           class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">⬇ CSV</a>
+           class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:scale-[1.02] active:scale-100 transition-all duration-150 text-sm">⬇ CSV</a>
     </form>
 </div>
 
@@ -125,7 +125,7 @@
                     </span>
                 </td>
                 <td class="py-4 px-6">
-                    <a href="{% url 'owner_booking_detail' booking.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-600 transition">View</a>
+                    <a href="{% url 'owner_booking_detail' booking.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">View</a>
                 </td>
             </tr>
             {% empty %}
@@ -143,11 +143,11 @@
     <div class="flex gap-2">
         {% if page_obj.has_previous %}
         <a href="?q={{ search }}&status={{ status_filter }}&coach={{ coach_filter }}&session_type={{ session_type_filter }}&package_type={{ package_type_filter }}&date_from={{ date_from_filter }}&date_to={{ date_to_filter }}&page={{ page_obj.previous_page_number }}"
-           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">← Prev</a>
+           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-all duration-150">← Prev</a>
         {% endif %}
         {% if page_obj.has_next %}
         <a href="?q={{ search }}&status={{ status_filter }}&coach={{ coach_filter }}&session_type={{ session_type_filter }}&package_type={{ package_type_filter }}&date_from={{ date_from_filter }}&date_to={{ date_to_filter }}&page={{ page_obj.next_page_number }}"
-           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">Next →</a>
+           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-all duration-150">Next →</a>
         {% endif %}
     </div>
 </div>

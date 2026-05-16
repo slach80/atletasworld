@@ -135,10 +135,10 @@
         </div>
 
         <div class="flex space-x-4 pt-4">
-            <button type="submit" class="px-6 py-3 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition">
+            <button type="submit" class="px-6 py-3 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                 {% if editing %}Update Package{% else %}Create Package{% endif %}
             </button>
-            <a href="{% url 'owner_packages' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Cancel</a>
+            <a href="{% url 'owner_packages' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-150">Cancel</a>
         </div>
     </form>
 </div>

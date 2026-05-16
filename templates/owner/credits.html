@@ -12,7 +12,7 @@
 <!-- Tab bar -->
 <div class="flex space-x-1 mb-6 bg-white rounded-xl shadow-sm p-1 inline-flex">
     <a href="{% url 'owner_credits' %}" class="px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white">Credits</a>
-    <a href="{% url 'owner_discount_codes' %}" class="px-5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:bg-gray-50 transition">Discount Codes</a>
+    <a href="{% url 'owner_discount_codes' %}" class="px-5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-all duration-150">Discount Codes</a>
 </div>
 
 <!-- APC Select Members Summary -->
@@ -49,7 +49,7 @@
                     </td>
                     <td class="py-3 px-4 text-right">
                         <button onclick="openGrantForm('{{ cp.client.id }}', '{{ cp.client.user.get_full_name|default:cp.client.user.username }}')"
-                                class="px-3 py-1 text-xs bg-owner text-white rounded hover:bg-indigo-600 transition">
+                                class="px-3 py-1 text-xs bg-owner text-white rounded hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                             + Grant Credit
                         </button>
                     </td>
@@ -107,7 +107,7 @@
                         <textarea name="notes" rows="2" placeholder="e.g. April APC Select credit"
                                   class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent"></textarea>
                     </div>
-                    <button type="submit" class="w-full py-2 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition text-sm">
+                    <button type="submit" class="w-full py-2 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150 text-sm">
                         Grant Credit
                     </button>
                 </div>
@@ -174,7 +174,7 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="cancel">
                                     <input type="hidden" name="credit_id" value="{{ credit.id }}">
-                                    <button type="submit" class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition">Cancel</button>
+                                    <button type="submit" class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition-all duration-150">Cancel</button>
                                 </form>
                                 {% endif %}
                             </td>

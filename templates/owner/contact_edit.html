@@ -11,7 +11,7 @@
         <p class="text-gray-500 text-sm">{{ contact.display_name }} · {{ players|length }} player{{ players|length|pluralize }}</p>
     </div>
     {% if contact.is_linked %}
-    <a href="{% url 'owner_client_detail' contact.client.pk %}" class="ml-auto px-4 py-2 bg-owner text-white rounded-lg text-sm font-semibold hover:bg-indigo-600 transition">
+    <a href="{% url 'owner_client_detail' contact.client.pk %}" class="ml-auto px-4 py-2 bg-owner text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
         View Client Account →
     </a>
     {% endif %}
@@ -66,7 +66,7 @@
                                   class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-owner focus:border-transparent"
                                   placeholder="Any notes about this contact…">{{ contact.notes }}</textarea>
                     </div>
-                    <button type="submit" class="w-full py-2 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition text-sm">
+                    <button type="submit" class="w-full py-2 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150 text-sm">
                         Save Contact
                     </button>
                 </div>
@@ -80,7 +80,7 @@
                   onsubmit="return confirm('Delete this contact and all {{ players|length }} player record{{ players|length|pluralize }}? This cannot be undone.');">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="delete_contact">
-                <button type="submit" class="w-full py-2 border border-red-300 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-50 transition">
+                <button type="submit" class="w-full py-2 border border-red-300 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-50 transition-all duration-150">
                     🗑 Delete Contact & All Players
                 </button>
             </form>
@@ -94,7 +94,7 @@
         <div class="flex items-center justify-between">
             <h2 class="text-lg font-bold text-gray-800">Players / Children</h2>
             <button onclick="document.getElementById('add-player-form').classList.toggle('hidden')"
-                    class="px-4 py-2 bg-owner text-white rounded-lg text-sm font-semibold hover:bg-indigo-600 transition">
+                    class="px-4 py-2 bg-owner text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                 + Add Player
             </button>
         </div>
@@ -107,9 +107,9 @@
                 <input type="hidden" name="action" value="save_player">
                 {% include 'owner/_contact_player_fields.html' with player=None %}
                 <div class="flex gap-2 mt-4">
-                    <button type="submit" class="flex-1 py-2 bg-owner text-white rounded-lg font-semibold text-sm hover:bg-indigo-600 transition">Add Player</button>
+                    <button type="submit" class="flex-1 py-2 bg-owner text-white rounded-lg font-semibold text-sm hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">Add Player</button>
                     <button type="button" onclick="document.getElementById('add-player-form').classList.add('hidden')"
-                            class="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+                            class="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-all duration-150">Cancel</button>
                 </div>
             </form>
         </div>
@@ -148,7 +148,7 @@
                         <input type="hidden" name="player_id" value="{{ player.pk }}">
                         {% include 'owner/_contact_player_fields.html' with player=player %}
                         <div class="flex gap-2 mt-4">
-                            <button type="submit" class="flex-1 py-2 bg-owner text-white rounded-lg font-semibold text-sm hover:bg-indigo-600 transition">Save Player</button>
+                            <button type="submit" class="flex-1 py-2 bg-owner text-white rounded-lg font-semibold text-sm hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">Save Player</button>
                         </div>
                     </form>
                     <form method="post" action="{% url 'owner_contact_edit' contact.pk %}" class="mt-2"
@@ -156,7 +156,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete_player">
                         <input type="hidden" name="player_id" value="{{ player.pk }}">
-                        <button type="submit" class="w-full py-1.5 border border-red-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 transition">
+                        <button type="submit" class="w-full py-1.5 border border-red-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 transition-all duration-150">
                             Remove Player
                         </button>
                     </form>

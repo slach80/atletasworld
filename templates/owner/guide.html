@@ -10,7 +10,7 @@
 <!-- Quick nav -->
 <div class="flex flex-wrap gap-2 mb-8 text-sm">
     {% for anchor, label in sections %}
-    <a href="#{{ anchor }}" class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-owner hover:text-owner transition">{{ label }}</a>
+    <a href="#{{ anchor }}" class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-owner hover:text-owner transition-all duration-150">{{ label }}</a>
     {% endfor %}
 </div>
 
@@ -405,7 +405,7 @@ const sections = [
 const nav = document.querySelector('.flex.flex-wrap.gap-2.mb-8');
 if (nav) {
     nav.innerHTML = sections.map(([a,l]) =>
-        `<a href="#${a}" class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition text-sm">${l}</a>`
+        `<a href="#${a}" class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all duration-150 text-sm">${l}</a>`
     ).join('');
 }
 </script>

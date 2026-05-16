@@ -17,11 +17,11 @@
     {% if editing %}
     <div class="flex gap-2">
         <a href="/coach/{{ coach.slug }}/" target="_blank"
-           class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">
+           class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all duration-150">
             View Public ↗
         </a>
         <a href="{% url 'owner_coach_schedule' coach.pk %}"
-           class="px-4 py-2 bg-owner text-white rounded-lg text-sm font-semibold hover:bg-indigo-600 transition">
+           class="px-4 py-2 bg-owner text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
             Schedule
         </a>
     </div>
@@ -277,16 +277,16 @@
 
         <!-- Save bar -->
         <div class="flex gap-3">
-            <button type="submit" class="px-6 py-3 bg-owner text-white rounded-xl font-bold hover:bg-indigo-600 transition">
+            <button type="submit" class="px-6 py-3 bg-owner text-white rounded-xl font-bold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                 {% if editing %}Save Changes{% else %}Create Coach{% endif %}
             </button>
             {% if editing %}
             <a href="/coach/{{ coach.slug }}/" target="_blank"
-               class="px-5 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition text-sm">
+               class="px-5 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-150 text-sm">
                 View Public Profile ↗
             </a>
             {% endif %}
-            <a href="{% url 'owner_coaches' %}" class="px-5 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold hover:bg-gray-200 transition text-sm">Cancel</a>
+            <a href="{% url 'owner_coaches' %}" class="px-5 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-150 text-sm">Cancel</a>
         </div>
 
     </div>
@@ -315,14 +315,14 @@
             {% csrf_token %}
             <input type="hidden" name="permanent" value="true">
             <button type="submit" {% if has_outstanding %}disabled{% endif %}
-                    class="px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition {% if has_outstanding %}cursor-not-allowed{% endif %}">
+                    class="px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 hover:scale-[1.02] active:scale-100 transition-all duration-150 {% if has_outstanding %}cursor-not-allowed{% endif %}">
                 Delete Permanently
             </button>
         </form>
         {% if has_outstanding %}
         <form method="post" action="{% url 'owner_coach_delete' coach.pk %}">
             {% csrf_token %}
-            <button type="submit" class="px-5 py-2.5 bg-gray-500 text-white rounded-lg text-sm font-semibold hover:bg-gray-600 transition">
+            <button type="submit" class="px-5 py-2.5 bg-gray-500 text-white rounded-lg text-sm font-semibold hover:bg-gray-600 transition-all duration-150">
                 Deactivate Instead
             </button>
         </form>

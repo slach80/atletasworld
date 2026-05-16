@@ -26,7 +26,7 @@
         <div class="bg-white rounded-xl shadow-md p-8">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">My Players</h1>
-                <a href="{% url 'clients:player_add' %}" class="bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000] transition flex items-center">
+                <a href="{% url 'clients:player_add' %}" class="bg-secondary text-gray-900 px-4 py-2 rounded-lg hover:bg-[#b8e000] hover:text-gray-900 hover:scale-[1.02] active:scale-100 transition-all duration-150 flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
@@ -88,12 +88,12 @@
                     </a>
 
                     <div class="flex space-x-2 pt-4 border-t">
-                        <a href="{% url 'clients:player_edit' player.id %}" class="flex-1 text-center py-2 border border-gray-700 text-gray-700 rounded-lg hover:bg-gray-700 hover:text-white transition">
+                        <a href="{% url 'clients:player_edit' player.id %}" class="flex-1 text-center py-2 border border-gray-700 text-gray-700 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-150">
                             Edit
                         </a>
                         <form method="POST" action="{% url 'clients:player_delete' player.id %}" class="flex-1" onsubmit="return confirm('Are you sure you want to remove {{ player.first_name }}?');">
                             {% csrf_token %}
-                            <button type="submit" class="w-full py-2 border border-accent text-accent rounded-lg hover:bg-accent hover:text-white transition">
+                            <button type="submit" class="w-full py-2 border border-accent text-accent rounded-lg hover:bg-accent hover:text-white transition-all duration-150">
                                 Remove
                             </button>
                         </form>
@@ -108,7 +108,7 @@
                 </svg>
                 <h2 class="text-xl font-semibold text-gray-700 mb-2">No Players Yet</h2>
                 <p class="text-gray-500 mb-6">Add your children or athletes to start booking training sessions.</p>
-                <a href="{% url 'clients:player_add' %}" class="bg-secondary text-gray-900 px-8 py-3 rounded-lg hover:bg-[#b8e000] transition inline-flex items-center">
+                <a href="{% url 'clients:player_add' %}" class="bg-secondary text-gray-900 px-8 py-3 rounded-lg hover:bg-[#b8e000] hover:text-gray-900 hover:scale-[1.02] active:scale-100 transition-all duration-150 inline-flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>

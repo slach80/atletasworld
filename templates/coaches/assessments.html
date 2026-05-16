@@ -13,7 +13,7 @@
                 <div class="bg-white rounded-lg p-4 border">
                     <p class="font-semibold">{{ booking.player }}</p>
                     <p class="text-sm text-gray-500">{{ booking.scheduled_date|date:"M j" }} - {{ booking.session_type.name }}</p>
-                    <a href="{% url 'coaches:create_assessment' booking.id %}" class="mt-2 inline-block bg-accent text-gray-900 px-3 py-1 rounded text-sm hover:bg-[#b8e000]">Add Assessment</a>
+                    <a href="{% url 'coaches:create_assessment' booking.id %}" class="mt-2 inline-block bg-accent text-gray-900 px-3 py-1 rounded text-sm hover:bg-[#b8e000] hover:text-gray-900 hover:scale-[1.02] active:scale-100 transition-all duration-150">Add Assessment</a>
                 </div>
                 {% endfor %}
             </div>
@@ -68,10 +68,10 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000]">
+                    <button type="submit" class="px-4 py-2 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000] hover:text-gray-900 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                         Apply Filters
                     </button>
-                    <a href="{% url 'coaches:assessments' %}" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+                    <a href="{% url 'coaches:assessments' %}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-all duration-150">
                         Clear Filters
                     </a>
                 </div>

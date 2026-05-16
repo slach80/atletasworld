@@ -347,11 +347,11 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Quick Templates</label>
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="useTemplate('schedule_change')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Schedule Change</button>
-                        <button type="button" onclick="useTemplate('promotion')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Promotion/Offer</button>
-                        <button type="button" onclick="useTemplate('reminder')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Session Reminder</button>
-                        <button type="button" onclick="useTemplate('announcement')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">General Announcement</button>
-                        <button type="button" onclick="useTemplate('holiday')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Holiday Hours</button>
+                        <button type="button" onclick="useTemplate('schedule_change')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition-all duration-150">Schedule Change</button>
+                        <button type="button" onclick="useTemplate('promotion')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition-all duration-150">Promotion/Offer</button>
+                        <button type="button" onclick="useTemplate('reminder')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition-all duration-150">Session Reminder</button>
+                        <button type="button" onclick="useTemplate('announcement')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition-all duration-150">General Announcement</button>
+                        <button type="button" onclick="useTemplate('holiday')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition-all duration-150">Holiday Hours</button>
                     </div>
                 </div>
 
@@ -361,7 +361,7 @@
                         <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Emails will be sent individually to each recipient
                     </p>
-                    <button type="submit" id="sendEmailBtn" class="px-6 py-2 bg-owner text-white rounded-lg font-medium hover:bg-indigo-700 transition flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button type="submit" id="sendEmailBtn" class="px-6 py-2 bg-owner text-white rounded-lg font-medium hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         <span id="sendBtnText">Send Emails</span>
                     </button>

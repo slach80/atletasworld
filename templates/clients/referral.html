@@ -30,7 +30,7 @@
             <input type="text" name="referral_code" placeholder="Enter referral code"
                    class="flex-1 px-4 py-2 border border-amber-300 rounded bg-white text-gray-900 uppercase"
                    pattern="[A-Z0-9]+" maxlength="20" required>
-            <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-6 rounded transition">
+            <button type="submit" class="bg-amber-600 hover:bg-amber-700 hover:scale-[1.02] active:scale-100 text-white font-bold py-2 px-6 rounded transition-all duration-150">
                 Apply Code
             </button>
         </form>
@@ -60,7 +60,7 @@
             <div class="text-center">
                 <div class="text-sm text-gray-600 mb-2">Share this code:</div>
                 <div class="text-4xl font-bold text-primary tracking-wider mb-4">{{ referral_code.code }}</div>
-                <button onclick="copyCode()" class="bg-secondary hover:bg-yellow-400 text-primary font-bold py-2 px-6 rounded transition">
+                <button onclick="copyCode()" class="bg-secondary hover:bg-yellow-400 hover:text-gray-900 hover:scale-[1.02] active:scale-100 text-primary font-bold py-2 px-6 rounded transition-all duration-150">
                     Copy Code
                 </button>
             </div>
@@ -71,7 +71,7 @@
             <div class="flex gap-2">
                 <input type="text" id="shareLink" value="{{ share_link }}" readonly
                        class="flex-1 px-4 py-2 border border-gray-300 rounded bg-gray-50 text-gray-700 font-mono text-sm">
-                <button onclick="copyLink()" class="bg-primary hover:bg-gray-800 text-white font-bold py-2 px-6 rounded transition">
+                <button onclick="copyLink()" class="bg-primary hover:bg-gray-800 hover:scale-[1.02] active:scale-100 text-white font-bold py-2 px-6 rounded transition-all duration-150">
                     Copy Link
                 </button>
             </div>
@@ -178,7 +178,7 @@
 
     <!-- Back Button -->
     <div class="text-center">
-        <a href="{% url 'clients:dashboard' %}" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded transition">
+        <a href="{% url 'clients:dashboard' %}" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded transition-all duration-150">
             Back to Dashboard
         </a>
     </div>

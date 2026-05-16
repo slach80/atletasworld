@@ -11,7 +11,7 @@
     </div>
     <div class="flex items-center gap-2 bg-white rounded-xl shadow-sm px-4 py-2 border border-gray-200">
         <a href="?month={{ prev_month }}&year={{ prev_year }}"
-           class="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition">
+           class="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-all duration-150">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -276,7 +276,7 @@
                             <input type="hidden" name="action" value="mark_paid">
                             <button type="submit"
                                     onclick="return confirm('Mark this booking as paid?')"
-                                    class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded hover:bg-green-200 transition">
+                                    class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded hover:bg-green-200 transition-all duration-150">
                                 Mark Paid
                             </button>
                         </form>

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="mb-6 flex items-center justify-between">
     <a href="{% url 'owner_session_types' %}" class="text-owner hover:underline">&larr; Back to Session Types</a>
-    <a href="{% url 'owner_session_type_roster' session_type.pk %}" class="text-sm px-4 py-2 bg-indigo-50 text-owner border border-owner rounded-lg hover:bg-indigo-100 transition">
+    <a href="{% url 'owner_session_type_roster' session_type.pk %}" class="text-sm px-4 py-2 bg-indigo-50 text-owner border border-owner rounded-lg hover:bg-indigo-100 transition-all duration-150">
         📋 View Roster
     </a>
 </div>
@@ -111,19 +111,19 @@
                             <div class="flex items-center gap-2">
                                 <input type="time" name="start_times" value="{{ t|slice:':5' }}" step="1800"
                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner focus:border-owner">
-                                <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>
+                                <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-all duration-150">✕</button>
                             </div>
                             {% endfor %}
                         {% else %}
                         <div class="flex items-center gap-2">
                             <input type="time" name="start_times" step="1800"
                                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner focus:border-owner">
-                            <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>
+                            <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-all duration-150">✕</button>
                         </div>
                         {% endif %}
                     </div>
                     <button type="button" onclick="addStartTime('start-times-list','start_times')"
-                            class="text-xs px-3 py-1.5 bg-owner text-white rounded-lg hover:bg-indigo-700">+ Add</button>
+                            class="text-xs px-3 py-1.5 bg-owner text-white rounded-lg hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">+ Add</button>
                 </div>
 
                 <!-- WEEKENDS -->
@@ -149,7 +149,7 @@
                             <div class="flex items-center gap-2">
                                 <input type="time" name="weekend_start_times" value="{{ t|slice:':5' }}" step="1800"
                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner focus:border-owner">
-                                <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>
+                                <button type="button" onclick="this.parentElement.remove()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-all duration-150">✕</button>
                             </div>
                             {% endfor %}
                         {% else %}
@@ -157,7 +157,7 @@
                         {% endif %}
                     </div>
                     <button type="button" onclick="addStartTime('weekend-times-list','weekend_start_times')"
-                            class="text-xs px-3 py-1.5 bg-owner text-white rounded-lg hover:bg-indigo-700">+ Add</button>
+                            class="text-xs px-3 py-1.5 bg-owner text-white rounded-lg hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">+ Add</button>
                 </div>
             </div>
 
@@ -174,7 +174,7 @@
                 <div id="capacity-apply-wrap" class="hidden">
                     <button type="button" id="applyCapacityBtn"
                             onclick="applyCapacityToBlocks()"
-                            class="text-xs px-4 py-2 bg-indigo-50 text-owner border border-owner rounded-lg hover:bg-indigo-100 transition">
+                            class="text-xs px-4 py-2 bg-indigo-50 text-owner border border-owner rounded-lg hover:bg-indigo-100 transition-all duration-150">
                         ⚡ Apply capacity rules to existing schedule blocks
                     </button>
                     <span id="applyCapacityStatus" class="ml-3 text-xs text-gray-500 hidden"></span>
@@ -333,10 +333,10 @@
         </div>
 
         <div class="flex space-x-4 pt-4">
-            <button type="submit" class="px-6 py-3 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-600 transition">
+            <button type="submit" class="px-6 py-3 bg-owner text-white rounded-lg font-semibold hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                 Update Session Type
             </button>
-            <a href="{% url 'owner_session_types' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Cancel</a>
+            <a href="{% url 'owner_session_types' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-150">Cancel</a>
         </div>
     </form>
 </div>
@@ -354,7 +354,7 @@ function addStartTime(listId, fieldName) {
     const row = document.createElement('div');
     row.className = 'flex items-center gap-2';
     row.innerHTML = `<input type="time" name="${name}" step="1800" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-owner focus:border-owner" onchange="buildCapacityGrid()">`
-                  + '<button type="button" onclick="this.parentElement.remove();buildCapacityGrid();" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">✕</button>';
+                  + '<button type="button" onclick="this.parentElement.remove();buildCapacityGrid();" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-all duration-150">✕</button>';
     list.appendChild(row);
     buildCapacityGrid();
 }

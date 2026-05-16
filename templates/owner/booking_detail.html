@@ -126,7 +126,7 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="confirm">
-                <button type="submit" class="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-[#b8e000] transition">Confirm Booking</button>
+                <button type="submit" class="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">Confirm Booking</button>
             </form>
             {% endif %}
 
@@ -134,13 +134,13 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="complete">
-                <button type="submit" class="w-full py-3 bg-secondary text-gray-900 rounded-lg font-semibold hover:bg-[#b8e000] transition">Mark Completed</button>
+                <button type="submit" class="w-full py-3 bg-secondary text-gray-900 rounded-lg font-semibold hover:bg-[#b8e000] hover:text-gray-900 hover:scale-[1.02] active:scale-100 transition-all duration-150">Mark Completed</button>
             </form>
 
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="no_show">
-                <button type="submit" class="w-full py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition" onclick="return confirm('Mark as no-show?');">Mark No-Show</button>
+                <button type="submit" class="w-full py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-all duration-150" onclick="return confirm('Mark as no-show?');">Mark No-Show</button>
             </form>
             {% endif %}
 
@@ -161,7 +161,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
                     <textarea name="notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
                 </div>
-                <button type="submit" class="w-full py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-[#b8e000] transition" onclick="return confirm('Cancel this booking?');">Cancel Booking</button>
+                <button type="submit" class="w-full py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-700 hover:scale-[1.02] active:scale-100 transition-all duration-150" onclick="return confirm('Cancel this booking?');">Cancel Booking</button>
             </form>
             {% endif %}
         </div>

@@ -259,7 +259,7 @@
                     {% if player %}
                     <form method="POST" action="{% url 'clients:player_delete' player.id %}" onsubmit="return confirm('Remove {{ player.first_name }} {{ player.last_name }}? This cannot be undone.')">
                         {% csrf_token %}
-                        <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:text-white transition">
+                        <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                             Remove Player
                         </button>
                     </form>
@@ -267,10 +267,10 @@
                     <div></div>
                     {% endif %}
                     <div class="flex space-x-4">
-                        <a href="{% url 'clients:players' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        <a href="{% url 'clients:players' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-150">
                             Cancel
                         </a>
-                        <button type="submit" class="px-6 py-3 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000] hover:text-gray-900 transition">
+                        <button type="submit" class="px-6 py-3 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000] hover:text-gray-900 hover:scale-[1.02] active:scale-100 transition-all duration-150">
                             {% if player %}Save Changes{% else %}Add Player{% endif %}
                         </button>
                     </div>

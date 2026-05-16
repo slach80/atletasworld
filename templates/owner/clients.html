@@ -7,7 +7,7 @@
         <h1 class="text-2xl font-bold text-gray-800">Client Management</h1>
         <p class="text-gray-500">{{ paginator.count }} client{{ paginator.count|pluralize }}</p>
     </div>
-    <a href="{% url 'owner_players' %}" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition">View All Players</a>
+    <a href="{% url 'owner_players' %}" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all duration-150">View All Players</a>
 </div>
 
 <!-- Search / Filter -->
@@ -26,8 +26,8 @@
                 <option value="0" {% if has_package == '0' %}selected{% endif %}>No active package</option>
             </select>
         </div>
-        <button type="submit" class="px-4 py-2 bg-owner text-white rounded-lg hover:bg-indigo-600 transition">Search</button>
-        <a href="{% url 'owner_clients' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Clear</a>
+        <button type="submit" class="px-4 py-2 bg-owner text-white rounded-lg hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">Search</button>
+        <a href="{% url 'owner_clients' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-150">Clear</a>
     </form>
 </div>
 
@@ -68,7 +68,7 @@
                 <td class="py-4 px-6 font-semibold">{{ client.total_bookings }}</td>
                 <td class="py-4 px-6 text-sm text-gray-500">{{ client.user.date_joined|date:"M j, Y" }}</td>
                 <td class="py-4 px-6">
-                    <a href="{% url 'owner_client_detail' client.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-600 transition">View</a>
+                    <a href="{% url 'owner_client_detail' client.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">View</a>
                 </td>
             </tr>
             {% empty %}
@@ -86,11 +86,11 @@
     <div class="flex gap-2">
         {% if page_obj.has_previous %}
         <a href="?{% if search %}q={{ search }}&{% endif %}{% if has_package %}has_package={{ has_package }}&{% endif %}page={{ page_obj.previous_page_number }}"
-           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">← Prev</a>
+           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-all duration-150">← Prev</a>
         {% endif %}
         {% if page_obj.has_next %}
         <a href="?{% if search %}q={{ search }}&{% endif %}{% if has_package %}has_package={{ has_package }}&{% endif %}page={{ page_obj.next_page_number }}"
-           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">Next →</a>
+           class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-all duration-150">Next →</a>
         {% endif %}
     </div>
 </div>
