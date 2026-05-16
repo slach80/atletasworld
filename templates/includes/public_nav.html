@@ -70,11 +70,36 @@ active_nav values: events, programs, coaches, about, special, faq
             <!-- Divider -->
             <div class="w-px h-5 bg-white/25 mx-2 flex-shrink-0"></div>
 
-            <!-- Right group: dedicated pages -->
-            <a href="/programs/"
-               class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'special' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
-                Special Projects ✦
-            </a>
+            <!-- Special Projects dropdown -->
+            <div class="relative" id="apc-special-dropdown">
+                <button id="apc-special-btn"
+                        class="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'special' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
+                    Special Projects ✦
+                    <svg class="w-3.5 h-3.5 mt-px flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="apc-special-menu"
+                     class="hidden absolute left-1/2 -translate-x-1/2 top-full mt-1 w-52 bg-gray-900 border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+                    <a href="/programs/" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition font-medium">
+                        Special Projects
+                    </a>
+                    <div class="border-t border-white/10"></div>
+                    <a href="/programs/#select" class="block px-4 py-2.5 text-sm text-gray-400 hover:bg-white/10 hover:text-white transition">
+                        APC Select Team
+                    </a>
+                    <a href="/programs/#serie-a" class="block px-4 py-2.5 text-sm text-gray-400 hover:bg-white/10 hover:text-white transition">
+                        Elite Sunday Class
+                    </a>
+                    <a href="/programs/#camps" class="block px-4 py-2.5 text-sm text-gray-400 hover:bg-white/10 hover:text-white transition">
+                        Summer Soccer Camp
+                    </a>
+                    <a href="/programs/#tournament" class="block px-4 py-2.5 text-sm text-gray-400 hover:bg-white/10 hover:text-white transition">
+                        4v4 Tournament
+                    </a>
+                </div>
+            </div>
+
             <a href="/faq/"
                class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'faq' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 FAQ
@@ -116,7 +141,11 @@ active_nav values: events, programs, coaches, about, special, faq
         <div class="border-t border-white/10 pt-3">
             <p class="px-4 pb-1 text-xs font-semibold uppercase tracking-widest text-gray-500">Pages</p>
             <a href="/programs/" class="flex items-center gap-2 px-4 py-2.5 text-secondary font-bold hover:bg-white/5 rounded-lg">Special Projects ✦</a>
-            <a href="/faq/"      class="flex items-center gap-2 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">FAQ</a>
+            <a href="/programs/#select"     class="flex items-center gap-2 pl-8 pr-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg text-sm">↳ APC Select Team</a>
+            <a href="/programs/#serie-a"    class="flex items-center gap-2 pl-8 pr-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg text-sm">↳ Elite Sunday Class</a>
+            <a href="/programs/#camps"      class="flex items-center gap-2 pl-8 pr-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg text-sm">↳ Summer Soccer Camp</a>
+            <a href="/programs/#tournament" class="flex items-center gap-2 pl-8 pr-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg text-sm">↳ 4v4 Tournament</a>
+            <a href="/faq/" class="flex items-center gap-2 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">FAQ</a>
         </div>
 
     </div>
@@ -126,15 +155,33 @@ active_nav values: events, programs, coaches, about, special, faq
 
 <script>
 (function(){
+    // Mobile hamburger
     var btn = document.getElementById('apc-mobile-btn');
     var menu = document.getElementById('apc-mobile-menu');
     var hIcon = document.getElementById('apc-hamburger-icon');
     var xIcon = document.getElementById('apc-close-icon');
-    if (!btn) return;
-    btn.addEventListener('click', function(){
-        var open = menu.classList.toggle('hidden') === false;
-        hIcon.classList.toggle('hidden', open);
-        xIcon.classList.toggle('hidden', !open);
-    });
+    if (btn) {
+        btn.addEventListener('click', function(){
+            var open = menu.classList.toggle('hidden') === false;
+            hIcon.classList.toggle('hidden', open);
+            xIcon.classList.toggle('hidden', !open);
+        });
+    }
+
+    // Special Projects dropdown — toggle on click, close on outside click
+    var specialBtn = document.getElementById('apc-special-btn');
+    var specialMenu = document.getElementById('apc-special-menu');
+    if (specialBtn && specialMenu) {
+        specialBtn.addEventListener('click', function(e){
+            e.stopPropagation();
+            specialMenu.classList.toggle('hidden');
+        });
+        document.addEventListener('click', function(){
+            specialMenu.classList.add('hidden');
+        });
+        specialMenu.addEventListener('click', function(e){
+            e.stopPropagation();
+        });
+    }
 })();
 </script>
