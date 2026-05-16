@@ -93,7 +93,7 @@
 
                     <!-- Operations dropdown -->
                     <div class="relative group">
-                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if 'coach' in request.resolver_match.url_name or 'booking' in request.resolver_match.url_name or 'finance' in request.resolver_match.url_name or 'referral' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
+                        <button class="flex items-center gap-1 px-3 py-2 rounded {% if 'coach' in request.resolver_match.url_name or 'booking' in request.resolver_match.url_name or 'finance' in request.resolver_match.url_name or 'referral' in request.resolver_match.url_name or 'blog' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                             Operations
                             <svg class="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
@@ -102,7 +102,9 @@
                             <a href="{% url 'owner_bookings' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'booking' in request.resolver_match.url_name %}text-owner{% endif %}">📅 Bookings</a>
                             <a href="{% url 'owner_finances' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'owner_finances' %}text-owner{% endif %}">💰 Finances</a>
                             <a href="{% url 'owner_payments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'owner_payments' %}text-owner{% endif %}">💳 Payments</a>
-                            <a href="{% url 'owner_referrals' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'referral' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">🎁 Referrals</a>
+                            <a href="{% url 'owner_referrals' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'referral' in request.resolver_match.url_name %}text-owner{% endif %}">🎁 Referrals</a>
+                            <div class="border-t border-gray-700"></div>
+                            <a href="{% url 'owner_blog_list' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'blog' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">✍️ Blog</a>
                         </div>
                     </div>
 
@@ -127,12 +129,6 @@
                     <a href="{% url 'owner_notifications' %}"
                        class="px-3 py-2 rounded {% if 'notification' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                         Notify
-                    </a>
-
-                    <!-- Blog -->
-                    <a href="{% url 'owner_blog_list' %}"
-                       class="px-3 py-2 rounded {% if 'blog' in request.resolver_match.url_name %}bg-owner/20 text-owner font-semibold{% else %}hover:bg-white/10{% endif %} transition">
-                        Blog
                     </a>
 
                     <!-- Divider -->
