@@ -255,13 +255,25 @@
                               placeholder="Any special needs, medical conditions, or notes for coaches...">{{ player.notes|default:'' }}</textarea>
                 </div>
 
-                <div class="flex justify-end space-x-4 pt-4">
-                    <a href="{% url 'clients:players' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                        Cancel
-                    </a>
-                    <button type="submit" class="px-6 py-3 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000] transition">
-                        {% if player %}Save Changes{% else %}Add Player{% endif %}
-                    </button>
+                <div class="flex items-center justify-between pt-4">
+                    {% if player %}
+                    <form method="POST" action="{% url 'clients:player_delete' player.id %}" onsubmit="return confirm('Remove {{ player.first_name }} {{ player.last_name }}? This cannot be undone.')">
+                        {% csrf_token %}
+                        <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:text-white transition">
+                            Remove Player
+                        </button>
+                    </form>
+                    {% else %}
+                    <div></div>
+                    {% endif %}
+                    <div class="flex space-x-4">
+                        <a href="{% url 'clients:players' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-6 py-3 bg-secondary text-gray-900 rounded-lg hover:bg-[#b8e000] hover:text-gray-900 transition">
+                            {% if player %}Save Changes{% else %}Add Player{% endif %}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
