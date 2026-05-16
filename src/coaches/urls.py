@@ -39,6 +39,7 @@ urlpatterns = [
     # Notifications
     path('notify/', views.notify_parents, name='notify_parents'),
     path('notify/send/', views.send_notification, name='send_notification'),
+    path('notify/ai-assist/', views.notify_ai_assist, name='notify_ai_assist'),
 
     # Profile management
     path('profile/edit/', views.edit_profile, name='edit_profile'),

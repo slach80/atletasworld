@@ -1005,6 +1005,79 @@ def send_notification(request):
 
 
 @coach_required
+def notify_ai_assist(request):
+    """AI Assist endpoint for the notify-parents message composer."""
+    import requests as _requests
+    from django.conf import settings as _settings
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    action = request.POST.get('action', '')
+    message = request.POST.get('message', '').strip()
+    notification_type = request.POST.get('notification_type', 'general')
+
+    TYPE_LABELS = {
+        'schedule_change': 'schedule change',
+        'session_reminder': 'session reminder',
+        'assessment_ready': 'assessment ready notification',
+        'general': 'general parent message',
+    }
+    type_label = TYPE_LABELS.get(notification_type, 'general message')
+
+    PROMPTS = {
+        'draft': (
+            f"You are a youth soccer coach at Atletas Performance Center (APC), an elite academy "
+            f"in Overland Park, Kansas City. Write a short, warm, professional parent notification "
+            f"email for a '{type_label}'.\n\n"
+            f"Requirements:\n"
+            f"- Plain text only, no HTML\n"
+            f"- 3-5 sentences max\n"
+            f"- Friendly but professional tone\n"
+            f"- Leave [brackets] for details the coach should fill in\n"
+            f"- Sign off as 'APC Coaching Staff'\n"
+            f"Return ONLY the message text."
+        ),
+        'grammar': (
+            f"Fix the spelling, grammar, and tone of the following parent notification message. "
+            f"Keep the meaning and length the same. Plain text only.\n\n"
+            f"Message:\n{message}\n\n"
+            f"Return ONLY the corrected message."
+        ),
+        'shorten': (
+            f"Shorten the following parent notification message to 2-3 sentences maximum. "
+            f"Keep the key information. Plain text only.\n\n"
+            f"Message:\n{message}\n\n"
+            f"Return ONLY the shortened message."
+        ),
+    }
+
+    prompt = PROMPTS.get(action)
+    if not prompt:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+
+    if action != 'draft' and not message:
+        return JsonResponse({'error': 'Message is empty — nothing to improve.'}, status=400)
+
+    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
+    model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')
+
+    try:
+        resp = _requests.post(
+            f'{ollama_url}/api/generate',
+            json={'model': model, 'prompt': prompt, 'stream': False, 'options': {'temperature': 0.6}},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        result = resp.json().get('response', '').strip()
+        return JsonResponse({'result': result})
+    except _requests.exceptions.Timeout:
+        return JsonResponse({'error': 'AI request timed out. Try again.'}, status=504)
+    except Exception as e:
+        return JsonResponse({'error': f'AI unavailable: {str(e)}'}, status=503)
+
+
+@coach_required
 def availability(request):
     """Coach availability calendar using Toast UI Calendar."""
     coach = request.coach
