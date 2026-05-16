@@ -1077,7 +1077,7 @@ def create_booking_payment_intent(request, booking_id):
         })
     except stripe.error.StripeError as e:
         logger.error('Booking payment intent error: %s', e)
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({'error': e.user_message or 'Payment error. Please try again.'}, status=400)
 
 
 @login_required
@@ -1110,8 +1110,6 @@ def create_batch_booking_payment_intent(request):
     for item in items:
         block_id = item.get('block_id')
         player_id = item.get('player_id')
-        amount = Decimal(item.get('amount', '0'))
-
         try:
             block = ScheduleBlock.objects.select_related('coach').prefetch_related('catalog_session_types').get(id=block_id)
             player = Player.objects.get(id=player_id, client=client)
@@ -1126,7 +1124,7 @@ def create_batch_booking_payment_intent(request):
         if not session_type:
             return JsonResponse({'error': 'Session has no type configured.'}, status=400)
 
-        price = amount or (block.price_override if block.price_override is not None else session_type.get_drop_in_price())
+        price = block.price_override if block.price_override is not None else session_type.get_drop_in_price()
         if not price:
             return JsonResponse({'error': f'Cannot determine price for {session_type.name}.'}, status=400)
 
@@ -1162,7 +1160,7 @@ def create_batch_booking_payment_intent(request):
         })
     except stripe.error.StripeError as e:
         logger.error('Batch booking payment intent error: %s', e)
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({'error': e.user_message or 'Payment error. Please try again.'}, status=400)
 
 
 def _confirm_booking_paid(booking_id, payment_intent_id, amount):
