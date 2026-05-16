@@ -17,8 +17,39 @@
 
         <div class="grid grid-cols-2 gap-6">
             <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
-                <input type="text" name="name" value="{{ session_type.name }}" required
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Name *</label>
+                    <div class="relative" id="ai-dropdown-wrap">
+                        <button type="button" id="ai-assist-btn"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-owner border border-owner/30 rounded-lg hover:bg-owner hover:text-white transition text-xs font-semibold">
+                            ✦ AI Assist
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="ai-dropdown"
+                             class="hidden absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden text-sm">
+                            <button type="button" data-action="suggest_name"
+                                    class="ai-action w-full text-left px-4 py-2.5 hover:bg-indigo-50 hover:text-owner transition flex items-center gap-2">
+                                🪄 Suggest names
+                            </button>
+                            <button type="button" data-action="write_description"
+                                    class="ai-action w-full text-left px-4 py-2.5 hover:bg-indigo-50 hover:text-owner transition flex items-center gap-2">
+                                ✍️ Write description
+                            </button>
+                            <button type="button" data-action="fix_description"
+                                    class="ai-action w-full text-left px-4 py-2.5 hover:bg-indigo-50 hover:text-owner transition flex items-center gap-2">
+                                ✅ Fix description
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="ai-status" class="hidden mb-2 px-3 py-2 bg-indigo-50 border border-owner/20 rounded-lg text-xs text-owner flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span id="ai-status-text">Thinking…</span>
+                </div>
+                <input type="text" name="name" id="name-input" value="{{ session_type.name }}" required
                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner">
             </div>
 
@@ -65,7 +96,7 @@
 
             <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea name="description" rows="3"
+                <textarea name="description" id="description-textarea" rows="3"
                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner focus:border-owner">{{ session_type.description }}</textarea>
             </div>
 
@@ -531,4 +562,69 @@ function toggleClinicFields() {
     }
 }
 </script>
+
+{% block extra_js %}
+<script>
+(function () {
+    const btn = document.getElementById('ai-assist-btn');
+    const dropdown = document.getElementById('ai-dropdown');
+    const status = document.getElementById('ai-status');
+    const statusText = document.getElementById('ai-status-text');
+    const nameInput = document.getElementById('name-input');
+    const descTA = document.getElementById('description-textarea');
+
+    btn.addEventListener('click', function (e) { e.stopPropagation(); dropdown.classList.toggle('hidden'); });
+    document.addEventListener('click', function () { dropdown.classList.add('hidden'); });
+    dropdown.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    const LABELS = { suggest_name: 'Suggesting names…', write_description: 'Writing description…', fix_description: 'Fixing description…' };
+
+    document.querySelectorAll('.ai-action').forEach(function (actionBtn) {
+        actionBtn.addEventListener('click', function () {
+            const action = this.dataset.action;
+            dropdown.classList.add('hidden');
+
+            const name = nameInput ? nameInput.value.trim() : '';
+            const description = descTA ? descTA.value.trim() : '';
+
+            if (action === 'fix_description' && !description) { alert('Description is empty — nothing to fix.'); return; }
+            if (action === 'write_description' && !name) { alert('Enter a name first.'); return; }
+
+            statusText.textContent = LABELS[action] || 'Working…';
+            status.classList.remove('hidden');
+            status.className = 'mb-2 px-3 py-2 bg-indigo-50 border border-owner/20 rounded-lg text-xs text-owner flex items-center gap-2';
+            status.querySelector('svg').classList.remove('hidden');
+            btn.disabled = true;
+
+            const csrfToken = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+            const fd = new FormData();
+            fd.append('action', action); fd.append('name', name);
+            fd.append('description', description); fd.append('context_type', 'session');
+            fd.append('csrfmiddlewaretoken', csrfToken);
+
+            fetch('{% url "owner_naming_ai_assist" %}', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    statusText.textContent = '⚠ ' + data.error;
+                    status.className = 'mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 flex items-center gap-2';
+                    status.querySelector('svg').classList.add('hidden');
+                    return;
+                }
+                if (action === 'suggest_name') {
+                    statusText.textContent = data.result;
+                    status.querySelector('svg').classList.add('hidden');
+                    status.className = 'mb-2 px-3 py-2 bg-indigo-50 border border-owner/20 rounded-lg text-xs text-owner whitespace-pre-line';
+                } else {
+                    if (descTA) descTA.value = data.result;
+                    status.classList.add('hidden');
+                }
+            })
+            .catch(err => { statusText.textContent = '⚠ ' + err.message; status.querySelector('svg').classList.add('hidden'); })
+            .finally(() => { btn.disabled = false; });
+        });
+    });
+})();
+</script>
+{% endblock %}
 {% endblock %}

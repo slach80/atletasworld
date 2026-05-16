@@ -3618,3 +3618,77 @@ def owner_blog_ai_assist(request):
         return JsonResponse({'error': 'Ollama timed out — the model may be loading, try again in a moment.'}, status=504)
     except Exception as e:
         return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
+
+
+@owner_required
+def owner_naming_ai_assist(request):
+    """AI Assist for package / session-type name and description fields."""
+    import requests as _requests
+    from django.conf import settings as _settings
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    action = request.POST.get('action', '')
+    name = request.POST.get('name', '').strip()
+    description = request.POST.get('description', '').strip()
+    context_type = request.POST.get('context_type', 'package')  # 'package' or 'session'
+
+    ctx = 'training package' if context_type == 'package' else 'session type'
+
+    PROMPTS = {
+        'suggest_name': (
+            f"You are naming {ctx}s for Atletas Performance Center (APC), an elite youth soccer "
+            f"academy in Overland Park, Kansas City. Suggest 5 clear, professional names for a "
+            f"{ctx} with the following description or context:\n\n"
+            f"{description or name or 'No context provided'}\n\n"
+            f"Requirements:\n"
+            f"- Short (2-5 words each)\n"
+            f"- Professional and parent-friendly\n"
+            f"- Consistent naming convention (e.g. 'Elite 8', 'Select Sunday', 'U13 Development')\n"
+            f"- Return ONLY a numbered list of 5 names, nothing else"
+        ),
+        'write_description': (
+            f"Write a short, clear description (2-3 sentences) for the following {ctx} at "
+            f"Atletas Performance Center, an elite youth soccer academy in Kansas City.\n\n"
+            f"Name: {name}\n"
+            f"{'Current description: ' + description if description else ''}\n\n"
+            f"Requirements:\n"
+            f"- Plain text only\n"
+            f"- Parent-friendly, clear, concise\n"
+            f"- Mention who it's for and what they get\n"
+            f"- Return ONLY the description text"
+        ),
+        'fix_description': (
+            f"Fix the grammar, spelling, and clarity of this {ctx} description for "
+            f"Atletas Performance Center. Keep the same meaning and length.\n\n"
+            f"{description}\n\n"
+            f"Return ONLY the corrected description."
+        ),
+    }
+
+    prompt = PROMPTS.get(action)
+    if not prompt:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+
+    if action == 'fix_description' and not description:
+        return JsonResponse({'error': 'Description is empty — nothing to fix.'}, status=400)
+    if action == 'write_description' and not name:
+        return JsonResponse({'error': 'Enter a name first so AI knows what to describe.'}, status=400)
+
+    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
+    model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')
+
+    try:
+        resp = _requests.post(
+            f'{ollama_url}/api/generate',
+            json={'model': model, 'prompt': prompt, 'stream': False, 'options': {'temperature': 0.7}},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        result = resp.json().get('response', '').strip()
+        return JsonResponse({'result': result})
+    except _requests.exceptions.Timeout:
+        return JsonResponse({'error': 'Ollama timed out — try again in a moment.'}, status=504)
+    except Exception as e:
+        return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
