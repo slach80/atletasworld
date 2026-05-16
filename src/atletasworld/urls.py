@@ -216,6 +216,7 @@ urlpatterns = [
     path('book/', book_redirect_view, name='book'),  # Redirects to portal booking
     path('comparison/', TemplateView.as_view(template_name='comparison.html'), name='comparison'),
     path('programs/', programs_view, name='programs'),
+    path('faq/', TemplateView.as_view(template_name='faq.html'), name='faq'),
 
     # Coach public profiles - static templates for main coaches (must be before dynamic route)
     # coach/mirko/ and coach/roger/ both served by dynamic coach_public_profile view

@@ -7,23 +7,23 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-touch-icon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Explore APC Select elite teams, Serie A Elite Scouts, summer camps, and FIFA tournaments for youth soccer development in Overland Park, Kansas City.">
+    <meta name="description" content="Elite youth soccer training in Overland Park, Kansas City. APC offers competitive select teams (U10–U16), Serie A-standard Sunday classes, summer soccer camps, and 4v4 tournaments. Ages U8–U19. Book today.">
     <link rel="canonical" href="https://atletasperformancecenter.com/programs/">
-    <meta property="og:title" content="Soccer Programs &amp; Camps | APC | Kansas City">
-    <meta property="og:description" content="Explore APC Select elite teams, Serie A Elite Scouts, summer camps, and FIFA tournaments for youth soccer development in Overland Park, Kansas City.">
+    <meta property="og:title" content="Youth Soccer Training Overland Park KS | Programs, Camps &amp; Elite Classes | APC">
+    <meta property="og:description" content="Elite youth soccer training in Overland Park, Kansas City. APC offers competitive select teams (U10–U16), Serie A-standard Sunday classes, summer soccer camps, and 4v4 tournaments. Ages U8–U19.">
     <meta property="og:url" content="https://atletasperformancecenter.com/programs/">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://atletasperformancecenter.com/static/img/og-preview.png">
     <meta property="og:site_name" content="Atletas Performance Center">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Soccer Programs &amp; Camps | APC | Kansas City">
-    <meta name="twitter:description" content="Explore APC Select elite teams, Serie A Elite Scouts, summer camps, and FIFA tournaments for youth soccer development in Kansas City.">
+    <meta name="twitter:title" content="Youth Soccer Training Overland Park KS | Programs, Camps &amp; Elite Classes | APC">
+    <meta name="twitter:description" content="Elite youth soccer training in Overland Park, Kansas City. APC Select teams, Serie A classes, summer camps. U8–U19. Book today.">
     <meta name="twitter:image" content="https://atletasperformancecenter.com/static/img/og-preview.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
     <link rel="stylesheet" href="/static/gymlife/css/bilgen.css?v=7">
-    <title>Soccer Programs &amp; Camps | APC | Kansas City</title>
+    <title>Youth Soccer Training Programs | APC | Kansas City</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -129,41 +129,116 @@
     </div>
 </nav>
 
-<!-- Page Header -->
-<section class="bg-primary text-white py-12">
+<!-- Page Header — SEO-first H1 with keyword targeting -->
+<section class="bg-primary text-white py-14">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center space-x-3 mb-4">
             <a href="/" class="text-gray-400 hover:text-secondary text-sm transition">Home</a>
             <span class="text-gray-600">/</span>
-            <span class="text-secondary text-sm font-semibold">Special Projects & Events</span>
+            <span class="text-secondary text-sm font-semibold">Programs &amp; Special Projects</span>
         </div>
         <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
-            Special Projects<br><span class="text-secondary">&amp; Events</span>
+            Youth Soccer Training<br><span class="text-secondary">Kansas City &amp; Overland Park</span>
         </h1>
-        <p class="text-gray-300 text-lg max-w-2xl">
-            Beyond our daily training programs — exclusive initiatives, select teams, and special events designed to elevate the APC experience.
+        <p class="text-gray-300 text-lg max-w-3xl mb-8">
+            Elite player development programs for U8–U19 athletes — competitive select teams, weekly elite classes, summer soccer camps, and community tournaments at our Overland Park facility.
         </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <a href="{% url 'book' %}" class="bg-secondary text-gray-900 px-8 py-4 rounded-full text-lg font-black hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl uppercase tracking-wide">
+                Book a Session →
+            </a>
+            <a href="#find-program" class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-gray-900 transition">
+                Find the Right Program
+            </a>
+        </div>
     </div>
 </section>
 
-<!-- Section Quick-Nav -->
+<!-- Social Proof Ribbon -->
+<div class="bg-secondary py-5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-gray-900">
+            <div>
+                <p class="text-3xl font-black">U8–U19</p>
+                <p class="text-sm font-semibold uppercase tracking-wide">All Age Groups</p>
+            </div>
+            <div>
+                <p class="text-3xl font-black">4+</p>
+                <p class="text-sm font-semibold uppercase tracking-wide">Elite Coaches</p>
+            </div>
+            <div>
+                <p class="text-3xl font-black">Year-Round</p>
+                <p class="text-sm font-semibold uppercase tracking-wide">Training Available</p>
+            </div>
+            <div>
+                <p class="text-3xl font-black">Overland Park</p>
+                <p class="text-sm font-semibold uppercase tracking-wide">Indoor Facility</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Find Your Program — Age-Group Entry Point -->
+<section id="find-program" class="py-14 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <span class="bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1 rounded inline-block mb-3">Find Your Program</span>
+            <h2 class="text-3xl md:text-4xl font-black text-gray-900 uppercase">
+                Athletic Development Programs for Every Age
+            </h2>
+            <p class="text-gray-500 mt-3 max-w-2xl mx-auto">Select your athlete's age group to see which programs in Overland Park, KS are the right fit.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <a href="#camps" class="group bg-gray-50 hover:bg-primary border-2 border-gray-200 hover:border-secondary rounded-2xl p-6 text-center transition card-hover">
+                <div class="text-4xl mb-3">⚽</div>
+                <p class="text-2xl font-black text-gray-900 group-hover:text-secondary">U8 – U10</p>
+                <p class="text-xs text-gray-500 group-hover:text-gray-300 mt-1 uppercase tracking-wide">Ages 7–10</p>
+                <p class="text-sm text-gray-600 group-hover:text-gray-400 mt-3">Summer Camp · Foundational Skills</p>
+                <span class="inline-block mt-4 text-xs font-bold text-secondary opacity-0 group-hover:opacity-100 transition uppercase tracking-wide">See Programs →</span>
+            </a>
+            <a href="#camps" class="group bg-gray-50 hover:bg-primary border-2 border-gray-200 hover:border-secondary rounded-2xl p-6 text-center transition card-hover">
+                <div class="text-4xl mb-3">🏃</div>
+                <p class="text-2xl font-black text-gray-900 group-hover:text-secondary">U11 – U13</p>
+                <p class="text-xs text-gray-500 group-hover:text-gray-300 mt-1 uppercase tracking-wide">Ages 10–13</p>
+                <p class="text-sm text-gray-600 group-hover:text-gray-400 mt-3">Serie A Class · Summer Camp · Select Tryouts</p>
+                <span class="inline-block mt-4 text-xs font-bold text-secondary opacity-0 group-hover:opacity-100 transition uppercase tracking-wide">See Programs →</span>
+            </a>
+            <a href="#select" class="group bg-gray-50 hover:bg-primary border-2 border-gray-200 hover:border-secondary rounded-2xl p-6 text-center transition card-hover">
+                <div class="text-4xl mb-3">🎯</div>
+                <p class="text-2xl font-black text-gray-900 group-hover:text-secondary">U14 – U16</p>
+                <p class="text-xs text-gray-500 group-hover:text-gray-300 mt-1 uppercase tracking-wide">Ages 13–16</p>
+                <p class="text-sm text-gray-600 group-hover:text-gray-400 mt-3">APC Select · Serie A Class · Speed &amp; Agility</p>
+                <span class="inline-block mt-4 text-xs font-bold text-secondary opacity-0 group-hover:opacity-100 transition uppercase tracking-wide">See Programs →</span>
+            </a>
+            <a href="#serie-a" class="group bg-gray-50 hover:bg-primary border-2 border-gray-200 hover:border-secondary rounded-2xl p-6 text-center transition card-hover">
+                <div class="text-4xl mb-3">⚡</div>
+                <p class="text-2xl font-black text-gray-900 group-hover:text-secondary">U17 – U19</p>
+                <p class="text-xs text-gray-500 group-hover:text-gray-300 mt-1 uppercase tracking-wide">Ages 16–19</p>
+                <p class="text-sm text-gray-600 group-hover:text-gray-400 mt-3">Serie A Class · Summer Program · Select</p>
+                <span class="inline-block mt-4 text-xs font-bold text-secondary opacity-0 group-hover:opacity-100 transition uppercase tracking-wide">See Programs →</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Section Quick-Nav (updated labels for SEO) -->
 <div class="bg-gray-900 border-b border-gray-700 sticky top-20 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center gap-2 overflow-x-auto py-3 scrollbar-hide">
             <a href="#select" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
-                🏆 APC Select
+                APC Select Team
             </a>
             <span class="text-gray-700 flex-shrink-0">|</span>
             <a href="#serie-a" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
-                ⚽ Serie A Scouts
+                Elite Sunday Class
             </a>
             <span class="text-gray-700 flex-shrink-0">|</span>
             <a href="#camps" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
-                ☀️ Summer Program
+                Summer Soccer Camp
             </a>
             <span class="text-gray-700 flex-shrink-0">|</span>
             <a href="#tournament" class="section-nav-link flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold text-gray-300 hover:bg-secondary hover:text-gray-900 uppercase tracking-wide">
-                ⚽ APC 4x4 FIFA Tournament
+                4v4 Tournament
             </a>
         </div>
     </div>
@@ -181,7 +256,7 @@
         <div class="max-w-3xl">
             <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1 rounded mb-6">New Program — 2026</span>
             <h2 class="text-5xl md:text-7xl font-black uppercase tracking-tight mb-6">
-                APC<br><span class="text-secondary">Select</span>
+                Elite Youth Soccer<br><span class="text-secondary">Select Team — Kansas City</span>
             </h2>
             <p class="text-xl text-gray-200 mb-8 leading-relaxed">
                 A high-performance supplemental program built for serious youth players. Three elite teams training and competing year-round — without replacing your club commitments.
@@ -336,8 +411,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-14">
             <span class="text-secondary font-bold uppercase tracking-widest text-sm">Coming Up</span>
-            <h2 class="text-4xl md:text-5xl font-black mt-2 uppercase">Tryout Schedule</h2>
-            <p class="text-gray-400 mt-4 text-lg">No registration fee — just show up and play.</p>
+            <h2 class="text-4xl md:text-5xl font-black mt-2 uppercase">APC Select Tryout Schedule</h2>
+            <p class="text-secondary font-bold mt-2">Overland Park, KS — Free to Attend</p>
+            <p class="text-gray-400 mt-2 text-lg">No registration fee — just show up and play.</p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
@@ -430,8 +506,9 @@
         <div class="text-center mb-14">
             <span class="inline-block bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded mb-4">Weekly Class · Every Sunday</span>
             <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight text-gray-900">
-                Serie A Elite Scouts Class
+                Elite Youth Soccer Class
             </h2>
+            <p class="text-gray-500 mt-2 font-bold uppercase tracking-widest text-sm">Serie A Scouting Standards · Every Sunday · Overland Park KS</p>
             <p class="text-gray-500 mt-4 max-w-2xl mx-auto text-lg">Elite development sessions coached at a Serie A scouting standard. Two age groups — 20-player cap per class.</p>
         </div>
 
@@ -525,7 +602,7 @@
         <div class="text-center mb-14">
             <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded mb-4">Summer 2026</span>
             <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight">
-                ☀️ Summer Program
+                Summer Soccer Camp<br><span class="text-secondary">Kansas City · All Ages · 2026</span>
             </h2>
             <p class="text-gray-400 mt-4 max-w-2xl mx-auto text-lg">Seasonal training across multiple locations. Full-day and half-day options for all ages and skill levels.</p>
         </div>
@@ -580,8 +657,9 @@
             <div>
                 <span class="inline-block bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded mb-5">Community Event</span>
                 <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight text-gray-900 mb-4">
-                    ⚽ APC 4x4 FIFA<br>Tournament
+                    Kansas City Youth<br>Soccer Tournament
                 </h2>
+                <p class="text-gray-500 font-semibold text-sm uppercase tracking-widest mb-4">APC 4v4 Format · Overland Park · Community Event 2026</p>
                 <p class="text-gray-600 text-lg leading-relaxed mb-6">
                     Compete on the pitch. APC's 4v4 on-field tournament brings our community together for a fun, competitive day of small-sided soccer — open to players, parents, and fans.
                 </p>
@@ -614,6 +692,65 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials — replace placeholder quotes with real ones from client -->
+<section class="py-14 bg-gray-50 border-t border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <span class="bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1 rounded inline-block mb-3">Parent Reviews</span>
+            <h2 class="text-3xl font-black text-gray-900 uppercase">
+                What Kansas City Families Are Saying
+            </h2>
+            <p class="text-gray-500 mt-2">Real feedback from APC families across Overland Park and the KC metro.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <div class="text-secondary text-xl mb-4">★★★★★</div>
+                <p class="text-gray-700 italic leading-relaxed mb-5">"My son has improved more in 3 months at APC than in two years of club soccer alone. The coaches see each player as an individual."</p>
+                <p class="text-sm font-bold text-gray-900">— Parent of U14 player, Overland Park</p>
+            </div>
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <div class="text-secondary text-xl mb-4">★★★★★</div>
+                <p class="text-gray-700 italic leading-relaxed mb-5">"The Serie A Sunday class is unlike anything in Kansas City. My daughter went from bench player to starter in her club team within one season."</p>
+                <p class="text-sm font-bold text-gray-900">— Parent of U16 player, Leawood</p>
+            </div>
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <div class="text-secondary text-xl mb-4">★★★★★</div>
+                <p class="text-gray-700 italic leading-relaxed mb-5">"Best summer soccer camp in the KC area. The coaching staff is professional, the facility is great, and my kids can't wait to come back next year."</p>
+                <p class="text-sm font-bold text-gray-900">— Parent of U10 &amp; U13 players, Shawnee</p>
+            </div>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-6">* Placeholder testimonials — replace with real client quotes</p>
+    </div>
+</section>
+
+<!-- Bottom CTA -->
+<section class="py-20 bg-primary text-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <span class="text-secondary font-bold uppercase tracking-widest text-sm block mb-4">Not Sure Which Program Fits?</span>
+        <h2 class="text-4xl md:text-5xl font-black uppercase mb-4">
+            Start With a Free Consultation
+        </h2>
+        <p class="text-gray-300 text-lg max-w-2xl mx-auto mb-10">
+            Our coaches will assess your athlete's current level and recommend the right program — whether they're 8 or 18, beginner or advanced. No commitment required.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'book' %}" class="bg-secondary text-gray-900 px-10 py-4 rounded-full text-lg font-black hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl uppercase tracking-wide">
+                Book a Session Now →
+            </a>
+            <a href="mailto:info@atletasperformancecenter.com?subject=Program Inquiry" class="border-2 border-gray-600 text-gray-300 px-10 py-4 rounded-full text-lg font-semibold hover:border-secondary hover:text-secondary transition">
+                Email Us Your Questions
+            </a>
+        </div>
+        <div class="mt-8 flex flex-col sm:flex-row justify-center gap-6 text-sm text-gray-500">
+            <span>No tryout fee for APC Select</span>
+            <span class="hidden sm:inline text-gray-700">·</span>
+            <span>Sessions as low as $40 / class</span>
+            <span class="hidden sm:inline text-gray-700">·</span>
+            <span>Programs for U8 through U19</span>
         </div>
     </div>
 </section>

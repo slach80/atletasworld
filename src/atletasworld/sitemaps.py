@@ -10,6 +10,7 @@ class StaticSitemap(Sitemap):
         return [
             'home',
             'programs',
+            'faq',
             'book',
             'about',
             'contact',
