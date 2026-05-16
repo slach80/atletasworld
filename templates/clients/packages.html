@@ -137,7 +137,7 @@
                             <div class="w-full text-center py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold cursor-default">Already a Member</div>
                             {% elif stripe_public_key %}
                             <button onclick="addToCart({{ package.pk }}, '{{ package.name|escapejs }}', {{ package.price }}, 'select')"
-                                    class="w-full py-3 bg-primary text-secondary rounded-xl font-black hover:bg-gray-800 hover:scale-[1.02] active:scale-100 transition-all duration-150 text-sm uppercase tracking-wide">
+                                    class="w-full py-3 bg-primary text-secondary rounded-xl font-black hover:bg-secondary hover:text-primary hover:scale-[1.02] active:scale-100 transition-all duration-150 text-sm uppercase tracking-wide">
                                 Add to Cart — ${{ package.price }}/mo
                             </button>
                             {% endif %}
