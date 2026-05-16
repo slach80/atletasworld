@@ -373,7 +373,7 @@ def player_delete(request, player_id):
 
     # Check for active packages
     from bookings.models import ClientPackage, Booking
-    active_packages = ClientPackage.objects.filter(player=player, is_active=True)
+    active_packages = ClientPackage.objects.filter(player=player, status='active')
     active_bookings = Booking.objects.filter(player=player, status__in=['confirmed', 'pending'])
 
     if active_packages.exists() or active_bookings.exists():
