@@ -8,6 +8,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-touch-icon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="canonical" href="https://atletasperformancecenter.com/">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
@@ -25,9 +26,38 @@
     <meta property="og:image:type" content="image/png">
     <meta property="og:site_name" content="Atletas Performance Center">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="APC - High Performance & Athletic Development Programs">
+    <meta name="twitter:title" content="Elite Youth Soccer &amp; Athletic Development | APC | Kansas City">
     <meta name="twitter:description" content="Elite soccer training, APC Select, Summer Programs, and Serie A Elite Scouts in the Kansas City metro area.">
     <meta name="twitter:image" content="https://atletasperformancecenter.com/static/img/og-preview.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["LocalBusiness", "SportsActivityLocation"],
+      "name": "Atletas Performance Center",
+      "alternateName": "APC",
+      "image": "https://atletasperformancecenter.com/static/img/og-preview.png",
+      "description": "Elite youth soccer training center offering APC Select, Serie A Elite Scouts, summer camps, and performance programs in Overland Park, Kansas City.",
+      "url": "https://atletasperformancecenter.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "11301 W 88th St",
+        "addressLocality": "Overland Park",
+        "addressRegion": "KS",
+        "postalCode": "66214",
+        "addressCountry": "US"
+      },
+      "areaServed": [
+        {"@type": "City", "name": "Overland Park"},
+        {"@type": "City", "name": "Kansas City"}
+      ],
+      "sameAs": [
+        "https://www.instagram.com/atletasperformancecenter/",
+        "https://www.facebook.com/profile.php?id=61572009236369"
+      ],
+      "priceRange": "$$",
+      "sport": "Soccer"
+    }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -185,7 +215,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
             <h1 class="text-5xl md:text-7xl font-bold mb-6 ">
-                Welcome to Atletas Performance Center
+                Elite Youth Soccer &amp; Athletic Development
             </h1>
             <p class="text-xl md:text-2xl mb-8 text-gray-100 max-w-3xl mx-auto">
                 Empowering athletes of all levels with tailored training programs. Your success is our priority.
@@ -257,7 +287,7 @@
                         {# ── Poster card ── #}
                         <div class="relative">
                             <img src="{{ ev.poster_image.url }}" alt="{{ ev.name }}"
-                                 class="w-full h-auto block">
+                                 loading="lazy" class="w-full h-auto block">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
                         </div>
                         <div class="bg-white/10 backdrop-blur-md p-4 flex items-center justify-between gap-3">
@@ -477,6 +507,7 @@
             <div class="relative">
                 <img src="/static/gymlife/img/KDJ_7168.jpg"
                      alt="Training session"
+                     loading="lazy" width="800" height="600"
                      class="rounded-2xl shadow-2xl">
                 <div class="absolute -bottom-6 -left-6 bg-accent text-gray-900 p-6 rounded-2xl shadow-xl">
                     <div class="text-3xl font-bold">Your Success</div>

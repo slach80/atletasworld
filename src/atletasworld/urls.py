@@ -9,7 +9,9 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.contrib.sitemaps.views import sitemap
 from coaches.views import coach_public_profile
+from .sitemaps import StaticSitemap, CoachProfileSitemap
 from .views import home_view, about_view, apple_pay_verification, programs_view
 from clients.views import unsubscribe_landing
 from .admin_views import (
@@ -108,9 +110,18 @@ def book_redirect_view(request):
     return _render(request, 'book_landing.html', {'login_url': login_url, 'signup_url': signup_url})
 
 
+sitemaps = {
+    'static': StaticSitemap,
+    'coaches': CoachProfileSitemap,
+}
+
 urlpatterns = [
     # Prometheus metrics (IP-restricted at nginx level)
     path('', include('django_prometheus.urls')),
+
+    # SEO
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
 
     # Login redirect
     path('login-redirect/', login_redirect_view, name='login_redirect'),

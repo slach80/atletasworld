@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+Disallow: /accounts/
+Disallow: /admin/
+Disallow: /owner-portal/
+Disallow: /portal/
+Disallow: /coach-portal/
+Disallow: /api/
+Disallow: /payments/
+
+Sitemap: https://atletasperformancecenter.com/sitemap.xml
