@@ -49,6 +49,7 @@ from .admin_views import (
     owner_blog_toggle_publish,
     owner_blog_ai_assist,
     owner_naming_ai_assist,
+    owner_notification_ai_assist,
 )
 
 
@@ -208,6 +209,7 @@ urlpatterns = [
     path('owner-portal/blog/<int:pk>/toggle-publish/', owner_blog_toggle_publish, name='owner_blog_toggle_publish'),
     path('owner-portal/blog/ai-assist/', owner_blog_ai_assist, name='owner_blog_ai_assist'),
     path('owner-portal/naming-ai-assist/', owner_naming_ai_assist, name='owner_naming_ai_assist'),
+    path('owner-portal/notification-ai-assist/', owner_notification_ai_assist, name='owner_notification_ai_assist'),
 
     # Owner - Service Catalog
     path('owner-portal/services/', owner_services, name='owner_services'),

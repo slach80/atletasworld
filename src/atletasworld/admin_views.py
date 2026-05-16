@@ -3693,3 +3693,78 @@ def owner_naming_ai_assist(request):
         return JsonResponse({'error': 'Ollama timed out — try again in a moment.'}, status=504)
     except Exception as e:
         return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_notification_ai_assist(request):
+    """AI Assist for the owner notification composer (subject + message)."""
+    import requests as _requests
+    from django.conf import settings as _settings
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    action = request.POST.get('action', '')
+    subject = request.POST.get('subject', '').strip()
+    message = request.POST.get('message', '').strip()
+
+    PROMPTS = {
+        'draft': (
+            f"You are writing a bulk email for Atletas Performance Center (APC), an elite youth "
+            f"soccer academy in Overland Park, Kansas City. Write a clear, professional email body "
+            f"based on the subject line below.\n\n"
+            f"Subject: {subject}\n\n"
+            f"Requirements:\n"
+            f"- Plain text, no HTML\n"
+            f"- Warm but professional tone\n"
+            f"- 3-5 short paragraphs\n"
+            f"- Leave [brackets] where specific details should be filled in\n"
+            f"- End with 'Best regards,\\nAtletas Performance Center Team'\n"
+            f"Return ONLY the email body."
+        ),
+        'subject': (
+            f"Write a clear, compelling email subject line for the following message body. "
+            f"Max 60 characters. Plain text only.\n\n"
+            f"Message:\n{message[:1000]}\n\n"
+            f"Return ONLY the subject line text."
+        ),
+        'grammar': (
+            f"Fix the grammar, spelling, and tone of the following email for Atletas Performance "
+            f"Center. Keep the same meaning and structure. Plain text only.\n\n"
+            f"{message}\n\n"
+            f"Return ONLY the corrected email body."
+        ),
+        'shorten': (
+            f"Shorten the following email to 2-3 short paragraphs while keeping the key information. "
+            f"Plain text only.\n\n"
+            f"{message}\n\n"
+            f"Return ONLY the shortened email body."
+        ),
+    }
+
+    prompt = PROMPTS.get(action)
+    if not prompt:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+
+    if action == 'draft' and not subject:
+        return JsonResponse({'error': 'Enter a subject line first.'}, status=400)
+    if action in ('grammar', 'shorten', 'subject') and not message:
+        return JsonResponse({'error': 'Message is empty — nothing to improve.'}, status=400)
+
+    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
+    model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')
+
+    try:
+        resp = _requests.post(
+            f'{ollama_url}/api/generate',
+            json={'model': model, 'prompt': prompt, 'stream': False, 'options': {'temperature': 0.6}},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        result = resp.json().get('response', '').strip()
+        return JsonResponse({'result': result})
+    except _requests.exceptions.Timeout:
+        return JsonResponse({'error': 'Ollama timed out — try again in a moment.'}, status=504)
+    except Exception as e:
+        return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
