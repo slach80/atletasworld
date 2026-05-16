@@ -188,6 +188,9 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Allauth settings
+# One reverse proxy (nginx) sits in front of gunicorn — needed for correct
+# IP detection after allauth 65.14.2 tightened X-Forwarded-For trust.
+ALLAUTH_TRUSTED_PROXY_COUNT = 1
 ACCOUNT_ADAPTER = 'atletasworld.adapters.SilentAuthAdapter'
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_LOGOUT_ON_GET = True
