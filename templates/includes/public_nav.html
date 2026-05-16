@@ -47,7 +47,7 @@ active_nav values: events, programs, coaches, about, special, faq
 <!-- Row 2: Pill nav (desktop) -->
 <div class="hidden md:block bg-primary/95 backdrop-blur-sm border-b border-white/5">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center gap-1 h-11">
+        <div class="flex items-center justify-center gap-1 h-11">
 
             <!-- Left group: homepage anchors -->
             <a href="/#events"
@@ -78,13 +78,6 @@ active_nav values: events, programs, coaches, about, special, faq
             <a href="/faq/"
                class="px-4 py-1.5 rounded-full text-sm font-medium uppercase tracking-wide transition {% if active_nav == 'faq' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 FAQ
-            </a>
-
-            <!-- Spacer + CTA -->
-            <div class="flex-1"></div>
-            <a href="{% url 'book' %}"
-               class="bg-secondary text-gray-900 px-6 py-2 rounded-full text-sm font-black uppercase tracking-wide hover:bg-[#b8e000] hover:scale-[1.03] active:scale-100 transition-all duration-150 shadow-lg">
-                Book Now →
             </a>
         </div>
     </div>
@@ -126,12 +119,6 @@ active_nav values: events, programs, coaches, about, special, faq
             <a href="/faq/"      class="flex items-center gap-2 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">FAQ</a>
         </div>
 
-        <!-- CTA -->
-        <div class="pt-3 border-t border-white/10">
-            <a href="{% url 'book' %}" class="block text-center py-3 bg-secondary text-gray-900 font-black rounded-xl uppercase tracking-wide hover:bg-[#b8e000] transition">
-                Book a Session →
-            </a>
-        </div>
     </div>
 </div>
 
