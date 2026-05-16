@@ -28,7 +28,7 @@ class CoachProfileSitemap(Sitemap):
 
     def items(self):
         from coaches.models import Coach
-        return Coach.objects.filter(is_active=True, profile_enabled=True)
+        return Coach.objects.filter(is_active=True, profile_enabled=True).exclude(slug='')
 
     def location(self, coach):
         return reverse('coach_public_profile', args=[coach.slug])
