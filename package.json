@@ -1,0 +1,28 @@
+{
+  "name": "atletasworld",
+  "version": "1.0.0",
+  "description": "Custom Django platform for Atletas World soccer training business.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i ./static/src/tailwind.css -o ./static/css/tailwind.min.css --minify",
+    "watch:css": "tailwindcss -i ./static/src/tailwind.css -o ./static/css/tailwind.min.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slach80/atletasworld.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/slach80/atletasworld/issues"
+  },
+  "homepage": "https://github.com/slach80/atletasworld#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}
