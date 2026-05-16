@@ -339,3 +339,7 @@ CSRF_TRUSTED_ORIGINS = env.list(
     'CSRF_TRUSTED_ORIGINS',
     default=['https://atletasperformancecenter.com', 'https://www.atletasperformancecenter.com']
 )
+
+# Ollama — local LLM for blog AI assist (slach-office)
+OLLAMA_BASE_URL = env('OLLAMA_BASE_URL', default='http://192.168.1.70:11434')
+OLLAMA_MODEL = env('OLLAMA_MODEL', default='qwen3:8b-32k')
