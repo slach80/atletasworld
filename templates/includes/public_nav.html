@@ -47,23 +47,23 @@ active_nav values: events, programs, coaches, about, special, faq
 <!-- Row 2: Pill nav (desktop) -->
 <div class="hidden md:block bg-primary/95 backdrop-blur-sm border-b border-white/5">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-center gap-1 h-11">
+        <div class="flex items-center justify-center gap-0.5 h-11 overflow-x-auto scrollbar-none">
 
             <!-- Left group: homepage anchors -->
             <a href="/#events"
-               class="px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide transition {% if active_nav == 'events' %}bg-secondary text-gray-900{% else %}text-accent hover:bg-white/10{% endif %}">
+               class="px-3 py-1.5 rounded-full text-sm font-bold uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'events' %}bg-secondary text-gray-900{% else %}text-accent hover:bg-white/10{% endif %}">
                 Events 🔥
             </a>
             <a href="/#programs"
-               class="px-4 py-1.5 rounded-full text-sm font-medium uppercase tracking-wide transition {% if active_nav == 'programs' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
+               class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'programs' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 Programs
             </a>
             <a href="/#coaches"
-               class="px-4 py-1.5 rounded-full text-sm font-medium uppercase tracking-wide transition {% if active_nav == 'coaches' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
+               class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'coaches' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 Coaches
             </a>
             <a href="/#about"
-               class="px-4 py-1.5 rounded-full text-sm font-medium uppercase tracking-wide transition {% if active_nav == 'about' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
+               class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'about' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 About
             </a>
 
@@ -72,11 +72,11 @@ active_nav values: events, programs, coaches, about, special, faq
 
             <!-- Right group: dedicated pages -->
             <a href="/programs/"
-               class="px-4 py-1.5 rounded-full text-sm font-medium uppercase tracking-wide transition {% if active_nav == 'special' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
+               class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'special' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 Special Projects ✦
             </a>
             <a href="/faq/"
-               class="px-4 py-1.5 rounded-full text-sm font-medium uppercase tracking-wide transition {% if active_nav == 'faq' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
+               class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'faq' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 FAQ
             </a>
         </div>
