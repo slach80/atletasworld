@@ -3,9 +3,10 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
+from django_prometheus.models import ExportModelOperationsMixin
 
 
-class Client(models.Model):
+class Client(ExportModelOperationsMixin("client"), models.Model):
     """Client profile for parents/guardians or adult athletes."""
     CLIENT_TYPE_CHOICES = [
         ('parent', 'Parent/Guardian'),
@@ -79,7 +80,7 @@ class Client(models.Model):
         ]
 
 
-class Player(models.Model):
+class Player(ExportModelOperationsMixin("player"), models.Model):
     """Player profile for children/athletes."""
     GENDER_CHOICES = [
         ('M', 'Male'),
@@ -256,7 +257,7 @@ class Package(models.Model):
         ]
 
 
-class ClientPackage(models.Model):
+class ClientPackage(ExportModelOperationsMixin("client_package"), models.Model):
     """Tracks packages purchased by clients."""
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -851,7 +852,7 @@ class RentalService(models.Model):
         return f"${self.price}{suffix}"
 
 
-class FieldRentalSlot(models.Model):
+class FieldRentalSlot(ExportModelOperationsMixin("field_rental_slot"), models.Model):
     """
     Owner-created rental slots. References a RentalService from the catalog.
     For field-type services, the field is exclusively reserved during the slot.

@@ -15,12 +15,13 @@ Booking lifecycle:
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django_prometheus.models import ExportModelOperationsMixin
 from datetime import timedelta
 from clients.models import Client, Player, ClientPackage
 from coaches.models import Coach
 
 
-class SessionType(models.Model):
+class SessionType(ExportModelOperationsMixin("session_type"), models.Model):
     """Catalogue entry describing a type of training session.
 
     Used both for booking (filtering which sessions a client can reserve) and
@@ -276,7 +277,7 @@ class AvailabilitySlot(models.Model):
         ]
 
 
-class Booking(models.Model):
+class Booking(ExportModelOperationsMixin("booking"), models.Model):
     """Session bookings with full lifecycle management."""
     STATUS_CHOICES = [
         ('pending', 'Pending Confirmation'),

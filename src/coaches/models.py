@@ -1,9 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django_prometheus.models import ExportModelOperationsMixin
 
 
-class Coach(models.Model):
+class Coach(ExportModelOperationsMixin("coach"), models.Model):
     """Coach profile with availability and specializations."""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
