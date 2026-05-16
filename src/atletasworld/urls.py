@@ -11,7 +11,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.contrib.sitemaps.views import sitemap
 from coaches.views import coach_public_profile
-from .sitemaps import StaticSitemap, CoachProfileSitemap
+from .sitemaps import StaticSitemap, CoachProfileSitemap, BlogPostSitemap
+from blog.views import blog_list, blog_detail
 from .views import home_view, about_view, apple_pay_verification, programs_view
 from clients.views import unsubscribe_landing
 from .admin_views import (
@@ -113,6 +114,7 @@ def book_redirect_view(request):
 sitemaps = {
     'static': StaticSitemap,
     'coaches': CoachProfileSitemap,
+    'blog': BlogPostSitemap,
 }
 
 urlpatterns = [
@@ -217,6 +219,8 @@ urlpatterns = [
     path('comparison/', TemplateView.as_view(template_name='comparison.html'), name='comparison'),
     path('programs/', programs_view, name='programs'),
     path('faq/', TemplateView.as_view(template_name='faq.html'), name='faq'),
+    path('blog/', blog_list, name='blog_list'),
+    path('blog/<slug:slug>/', blog_detail, name='blog_detail'),
 
     # Coach public profiles - static templates for main coaches (must be before dynamic route)
     # coach/mirko/ and coach/roger/ both served by dynamic coach_public_profile view

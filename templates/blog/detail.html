@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-touch-icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ post.meta_description }}">
+    <link rel="canonical" href="https://atletasperformancecenter.com/blog/{{ post.slug }}/">
+    <meta property="og:title" content="{{ post.title }} | APC | Kansas City">
+    <meta property="og:description" content="{{ post.meta_description }}">
+    <meta property="og:url" content="https://atletasperformancecenter.com/blog/{{ post.slug }}/">
+    <meta property="og:type" content="article">
+    {% if post.image %}
+    <meta property="og:image" content="https://atletasperformancecenter.com{{ post.image.url }}">
+    <meta name="twitter:image" content="https://atletasperformancecenter.com{{ post.image.url }}">
+    {% else %}
+    <meta property="og:image" content="https://atletasperformancecenter.com/static/img/og-preview.png">
+    <meta name="twitter:image" content="https://atletasperformancecenter.com/static/img/og-preview.png">
+    {% endif %}
+    <meta property="og:site_name" content="Atletas Performance Center">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ post.title }} | APC | Kansas City">
+    <meta name="twitter:description" content="{{ post.meta_description }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
+    <link rel="stylesheet" href="/static/gymlife/css/bilgen.css?v=7">
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
+    <title>{{ post.title }} | APC | Kansas City</title>
+    <style>
+        body { font-family: 'Archivo Condensed', system-ui, sans-serif; }
+        h1, h2, .brand-heading { font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif; }
+        h3, h4, h5, h6 { font-family: 'Archivo Condensed', system-ui, sans-serif; }
+        h1, h2, h3 { font-weight: 800; }
+
+        /* Article body prose */
+        .prose h2 { font-size: 1.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; margin-top: 2rem; margin-bottom: 0.75rem; color: #1a1a1a; }
+        .prose h3 { font-size: 1.2rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1a1a1a; }
+        .prose p { margin-bottom: 1.25rem; line-height: 1.75; color: #374151; font-size: 1.05rem; }
+        .prose ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1.25rem; }
+        .prose ul li { margin-bottom: 0.4rem; color: #374151; line-height: 1.6; }
+        .prose ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1.25rem; }
+        .prose ol li { margin-bottom: 0.4rem; color: #374151; line-height: 1.6; }
+        .prose strong { color: #1a1a1a; font-weight: 700; }
+        .prose a { color: #1a1a1a; text-decoration: underline; }
+        .prose blockquote { border-left: 4px solid #D7FF00; padding-left: 1rem; margin: 1.5rem 0; font-style: italic; color: #4b5563; }
+    </style>
+
+    <!-- Article JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{{ post.title }}",
+      "description": "{{ post.meta_description }}",
+      "datePublished": "{% if post.published_at %}{{ post.published_at|date:'c' }}{% endif %}",
+      "dateModified": "{{ post.updated_at|date:'c' }}",
+      {% if post.image %}"image": "https://atletasperformancecenter.com{{ post.image.url }}",{% endif %}
+      "publisher": {
+        "@type": "Organization",
+        "name": "Atletas Performance Center",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://atletasperformancecenter.com/static/img/apc-logo-yellow.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://atletasperformancecenter.com/blog/{{ post.slug }}/"
+      }
+    }
+    </script>
+</head>
+<body class="bg-gray-50">
+
+{% with active_nav="blog" %}{% include "includes/public_nav.html" %}{% endwith %}
+
+<!-- Article header -->
+<section class="bg-primary text-white py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <div class="flex items-center space-x-3 mb-5 text-sm">
+            <a href="/" class="text-gray-400 hover:text-secondary transition">Home</a>
+            <span class="text-gray-600">/</span>
+            <a href="/blog/" class="text-gray-400 hover:text-secondary transition">Blog</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-secondary font-semibold truncate max-w-xs">{{ post.title }}</span>
+        </div>
+        <!-- Category + date -->
+        <div class="flex items-center gap-3 mb-4">
+            <span class="bg-secondary text-gray-900 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full">{{ post.category_label }}</span>
+            {% if post.published_at %}
+            <span class="text-gray-400 text-sm">{{ post.published_at|date:"N j, Y" }}</span>
+            {% endif %}
+        </div>
+        <h1 class="text-3xl md:text-5xl font-black uppercase tracking-tight leading-tight">
+            {{ post.title }}
+        </h1>
+        <p class="mt-4 text-gray-300 text-lg leading-relaxed">{{ post.excerpt }}</p>
+    </div>
+</section>
+
+<!-- Hero image -->
+{% if post.image %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 -mt-0">
+    <div class="aspect-[16/7] rounded-b-2xl overflow-hidden shadow-xl">
+        <img src="{{ post.image.url }}" alt="{{ post.title }}" class="w-full h-full object-cover" loading="eager">
+    </div>
+</div>
+{% endif %}
+
+<!-- Article body -->
+<article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="prose">
+        {{ post.body|safe }}
+    </div>
+
+    <!-- CTA block -->
+    <div class="mt-12 bg-primary rounded-2xl p-6 md:p-8 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+            <p class="text-secondary font-black text-lg uppercase tracking-tight">Ready to train?</p>
+            <p class="text-gray-300 text-sm mt-1">Book a session with APC's elite coaching staff in Overland Park, KS.</p>
+        </div>
+        <a href="/book/"
+           class="flex-shrink-0 bg-secondary text-gray-900 font-black uppercase tracking-wide px-6 py-3 rounded-full hover:bg-[#b8e000] transition text-sm whitespace-nowrap">
+            Book a Session →
+        </a>
+    </div>
+</article>
+
+<!-- Related posts -->
+{% if related %}
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+    <h2 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 border-t border-gray-200 pt-8">More in {{ post.category_label }}</h2>
+    <div class="space-y-0 divide-y divide-gray-200">
+        {% for rpost in related %}
+        <a href="{{ rpost.get_absolute_url }}" class="group flex gap-4 py-5 hover:bg-gray-50 transition rounded-xl px-2 -mx-2">
+            <div class="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-gray-100">
+                {% if rpost.image %}
+                <img src="{{ rpost.image.url }}" alt="{{ rpost.title }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                {% else %}
+                <div class="w-full h-full bg-primary flex items-center justify-center">
+                    <img src="/static/img/apc-logo-yellow.png" alt="APC" class="h-6 opacity-30">
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex-1 min-w-0">
+                <span class="text-xs font-bold uppercase tracking-wide text-secondary">{{ rpost.category_label }}</span>
+                <h3 class="text-base font-black uppercase tracking-tight text-gray-900 group-hover:text-primary transition leading-tight mt-0.5">{{ rpost.title }}</h3>
+                <p class="text-gray-500 text-xs mt-1 line-clamp-2">{{ rpost.excerpt }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% include "includes/public_footer.html" %}
+
+</body>
+</html>

@@ -22,6 +22,18 @@ class StaticSitemap(Sitemap):
         return reverse(item)
 
 
+class BlogPostSitemap(Sitemap):
+    priority = 0.8
+    changefreq = "monthly"
+
+    def items(self):
+        from blog.models import BlogPost
+        return BlogPost.objects.filter(is_published=True)
+
+    def lastmod(self, post):
+        return post.updated_at
+
+
 class CoachProfileSitemap(Sitemap):
     priority = 0.7
     changefreq = "monthly"

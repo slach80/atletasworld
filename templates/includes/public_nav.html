@@ -2,7 +2,7 @@
 PUBLIC NAV — two-row: brand+auth row / pill nav row
 Include with: include "includes/public_nav.html"
 Pass active page with: with active_nav="faq" ... endwith
-active_nav values: events, programs, coaches, about, special, faq
+active_nav values: events, programs, coaches, about, special, faq, blog
 {% endcomment %}
 
 <!-- Row 1: Brand + Auth -->
@@ -104,6 +104,10 @@ active_nav values: events, programs, coaches, about, special, faq
                class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'faq' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
                 FAQ
             </a>
+            <a href="/blog/"
+               class="px-3 py-1.5 rounded-full text-sm font-medium uppercase tracking-normal whitespace-nowrap transition {% if active_nav == 'blog' %}bg-secondary text-gray-900{% else %}text-gray-300 hover:bg-white/10 hover:text-white{% endif %}">
+                Blog
+            </a>
         </div>
     </div>
 </div>
@@ -146,6 +150,7 @@ active_nav values: events, programs, coaches, about, special, faq
             <a href="/programs/#camps"      class="flex items-center gap-2 pl-8 pr-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg text-sm">↳ Summer Soccer Camp</a>
             <a href="/programs/#tournament" class="flex items-center gap-2 pl-8 pr-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg text-sm">↳ 4v4 Tournament</a>
             <a href="/faq/" class="flex items-center gap-2 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">FAQ</a>
+            <a href="/blog/" class="flex items-center gap-2 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">Blog</a>
         </div>
 
     </div>

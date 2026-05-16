@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-touch-icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Training tips, player development insights, and program news from Atletas Performance Center — Kansas City's elite youth soccer academy.">
+    <link rel="canonical" href="https://atletasperformancecenter.com/blog/">
+    <meta property="og:title" content="Training Tips & Player Development | APC Blog | Kansas City">
+    <meta property="og:description" content="Training tips, player development insights, and program news from Atletas Performance Center — Kansas City's elite youth soccer academy.">
+    <meta property="og:url" content="https://atletasperformancecenter.com/blog/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://atletasperformancecenter.com/static/img/og-preview.png">
+    <meta property="og:site_name" content="Atletas Performance Center">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Training Tips & Player Development | APC Blog | Kansas City">
+    <meta name="twitter:description" content="Training tips and player development insights from APC — Kansas City's elite youth soccer academy.">
+    <meta name="twitter:image" content="https://atletasperformancecenter.com/static/img/og-preview.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Condensed:wght@300;400;700;800&display=swap">
+    <link rel="stylesheet" href="/static/gymlife/css/bilgen.css?v=7">
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
+    <title>Training Tips & Player Development | APC Blog | Kansas City</title>
+    <style>
+        body { font-family: 'Archivo Condensed', system-ui, sans-serif; }
+        h1, h2, .brand-heading { font-family: 'Bilgen', 'Archivo Condensed', system-ui, sans-serif; }
+        h3, h4, h5, h6 { font-family: 'Archivo Condensed', system-ui, sans-serif; }
+        h1, h2, h3 { font-weight: 800; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+{% with active_nav="blog" %}{% include "includes/public_nav.html" %}{% endwith %}
+
+<!-- Page header -->
+<section class="bg-primary text-white py-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center space-x-3 mb-4">
+            <a href="/" class="text-gray-400 hover:text-secondary text-sm transition">Home</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-secondary text-sm font-semibold">Blog</span>
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tight mb-3">
+            Training Tips &amp;<br><span class="text-secondary">Player Development</span>
+        </h1>
+        <p class="text-gray-300 text-lg max-w-xl">Insights for athletes and parents from APC's coaching staff.</p>
+    </div>
+</section>
+
+<main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    {% if featured %}
+    <!-- Featured post -->
+    <a href="{{ featured.get_absolute_url }}" class="group block mb-12 rounded-2xl overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow">
+        {% if featured.image %}
+        <div class="aspect-[16/7] overflow-hidden">
+            <img src="{{ featured.image.url }}" alt="{{ featured.title }}" loading="lazy"
+                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        </div>
+        {% else %}
+        <div class="aspect-[16/7] bg-primary flex items-center justify-center">
+            <img src="/static/img/apc-logo-yellow.png" alt="APC" class="h-16 opacity-30">
+        </div>
+        {% endif %}
+        <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="bg-secondary text-gray-900 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full">Featured</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-secondary">{{ featured.category_label }}</span>
+                {% if featured.published_at %}
+                <span class="text-gray-400 text-sm">{{ featured.published_at|date:"N j, Y" }}</span>
+                {% endif %}
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black uppercase tracking-tight text-gray-900 group-hover:text-primary transition mb-2">
+                {{ featured.title }}
+            </h2>
+            <p class="text-gray-600 text-base leading-relaxed mb-4 max-w-3xl">{{ featured.excerpt }}</p>
+            <span class="text-primary font-bold text-sm uppercase tracking-wide group-hover:text-secondary transition">Read More →</span>
+        </div>
+    </a>
+    {% endif %}
+
+    {% if posts %}
+    <!-- Post list -->
+    {% if featured %}<h2 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 border-b border-gray-200 pb-3">More Posts</h2>{% endif %}
+
+    <div class="space-y-0 divide-y divide-gray-200">
+        {% for post in posts %}
+        <a href="{{ post.get_absolute_url }}" class="group flex gap-5 py-6 hover:bg-gray-50 transition rounded-xl px-2 -mx-2">
+            <!-- Thumbnail -->
+            <div class="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-gray-100">
+                {% if post.image %}
+                <img src="{{ post.image.url }}" alt="{{ post.title }}" loading="lazy"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                {% else %}
+                <div class="w-full h-full bg-primary flex items-center justify-center">
+                    <img src="/static/img/apc-logo-yellow.png" alt="APC" class="h-8 opacity-30">
+                </div>
+                {% endif %}
+            </div>
+            <!-- Text -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1.5">
+                    <span class="text-xs font-bold uppercase tracking-wide text-secondary">{{ post.category_label }}</span>
+                    {% if post.published_at %}
+                    <span class="text-gray-400 text-xs">{{ post.published_at|date:"N j, Y" }}</span>
+                    {% endif %}
+                </div>
+                <h3 class="text-lg md:text-xl font-black uppercase tracking-tight text-gray-900 group-hover:text-primary transition leading-tight mb-1.5">
+                    {{ post.title }}
+                </h3>
+                <p class="text-gray-500 text-sm leading-relaxed line-clamp-2">{{ post.excerpt }}</p>
+                <span class="mt-2 inline-block text-primary font-bold text-xs uppercase tracking-wide group-hover:text-secondary transition">Read More →</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% elif not featured %}
+    <div class="text-center py-20 text-gray-400">
+        <p class="text-xl font-semibold">No posts yet — check back soon.</p>
+    </div>
+    {% endif %}
+
+</main>
+
+{% include "includes/public_footer.html" %}
+
+</body>
+</html>
