@@ -55,9 +55,6 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
 
-    # Monitoring
-    'django_prometheus',
-
     # Local apps
     'clients.apps.ClientsConfig',
     'coaches',
