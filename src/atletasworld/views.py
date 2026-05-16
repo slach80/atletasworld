@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import FileResponse, HttpResponse
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Prefetch
 from clients.models import Package
 from bookings.models import SessionType
 from coaches.models import ScheduleBlock
@@ -39,10 +39,16 @@ def home_view(request):
     packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=False
     ).exclude(package_type__in=['select', 'team']).order_by('price')
-    events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related('linked_packages').order_by('event_display_order', 'start_date', 'name')
     from django.db.models import Sum
+    pkg_prefetch = Prefetch(
+        'linked_packages',
+        queryset=Package.objects.only(
+            'id', 'event_start_date', 'event_start_time', 'event_end_date', 'event_end_time'
+        ),
+    )
+    events_qs = SessionType.objects.filter(show_as_event=True).prefetch_related(pkg_prefetch).order_by('event_display_order', 'start_date', 'name')
     today = timezone.localdate()
-    programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related('linked_packages').annotate(
+    programs_qs = SessionType.objects.filter(is_active=True, show_as_program=True).prefetch_related(pkg_prefetch).annotate(
         confirmed_bookings=Count(
             'bookings',
             filter=Q(bookings__status__in=['pending', 'confirmed'],
@@ -65,7 +71,7 @@ def home_view(request):
     for obj in list(events_qs) + list(programs_qs):
         obj.start_times_fmt = _fmt_times(obj.start_times)
         obj.weekend_start_times_fmt = _fmt_times(obj.weekend_start_times) if obj.weekend_start_times else ''
-        obj.pkg_date = obj.linked_packages.filter(event_start_date__isnull=False).first()
+        obj.pkg_date = next((p for p in obj.linked_packages.all() if p.event_start_date is not None), None)
 
     for obj in programs_qs:
         cap = cap_by_st.get(obj.pk)
