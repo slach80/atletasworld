@@ -371,6 +371,24 @@ def player_delete(request, player_id):
     client, created = Client.objects.get_or_create(user=request.user)
     player = get_object_or_404(Player, id=player_id, client=client)
 
+    # Check for active packages
+    from bookings.models import ClientPackage, Booking
+    active_packages = ClientPackage.objects.filter(player=player, is_active=True)
+    active_bookings = Booking.objects.filter(player=player, status__in=['confirmed', 'pending'])
+
+    if active_packages.exists() or active_bookings.exists():
+        warning_parts = []
+        if active_packages.exists():
+            warning_parts.append(f"{active_packages.count()} active package(s)")
+        if active_bookings.exists():
+            warning_parts.append(f"{active_bookings.count()} active booking(s)")
+
+        messages.warning(
+            request,
+            f'⚠️ {player.first_name} has {" and ".join(warning_parts)}. '
+            f'Removing this player may affect their access to sessions and packages.'
+        )
+
     player.is_active = False
     player.save()
 
