@@ -53,6 +53,9 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
 
+    # Monitoring
+    'django_prometheus',
+
     # Local apps
     'clients.apps.ClientsConfig',
     'coaches',
@@ -63,6 +66,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -76,6 +80,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'atletasworld.middleware.SecurityHeadersMiddleware',
     'atletasworld.middleware.PasswordExpiryMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'atletasworld.urls'

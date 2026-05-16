@@ -109,6 +109,9 @@ def book_redirect_view(request):
 
 
 urlpatterns = [
+    # Prometheus metrics (IP-restricted at nginx level)
+    path('', include('django_prometheus.urls')),
+
     # Login redirect
     path('login-redirect/', login_redirect_view, name='login_redirect'),
 
