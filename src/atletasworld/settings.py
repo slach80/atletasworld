@@ -21,6 +21,8 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # Application definition
 INSTALLED_APPS = [
+    'django_prometheus',
+
     # Grappelli must come before django.contrib.admin
     'grappelli',
 
@@ -109,6 +111,14 @@ WSGI_APPLICATION = 'atletasworld.wsgi.application'
 DATABASES = {
     'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3')
 }
+
+# Wrap database engine with django-prometheus for model-level metrics
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default']['ENGINE'] = 'django_prometheus.db.backends.postgresql'
+elif DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+    DATABASES['default']['ENGINE'] = 'django_prometheus.db.backends.mysql'
+elif DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    DATABASES['default']['ENGINE'] = 'django_prometheus.db.backends.sqlite3'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
