@@ -69,7 +69,7 @@
         <div class="p-6 md:p-8">
             <div class="flex items-center gap-3 mb-3">
                 <span class="bg-secondary text-gray-900 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full">Featured</span>
-                <span class="text-xs font-semibold uppercase tracking-wide text-secondary">{{ featured.category_label }}</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ featured.category_label }}</span>
                 {% if featured.published_at %}
                 <span class="text-gray-400 text-sm">{{ featured.published_at|date:"N j, Y" }}</span>
                 {% endif %}
@@ -104,7 +104,7 @@
             <!-- Text -->
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1.5">
-                    <span class="text-xs font-bold uppercase tracking-wide text-secondary">{{ post.category_label }}</span>
+                    <span class="text-xs font-bold uppercase tracking-wide text-gray-500">{{ post.category_label }}</span>
                     {% if post.published_at %}
                     <span class="text-gray-400 text-xs">{{ post.published_at|date:"N j, Y" }}</span>
                     {% endif %}
