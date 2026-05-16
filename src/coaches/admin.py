@@ -7,7 +7,8 @@ from .models import Coach, Availability, ScheduleBlock, SessionAttendance, Playe
 class CoachAdmin(admin.ModelAdmin):
     """Admin configuration for Coach model with organized fieldsets."""
 
-    list_display = ['get_full_name', 'user', 'slug', 'get_referral_code', 'is_active', 'profile_enabled', 'hourly_rate']
+    list_display = ['get_full_name', 'user', 'slug', 'get_referral_code', 'display_order', 'is_active', 'profile_enabled', 'hourly_rate']
+    list_editable = ['display_order']
     list_filter = ['is_active', 'profile_enabled']
     search_fields = ['user__first_name', 'user__last_name', 'user__email', 'slug']
     prepopulated_fields = {'slug': ('user',)}
@@ -15,7 +16,7 @@ class CoachAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Basic Information (Admin Only)', {
-            'fields': ('user', 'slug', 'is_active', 'hourly_rate', 'sessions_display_floor', 'get_referral_code_display'),
+            'fields': ('user', 'slug', 'display_order', 'is_active', 'hourly_rate', 'sessions_display_floor', 'get_referral_code_display'),
             'description': 'Core settings managed by admin only.'
         }),
         ('Profile Access Control (Admin Only)', {

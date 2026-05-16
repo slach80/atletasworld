@@ -44,6 +44,9 @@ class Coach(ExportModelOperationsMixin("coach"), models.Model):
     gallery_image_2 = models.ImageField(upload_to='coaches/gallery/', blank=True, null=True)
     gallery_image_3 = models.ImageField(upload_to='coaches/gallery/', blank=True, null=True)
 
+    display_order = models.IntegerField(default=10,
+                                        help_text="Sort order on public pages — lower = first (Roger=1, Mirko=2, etc.)")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -51,7 +54,7 @@ class Coach(ExportModelOperationsMixin("coach"), models.Model):
         return f"Coach {self.user.get_full_name() or self.user.username}"
 
     class Meta:
-        ordering = ['user__first_name']
+        ordering = ['display_order', 'user__first_name']
         indexes = [
             models.Index(fields=['is_active']),
             models.Index(fields=['profile_enabled']),

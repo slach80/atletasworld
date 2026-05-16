@@ -23,7 +23,7 @@ def apple_pay_verification(request):
 
 def _get_active_coaches():
     from coaches.models import Coach
-    return Coach.objects.filter(is_active=True).select_related('user').order_by('user__first_name')
+    return Coach.objects.filter(is_active=True).select_related('user').order_by('display_order', 'user__first_name')
 
 
 def about_view(request):
