@@ -78,30 +78,37 @@ class Migration(migrations.Migration):
             name='reviewed_by',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviewed_payouts', to=settings.AUTH_USER_MODEL),
         ),
-        migrations.AddIndex(
-            model_name='referral',
-            index=models.Index(fields=['referrer_user', 'status'], name='clients_ref_referre_db5a97_idx'),
+        # These 6 indexes already exist in prod DB — update Django state only.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddIndex(
+                    model_name='referral',
+                    index=models.Index(fields=['referrer_user', 'status'], name='clients_ref_referre_db5a97_idx'),
+                ),
+                migrations.AddIndex(
+                    model_name='referral',
+                    index=models.Index(fields=['referred_user', 'status'], name='clients_ref_referre_76e133_idx'),
+                ),
+                migrations.AddIndex(
+                    model_name='referral',
+                    index=models.Index(fields=['status', 'referral_window_expires'], name='clients_ref_status_d1c640_idx'),
+                ),
+                migrations.AddIndex(
+                    model_name='referralcode',
+                    index=models.Index(fields=['code'], name='clients_ref_code_534106_idx'),
+                ),
+                migrations.AddIndex(
+                    model_name='referralpayout',
+                    index=models.Index(fields=['coach_user', 'status'], name='clients_ref_coach_u_71fa11_idx'),
+                ),
+                migrations.AddIndex(
+                    model_name='referralpayout',
+                    index=models.Index(fields=['status', 'created_at'], name='clients_ref_status_0ae768_idx'),
+                ),
+            ],
+            database_operations=[],
         ),
-        migrations.AddIndex(
-            model_name='referral',
-            index=models.Index(fields=['referred_user', 'status'], name='clients_ref_referre_76e133_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='referral',
-            index=models.Index(fields=['status', 'referral_window_expires'], name='clients_ref_status_d1c640_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='referralcode',
-            index=models.Index(fields=['code'], name='clients_ref_code_534106_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='referralpayout',
-            index=models.Index(fields=['coach_user', 'status'], name='clients_ref_coach_u_71fa11_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='referralpayout',
-            index=models.Index(fields=['status', 'created_at'], name='clients_ref_status_0ae768_idx'),
-        ),
+        # Constraint does not yet exist in prod — apply normally.
         migrations.AddConstraint(
             model_name='referral',
             constraint=models.UniqueConstraint(fields=('referred_user',), name='one_referral_per_user'),
