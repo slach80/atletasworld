@@ -3620,7 +3620,8 @@ def owner_blog_ai_assist(request):
         return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
 
 
-@owner_required
+@login_required
+@user_passes_test(is_owner)
 def owner_naming_ai_assist(request):
     """AI Assist for package / session-type name and description fields."""
     import requests as _requests
