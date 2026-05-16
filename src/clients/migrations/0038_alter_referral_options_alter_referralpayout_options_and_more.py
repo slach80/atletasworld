@@ -21,10 +21,17 @@ class Migration(migrations.Migration):
             name='referralpayout',
             options={'ordering': ['-created_at']},
         ),
-        migrations.RenameIndex(
-            model_name='notificationoutbox',
-            new_name='clients_not_send_af_02e245_idx',
-            old_name='clients_not_send_af_idx',
+        # Index already renamed in prod DB; use SeparateDatabaseAndState so
+        # Django's state is updated without attempting the DB rename again.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RenameIndex(
+                    model_name='notificationoutbox',
+                    new_name='clients_not_send_af_02e245_idx',
+                    old_name='clients_not_send_af_idx',
+                ),
+            ],
+            database_operations=[],
         ),
         migrations.AlterField(
             model_name='clientcredit',
