@@ -49,13 +49,14 @@ def dashboard(request):
         expiry_date__gte=timezone.localdate()
     )
 
-    # Get upcoming bookings (exclude orphaned pending-payment bookings from old flow)
+    # Get upcoming bookings — exclude orphaned pending-payment bookings from old paid flow,
+    # but only when the session type has a non-zero price (free/comp sessions are always shown).
     upcoming_bookings = Booking.objects.filter(
         client=client,
         scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
     ).exclude(
-        payment_status='pending', client_package__isnull=True
+        payment_status='pending', client_package__isnull=True, session_type__price__gt=0
     ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')[:5]
 
     # Get recent bookings (past)
@@ -516,7 +517,7 @@ def bookings_list(request):
         scheduled_date__gte=timezone.localdate(),
         status__in=['pending', 'confirmed']
     ).exclude(
-        payment_status='pending', client_package__isnull=True
+        payment_status='pending', client_package__isnull=True, session_type__price__gt=0
     ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')
 
     past_bookings = Booking.objects.filter(
