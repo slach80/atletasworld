@@ -13,7 +13,12 @@
     <meta property="og:description" content="{{ coach.tagline|default:'Elite soccer coach at Atletas Performance Center in Overland Park, Kansas City.' }}">
     <meta property="og:url" content="https://atletasperformancecenter.com/coach/{{ coach.slug }}/">
     <meta property="og:type" content="profile">
+    <meta property="og:image" content="{% if coach.photo %}{{ coach.photo.url }}{% else %}https://atletasperformancecenter.com/static/img/apc-logo-yellow.png{% endif %}">
     <meta property="og:site_name" content="Atletas Performance Center">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ coach.user.get_full_name }} — APC Coach | Kansas City">
+    <meta name="twitter:description" content="{{ coach.tagline|default:'Elite soccer coach at Atletas Performance Center in Overland Park, Kansas City.' }}">
+    <meta name="twitter:image" content="{% if coach.photo %}{{ coach.photo.url }}{% else %}https://atletasperformancecenter.com/static/img/apc-logo-yellow.png{% endif %}">
     <title>{{ coach.user.get_full_name }} — APC Coach | Kansas City</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
