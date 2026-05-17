@@ -59,6 +59,7 @@
         {% if featured.image %}
         <div class="aspect-[16/7] overflow-hidden">
             <img src="{{ featured.image.url }}" alt="{{ featured.title }}" loading="lazy"
+                 width="1200" height="525"
                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
         </div>
         {% else %}
@@ -94,6 +95,7 @@
             <div class="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-gray-100">
                 {% if post.image %}
                 <img src="{{ post.image.url }}" alt="{{ post.title }}" loading="lazy"
+                     width="128" height="128"
                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 {% else %}
                 <div class="w-full h-full bg-primary flex items-center justify-center">

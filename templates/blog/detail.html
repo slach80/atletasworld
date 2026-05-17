@@ -108,7 +108,7 @@
 {% if post.image %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 -mt-0">
     <div class="aspect-[16/7] rounded-b-2xl overflow-hidden shadow-xl">
-        <img src="{{ post.image.url }}" alt="{{ post.title }}" class="w-full h-full object-cover" loading="eager">
+        <img src="{{ post.image.url }}" alt="{{ post.title }}" class="w-full h-full object-cover" loading="eager" width="1200" height="525" fetchpriority="high">
     </div>
 </div>
 {% endif %}
