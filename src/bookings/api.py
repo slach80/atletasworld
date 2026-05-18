@@ -899,7 +899,7 @@ class ClientPackageViewSet(viewsets.ReadOnlyModelViewSet):
             'sessions_included': pkg.package.sessions_included,
             'expiry_date': str(pkg.expiry_date),
             'is_valid': pkg.is_valid,
-            'can_book': pkg.sessions_remaining > 0 and pkg.is_valid,
+            'can_book': pkg.is_valid and (pkg.package.sessions_included == 0 or pkg.sessions_remaining > 0),
         } for pkg in queryset]
 
         # Add upgrade options (purchasable, non-team, non-special only)

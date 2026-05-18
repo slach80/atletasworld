@@ -378,4 +378,23 @@
                 {% endif %}
         </div>
     </div>
+
+{% block extra_scripts %}
+<script>
+function assignPackageToPlayer(packageId, playerId) {
+    const csrfToken = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='));
+    const csrf = csrfToken ? csrfToken.split('=')[1] : '';
+    fetch(`/portal/packages/${packageId}/assign/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
+        body: JSON.stringify({player_id: playerId || null})
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) console.error('Assign failed:', d);
+    })
+    .catch(e => console.error('Assign error:', e));
+}
+</script>
+{% endblock %}
 {% endblock %}
