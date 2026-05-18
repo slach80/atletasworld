@@ -102,17 +102,35 @@ def login_redirect_view(request):
 
 
 def book_redirect_view(request):
-    """Redirect authenticated users to client booking page; show CTA for guests."""
+    """Redirect authenticated users to client booking page; show CTA for guests.
+
+    Translates ?coach=<slug> into ?coach_id=<int> so the booking page can
+    pre-select the filter without needing slug-lookup logic in the client app.
+    """
     from django.urls import reverse
+    from urllib.parse import urlencode, parse_qs, urlparse
+
+    # Translate ?coach=<slug> → ?coach_id=<int>
+    params = request.GET.copy()
+    if 'coach' in params and 'coach_id' not in params:
+        from coaches.models import Coach
+        try:
+            coach = Coach.objects.get(slug=params['coach'])
+            params['coach_id'] = str(coach.pk)
+        except Coach.DoesNotExist:
+            pass
+        del params['coach']
+
     if request.user.is_authenticated:
         url = reverse('clients:book')
-        qs = request.META.get('QUERY_STRING', '')
+        qs = params.urlencode()
         if qs:
             url = f"{url}?{qs}"
         return redirect(url)
+
     # Unauthenticated — show public booking landing with sign-up / login CTA
     from django.shortcuts import render as _render
-    qs = request.META.get('QUERY_STRING', '')
+    qs = params.urlencode()
     login_url = reverse('account_login') + (f'?next=/portal/book/?{qs}' if qs else f'?next={reverse("clients:book")}')
     signup_url = reverse('account_signup')
     return _render(request, 'book_landing.html', {'login_url': login_url, 'signup_url': signup_url})

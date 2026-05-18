@@ -711,6 +711,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     } else {
         if(b) b.classList.add('f-pill-on');
     }
+    {% if preselect_coach_id %}
+    const cs=document.getElementById('coachSelect');
+    if(cs){ cs.value='{{ preselect_coach_id }}'; setCoachFilter('{{ preselect_coach_id }}'); }
+    {% endif %}
 });
 function populateLocationFilter(){
     const locs=[...new Set(Object.values(slotMap).map(s=>s.location).filter(Boolean))].sort();

@@ -1021,6 +1021,10 @@ def booking_page(request):
     # Get favorite coach IDs for template
     favorite_coach_ids = list(booking_prefs.favorite_coaches.values_list('id', flat=True))
 
+    # Pre-select coach filter from ?coach_id=<int> query param
+    preselect_coach_id_raw = request.GET.get('coach_id', '')
+    preselect_coach_id = int(preselect_coach_id_raw) if preselect_coach_id_raw.isdigit() else None
+
     # Get blocked dates from special packages (dates when special events are happening)
     # Optimized: Generate date ranges more efficiently
     blocked_dates = []
@@ -1068,6 +1072,7 @@ def booking_page(request):
         'sessions_remaining': active_package.sessions_remaining if active_package else 0,
         'booking_prefs': booking_prefs,
         'favorite_coach_ids': favorite_coach_ids,
+        'preselect_coach_id': preselect_coach_id,
         'has_select_membership': has_select_membership,
         'select_credit_balance': select_credit_balance,
         'stripe_public_key': __import__('django.conf', fromlist=['settings']).settings.STRIPE_PUBLIC_KEY,
