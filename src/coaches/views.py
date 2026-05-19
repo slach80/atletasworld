@@ -104,8 +104,10 @@ def dashboard(request):
         'pending_assessments': pending_assessments.count(),
     }
 
-    # Upcoming session roster — grouped by time / age_group / session_type
-    group_by = request.GET.get('group_by', 'time')
+    # Upcoming session roster — built once, regrouped client-side (no page reload)
+    import json as _json
+    import urllib.parse as _urlparse
+    from datetime import datetime as _dt
 
     upcoming_bookings = Booking.objects.filter(
         coach=coach,
@@ -114,7 +116,6 @@ def dashboard(request):
         status__in=['pending', 'confirmed'],
     ).select_related('player', 'session_type').order_by('scheduled_date', 'scheduled_time')
 
-    # Also get ScheduleBlock end_times for the sessions in range
     block_end_times = {}
     for block in ScheduleBlock.objects.filter(
         coach=coach,
@@ -124,8 +125,6 @@ def dashboard(request):
         key = (block['date'], block['start_time'])
         block_end_times[key] = (block['end_time'], block['location_override'])
 
-    import urllib.parse as _urlparse
-    from datetime import datetime as _dt
     def _gcal_link(date, start, end, title, location=''):
         fmt = '%Y%m%dT%H%M%S'
         s = _dt.combine(date, start).strftime(fmt)
@@ -135,76 +134,42 @@ def dashboard(request):
             'dates': f'{s}/{e}', 'location': location,
         })
 
-    # Group bookings into session blocks
-    from collections import OrderedDict
-    raw_blocks = OrderedDict()
+    raw_blocks: dict = {}
+    raw_blocks_order: list = []
     for bk in upcoming_bookings:
-        key = (bk.scheduled_date, bk.scheduled_time)
+        key = (str(bk.scheduled_date), str(bk.scheduled_time))
         if key not in raw_blocks:
-            end_time_info = block_end_times.get(key, (None, ''))
+            end_time_info = block_end_times.get((bk.scheduled_date, bk.scheduled_time), (None, ''))
             end_t = end_time_info[0]
             location = end_time_info[1] or ''
             stype_name = bk.session_type.name if bk.session_type else 'Session'
             raw_blocks[key] = {
-                'date': bk.scheduled_date,
-                'start_time': bk.scheduled_time,
-                'end_time': end_t,
+                'date': str(bk.scheduled_date),
+                'date_display': bk.scheduled_date.strftime('%a, %b %-d'),
+                'start_time': str(bk.scheduled_time),
+                'start_display': bk.scheduled_time.strftime('%-I:%M %p'),
+                'end_display': end_t.strftime('%-I:%M %p') if end_t else '',
                 'session_type_name': stype_name,
-                'session_type': bk.session_type,
                 'location': location,
-                'players': [],
                 'gcal_link': _gcal_link(
                     bk.scheduled_date, bk.scheduled_time,
                     end_t or bk.scheduled_time,
                     f'APC – {stype_name}', location
                 ),
+                'players': [],
+                # ISO datetime string for client-side time bucketing
+                'iso_dt': _dt.combine(bk.scheduled_date, bk.scheduled_time).isoformat(),
             }
+            raw_blocks_order.append(key)
         player = bk.player
         if player:
             raw_blocks[key]['players'].append({
                 'name': f'{player.first_name} {player.last_name}',
                 'skill_level': player.skill_level or '',
                 'age_group': player.age_group if hasattr(player, 'age_group') else '',
-                'status': bk.status,
             })
 
-    all_blocks = list(raw_blocks.values())
-
-    # Apply grouping
-    now_dt = timezone.now()
-    cutoff_24h = now_dt + timedelta(hours=24)
-    cutoff_48h = now_dt + timedelta(hours=48)
-
-    def _block_dt(blk):
-        naive = _dt.combine(blk['date'], blk['start_time'])
-        return timezone.make_aware(naive) if timezone.is_naive(naive) else naive
-
-    if group_by == 'age_group':
-        grouped = OrderedDict()
-        age_order = ['U6', 'U8', 'U10', 'U12', 'U13', 'U14', 'U16', 'U19', 'Adult']
-        for blk in all_blocks:
-            age_groups = list({p['age_group'] for p in blk['players'] if p['age_group']}) or ['Unknown']
-            for ag in age_groups:
-                grouped.setdefault(ag, []).append(blk)
-        sorted_grouped = OrderedDict()
-        for ag in age_order:
-            if ag in grouped:
-                sorted_grouped[ag] = grouped[ag]
-        for ag in grouped:
-            if ag not in sorted_grouped:
-                sorted_grouped[ag] = grouped[ag]
-        grouped_sessions = sorted_grouped
-    elif group_by == 'session_type':
-        grouped = OrderedDict()
-        for blk in all_blocks:
-            label = blk['session_type_name']
-            grouped.setdefault(label, []).append(blk)
-        grouped_sessions = grouped
-    else:  # 'time' (default)
-        grouped_sessions = OrderedDict()
-        grouped_sessions['Next 24 Hours'] = [b for b in all_blocks if _block_dt(b) <= cutoff_24h]
-        grouped_sessions['Next 48 Hours'] = [b for b in all_blocks if cutoff_24h < _block_dt(b) <= cutoff_48h]
-        grouped_sessions['Next 7 Days']   = [b for b in all_blocks if _block_dt(b) > cutoff_48h]
+    roster_blocks_json = _json.dumps([raw_blocks[k] for k in raw_blocks_order])
 
     # Coach rating
     from reviews.models import Review
@@ -235,8 +200,7 @@ def dashboard(request):
     context = {
         'coach': coach,
         'todays_blocks': todays_blocks,
-        'grouped_sessions': grouped_sessions,
-        'group_by': group_by,
+        'roster_blocks_json': roster_blocks_json,
         'upcoming_blocks': upcoming_blocks,
         'pending_assessments': pending_assessments,
         'stats': stats,
@@ -1269,9 +1233,7 @@ def edit_profile(request):
     """Coach profile edit page - only accessible if profile_enabled."""
     coach = request.coach
 
-    if not coach.profile_enabled:
-        messages.error(request, 'Your public profile has not been enabled yet. Please contact the administrator.')
-        return redirect('coaches:dashboard')
+    profile_locked = not coach.profile_enabled
 
     if request.method == 'POST':
         # Update coach profile fields (only the coach-editable fields)
@@ -1315,6 +1277,7 @@ def edit_profile(request):
 
     context = {
         'coach': coach,
+        'profile_locked': profile_locked,
     }
     return render(request, 'coaches/edit_profile.html', context)
 

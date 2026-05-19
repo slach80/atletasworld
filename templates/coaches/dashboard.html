@@ -101,65 +101,19 @@
                 {% endif %}
             </div>
 
-            <!-- Upcoming Roster -->
+            <!-- Upcoming Roster (client-side grouping, no page reload) -->
             <div class="bg-white rounded-xl shadow-md p-6">
                 <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
                     <h2 class="text-xl font-bold text-gray-800">Upcoming Roster</h2>
                     <a href="{% url 'coaches:schedule' %}" class="text-secondary text-sm hover:underline">Full Schedule →</a>
                 </div>
-                <!-- Group-by chips -->
-                <div class="flex gap-1.5 flex-wrap mb-4">
-                    <a href="?group_by=time" class="px-3 py-1 rounded-full text-xs font-semibold transition {% if group_by == 'time' %}bg-primary text-secondary{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">⏱ Time</a>
-                    <a href="?group_by=age_group" class="px-3 py-1 rounded-full text-xs font-semibold transition {% if group_by == 'age_group' %}bg-primary text-secondary{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">👥 Age Group</a>
-                    <a href="?group_by=session_type" class="px-3 py-1 rounded-full text-xs font-semibold transition {% if group_by == 'session_type' %}bg-primary text-secondary{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">📋 Session Type</a>
+                <!-- Group-by chips — JS onclick, no navigation -->
+                <div class="flex gap-1.5 flex-wrap mb-4" id="roster-chips">
+                    <button onclick="rosterGroup('time')" data-group="time" class="roster-chip px-3 py-1 rounded-full text-xs font-semibold transition bg-primary text-secondary">⏱ Time</button>
+                    <button onclick="rosterGroup('age_group')" data-group="age_group" class="roster-chip px-3 py-1 rounded-full text-xs font-semibold transition bg-gray-100 text-gray-600 hover:bg-gray-200">👥 Age Group</button>
+                    <button onclick="rosterGroup('session_type')" data-group="session_type" class="roster-chip px-3 py-1 rounded-full text-xs font-semibold transition bg-gray-100 text-gray-600 hover:bg-gray-200">📋 Session Type</button>
                 </div>
-                {% for group_label, session_blocks in grouped_sessions.items %}
-                {% if session_blocks %}
-                <div class="mb-3">
-                    <button type="button" onclick="this.nextElementSibling.classList.toggle('hidden');this.querySelector('.chev').classList.toggle('rotate-180')"
-                            class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition">
-                        <span>{{ group_label }}</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-normal text-gray-400">{{ session_blocks|length }} session{{ session_blocks|length|pluralize }}</span>
-                            <svg class="chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </div>
-                    </button>
-                    <div class="mt-2 space-y-2">
-                        {% for session in session_blocks %}
-                        <div class="border border-gray-100 rounded-xl p-3">
-                            <div class="flex items-start justify-between gap-2 flex-wrap mb-2">
-                                <div>
-                                    <p class="font-semibold text-sm text-gray-800">{{ session.date|date:"D, M j" }} · {{ session.start_time|time:"g:i A" }}{% if session.end_time %} – {{ session.end_time|time:"g:i A" }}{% endif %}</p>
-                                    <p class="text-xs text-gray-500">{{ session.session_type_name }}{% if session.location %} · 📍 {{ session.location }}{% endif %} · {{ session.players|length }} player{{ session.players|length|pluralize }}</p>
-                                </div>
-                                {% if session.gcal_link %}
-                                <a href="{{ session.gcal_link }}" target="_blank" rel="noopener" class="shrink-0 text-xs text-blue-500 hover:text-blue-700 hover:underline">📅 Add to Cal</a>
-                                {% endif %}
-                            </div>
-                            {% if session.players %}
-                            <div class="flex flex-wrap gap-1.5">
-                                {% for p in session.players %}
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                                    {% if p.skill_level == 'beginner' %}bg-blue-100 text-blue-800
-                                    {% elif p.skill_level == 'intermediate' %}bg-amber-100 text-amber-800
-                                    {% elif p.skill_level == 'advanced' %}bg-orange-100 text-orange-800
-                                    {% elif p.skill_level == 'elite' %}bg-purple-100 text-purple-800
-                                    {% else %}bg-gray-100 text-gray-700{% endif %}">
-                                    {{ p.name }}{% if p.skill_level %} · {{ p.skill_level }}{% endif %}
-                                </span>
-                                {% endfor %}
-                            </div>
-                            {% else %}
-                            <p class="text-xs text-gray-400">No confirmed players yet.</p>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                {% empty %}
-                <p class="text-gray-500 text-center py-4">No upcoming sessions in the next 7 days.</p>
-                {% endfor %}
+                <div id="roster-container"></div>
             </div>
         </div>
 
@@ -204,4 +158,109 @@
         </div>
         {% endif %}
     </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+const BLOCKS = {{ roster_blocks_json|safe }};
+const AGE_ORDER = ['U6','U8','U10','U12','U13','U14','U16','U19','Adult'];
+const SKILL_COLORS = {
+  beginner:     'bg-blue-100 text-blue-800',
+  intermediate: 'bg-amber-100 text-amber-800',
+  advanced:     'bg-orange-100 text-orange-800',
+  elite:        'bg-purple-100 text-purple-800',
+  '':           'bg-gray-100 text-gray-700',
+};
+const now = new Date();
+const h24 = new Date(now.getTime() + 24*3600*1000);
+const h48 = new Date(now.getTime() + 48*3600*1000);
+
+function group(mode) {
+  const map = {};
+  const order = [];
+  BLOCKS.forEach(b => {
+    let keys;
+    if (mode === 'age_group') {
+      const ages = [...new Set(b.players.map(p => p.age_group).filter(Boolean))];
+      keys = ages.length ? ages : ['Unknown'];
+    } else if (mode === 'session_type') {
+      keys = [b.session_type_name || 'Session'];
+    } else {
+      const dt = new Date(b.iso_dt);
+      keys = [dt <= h24 ? 'Next 24 Hours' : dt <= h48 ? 'Next 48 Hours' : 'Next 7 Days'];
+    }
+    keys.forEach(k => {
+      if (!map[k]) { map[k] = []; order.push(k); }
+      map[k].push(b);
+    });
+  });
+  if (mode === 'age_group') {
+    const sorted = [];
+    AGE_ORDER.forEach(a => { if (map[a]) sorted.push(a); });
+    order.forEach(a => { if (!AGE_ORDER.includes(a) && map[a]) sorted.push(a); });
+    return sorted.map(k => [k, map[k]]);
+  }
+  return [...new Set(order)].map(k => [k, map[k]]);
+}
+
+function renderBadge(p) {
+  const cls = SKILL_COLORS[p.skill_level] || SKILL_COLORS[''];
+  const skill = p.skill_level ? ' · ' + p.skill_level : '';
+  return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cls}">${p.name}${skill}</span>`;
+}
+
+function renderBlock(b) {
+  const timeStr = b.end_display ? `${b.start_display} – ${b.end_display}` : b.start_display;
+  const loc = b.location ? ` · 📍 ${b.location}` : '';
+  const pCount = b.players.length;
+  const pLabel = pCount === 1 ? '1 player' : `${pCount} players`;
+  const cal = b.gcal_link ? `<a href="${b.gcal_link}" target="_blank" rel="noopener" class="shrink-0 text-xs text-blue-500 hover:text-blue-700 hover:underline">📅 Add to Cal</a>` : '';
+  const badges = pCount
+    ? b.players.map(renderBadge).join('')
+    : '<p class="text-xs text-gray-400">No confirmed players yet.</p>';
+  return `<div class="border border-gray-100 rounded-xl p-3">
+    <div class="flex items-start justify-between gap-2 flex-wrap mb-2">
+      <div>
+        <p class="font-semibold text-sm text-gray-800">${b.date_display} · ${timeStr}</p>
+        <p class="text-xs text-gray-500">${b.session_type_name}${loc} · ${pLabel}</p>
+      </div>${cal}
+    </div>
+    <div class="flex flex-wrap gap-1.5">${badges}</div>
+  </div>`;
+}
+
+function renderGroups(mode) {
+  const groups = group(mode);
+  if (!groups.length) return '<p class="text-gray-500 text-center py-4">No upcoming sessions in the next 7 days.</p>';
+  return groups.filter(([,bs]) => bs && bs.length).map(([label, bs]) => {
+    const count = bs.length;
+    const sLabel = count === 1 ? '1 session' : `${count} sessions`;
+    return `<div class="mb-3">
+      <button type="button" onclick="var s=this.nextElementSibling;s.classList.toggle('hidden');this.querySelector('.chev').classList.toggle('rotate-180')"
+              class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition">
+        <span>${label}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-normal text-gray-400">${sLabel}</span>
+          <svg class="chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </button>
+      <div class="mt-2 space-y-2">${bs.map(renderBlock).join('')}</div>
+    </div>`;
+  }).join('') || '<p class="text-gray-500 text-center py-4">No upcoming sessions in the next 7 days.</p>';
+}
+
+window.rosterGroup = function(mode) {
+  document.querySelectorAll('.roster-chip').forEach(c => {
+    const active = c.dataset.group === mode;
+    c.className = 'roster-chip px-3 py-1 rounded-full text-xs font-semibold transition ' +
+      (active ? 'bg-primary text-secondary' : 'bg-gray-100 text-gray-600 hover:bg-gray-200');
+  });
+  document.getElementById('roster-container').innerHTML = renderGroups(mode);
+};
+
+// Initial render
+rosterGroup('time');
+})();
+</script>
 {% endblock %}

@@ -108,12 +108,10 @@
                    class="px-3 py-2 rounded {% if 'blog' in request.resolver_match.url_name %}bg-white/10 text-secondary font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                     Blog
                 </a>
-                {% if coach.profile_enabled %}
                 <a href="{% url 'coaches:edit_profile' %}"
                    class="px-3 py-2 rounded {% if request.resolver_match.url_name == 'edit_profile' %}bg-white/10 text-secondary font-semibold{% else %}hover:bg-white/10{% endif %} transition">
                     Profile
                 </a>
-                {% endif %}
                 <span class="text-gray-600">|</span>
                 {% include "includes/_role_switcher.html" %}
                 <button onclick="toggleDarkMode()" id="coach-dark-btn" title="Toggle dark mode"
@@ -143,7 +141,7 @@
         {% if teams %}<a href="{% url 'coaches:my_players' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
         <a href="{% url 'coaches:referral' %}" class="block px-4 py-2 hover:bg-white/10 rounded">🎁 Referrals</a>
         <a href="{% url 'coaches:blog_posts' %}" class="block px-4 py-2 hover:bg-white/10 rounded">✍️ Blog</a>
-        {% if coach.profile_enabled %}<a href="{% url 'coaches:edit_profile' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Profile</a>{% endif %}
+        <a href="{% url 'coaches:edit_profile' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Profile</a>
         <div class="border-t border-gray-700 mt-2 pt-2">
             <a href="/accounts/logout/" class="block px-4 py-2 text-gray-400 hover:text-accent rounded">Logout</a>
         </div>
