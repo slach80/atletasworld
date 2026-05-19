@@ -36,18 +36,24 @@
     <div class="space-y-4">
         {% for group_label, session_blocks in grouped_sessions.items %}
         {% if session_blocks %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-            <button type="button" onclick="this.nextElementSibling.classList.toggle('hidden');this.querySelector('.chev').classList.toggle('rotate-180')"
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 apc-group-block">
+            <button type="button" onclick="this.parentElement.querySelector('.apc-group-body').classList.toggle('hidden');this.querySelector('.chev').classList.toggle('rotate-180')"
                     class="w-full flex items-center justify-between px-5 py-4 text-left">
                 <div class="flex items-center gap-3">
                     <span class="font-bold text-gray-800">{{ group_label }}</span>
                     <span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{{ session_blocks|length }} session{{ session_blocks|length|pluralize }}</span>
+                    <button type="button" onclick="event.stopPropagation();apcDownloadGroupIcs(this.closest('.apc-group-block'),'{{ group_label|escapejs }}')"
+                            class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 transition">📅 Add all to Cal</button>
                 </div>
                 <svg class="chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="px-5 pb-5 space-y-3">
+            <div class="px-5 pb-5 space-y-3 apc-group-body">
                 {% for session in session_blocks %}
-                <div class="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition">
+                <div class="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition apc-session-card"
+                     data-ics-start="{{ session.date|date:'Ymd' }}T{{ session.start_time|time:'His' }}"
+                     data-ics-end="{% if session.end_time %}{{ session.date|date:'Ymd' }}T{{ session.end_time|time:'His' }}{% else %}{{ session.date|date:'Ymd' }}T{{ session.start_time|time:'His' }}{% endif %}"
+                     data-ics-summary="APC – {{ session.session_type_name|escapejs }}"
+                     data-ics-location="{{ session.location|escapejs }}">
                     <div class="flex items-start justify-between gap-2 flex-wrap mb-3">
                         <div>
                             <p class="font-semibold text-sm text-gray-800">{{ session.date|date:"D, M j" }} · {{ session.start_time|time:"g:i A" }}{% if session.end_time %} – {{ session.end_time|time:"g:i A" }}{% endif %}</p>
@@ -103,4 +109,38 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function apcDownloadGroupIcs(groupEl, label) {
+    const cards = groupEl.querySelectorAll('.apc-session-card');
+    const uid_base = Date.now();
+    const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//APC//Roster//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+    cards.forEach(function(card, i) {
+        const start = card.dataset.icsStart;
+        const end   = card.dataset.icsEnd || start;
+        const title = card.dataset.icsSummary || 'APC Session';
+        const loc   = card.dataset.icsLocation || '';
+        lines.push('BEGIN:VEVENT',
+            'UID:apc-' + uid_base + '-' + i + '@atletasperformancecenter.com',
+            'DTSTART:' + start,
+            'DTEND:' + end,
+            'SUMMARY:' + title,
+            loc ? 'LOCATION:' + loc : null,
+            'END:VEVENT'
+        );
+    });
+    lines.push('END:VCALENDAR');
+    const ics = lines.filter(Boolean).join('\r\n');
+    const blob = new Blob([ics], {type: 'text/calendar;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'apc-' + label.toLowerCase().replace(/\s+/g,'-') + '.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+</script>
 {% endblock %}

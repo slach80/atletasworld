@@ -227,7 +227,12 @@ function renderBlock(b) {
   } else {
     roster = '<p class="text-xs text-gray-400">No confirmed players yet.</p>';
   }
-  return `<div class="border border-gray-100 rounded-xl p-3">
+  const icsStart = b.date.replace(/-/g,'') + 'T' + b.start_time.replace(/:/g,'').slice(0,6);
+  const icsEnd   = b.end_time ? b.date.replace(/-/g,'') + 'T' + b.end_time.replace(/:/g,'').slice(0,6) : icsStart;
+  return `<div class="border border-gray-100 rounded-xl p-3 apc-session-card"
+     data-ics-start="${icsStart}" data-ics-end="${icsEnd}"
+     data-ics-summary="APC – ${b.session_type_name.replace(/"/g,'')}"
+     data-ics-location="${b.location.replace(/"/g,'')}">
     <div class="flex items-start justify-between gap-2 flex-wrap mb-2">
       <div>
         <p class="font-semibold text-sm text-gray-800">${b.date_display} · ${timeStr}</p>
@@ -244,16 +249,19 @@ function renderGroups(mode) {
   return groups.filter(([,bs]) => bs && bs.length).map(([label, bs]) => {
     const count = bs.length;
     const sLabel = count === 1 ? '1 session' : `${count} sessions`;
-    return `<div class="mb-3">
-      <button type="button" onclick="var s=this.nextElementSibling;s.classList.toggle('hidden');this.querySelector('.chev').classList.toggle('rotate-180')"
+    const bodyId = 'rg-' + label.replace(/\s+/g,'-') + '-' + count;
+    return `<div class="mb-3 apc-group-block">
+      <button type="button" onclick="var s=document.getElementById('${bodyId}');s.classList.toggle('hidden');this.querySelector('.chev').classList.toggle('rotate-180')"
               class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition">
-        <span>${label}</span>
         <div class="flex items-center gap-2">
+          <span>${label}</span>
           <span class="text-xs font-normal text-gray-400">${sLabel}</span>
-          <svg class="chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <button type="button" onclick="event.stopPropagation();apcDownloadGroupIcs(this.closest('.apc-group-block'),'${label}')"
+                  class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 transition">📅 Add all to Cal</button>
         </div>
+        <svg class="chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
-      <div class="mt-2 space-y-2">${bs.map(renderBlock).join('')}</div>
+      <div id="${bodyId}" class="mt-2 space-y-2">${bs.map(renderBlock).join('')}</div>
     </div>`;
   }).join('') || '<p class="text-gray-500 text-center py-4">No upcoming sessions in the next 7 days.</p>';
 }
@@ -269,6 +277,35 @@ window.rosterGroup = function(mode) {
 
 // Initial render
 rosterGroup('time');
+
+window.apcDownloadGroupIcs = function(groupEl, label) {
+    const cards = groupEl.querySelectorAll('.apc-session-card');
+    const uid_base = Date.now();
+    const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//APC//Roster//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+    cards.forEach(function(card, i) {
+        const start = card.dataset.icsStart;
+        const end   = card.dataset.icsEnd || start;
+        const title = card.dataset.icsSummary || 'APC Session';
+        const loc   = card.dataset.icsLocation || '';
+        lines.push('BEGIN:VEVENT',
+            'UID:apc-' + uid_base + '-' + i + '@atletasperformancecenter.com',
+            'DTSTART:' + start,
+            'DTEND:' + end,
+            'SUMMARY:' + title,
+            loc ? 'LOCATION:' + loc : null,
+            'END:VEVENT'
+        );
+    });
+    lines.push('END:VCALENDAR');
+    const ics = lines.filter(Boolean).join('\r\n');
+    const blob = new Blob([ics], {type: 'text/calendar;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'apc-' + label.toLowerCase().replace(/\s+/g,'-') + '.ics';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+};
 })();
 </script>
 {% endblock %}
