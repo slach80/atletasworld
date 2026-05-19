@@ -182,18 +182,26 @@
                         <div class="text-xs text-gray-400">Expires: {{ pkg.expiry_date|date:"M j, Y" }}</div>
                         <span class="inline-block mt-1 px-2 py-0.5 text-xs rounded-full {% if pkg.status == 'active' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">{{ pkg.get_status_display }}</span>
                     </div>
-                    <div class="flex-shrink-0">
-                        <label class="block text-xs text-gray-500 mb-1">Assigned to:</label>
-                        <select class="text-xs px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner package-assign-dropdown"
-                                data-package-id="{{ pkg.id }}"
-                                onchange="assignPackageToPlayer({{ pkg.id }}, this.value)">
-                            <option value="">Unassigned</option>
-                            {% for player in players %}
-                            <option value="{{ player.id }}" {% if pkg.player_id == player.id %}selected{% endif %}>
-                                {{ player.first_name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="flex-shrink-0 flex flex-col gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Assigned to:</label>
+                            <select class="text-xs px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-owner package-assign-dropdown"
+                                    data-package-id="{{ pkg.id }}"
+                                    onchange="assignPackageToPlayer({{ pkg.id }}, this.value)">
+                                <option value="">Unassigned</option>
+                                {% for player in players %}
+                                <option value="{{ player.id }}" {% if pkg.player_id == player.id %}selected{% endif %}>
+                                    {{ player.first_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if pkg.package.sessions_included > 0 %}
+                        <button type="button" onclick="adjustSessions({{ pkg.id }}, {{ pkg.sessions_remaining }}, {{ pkg.package.sessions_included }})"
+                                class="text-xs px-2 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-600 transition">
+                            ✏️ Adjust sessions
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -287,6 +295,25 @@ async function assignPackageToPlayer(packageId, playerId) {
         alert('Network error — please try again');
         location.reload();
     }
+}
+
+async function adjustSessions(packageId, current, total) {
+    const val = prompt(`Adjust sessions remaining for this package.\nCurrent: ${current}/${total}\n\nEnter new sessions remaining (0–${total}):`, current);
+    if (val === null) return;
+    const n = parseInt(val, 10);
+    if (isNaN(n) || n < 0 || n > total) {
+        alert(`Please enter a number between 0 and ${total}.`);
+        return;
+    }
+    const url = '{% url "owner_package_adjust" 0 %}'.replace('0', packageId);
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ sessions_remaining: n })
+    });
+    const data = await res.json();
+    if (res.ok) { location.reload(); }
+    else { alert(data.error || 'Failed to update'); }
 }
 </script>
 {% endblock %}

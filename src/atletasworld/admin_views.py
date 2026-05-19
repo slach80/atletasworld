@@ -1641,6 +1641,30 @@ def owner_package_assign(request, pk):
 
 @login_required
 @user_passes_test(is_owner)
+def owner_package_adjust(request, pk):
+    """Manually adjust sessions_remaining on a ClientPackage (owner only)."""
+    import json
+    from clients.models import ClientPackage
+    try:
+        package = get_object_or_404(ClientPackage, pk=pk)
+        data = json.loads(request.body)
+        new_remaining = int(data['sessions_remaining'])
+        if new_remaining < 0 or (package.package.sessions_included > 0 and new_remaining > package.package.sessions_included):
+            return JsonResponse({'error': 'Value out of range'}, status=400)
+        package.sessions_remaining = new_remaining
+        package.sessions_used = package.package.sessions_included - new_remaining
+        if new_remaining == 0:
+            package.status = 'exhausted'
+        elif package.status == 'exhausted':
+            package.status = 'active'
+        package.save()
+        return JsonResponse({'success': True, 'sessions_remaining': new_remaining})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@user_passes_test(is_owner)
 def owner_players(request):
     """List all players with session-type / package filters and CSV/XLSX/PDF export."""
     from clients.models import ClientPackage
