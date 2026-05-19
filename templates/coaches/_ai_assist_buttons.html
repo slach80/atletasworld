@@ -1,0 +1,26 @@
+<div class="mt-1.5" data-ai-field="{{ field }}" data-ai-textarea="{{ textarea_id }}">
+    <div class="flex flex-wrap gap-1.5 mb-1.5">
+        <span class="text-xs text-gray-400 self-center">✨ AI:</span>
+        <button type="button" onclick="profileAiAssist('{{ textarea_id }}','{{ field }}','draft')"
+                class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-secondary hover:text-gray-900 transition">Draft</button>
+        <button type="button" onclick="profileAiAssist('{{ textarea_id }}','{{ field }}','improve')"
+                class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-secondary hover:text-gray-900 transition">Improve</button>
+        <button type="button" onclick="profileAiAssist('{{ textarea_id }}','{{ field }}','shorten')"
+                class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-secondary hover:text-gray-900 transition">Shorten</button>
+        <button type="button" onclick="profileAiAssist('{{ textarea_id }}','{{ field }}','grammar')"
+                class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-secondary hover:text-gray-900 transition">Fix Grammar</button>
+    </div>
+    <div id="ai-result-{{ textarea_id }}" class="hidden mt-1">
+        <div id="ai-spinner-{{ textarea_id }}" class="hidden text-xs text-gray-400 italic py-1">⏳ Thinking…</div>
+        <div id="ai-box-{{ textarea_id }}" class="hidden">
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700 whitespace-pre-wrap" id="ai-text-{{ textarea_id }}"></div>
+            <div class="flex gap-2 mt-1.5">
+                <button type="button" onclick="profileAiUse('{{ textarea_id }}')"
+                        class="px-3 py-1 bg-secondary text-gray-900 rounded text-xs font-bold hover:bg-[#b8e000] transition">Use this ↑</button>
+                <button type="button" onclick="document.getElementById('ai-result-{{ textarea_id }}').classList.add('hidden')"
+                        class="px-3 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200 transition">Dismiss</button>
+            </div>
+        </div>
+        <div id="ai-error-{{ textarea_id }}" class="hidden text-xs text-red-600 py-1"></div>
+    </div>
+</div>

@@ -104,13 +104,107 @@ def dashboard(request):
         'pending_assessments': pending_assessments.count(),
     }
 
-    # Confirmed bookings — next 14 days only (add "View All" link to schedule)
-    confirmed_bookings = Booking.objects.filter(
+    # Upcoming session roster — grouped by time / age_group / session_type
+    group_by = request.GET.get('group_by', 'time')
+
+    upcoming_bookings = Booking.objects.filter(
         coach=coach,
         scheduled_date__gte=today,
-        scheduled_date__lte=today + timedelta(days=14),
+        scheduled_date__lte=today + timedelta(days=7),
         status__in=['pending', 'confirmed'],
-    ).select_related('player', 'client', 'session_type').order_by('scheduled_date', 'scheduled_time')
+    ).select_related('player', 'session_type').order_by('scheduled_date', 'scheduled_time')
+
+    # Also get ScheduleBlock end_times for the sessions in range
+    block_end_times = {}
+    for block in ScheduleBlock.objects.filter(
+        coach=coach,
+        date__gte=today,
+        date__lte=today + timedelta(days=7),
+    ).values('date', 'start_time', 'end_time', 'location_override'):
+        key = (block['date'], block['start_time'])
+        block_end_times[key] = (block['end_time'], block['location_override'])
+
+    import urllib.parse as _urlparse
+    from datetime import datetime as _dt
+    def _gcal_link(date, start, end, title, location=''):
+        fmt = '%Y%m%dT%H%M%S'
+        s = _dt.combine(date, start).strftime(fmt)
+        e = _dt.combine(date, end).strftime(fmt)
+        return 'https://calendar.google.com/calendar/render?' + _urlparse.urlencode({
+            'action': 'TEMPLATE', 'text': title,
+            'dates': f'{s}/{e}', 'location': location,
+        })
+
+    # Group bookings into session blocks
+    from collections import OrderedDict
+    raw_blocks = OrderedDict()
+    for bk in upcoming_bookings:
+        key = (bk.scheduled_date, bk.scheduled_time)
+        if key not in raw_blocks:
+            end_time_info = block_end_times.get(key, (None, ''))
+            end_t = end_time_info[0]
+            location = end_time_info[1] or ''
+            stype_name = bk.session_type.name if bk.session_type else 'Session'
+            raw_blocks[key] = {
+                'date': bk.scheduled_date,
+                'start_time': bk.scheduled_time,
+                'end_time': end_t,
+                'session_type_name': stype_name,
+                'session_type': bk.session_type,
+                'location': location,
+                'players': [],
+                'gcal_link': _gcal_link(
+                    bk.scheduled_date, bk.scheduled_time,
+                    end_t or bk.scheduled_time,
+                    f'APC – {stype_name}', location
+                ),
+            }
+        player = bk.player
+        if player:
+            raw_blocks[key]['players'].append({
+                'name': f'{player.first_name} {player.last_name}',
+                'skill_level': player.skill_level or '',
+                'age_group': player.age_group if hasattr(player, 'age_group') else '',
+                'status': bk.status,
+            })
+
+    all_blocks = list(raw_blocks.values())
+
+    # Apply grouping
+    now_dt = timezone.now()
+    cutoff_24h = now_dt + timedelta(hours=24)
+    cutoff_48h = now_dt + timedelta(hours=48)
+
+    def _block_dt(blk):
+        naive = _dt.combine(blk['date'], blk['start_time'])
+        return timezone.make_aware(naive) if timezone.is_naive(naive) else naive
+
+    if group_by == 'age_group':
+        grouped = OrderedDict()
+        age_order = ['U6', 'U8', 'U10', 'U12', 'U13', 'U14', 'U16', 'U19', 'Adult']
+        for blk in all_blocks:
+            age_groups = list({p['age_group'] for p in blk['players'] if p['age_group']}) or ['Unknown']
+            for ag in age_groups:
+                grouped.setdefault(ag, []).append(blk)
+        sorted_grouped = OrderedDict()
+        for ag in age_order:
+            if ag in grouped:
+                sorted_grouped[ag] = grouped[ag]
+        for ag in grouped:
+            if ag not in sorted_grouped:
+                sorted_grouped[ag] = grouped[ag]
+        grouped_sessions = sorted_grouped
+    elif group_by == 'session_type':
+        grouped = OrderedDict()
+        for blk in all_blocks:
+            label = blk['session_type_name']
+            grouped.setdefault(label, []).append(blk)
+        grouped_sessions = grouped
+    else:  # 'time' (default)
+        grouped_sessions = OrderedDict()
+        grouped_sessions['Next 24 Hours'] = [b for b in all_blocks if _block_dt(b) <= cutoff_24h]
+        grouped_sessions['Next 48 Hours'] = [b for b in all_blocks if cutoff_24h < _block_dt(b) <= cutoff_48h]
+        grouped_sessions['Next 7 Days']   = [b for b in all_blocks if _block_dt(b) > cutoff_48h]
 
     # Coach rating
     from reviews.models import Review
@@ -141,7 +235,8 @@ def dashboard(request):
     context = {
         'coach': coach,
         'todays_blocks': todays_blocks,
-        'confirmed_bookings': confirmed_bookings,
+        'grouped_sessions': grouped_sessions,
+        'group_by': group_by,
         'upcoming_blocks': upcoming_blocks,
         'pending_assessments': pending_assessments,
         'stats': stats,
@@ -1058,6 +1153,88 @@ def notify_ai_assist(request):
 
     if action != 'draft' and not message:
         return JsonResponse({'error': 'Message is empty — nothing to improve.'}, status=400)
+
+    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
+    model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')
+
+    try:
+        resp = _requests.post(
+            f'{ollama_url}/api/generate',
+            json={'model': model, 'prompt': prompt, 'stream': False, 'options': {'temperature': 0.6}},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        result = resp.json().get('response', '').strip()
+        return JsonResponse({'result': result})
+    except _requests.exceptions.Timeout:
+        return JsonResponse({'error': 'AI request timed out. Try again.'}, status=504)
+    except Exception as e:
+        return JsonResponse({'error': f'AI unavailable: {str(e)}'}, status=503)
+
+
+@coach_required
+def profile_ai_assist(request):
+    """AI Assist endpoint for the coach profile editor (bio, philosophy, achievements)."""
+    import requests as _requests
+    from django.conf import settings as _settings
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    coach = request.coach
+    if not coach.profile_enabled:
+        return JsonResponse({'error': 'Profile not enabled.'}, status=403)
+
+    action = request.POST.get('action', '')
+    text = request.POST.get('text', '').strip()
+    field = request.POST.get('field', 'bio')
+
+    FIELD_LABELS = {
+        'full_bio': 'full biography',
+        'coaching_philosophy': 'coaching philosophy',
+        'achievements': 'achievements and career highlights',
+        'tagline': 'tagline',
+    }
+    field_label = FIELD_LABELS.get(field, field)
+
+    PROMPTS = {
+        'draft': (
+            f"You are a youth soccer coach at Atletas Performance Center (APC), an elite academy "
+            f"in Overland Park, Kansas City. Write a professional coach {field_label}.\n\n"
+            f"Requirements:\n"
+            f"- Plain text only, no HTML or markdown\n"
+            f"- Confident, warm, professional tone\n"
+            f"- Under 150 words\n"
+            f"- Write in first person\n"
+            f"Context provided by the coach: {text if text else 'none'}\n\n"
+            f"Return ONLY the text."
+        ),
+        'improve': (
+            f"Improve the following coach {field_label} to be more compelling and professional. "
+            f"Keep the same approximate length and first-person voice. Plain text only.\n\n"
+            f"{field_label.capitalize()}:\n{text}\n\n"
+            f"Return ONLY the improved text."
+        ),
+        'shorten': (
+            f"Shorten the following coach {field_label} to under 80 words. "
+            f"Keep the key points and first-person voice. Plain text only.\n\n"
+            f"{field_label.capitalize()}:\n{text}\n\n"
+            f"Return ONLY the shortened text."
+        ),
+        'grammar': (
+            f"Fix the spelling, grammar, and punctuation of the following coach {field_label}. "
+            f"Keep the meaning, length, and voice identical. Plain text only.\n\n"
+            f"{field_label.capitalize()}:\n{text}\n\n"
+            f"Return ONLY the corrected text."
+        ),
+    }
+
+    prompt = PROMPTS.get(action)
+    if not prompt:
+        return JsonResponse({'error': 'Invalid action.'}, status=400)
+
+    if action != 'draft' and not text:
+        return JsonResponse({'error': 'Text is empty — nothing to improve.'}, status=400)
 
     ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
     model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')

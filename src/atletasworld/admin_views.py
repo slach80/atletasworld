@@ -3768,3 +3768,134 @@ def owner_notification_ai_assist(request):
         return JsonResponse({'error': 'Ollama timed out — try again in a moment.'}, status=504)
     except Exception as e:
         return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_upcoming_sessions(request):
+    """Upcoming sessions roster — all coaches, grouped by time / age group / session type / coach."""
+    import urllib.parse as _urlparse
+    from datetime import datetime as _dt
+    from collections import OrderedDict
+    from coaches.models import ScheduleBlock
+
+    today = timezone.localdate()
+    now_dt = timezone.now()
+    cutoff_24h = now_dt + timedelta(hours=24)
+    cutoff_48h = now_dt + timedelta(hours=48)
+
+    group_by = request.GET.get('group_by', 'time')
+    coach_filter = request.GET.get('coach', '')
+
+    qs = Booking.objects.filter(
+        scheduled_date__gte=today,
+        scheduled_date__lte=today + timedelta(days=7),
+        status__in=['pending', 'confirmed'],
+    ).select_related('player', 'coach__user', 'session_type').order_by('scheduled_date', 'scheduled_time')
+
+    if coach_filter:
+        try:
+            qs = qs.filter(coach_id=int(coach_filter))
+        except (ValueError, TypeError):
+            pass
+
+    # Build block end-time lookup
+    block_end_times = {}
+    for block in ScheduleBlock.objects.filter(
+        date__gte=today,
+        date__lte=today + timedelta(days=7),
+    ).values('coach_id', 'date', 'start_time', 'end_time', 'location_override'):
+        key = (block['coach_id'], block['date'], block['start_time'])
+        block_end_times[key] = (block['end_time'], block['location_override'] or '')
+
+    def _gcal_link(date, start, end, title, location=''):
+        fmt = '%Y%m%dT%H%M%S'
+        s = _dt.combine(date, start).strftime(fmt)
+        e = _dt.combine(date, end).strftime(fmt)
+        return 'https://calendar.google.com/calendar/render?' + _urlparse.urlencode({
+            'action': 'TEMPLATE', 'text': title,
+            'dates': f'{s}/{e}', 'location': location,
+        })
+
+    raw_blocks = OrderedDict()
+    for bk in qs:
+        key = (bk.coach_id, bk.scheduled_date, bk.scheduled_time)
+        if key not in raw_blocks:
+            end_info = block_end_times.get(key, (None, ''))
+            end_t = end_info[0]
+            location = end_info[1]
+            stype_name = bk.session_type.name if bk.session_type else 'Session'
+            coach_name = bk.coach.user.get_full_name() if bk.coach else ''
+            raw_blocks[key] = {
+                'date': bk.scheduled_date,
+                'start_time': bk.scheduled_time,
+                'end_time': end_t,
+                'session_type_name': stype_name,
+                'session_type': bk.session_type,
+                'location': location,
+                'coach_name': coach_name,
+                'coach_id': bk.coach_id,
+                'players': [],
+                'gcal_link': _gcal_link(
+                    bk.scheduled_date, bk.scheduled_time,
+                    end_t or bk.scheduled_time,
+                    f'APC – {stype_name}', location
+                ),
+            }
+        player = bk.player
+        if player:
+            raw_blocks[key]['players'].append({
+                'name': f'{player.first_name} {player.last_name}',
+                'skill_level': player.skill_level or '',
+                'age_group': player.age_group if hasattr(player, 'age_group') else '',
+                'status': bk.status,
+            })
+
+    all_blocks = list(raw_blocks.values())
+
+    def _block_dt(blk):
+        naive = _dt.combine(blk['date'], blk['start_time'])
+        return timezone.make_aware(naive) if timezone.is_naive(naive) else naive
+
+    if group_by == 'age_group':
+        grouped = OrderedDict()
+        age_order = ['U6', 'U8', 'U10', 'U12', 'U13', 'U14', 'U16', 'U19', 'Adult']
+        for blk in all_blocks:
+            ages = list({p['age_group'] for p in blk['players'] if p['age_group']}) or ['Unknown']
+            for ag in ages:
+                grouped.setdefault(ag, []).append(blk)
+        sorted_grouped = OrderedDict()
+        for ag in age_order:
+            if ag in grouped:
+                sorted_grouped[ag] = grouped[ag]
+        for ag in grouped:
+            if ag not in sorted_grouped:
+                sorted_grouped[ag] = grouped[ag]
+        grouped_sessions = sorted_grouped
+    elif group_by == 'session_type':
+        grouped = OrderedDict()
+        for blk in all_blocks:
+            grouped.setdefault(blk['session_type_name'], []).append(blk)
+        grouped_sessions = grouped
+    elif group_by == 'coach':
+        grouped = OrderedDict()
+        for blk in all_blocks:
+            grouped.setdefault(blk['coach_name'] or 'Unassigned', []).append(blk)
+        grouped_sessions = grouped
+    else:  # 'time'
+        grouped_sessions = OrderedDict()
+        grouped_sessions['Next 24 Hours'] = [b for b in all_blocks if _block_dt(b) <= cutoff_24h]
+        grouped_sessions['Next 48 Hours'] = [b for b in all_blocks if cutoff_24h < _block_dt(b) <= cutoff_48h]
+        grouped_sessions['Next 7 Days'] = [b for b in all_blocks if _block_dt(b) > cutoff_48h]
+
+    from coaches.models import Coach as _Coach
+    coaches = _Coach.objects.filter(is_active=True).select_related('user').order_by('user__first_name')
+
+    return render(request, 'owner/upcoming_sessions.html', {
+        'grouped_sessions': grouped_sessions,
+        'group_by': group_by,
+        'coaches': coaches,
+        'coach_filter': coach_filter,
+        'total_sessions': len(all_blocks),
+        'total_players': sum(len(b['players']) for b in all_blocks),
+    })

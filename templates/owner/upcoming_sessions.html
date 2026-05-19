@@ -1,0 +1,99 @@
+{% extends 'owner/base.html' %}
+{% block title %}Upcoming Roster{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Upcoming Session Roster</h1>
+            <p class="text-sm text-gray-400 mt-0.5">{{ total_sessions }} session{{ total_sessions|pluralize }} · {{ total_players }} player{{ total_players|pluralize }} in the next 7 days</p>
+        </div>
+    </div>
+
+    <!-- Group-by chips -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <span class="text-xs text-gray-500 self-center mr-1 font-semibold uppercase tracking-wider">Group by:</span>
+        <a href="?group_by=time{% if coach_filter %}&coach={{ coach_filter }}{% endif %}" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if group_by == 'time' %}bg-primary text-secondary{% else %}bg-white border border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}">⏱ Time</a>
+        <a href="?group_by=age_group{% if coach_filter %}&coach={{ coach_filter }}{% endif %}" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if group_by == 'age_group' %}bg-primary text-secondary{% else %}bg-white border border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}">👥 Age Group</a>
+        <a href="?group_by=session_type{% if coach_filter %}&coach={{ coach_filter }}{% endif %}" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if group_by == 'session_type' %}bg-primary text-secondary{% else %}bg-white border border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}">📋 Session Type</a>
+        <a href="?group_by=coach{% if coach_filter %}&coach={{ coach_filter }}{% endif %}" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if group_by == 'coach' %}bg-primary text-secondary{% else %}bg-white border border-gray-200 text-gray-600 hover:bg-gray-50{% endif %}">🏋️ Coach</a>
+    </div>
+
+    <!-- Coach filter chips -->
+    {% if coaches %}
+    <div class="flex flex-wrap gap-1.5 mb-5">
+        <a href="?group_by={{ group_by }}" class="px-2.5 py-1 rounded-full text-xs transition {% if not coach_filter %}bg-owner text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">All Coaches</a>
+        {% for c in coaches %}
+        <a href="?group_by={{ group_by }}&coach={{ c.id }}" class="px-2.5 py-1 rounded-full text-xs transition {% if coach_filter == c.id|stringformat:'s' %}bg-owner text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">{{ c.user.first_name }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Grouped sessions -->
+    {% if grouped_sessions %}
+    <div class="space-y-4">
+        {% for group_label, session_blocks in grouped_sessions.items %}
+        {% if session_blocks %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+            <button type="button" onclick="this.nextElementSibling.classList.toggle('hidden');this.querySelector('.chev').classList.toggle('rotate-180')"
+                    class="w-full flex items-center justify-between px-5 py-4 text-left">
+                <div class="flex items-center gap-3">
+                    <span class="font-bold text-gray-800">{{ group_label }}</span>
+                    <span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{{ session_blocks|length }} session{{ session_blocks|length|pluralize }}</span>
+                </div>
+                <svg class="chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="px-5 pb-5 space-y-3">
+                {% for session in session_blocks %}
+                <div class="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition">
+                    <div class="flex items-start justify-between gap-2 flex-wrap mb-3">
+                        <div>
+                            <p class="font-semibold text-sm text-gray-800">{{ session.date|date:"D, M j" }} · {{ session.start_time|time:"g:i A" }}{% if session.end_time %} – {{ session.end_time|time:"g:i A" }}{% endif %}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                {{ session.session_type_name }}
+                                · Coach {{ session.coach_name }}
+                                {% if session.location %} · 📍 {{ session.location }}{% endif %}
+                                · <span class="font-medium">{{ session.players|length }} player{{ session.players|length|pluralize }}</span>
+                            </p>
+                        </div>
+                        {% if session.gcal_link %}
+                        <a href="{{ session.gcal_link }}" target="_blank" rel="noopener" class="shrink-0 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 transition">📅 Add to Cal</a>
+                        {% endif %}
+                    </div>
+                    {% if session.players %}
+                    <div class="flex flex-wrap gap-1.5">
+                        {% for p in session.players %}
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                            {% if p.skill_level == 'beginner' %}bg-blue-100 text-blue-800
+                            {% elif p.skill_level == 'intermediate' %}bg-amber-100 text-amber-800
+                            {% elif p.skill_level == 'advanced' %}bg-orange-100 text-orange-800
+                            {% elif p.skill_level == 'elite' %}bg-purple-100 text-purple-800
+                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {{ p.name }}{% if p.age_group %} <span class="opacity-60">{{ p.age_group }}</span>{% endif %}{% if p.skill_level %} · {{ p.skill_level }}{% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-gray-400 italic">No confirmed players yet.</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="bg-white rounded-xl shadow-sm p-10 text-center text-gray-400">
+            <p class="text-lg">No upcoming sessions in the next 7 days.</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm p-10 text-center text-gray-400">
+        <p class="text-lg">No upcoming sessions in the next 7 days.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
