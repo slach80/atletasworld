@@ -219,52 +219,67 @@
 {% block extra_js %}
 <script>
 const PROFILE_AI_URL = '{% url "coaches:profile_ai_assist" %}';
-const CSRF_TOKEN = '{{ csrf_token }}';
+const PROFILE_CSRF = '{{ csrf_token }}';
 
-function profileAiAssist(textareaId, field, action) {
+function aiProfileToggle(id) {
+    const drop = document.getElementById('ai-drop-' + id);
+    // Close all other open dropdowns first
+    document.querySelectorAll('[id^="ai-drop-"]').forEach(d => {
+        if (d.id !== 'ai-drop-' + id) d.classList.add('hidden');
+    });
+    drop.classList.toggle('hidden');
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('[id^="ai-wrap-"]')) {
+        document.querySelectorAll('[id^="ai-drop-"]').forEach(d => d.classList.add('hidden'));
+    }
+});
+
+function aiProfileRun(textareaId, field, action) {
+    document.getElementById('ai-drop-' + textareaId).classList.add('hidden');
     const textarea = document.getElementById(textareaId);
-    const resultDiv = document.getElementById('ai-result-' + textareaId);
-    const spinner = document.getElementById('ai-spinner-' + textareaId);
-    const box = document.getElementById('ai-box-' + textareaId);
-    const textEl = document.getElementById('ai-text-' + textareaId);
-    const errEl = document.getElementById('ai-error-' + textareaId);
+    const status   = document.getElementById('ai-status-' + textareaId);
+    const statusTx = document.getElementById('ai-status-text-' + textareaId);
+    const result   = document.getElementById('ai-result-' + textareaId);
+    const textEl   = document.getElementById('ai-text-' + textareaId);
 
-    resultDiv.classList.remove('hidden');
-    spinner.classList.remove('hidden');
-    box.classList.add('hidden');
-    errEl.classList.add('hidden');
+    result.classList.add('hidden');
+    status.classList.remove('hidden');
+    status.className = status.className.replace(/bg-red-\S+|text-red-\S+|border-red-\S+/g, '');
+    status.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-200');
+    statusTx.textContent = action === 'draft' ? 'Drafting…' : action === 'improve' ? 'Improving…' : action === 'shorten' ? 'Shortening…' : 'Fixing…';
 
-    const body = new FormData();
-    body.append('action', action);
-    body.append('field', field);
-    body.append('text', textarea.value);
-    body.append('csrfmiddlewaretoken', CSRF_TOKEN);
+    const fd = new FormData();
+    fd.append('action', action);
+    fd.append('field', field);
+    fd.append('text', textarea.value);
+    fd.append('csrfmiddlewaretoken', PROFILE_CSRF);
 
-    fetch(PROFILE_AI_URL, {method: 'POST', body})
+    fetch(PROFILE_AI_URL, {method: 'POST', body: fd})
         .then(r => r.json())
         .then(data => {
-            spinner.classList.add('hidden');
+            status.classList.add('hidden');
             if (data.result) {
                 textEl.textContent = data.result;
-                box.classList.remove('hidden');
+                result.classList.remove('hidden');
             } else {
-                errEl.textContent = data.error || 'Unknown error.';
-                errEl.classList.remove('hidden');
+                statusTx.textContent = '⚠ ' + (data.error || 'Unknown error.');
+                status.classList.remove('hidden', 'bg-indigo-50', 'text-indigo-700', 'border-indigo-200');
+                status.classList.add('bg-red-50', 'text-red-600', 'border-red-200');
             }
         })
-        .catch(() => {
-            spinner.classList.add('hidden');
-            errEl.textContent = 'Request failed. Is AI available?';
-            errEl.classList.remove('hidden');
+        .catch(err => {
+            statusTx.textContent = '⚠ Request failed: ' + err.message;
+            status.classList.remove('hidden', 'bg-indigo-50', 'text-indigo-700', 'border-indigo-200');
+            status.classList.add('bg-red-50', 'text-red-600', 'border-red-200');
         });
 }
 
-function profileAiUse(textareaId) {
-    const textarea = document.getElementById(textareaId);
-    const textEl = document.getElementById('ai-text-' + textareaId);
-    const resultDiv = document.getElementById('ai-result-' + textareaId);
-    textarea.value = textEl.textContent;
-    resultDiv.classList.add('hidden');
+function aiProfileUse(textareaId) {
+    document.getElementById(textareaId).value = document.getElementById('ai-text-' + textareaId).textContent;
+    document.getElementById('ai-result-' + textareaId).classList.add('hidden');
 }
 </script>
 {% endblock %}
