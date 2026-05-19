@@ -66,11 +66,11 @@
                     <div class="flex flex-wrap gap-1.5">
                         {% for p in session.players %}
                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
-                            {% if p.skill_level == 'beginner' %}bg-blue-100 text-blue-800
-                            {% elif p.skill_level == 'intermediate' %}bg-amber-100 text-amber-800
-                            {% elif p.skill_level == 'advanced' %}bg-orange-100 text-orange-800
-                            {% elif p.skill_level == 'elite' %}bg-purple-100 text-purple-800
-                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {% if p.skill_level == 'beginner' %}bg-blue-500 text-white
+                            {% elif p.skill_level == 'intermediate' %}bg-amber-500 text-white
+                            {% elif p.skill_level == 'advanced' %}bg-orange-500 text-white
+                            {% elif p.skill_level == 'elite' %}bg-purple-600 text-white
+                            {% else %}bg-gray-400 text-white{% endif %}">
                             {{ p.name }}{% if p.age_group %} <span class="opacity-60">{{ p.age_group }}</span>{% endif %}{% if p.skill_level %} · {{ p.skill_level }}{% endif %}
                         </span>
                         {% endfor %}
