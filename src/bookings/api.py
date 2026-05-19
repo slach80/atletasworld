@@ -464,7 +464,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                         status='active',
                         expiry_date__gte=timezone.localdate(),
                         player_id=player_id
-                    ).first()
+                    ).exclude(
+                        package__sessions_included__gt=0,
+                        sessions_remaining=0
+                    ).order_by('-sessions_remaining').first()
 
                     # Fallback to unassigned package with sessions
                     if not package:
@@ -475,7 +478,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                         ).exclude(
                             package__sessions_included__gt=0,
                             sessions_remaining=0
-                        ).first()
+                        ).order_by('-sessions_remaining').first()
 
             if slot_type == 'schedule_block':
                 # Book against a ScheduleBlock — only fetch publicly available slots

@@ -1176,12 +1176,15 @@ def reserve_session(request):
     )
 
     # Check if client has an active package with sessions remaining
-    # First, try to find a package assigned to this specific player
+    # First, try to find a package assigned to this specific player (with sessions left)
     active_package = client.packages.filter(
         status='active',
         expiry_date__gte=timezone.localdate(),
         player=player
-    ).first()
+    ).exclude(
+        package__sessions_included__gt=0,
+        sessions_remaining=0
+    ).order_by('-sessions_remaining').first()
 
     # If no player-specific package, fallback to unassigned packages with sessions
     if not active_package:
@@ -1192,7 +1195,7 @@ def reserve_session(request):
         ).exclude(
             package__sessions_included__gt=0,
             sessions_remaining=0
-        ).first()
+        ).order_by('-sessions_remaining').first()
 
     # Check if we have a valid package
     if not block_is_free:
