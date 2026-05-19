@@ -169,6 +169,23 @@ def dashboard(request):
                 'age_group': player.age_group if hasattr(player, 'age_group') else '',
             })
 
+    _age_order = ['U6','U8','U10','U12','U13','U14','U16','U19','Adult','Unknown']
+    _skill_order = {'elite': 0, 'advanced': 1, 'intermediate': 2, 'beginner': 3, '': 4}
+    for blk in raw_blocks.values():
+        by_age = {}
+        for p in blk['players']:
+            ag = p['age_group'] or 'Unknown'
+            by_age.setdefault(ag, []).append(p)
+        for ag in by_age:
+            by_age[ag].sort(key=lambda p: _skill_order.get(p['skill_level'], 4))
+        blk['players_by_age'] = [
+            {'age_group': ag, 'players': by_age[ag]}
+            for ag in _age_order if ag in by_age
+        ] + [
+            {'age_group': ag, 'players': by_age[ag]}
+            for ag in by_age if ag not in _age_order
+        ]
+
     roster_blocks_json = _json.dumps([raw_blocks[k] for k in raw_blocks_order])
 
     # Coach rating

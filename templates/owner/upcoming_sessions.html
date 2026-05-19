@@ -62,17 +62,24 @@
                         <a href="{{ session.gcal_link }}" target="_blank" rel="noopener" class="shrink-0 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 transition">📅 Add to Cal</a>
                         {% endif %}
                     </div>
-                    {% if session.players %}
-                    <div class="flex flex-wrap gap-1.5">
-                        {% for p in session.players %}
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
-                            {% if p.skill_level == 'beginner' %}bg-blue-500 text-white
-                            {% elif p.skill_level == 'intermediate' %}bg-amber-500 text-white
-                            {% elif p.skill_level == 'advanced' %}bg-orange-500 text-white
-                            {% elif p.skill_level == 'elite' %}bg-purple-600 text-white
-                            {% else %}bg-gray-400 text-white{% endif %}">
-                            {{ p.name }}{% if p.age_group %} <span class="opacity-60">{{ p.age_group }}</span>{% endif %}{% if p.skill_level %} · {{ p.skill_level }}{% endif %}
-                        </span>
+                    {% if session.players_by_age %}
+                    <div class="space-y-2 mt-1">
+                        {% for grp in session.players_by_age %}
+                        <div>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{{ grp.age_group }} <span class="font-normal normal-case">· {{ grp.players|length }}</span></p>
+                            <div class="flex flex-wrap gap-1.5">
+                                {% for p in grp.players %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                                    {% if p.skill_level == 'beginner' %}bg-blue-500 text-white
+                                    {% elif p.skill_level == 'intermediate' %}bg-amber-500 text-white
+                                    {% elif p.skill_level == 'advanced' %}bg-orange-500 text-white
+                                    {% elif p.skill_level == 'elite' %}bg-purple-600 text-white
+                                    {% else %}bg-gray-400 text-white{% endif %}">
+                                    {{ p.name }}{% if p.skill_level %} · {{ p.skill_level }}{% endif %}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
                         {% endfor %}
                     </div>
                     {% else %}
