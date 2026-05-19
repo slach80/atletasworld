@@ -154,12 +154,16 @@
     </div>
 
     {% if pending_payments_list %}
-    <div class="mb-5 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-        <div class="flex items-center justify-between mb-2">
+    <div class="mb-5 bg-yellow-50 border border-yellow-200 rounded-xl overflow-hidden">
+        <button type="button" onclick="apcToggle('pending-payments',this)" data-key="pending-payments"
+                class="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-yellow-100 transition">
             <h3 class="text-sm font-bold text-yellow-800">⏳ Awaiting Payment ({{ pending_payments_list|length }})</h3>
-            <a href="{% url 'owner_bookings' %}" class="text-xs text-yellow-700 hover:underline">View all →</a>
-        </div>
-        <div class="space-y-1.5">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'owner_bookings' %}" onclick="event.stopPropagation()" class="text-xs text-yellow-700 hover:underline">View all →</a>
+                <svg class="apc-chev w-4 h-4 text-yellow-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+        </button>
+        <div class="apc-body px-3 pb-3 space-y-1.5">
             {% for bk in pending_payments_list %}
             <div class="flex items-center justify-between py-1.5 px-2 bg-white rounded-lg text-xs border border-yellow-100">
                 <div class="min-w-0">
@@ -178,12 +182,16 @@
     {% endif %}
 
     {% if pending_confirmation_list %}
-    <div class="mb-5 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-        <div class="flex items-center justify-between mb-2">
+    <div class="mb-5 bg-blue-50 border border-blue-200 rounded-xl overflow-hidden">
+        <button type="button" onclick="apcToggle('pending-confirmation',this)" data-key="pending-confirmation"
+                class="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-blue-100 transition">
             <h3 class="text-sm font-bold text-blue-800">📋 Pending Confirmation ({{ pending_confirmation_list|length }})</h3>
-            <a href="{% url 'owner_bookings' %}?status=pending" class="text-xs text-blue-700 hover:underline">View all →</a>
-        </div>
-        <div class="space-y-1.5">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'owner_bookings' %}?status=pending" onclick="event.stopPropagation()" class="text-xs text-blue-700 hover:underline">View all →</a>
+                <svg class="apc-chev w-4 h-4 text-blue-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+        </button>
+        <div class="apc-body px-3 pb-3 space-y-1.5">
             {% for bk in pending_confirmation_list %}
             <div class="flex items-center justify-between py-1.5 px-2 bg-white rounded-lg text-xs border border-blue-100">
                 <div class="min-w-0 flex-1">
@@ -207,33 +215,41 @@
     </div>
     {% endif %}
 
-    {% if recent_transactions %}
-    <h3 class="text-sm font-semibold text-gray-600 mb-3">Recent Transactions</h3>
-    <div class="space-y-2">
-        {% for tx in recent_transactions %}
-        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-sm">
-            <div>
-                <span class="font-medium text-gray-800">{{ tx.name }}</span>
-                <span class="text-gray-400 mx-1">·</span>
-                <span class="text-gray-500">{{ tx.label }}</span>
-                {% if tx.type == 'package' %}<span class="ml-1 text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">pkg</span>{% endif %}
-                {% if tx.discount_label %}
-                <span class="ml-1 text-xs bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded">{{ tx.discount_label }} −${{ tx.discount_amount|floatformat:0 }}</span>
-                {% endif %}
+    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden mb-2">
+        <button type="button" onclick="apcToggle('recent-transactions',this)" data-key="recent-transactions"
+                class="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-50 transition">
+            <h3 class="text-sm font-semibold text-gray-600">Recent Transactions</h3>
+            <svg class="apc-chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="apc-body px-3 pb-3">
+            {% if recent_transactions %}
+            <div class="space-y-2">
+                {% for tx in recent_transactions %}
+                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-sm">
+                    <div>
+                        <span class="font-medium text-gray-800">{{ tx.name }}</span>
+                        <span class="text-gray-400 mx-1">·</span>
+                        <span class="text-gray-500">{{ tx.label }}</span>
+                        {% if tx.type == 'package' %}<span class="ml-1 text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">pkg</span>{% endif %}
+                        {% if tx.discount_label %}
+                        <span class="ml-1 text-xs bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded">{{ tx.discount_label }} −${{ tx.discount_amount|floatformat:0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-right">
+                        {% if tx.list_price %}
+                        <div class="text-xs text-gray-400 line-through">${{ tx.list_price|floatformat:0 }}</div>
+                        {% endif %}
+                        <span class="font-bold text-green-700">${{ tx.amount|floatformat:2 }}</span>
+                        <span class="text-gray-400 text-xs ml-2">{{ tx.date|date:"M j" }}</span>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            <div class="text-right">
-                {% if tx.list_price %}
-                <div class="text-xs text-gray-400 line-through">${{ tx.list_price|floatformat:0 }}</div>
-                {% endif %}
-                <span class="font-bold text-green-700">${{ tx.amount|floatformat:2 }}</span>
-                <span class="text-gray-400 text-xs ml-2">{{ tx.date|date:"M j" }}</span>
-            </div>
+            {% else %}
+            <p class="text-sm text-gray-400 text-center py-4">No paid transactions yet this month.</p>
+            {% endif %}
         </div>
-        {% endfor %}
     </div>
-    {% else %}
-    <p class="text-sm text-gray-400 text-center py-4">No paid transactions yet this month.</p>
-    {% endif %}
 </div>
 
 <!-- ── Main Grid ───────────────────────────────────────────────────────────── -->
@@ -297,45 +313,51 @@
 </div>
 
 <!-- Recent Bookings -->
-<div class="bg-white rounded-xl shadow-md p-6 mb-6">
-    <div class="flex justify-between items-center mb-4">
+<div class="bg-white rounded-xl shadow-md mb-6 overflow-hidden">
+    <button type="button" onclick="apcToggle('recent-bookings',this)" data-key="recent-bookings"
+            class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition">
         <h2 class="text-lg font-bold text-gray-800">Recent Bookings</h2>
-        <a href="{% url 'owner_bookings' %}" class="text-owner text-sm hover:underline">View All</a>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'owner_bookings' %}" onclick="event.stopPropagation()" class="text-owner text-sm hover:underline">View All</a>
+            <svg class="apc-chev w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+    </button>
+    <div class="apc-body px-6 pb-6">
+        {% if recent_bookings %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead><tr class="text-left text-xs text-gray-500 border-b">
+                    <th class="pb-2 font-semibold">Player</th>
+                    <th class="pb-2 font-semibold">Coach</th>
+                    <th class="pb-2 font-semibold">Session</th>
+                    <th class="pb-2 font-semibold">Date</th>
+                    <th class="pb-2 font-semibold">Status</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for booking in recent_bookings %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2.5 font-medium text-gray-800">{{ booking.player.first_name|default:booking.client.user.first_name }} {{ booking.player.last_name|default:'' }}</td>
+                        <td class="py-2.5 text-gray-500">{{ booking.coach.user.first_name }}</td>
+                        <td class="py-2.5 text-gray-500">{{ booking.session_type.name|default:"—" }}</td>
+                        <td class="py-2.5 text-gray-500">{{ booking.scheduled_date|date:"M j" }}</td>
+                        <td class="py-2.5">
+                            <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                                {% if booking.status == 'completed' %}bg-green-100 text-green-700
+                                {% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-700
+                                {% elif booking.status == 'cancelled' %}bg-red-100 text-red-600
+                                {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-6">No recent bookings.</p>
+        {% endif %}
     </div>
-    {% if recent_bookings %}
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead><tr class="text-left text-xs text-gray-500 border-b">
-                <th class="pb-2 font-semibold">Player</th>
-                <th class="pb-2 font-semibold">Coach</th>
-                <th class="pb-2 font-semibold">Session</th>
-                <th class="pb-2 font-semibold">Date</th>
-                <th class="pb-2 font-semibold">Status</th>
-            </tr></thead>
-            <tbody class="divide-y divide-gray-50">
-                {% for booking in recent_bookings %}
-                <tr class="hover:bg-gray-50">
-                    <td class="py-2.5 font-medium text-gray-800">{{ booking.player.first_name|default:booking.client.user.first_name }} {{ booking.player.last_name|default:'' }}</td>
-                    <td class="py-2.5 text-gray-500">{{ booking.coach.user.first_name }}</td>
-                    <td class="py-2.5 text-gray-500">{{ booking.session_type.name|default:"—" }}</td>
-                    <td class="py-2.5 text-gray-500">{{ booking.scheduled_date|date:"M j" }}</td>
-                    <td class="py-2.5">
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                            {% if booking.status == 'completed' %}bg-green-100 text-green-700
-                            {% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-700
-                            {% elif booking.status == 'cancelled' %}bg-red-100 text-red-600
-                            {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                            {{ booking.get_status_display }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <p class="text-sm text-gray-400 text-center py-6">No recent bookings.</p>
-    {% endif %}
 </div>
 
 <!-- ── Bottom monitoring row ─────────────────────────────────────────────── -->
@@ -418,4 +440,24 @@
 
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function apcToggle(key, btn) {
+    var body = btn.parentElement.querySelector('.apc-body');
+    var chev = btn.querySelector('.apc-chev');
+    var isHidden = body.classList.toggle('hidden');
+    chev.style.transform = isHidden ? 'rotate(-90deg)' : '';
+    localStorage.setItem('apc-collapse-' + key, isHidden ? '1' : '');
+}
+document.addEventListener('DOMContentLoaded', function() {
+    ['pending-payments','pending-confirmation','recent-transactions','recent-bookings'].forEach(function(key) {
+        if (localStorage.getItem('apc-collapse-' + key) === '1') {
+            var btn = document.querySelector('[data-key="' + key + '"]');
+            if (btn) apcToggle(key, btn);
+        }
+    });
+});
+</script>
 {% endblock %}
