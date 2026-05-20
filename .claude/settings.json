@@ -1,8 +1,14 @@
 {
   "hooks": {
-    "SessionEnd": {
-      "command": "bash .claude/auto-port-to-hustle.sh",
-      "description": "Auto-detect and port reusable changes to hustle template"
-    }
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/auto-port-to-hustle.sh"
+          }
+        ]
+      }
+    ]
   }
 }
