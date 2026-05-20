@@ -13,7 +13,7 @@ from django.contrib.sitemaps.views import sitemap
 from coaches.views import coach_public_profile
 from .sitemaps import StaticSitemap, CoachProfileSitemap, BlogPostSitemap
 from blog.views import blog_list, blog_detail
-from .views import home_view, about_view, apple_pay_verification, programs_view
+from .views import home_view, about_view, apple_pay_verification, programs_view, adi_view
 from clients.views import unsubscribe_landing
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
@@ -246,6 +246,9 @@ urlpatterns = [
 
     # Theme preview (temporary)
     path('preview-gymlife/', gymlife_preview, name='gymlife_preview'),
+
+    # ADI — Athlete Development Institute landing page (static Next.js export)
+    path('adi/', adi_view, name='adi'),
 
     # Public pages
     path('', home_view, name='home'),

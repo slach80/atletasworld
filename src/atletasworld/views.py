@@ -89,6 +89,15 @@ def home_view(request):
     })
 
 
+def adi_view(request):
+    """Serve the ADI (Athlete Development Institute) static site at /adi/."""
+    path = os.path.join(settings.BASE_DIR, 'static', 'adi', 'index.html')
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            return HttpResponse(f.read(), content_type='text/html')
+    return HttpResponse('<h1>ADI page not found</h1>', status=404)
+
+
 def programs_view(request):
     """Special Projects & Events page — APC Select with live tryout spot counts."""
     import datetime
