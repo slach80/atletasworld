@@ -1540,7 +1540,10 @@ def owner_client_detail(request, pk):
     recent_bookings = Booking.objects.filter(client=client).select_related('player', 'coach__user')[:20]
     all_services = RentalService.objects.filter(is_active=True)
     pending_payment_count = Booking.objects.filter(
-        client=client, payment_status='pending', status__in=['pending', 'confirmed']
+        client=client, status__in=['pending', 'confirmed']
+    ).filter(
+        Q(payment_status='pending') |
+        Q(session_type__requires_package=True, client_package__isnull=True)
     ).count()
     eligible_packages = [p for p in packages if p.is_valid and p.sessions_remaining > 0]
 
@@ -1579,22 +1582,35 @@ def owner_client_settle_bookings(request, pk):
     if not package.is_valid:
         return JsonResponse({'error': 'Package is expired or inactive'}, status=400)
 
-    pending_bookings = Booking.objects.filter(
-        client=client, payment_status='pending', status__in=['pending', 'confirmed']
+    # Match exactly what the client portal shows as "Payment Required":
+    # (1) payment_status='pending' OR
+    # (2) requires_package=True with no package linked
+    unsettled_bookings = Booking.objects.filter(
+        client=client, status__in=['pending', 'confirmed']
+    ).filter(
+        Q(payment_status='pending') |
+        Q(session_type__requires_package=True, client_package__isnull=True)
     ).order_by('scheduled_date', 'scheduled_time')
 
     settled = 0
     skipped = 0
-    for booking in pending_bookings:
+    for booking in unsettled_bookings:
         if package.sessions_remaining <= 0:
             skipped += 1
             continue
         try:
-            booking.use_package(package)
+            booking.client_package = package
+            booking.payment_status = 'package'
             booking.save()
+            package.sessions_remaining -= 1
+            package.sessions_used += 1
             settled += 1
         except Exception:
             skipped += 1
+
+    if package.sessions_remaining == 0:
+        package.status = 'exhausted'
+    package.save()
 
     return JsonResponse({
         'settled': settled,

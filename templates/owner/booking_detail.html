@@ -166,7 +166,7 @@
             {% endif %}
         </div>
 
-        {% if booking.payment_status == 'pending' and eligible_packages %}
+        {% if eligible_packages and booking.payment_status == 'pending' or eligible_packages and booking.session_type.requires_package and not booking.client_package %}
         <hr class="my-4">
         <form method="post" class="space-y-3">
             {% csrf_token %}
