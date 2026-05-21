@@ -11,7 +11,7 @@ from datetime import timedelta
 from email.mime.image import MIMEImage
 import logging
 
-from clients.services import _booking_location
+from clients.services import _booking_location, _location_map_url, _make_ics
 
 logger = logging.getLogger(__name__)
 
@@ -243,11 +243,13 @@ def send_booking_reminders(self):
             # Build sessions list for the template
             sessions = []
             for b in qualifying:
+                loc = _booking_location(b)
                 sessions.append({
                     'player_name':      b.player.first_name if b.player else '',
                     'session_type':     b.session_type.name if b.session_type else 'Training Session',
                     'session_duration': f"{b.session_type.duration_minutes} min" if b.session_type else '',
-                    'location':         _booking_location(b),
+                    'location':         loc,
+                    'location_map_url': _location_map_url(loc),
                     'coach_name':       b.coach.user.get_full_name() or str(b.coach),
                     'date':             b.scheduled_date.strftime('%A, %B %-d, %Y'),
                     'time':             b.scheduled_time.strftime('%-I:%M %p'),
@@ -280,13 +282,32 @@ def send_booking_reminders(self):
                 text_lines.append(f"  • {s['session_type']} — {s['date']} at {s['time']} with {s['coach_name']}")
             text_lines.append(f"\nView all: {site_url}/portal/bookings/")
 
-            success, msg = NotificationService.send_email(
-                to_email=client.user.email,
+            # Build ICS: one file per booking; for a single session use session.ics,
+            # for multiple use session-1.ics, session-2.ics, etc.
+            from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string as _rts
+            base_ctx = {'content': html_body, 'subject': subject, **ctx}
+            full_html = _rts('emails/base_email.html', base_ctx)
+
+            msg_obj = EmailMultiAlternatives(
                 subject=subject,
-                html_content=html_body,
-                text_content='\n'.join(text_lines),
-                context=ctx,
+                body='\n'.join(text_lines),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[client.user.email],
             )
+            msg_obj.attach_alternative(full_html, 'text/html')
+            for i, b in enumerate(qualifying):
+                try:
+                    ics_data = _make_ics(b, location=_booking_location(b))
+                    fname = 'session.ics' if len(qualifying) == 1 else f'session-{i+1}.ics'
+                    msg_obj.attach(fname, ics_data, 'text/calendar')
+                except Exception:
+                    pass
+            try:
+                msg_obj.send()
+                success, msg = True, 'Sent'
+            except Exception as exc:
+                success, msg = False, str(exc)
 
             # Create one Notification record per booking for deduplication on next run
             sent_now = timezone.now() if success else None

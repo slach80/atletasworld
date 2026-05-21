@@ -2,12 +2,64 @@
 Notification Service for sending emails and SMS.
 """
 import logging
+import uuid
+from datetime import datetime, timezone as dt_timezone
+from urllib.parse import quote
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
+# APC's fixed Google Maps link — used as fallback when no location is known
+_APC_MAP_URL = 'https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9'
+
+
+def _location_map_url(location):
+    """Return a Google Maps search URL for any location string."""
+    if not location:
+        return _APC_MAP_URL
+    return 'https://www.google.com/maps/search/' + quote(location, safe='')
+
+
+def _make_ics(booking, location=''):
+    """Build a minimal RFC 5545 .ics calendar event for a booking."""
+    from datetime import datetime, timedelta
+    start = datetime(
+        booking.scheduled_date.year,
+        booking.scheduled_date.month,
+        booking.scheduled_date.day,
+        booking.scheduled_time.hour,
+        booking.scheduled_time.minute,
+    )
+    duration_mins = getattr(booking.session_type, 'duration_minutes', 60) if booking.session_type else 60
+    end = start + timedelta(minutes=duration_mins)
+
+    fmt = '%Y%m%dT%H%M%S'
+    summary = booking.session_type.name if booking.session_type else 'Training Session'
+    coach_name = booking.coach.user.get_full_name() if booking.coach else ''
+    description = f"Coach: {coach_name}" if coach_name else ''
+    uid = f"booking-{booking.pk}@atletasperformancecenter.com"
+
+    lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Atletas Performance Center//EN',
+        'METHOD:REQUEST',
+        'BEGIN:VEVENT',
+        f'UID:{uid}',
+        f'DTSTAMP:{datetime.utcnow().strftime(fmt)}Z',
+        f'DTSTART:{start.strftime(fmt)}',
+        f'DTEND:{end.strftime(fmt)}',
+        f'SUMMARY:{summary}',
+    ]
+    if description:
+        lines.append(f'DESCRIPTION:{description}')
+    if location:
+        lines.append(f'LOCATION:{location}')
+    lines += ['END:VEVENT', 'END:VCALENDAR']
+    return '\r\n'.join(lines).encode('utf-8')
 
 
 def _booking_location(booking):
@@ -30,8 +82,8 @@ class NotificationService:
     """Centralized service for sending notifications."""
 
     @staticmethod
-    def send_email(to_email, subject, html_content, text_content, context=None):
-        """Send email with HTML and plain text versions."""
+    def send_email(to_email, subject, html_content, text_content, context=None, ics_attachment=None):
+        """Send email with HTML and plain text versions, optional .ics attachment."""
         try:
             # Wrap in base email template if context provided
             if context:
@@ -50,6 +102,8 @@ class NotificationService:
                 to=[to_email] if isinstance(to_email, str) else to_email
             )
             msg.attach_alternative(full_html, "text/html")
+            if ics_attachment:
+                msg.attach('session.ics', ics_attachment, 'text/calendar')
             msg.send()
 
             logger.info(f"Email sent to {to_email}: {subject}")
@@ -325,6 +379,7 @@ class NotificationService:
             'site_url': site_url,
             'current_year': _tz.now().year,
             'unsubscribe_token': _unsub_token,
+            'location_map_url': _location_map_url(ctx.get('location', '')),
         })
 
         html_content = render_to_string(template_name, ctx)
@@ -336,12 +391,24 @@ class NotificationService:
             f"View details: {site_url}/portal/bookings/"
         )
 
+        # Attach .ics for booking confirmations (all paths that have a booking)
+        ics = None
+        if booking_id and b and template_name in (
+            'emails/booking_confirmation.html',
+            'emails/booking_reserved.html',
+        ):
+            try:
+                ics = _make_ics(b, location=ctx.get('location', ''))
+            except Exception:
+                logger.exception('send_grouped: failed to build ICS for booking #%s', booking_id)
+
         success, msg = cls.send_email(
             to_email=client.user.email,
             subject=subject,
             html_content=html_content,
             text_content=text_content,
             context=ctx,
+            ics_attachment=ics,
         )
 
         # ── Audit trail ──────────────────────────────────────────────────────
