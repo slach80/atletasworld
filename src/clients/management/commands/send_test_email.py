@@ -16,6 +16,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.conf import settings
+from clients.services import _location_map_url, _make_ics
 
 
 SAMPLE_CONTEXTS = {
@@ -30,7 +31,7 @@ SAMPLE_CONTEXTS = {
             'coach_name': 'Mirko Trapletti',
             'date': 'Sunday, May 25, 2026',
             'time': '4:00 PM',
-            'location': 'APC Indoor Facility',
+            'location': 'Hocker Grove Middle School',
             'player_name': 'Tommy Smith',
             'package_name': 'Basic 4 Sessions',
             'sessions_remaining': 3,
@@ -76,6 +77,7 @@ class Command(BaseCommand):
             ctx.update({
                 'site_url': getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com'),
                 'current_year': timezone.now().year,
+                'location_map_url': _location_map_url(ctx.get('location', '')),
             })
             html_content = render_to_string(config['template'], ctx)
             # Wrap in base email layout
@@ -119,6 +121,19 @@ class Command(BaseCommand):
                 to=[to_email],
             )
             msg.attach_alternative(wrapped, 'text/html')
+            # Attach ICS for booking_confirmation template
+            if template_key == 'booking_confirmation':
+                import datetime
+                class FakeBooking:
+                    pk = 0
+                    scheduled_date = datetime.date.today()
+                    scheduled_time = datetime.time(16, 0)
+                    coach = None
+                    class session_type:
+                        name = 'Serie A Elite Scouts — U13'
+                        duration_minutes = 90
+                ics = _make_ics(FakeBooking(), location=config['context'].get('location', ''))
+                msg.attach('session.ics', ics, 'text/calendar')
             msg.send()
             self.stdout.write(self.style.SUCCESS(
                 f"✓ Test email sent to {to_email}"
