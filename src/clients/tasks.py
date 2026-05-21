@@ -11,6 +11,8 @@ from datetime import timedelta
 from email.mime.image import MIMEImage
 import logging
 
+from clients.services import _booking_location
+
 logger = logging.getLogger(__name__)
 
 
@@ -245,7 +247,7 @@ def send_booking_reminders(self):
                     'player_name':      b.player.first_name if b.player else '',
                     'session_type':     b.session_type.name if b.session_type else 'Training Session',
                     'session_duration': f"{b.session_type.duration_minutes} min" if b.session_type else '',
-                    'location':         b.session_type.location if b.session_type else '',
+                    'location':         _booking_location(b),
                     'coach_name':       b.coach.user.get_full_name() or str(b.coach),
                     'date':             b.scheduled_date.strftime('%A, %B %-d, %Y'),
                     'time':             b.scheduled_time.strftime('%-I:%M %p'),

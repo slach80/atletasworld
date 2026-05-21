@@ -10,6 +10,22 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
+def _booking_location(booking):
+    """Return the effective location for a booking: block override > session type."""
+    try:
+        from coaches.models import ScheduleBlock
+        block = ScheduleBlock.objects.get(
+            coach=booking.coach,
+            date=booking.scheduled_date,
+            start_time=booking.scheduled_time,
+        )
+        if block.location_override:
+            return block.location_override
+    except Exception:
+        pass
+    return booking.session_type.location if booking.session_type else ''
+
+
 class NotificationService:
     """Centralized service for sending notifications."""
 
@@ -204,7 +220,7 @@ class NotificationService:
                     'session_type':     b.session_type.name if b.session_type else 'Training Session',
                     'session_format':   b.session_type.get_session_format_display() if b.session_type else '',
                     'session_duration': f"{b.session_type.duration_minutes} min" if b.session_type else '',
-                    'location':         b.session_type.location if b.session_type else '',
+                    'location':         _booking_location(b),
                     'coach_name':       b.coach.user.get_full_name() or str(b.coach),
                     'date':             b.scheduled_date.strftime('%A, %B %-d, %Y'),
                     'time':             b.scheduled_time.strftime('%-I:%M %p'),
