@@ -1440,11 +1440,35 @@ def owner_booking_detail(request, pk):
             messages.success(request, 'Booking marked as paid.')
             return redirect('owner_finances')
 
+        elif action == 'settle_via_package':
+            from clients.models import ClientPackage
+            package_id = request.POST.get('package_id')
+            try:
+                package = ClientPackage.objects.get(pk=package_id, client=booking.client)
+                if package.sessions_remaining <= 0:
+                    messages.error(request, f'Package "{package.package.name}" has no sessions remaining.')
+                elif not package.is_valid:
+                    messages.error(request, f'Package "{package.package.name}" is expired or inactive.')
+                else:
+                    booking.use_package(package)
+                    booking.save()
+                    messages.success(request, f'Booking settled via package "{package.package.name}".')
+            except ClientPackage.DoesNotExist:
+                messages.error(request, 'Package not found.')
+            except Exception as e:
+                messages.error(request, f'Error: {str(e)}')
+
         return redirect('owner_booking_detail', pk=pk)
+
+    from clients.models import ClientPackage
+    eligible_packages = ClientPackage.objects.filter(
+        client=booking.client, status='active'
+    ).select_related('package').filter(sessions_remaining__gt=0)
 
     context = {
         'booking': booking,
         'cancellation_reasons': Booking.CANCELLATION_REASON_CHOICES,
+        'eligible_packages': eligible_packages,
     }
     return render(request, 'owner/booking_detail.html', context)
 
@@ -1515,6 +1539,10 @@ def owner_client_detail(request, pk):
     packages = ClientPackage.objects.filter(client=client).select_related('package')
     recent_bookings = Booking.objects.filter(client=client).select_related('player', 'coach__user')[:20]
     all_services = RentalService.objects.filter(is_active=True)
+    pending_payment_count = Booking.objects.filter(
+        client=client, payment_status='pending', status__in=['pending', 'confirmed']
+    ).count()
+    eligible_packages = [p for p in packages if p.is_valid and p.sessions_remaining > 0]
 
     context = {
         'client': client,
@@ -1523,8 +1551,56 @@ def owner_client_detail(request, pk):
         'recent_bookings': recent_bookings,
         'all_services': all_services,
         'allowed_service_ids': list(client.allowed_services.values_list('id', flat=True)),
+        'pending_payment_count': pending_payment_count,
+        'eligible_packages': eligible_packages,
     }
     return render(request, 'owner/client_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_client_settle_bookings(request, pk):
+    """Bulk-settle all pending-payment bookings for a client via a chosen package."""
+    import json
+    from django.http import JsonResponse
+    from clients.models import ClientPackage
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    client = get_object_or_404(Client, pk=pk)
+    try:
+        data = json.loads(request.body)
+        package_id = int(data['package_id'])
+        package = ClientPackage.objects.get(pk=package_id, client=client)
+    except (KeyError, ValueError, ClientPackage.DoesNotExist):
+        return JsonResponse({'error': 'Invalid package'}, status=400)
+
+    if not package.is_valid:
+        return JsonResponse({'error': 'Package is expired or inactive'}, status=400)
+
+    pending_bookings = Booking.objects.filter(
+        client=client, payment_status='pending', status__in=['pending', 'confirmed']
+    ).order_by('scheduled_date', 'scheduled_time')
+
+    settled = 0
+    skipped = 0
+    for booking in pending_bookings:
+        if package.sessions_remaining <= 0:
+            skipped += 1
+            continue
+        try:
+            booking.use_package(package)
+            booking.save()
+            settled += 1
+        except Exception:
+            skipped += 1
+
+    return JsonResponse({
+        'settled': settled,
+        'skipped': skipped,
+        'sessions_remaining': package.sessions_remaining,
+    })
 
 
 @login_required

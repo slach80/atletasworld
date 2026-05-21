@@ -226,6 +226,34 @@
     </div>
 </div>
 
+<!-- Settle Pending Bookings via Package -->
+{% if pending_payment_count > 0 and eligible_packages %}
+<div class="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-6">
+    <div class="flex items-start gap-3">
+        <div class="text-2xl">💳</div>
+        <div class="flex-1">
+            <h2 class="text-lg font-bold text-amber-900 mb-1">Settle Pending Payments via Package</h2>
+            <p class="text-sm text-amber-700 mb-4">
+                This client has <strong>{{ pending_payment_count }} booking{{ pending_payment_count|pluralize }} with payment pending</strong>.
+                Select a package to deduct sessions and settle all pending bookings at once.
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+                <select id="settle-package-select" class="px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white">
+                    {% for pkg in eligible_packages %}
+                    <option value="{{ pkg.id }}">{{ pkg.package.name }} — {{ pkg.sessions_remaining }} sessions remaining</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="settleBookingsViaPackage({{ client.pk }})"
+                        class="px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 transition">
+                    Settle {{ pending_payment_count }} Booking{{ pending_payment_count|pluralize }}
+                </button>
+                <span id="settle-msg" class="text-sm font-medium hidden"></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Recent Bookings -->
 <div class="mt-6 bg-white rounded-xl shadow-md p-6">
     <h2 class="text-lg font-bold text-gray-800 mb-4">Recent Bookings</h2>
@@ -312,6 +340,44 @@ async function assignPackageToPlayer(packageId, playerId) {
 
 function toggleAdjust(id) {
     document.getElementById(id).classList.toggle('hidden');
+}
+
+async function settleBookingsViaPackage(clientId) {
+    const select = document.getElementById('settle-package-select');
+    const packageId = select ? parseInt(select.value) : null;
+    if (!packageId) return;
+    const msg = document.getElementById('settle-msg');
+    const btn = select.nextElementSibling;
+    btn.disabled = true;
+    btn.textContent = 'Settling...';
+    msg.classList.add('hidden');
+    try {
+        const url = '{% url "owner_client_settle_bookings" 0 %}'.replace('0', clientId);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ package_id: packageId })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            msg.className = 'text-sm font-medium text-green-700';
+            msg.textContent = `Done — ${data.settled} booking${data.settled !== 1 ? 's' : ''} settled, ${data.sessions_remaining} sessions remaining in package.${data.skipped ? ` (${data.skipped} skipped — insufficient sessions)` : ''}`;
+            msg.classList.remove('hidden');
+            setTimeout(() => location.reload(), 2500);
+        } else {
+            msg.className = 'text-sm font-medium text-red-700';
+            msg.textContent = data.error || 'Error settling bookings.';
+            msg.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Settle Bookings';
+        }
+    } catch (e) {
+        msg.className = 'text-sm font-medium text-red-700';
+        msg.textContent = 'Network error — please try again.';
+        msg.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Settle Bookings';
+    }
 }
 
 async function saveAdjust(packageId, total) {
