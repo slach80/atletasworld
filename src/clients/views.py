@@ -1170,7 +1170,7 @@ def reserve_session(request):
         block.price_override is not None and block.price_override == 0
     ) or (
         catalog_types.exists() and all(
-            (st.drop_in_price is not None and st.drop_in_price == 0) or st.price == 0
+            (st.drop_in_price is not None and st.drop_in_price == 0) or (st.price == 0 and not st.requires_package)
             for st in catalog_types
         )
     )
@@ -1283,7 +1283,7 @@ def confirm_booking(request):
             res.schedule_block.price_override is not None and res.schedule_block.price_override == 0
         ) or (
             catalog_types.exists() and all(
-                (st.drop_in_price is not None and st.drop_in_price == 0) or st.price == 0
+                (st.drop_in_price is not None and st.drop_in_price == 0) or (st.price == 0 and not st.requires_package)
                 for st in catalog_types
             )
         )
@@ -1461,7 +1461,7 @@ def create_booking_direct(request):
             is_free = (
                 block.price_override is not None and block.price_override == 0
             ) or all(
-                (st.drop_in_price is not None and st.drop_in_price == 0) or st.price == 0
+                (st.drop_in_price is not None and st.drop_in_price == 0) or (st.price == 0 and not st.requires_package)
                 for st in catalog_types
             )
 
