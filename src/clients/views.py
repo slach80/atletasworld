@@ -1292,33 +1292,35 @@ def confirm_booking(request):
         else:
             paid_reservations.append(res)
 
-    # Helper function to find the right package for a player
-    def get_package_for_player(player):
-        """Get active package for player (player-specific or unassigned fallback)."""
-        # Try player-specific package first
-        pkg = client.packages.filter(
+    def get_package_for_player(player, session_type=None):
+        linked_ids = (
+            list(session_type.linked_packages.values_list('id', flat=True))
+            if session_type is not None else []
+        )
+        not_exhausted = client.packages.filter(
             status='active',
             expiry_date__gte=timezone.localdate(),
-            player=player
-        ).first()
-
-        # Fallback to unassigned package with sessions
+        ).exclude(
+            package__sessions_included__gt=0,
+            sessions_remaining=0
+        )
+        if linked_ids:
+            # Session type restricts to specific packages — no fallback
+            pkg = not_exhausted.filter(player=player, package__id__in=linked_ids).first()
+            if not pkg:
+                pkg = not_exhausted.filter(player__isnull=True, package__id__in=linked_ids).first()
+            return pkg
+        # No restriction — any active package works
+        pkg = not_exhausted.filter(player=player).first()
         if not pkg:
-            pkg = client.packages.filter(
-                status='active',
-                expiry_date__gte=timezone.localdate(),
-                player__isnull=True
-            ).exclude(
-                package__sessions_included__gt=0,
-                sessions_remaining=0
-            ).first()
-
+            pkg = not_exhausted.filter(player__isnull=True).first()
         return pkg
 
     # Validate all paid reservations have packages before proceeding
     player_package_map = {}
     for res in paid_reservations:
-        pkg = get_package_for_player(res.player)
+        session_type_for_res = res.schedule_block.catalog_session_types.first()
+        pkg = get_package_for_player(res.player, session_type_for_res)
         if not pkg:
             return JsonResponse({
                 'success': False,
@@ -1408,22 +1410,28 @@ def create_booking_direct(request):
         if not bookings_data:
             return JsonResponse({'success': False, 'error': 'No bookings provided'})
 
-        # Helper to get package for player
-        def get_package_for_player(player):
-            pkg = client.packages.filter(
+        def get_package_for_player(player, session_type=None):
+            linked_ids = (
+                list(session_type.linked_packages.values_list('id', flat=True))
+                if session_type is not None else []
+            )
+            not_exhausted = client.packages.filter(
                 status='active',
                 expiry_date__gte=timezone.localdate(),
-                player=player
-            ).first()
+            ).exclude(
+                package__sessions_included__gt=0,
+                sessions_remaining=0
+            )
+            if linked_ids:
+                # Session type restricts to specific packages — no fallback
+                pkg = not_exhausted.filter(player=player, package__id__in=linked_ids).first()
+                if not pkg:
+                    pkg = not_exhausted.filter(player__isnull=True, package__id__in=linked_ids).first()
+                return pkg
+            # No restriction — any active package works
+            pkg = not_exhausted.filter(player=player).first()
             if not pkg:
-                pkg = client.packages.filter(
-                    status='active',
-                    expiry_date__gte=timezone.localdate(),
-                    player__isnull=True
-                ).exclude(
-                    package__sessions_included__gt=0,
-                    sessions_remaining=0
-                ).first()
+                pkg = not_exhausted.filter(player__isnull=True).first()
             return pkg
 
         # Track sessions consumed during this batch to prevent over-booking
@@ -1476,8 +1484,7 @@ def create_booking_direct(request):
 
             if not is_free:
                 if allows_package:
-                    # Check if client has a valid package for this session type
-                    pkg = get_package_for_player(player)
+                    pkg = get_package_for_player(player, session_type)
                     if pkg and pkg.package.sessions_included > 0:
                         # Account for sessions already claimed in this batch
                         batch_used = package_sessions_used.get(pkg.id, 0)
