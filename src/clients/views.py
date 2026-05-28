@@ -1478,12 +1478,6 @@ def create_booking_direct(request):
                 if allows_package:
                     # Check if client has a valid package for this session type
                     pkg = get_package_for_player(player)
-                    if pkg:
-                        # Check if package is linked to this session type (if linked_packages exist)
-                        linked = session_type.linked_packages.all()
-                        if linked.exists() and pkg.package not in linked:
-                            pkg = None  # Package doesn't cover this session type
-
                     if pkg and pkg.package.sessions_included > 0:
                         # Account for sessions already claimed in this batch
                         batch_used = package_sessions_used.get(pkg.id, 0)
