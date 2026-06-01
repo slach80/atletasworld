@@ -168,3 +168,9 @@ When a feature maps to a hustle module:
 - `referral_program.md` ✅ (synced 2026-05-09)
 - `stripe_integration.md`
 - Others as created...
+
+## Backlog
+
+- **Task #12 — APC Select Membership recurring billing**: Mirko wants parents to purchase by June 15, then auto-billed monthly on the 15th starting July. Use Stripe Subscriptions (`Package.stripe_price_id` field already exists). Need: Stripe recurring Price object, subscription creation on purchase, webhook handling for `invoice.paid` / `invoice.payment_failed`, June 15 purchase deadline enforced in packages view.
+- **Task #11 — Enable Venmo in Stripe Dashboard**: No code changes needed, pure Stripe config.
+- **Task #7 — Google OAuth login**: Needs `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` in EC2 `.env` from Mirko, then enable social login buttons.
