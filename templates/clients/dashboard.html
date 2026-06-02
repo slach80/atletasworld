@@ -307,10 +307,10 @@
                                     <span>{{ booking.player }}</span>
                                 </div>
                                 {% endif %}
-                                {% if booking.session_type.location %}
+                                {% if booking.effective_location %}
                                 <div class="flex items-center gap-2 text-sm">
                                     <span class="text-lg">📍</span>
-                                    <a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">{{ booking.session_type.location }}</a>
+                                    <span class="text-gray-700">{{ booking.effective_location }}</span>
                                 </div>
                                 {% endif %}
                             </div>
