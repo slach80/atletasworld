@@ -94,9 +94,10 @@ def dashboard(request):
         if (p.expiry_date - today).days <= 14
     ]
 
-    from clients.services import _booking_location
+    from clients.services import _booking_location, _location_map_url
     for b in upcoming_bookings:
         b.effective_location = _booking_location(b)
+        b.effective_location_map_url = _location_map_url(b.effective_location)
 
     context = {
         'client': client,

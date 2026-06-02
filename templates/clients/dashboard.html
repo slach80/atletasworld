@@ -310,7 +310,7 @@
                                 {% if booking.effective_location %}
                                 <div class="flex items-center gap-2 text-sm">
                                     <span class="text-lg">📍</span>
-                                    <span class="text-gray-700">{{ booking.effective_location }}</span>
+                                    <a href="{{ booking.effective_location_map_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">{{ booking.effective_location }}</a>
                                 </div>
                                 {% endif %}
                             </div>
