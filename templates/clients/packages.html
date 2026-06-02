@@ -647,6 +647,16 @@ function showPaymentForm(data) {
 
     document.getElementById('pay-amount').textContent = '$' + finalAmt.toFixed(2);
 
+    document.getElementById('payment-loading').classList.add('hidden');
+
+    if (data.free) {
+        // 100% discount — no card needed, show confirm button
+        const btn = document.getElementById('pay-btn');
+        btn.innerHTML = 'Confirm Free Order';
+        btn.classList.remove('hidden');
+        return;
+    }
+
     // Mount Stripe
     paymentElements = stripeJs.elements({
         clientSecret: data.client_secret,
@@ -655,7 +665,6 @@ function showPaymentForm(data) {
     const pe = paymentElements.create('payment', { layout: 'tabs' });
     pe.mount('#payment-element');
 
-    document.getElementById('payment-loading').classList.add('hidden');
     document.getElementById('payment-element').classList.remove('hidden');
     document.getElementById('pay-btn').classList.remove('hidden');
 }
@@ -691,8 +700,21 @@ function closePaymentModal() {
 }
 
 async function submitPayment() {
-    if (!paymentElements) return;
     const btn = document.getElementById('pay-btn');
+
+    // Free order — already activated by the server, just show success
+    if (!paymentElements) {
+        closePaymentModal();
+        const count = cart.length;
+        cart = [];
+        renderCart();
+        document.getElementById('success-detail').textContent = count > 1
+            ? `${count} packages activated for your players.`
+            : 'Your package is now active and ready to use.';
+        document.getElementById('payment-success').classList.remove('hidden');
+        return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Processing…';
 

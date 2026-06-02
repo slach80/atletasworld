@@ -312,7 +312,6 @@ def create_batch_package_payment_intent(request):
                 remaining -= use_amount
 
     final_amount = max(subtotal - discount_amount - credit_applied, Decimal('0'))
-    amount_cents = max(int(final_amount * 100), 50)
 
     # Metadata for webhook — items grouped by package
     items_meta = json.dumps([
@@ -320,6 +319,47 @@ def create_batch_package_payment_intent(request):
         for li in all_line_items
     ])
     description = ', '.join(description_parts)
+
+    # Free order — 100% discount applied, skip Stripe and activate immediately
+    if final_amount == Decimal('0'):
+        import uuid
+        free_intent_id = f'FREE-{uuid.uuid4().hex[:12]}'
+        Payment.objects.create(
+            client=client,
+            amount=Decimal('0'),
+            stripe_payment_intent_id=free_intent_id,
+            description=f'Packages (free): {description}',
+            status='succeeded',
+        )
+        if discount_code and discount_amount > 0:
+            DiscountCodeUse.objects.create(
+                code=discount_code,
+                client=client,
+                discount_amount=discount_amount,
+                original_amount=subtotal,
+                final_amount=Decimal('0'),
+                status='pending',
+                stripe_payment_intent_id=free_intent_id,
+            )
+        _activate_multi_packages(
+            client.pk, items_meta, free_intent_id,
+            metadata={
+                'discount_code': promo_code_str or '',
+                'discount_amount': str(discount_amount),
+                'credit_applied': str(credit_applied),
+            },
+        )
+        return JsonResponse({
+            'free': True,
+            'amount': '0.00',
+            'original_amount': str(sum(Decimal(li['original_price']) for li in all_line_items)),
+            'subtotal': str(subtotal),
+            'discount_amount': str(discount_amount),
+            'credit_applied': str(credit_applied),
+            'line_items': all_line_items,
+        })
+
+    amount_cents = int(final_amount * 100)
 
     try:
         customer_id = _get_or_create_stripe_customer(client)
