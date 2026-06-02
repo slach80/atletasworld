@@ -2088,8 +2088,15 @@ def field_rental_available_json(request):
 def discount_validate(request):
     """
     AJAX: validate a promo code and return discount details.
+    Rate-limited to 10 req/min per user to prevent code enumeration.
     POST JSON: { code, context ("package"|"session"), amount, target_id (optional) }
     """
+    rl_key = f'discount_validate:{request.user.pk}'
+    rl_count = cache.get(rl_key, 0)
+    if rl_count >= 10:
+        return JsonResponse({'valid': False, 'error': 'Too many requests. Please wait a moment.'}, status=429)
+    cache.set(rl_key, rl_count + 1, timeout=60)
+
     import json
     from decimal import Decimal
 

@@ -12,6 +12,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -65,24 +66,25 @@ def create_package_payment_intent(request, package_id):
         sibling_discount_amount = (subtotal * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
         sibling_discount_found = True
 
-    # --- Promo code ---
+    # --- Promo code (atomic check to prevent race on max_uses_per_client) ---
     promo_code_str  = request.POST.get('promo_code', '').strip().upper()
     discount_code   = None
     discount_amount = Decimal('0.00')
     if promo_code_str and not sibling_discount_found:
         try:
-            dc = DiscountCode.objects.get(code=promo_code_str, is_active=True)
-            ok, _ = dc.is_valid_now()
-            if ok and dc.scope in ('all', 'packages'):
-                if dc.specific_packages.exists() and not dc.specific_packages.filter(pk=package.pk).exists():
-                    pass  # code not valid for this specific package
-                elif dc.min_purchase_amount and subtotal < dc.min_purchase_amount:
-                    pass  # minimum not met
-                else:
-                    client_uses = dc.uses.filter(client=client, status='applied').count()
-                    if client_uses < dc.max_uses_per_client:
-                        discount_amount = dc.compute_discount(subtotal)
-                        discount_code = dc
+            with transaction.atomic():
+                dc = DiscountCode.objects.select_for_update().get(code=promo_code_str, is_active=True)
+                ok, _ = dc.is_valid_now()
+                if ok and dc.scope in ('all', 'packages'):
+                    if dc.specific_packages.exists() and not dc.specific_packages.filter(pk=package.pk).exists():
+                        pass  # code not valid for this specific package
+                    elif dc.min_purchase_amount and subtotal < dc.min_purchase_amount:
+                        pass  # minimum not met
+                    else:
+                        client_uses = dc.uses.filter(client=client, status='applied').count()
+                        if client_uses < dc.max_uses_per_client:
+                            discount_amount = dc.compute_discount(subtotal)
+                            discount_code = dc
         except DiscountCode.DoesNotExist:
             pass
 
@@ -104,7 +106,49 @@ def create_package_payment_intent(request, package_id):
         discount_code   = None                     # don't double-record promo
 
     final_amount = max(subtotal - effective_discount - credit_applied, Decimal('0.00'))
-    amount_cents = max(int(final_amount * 100), 50)  # Stripe minimum $0.50
+
+    # Free order — 100% discount, skip Stripe entirely
+    if final_amount == Decimal('0.00'):
+        import uuid
+        from clients.models import DiscountCodeUse
+        free_intent_id = f'FREE-{uuid.uuid4().hex}'
+        with transaction.atomic():
+            Payment.objects.create(
+                client=client,
+                amount=Decimal('0.00'),
+                stripe_payment_intent_id=free_intent_id,
+                description=f'Package (free): {package.name}',
+                status='succeeded',
+            )
+            if discount_code and effective_discount > 0:
+                DiscountCodeUse.objects.create(
+                    code=discount_code,
+                    client=client,
+                    discount_amount=effective_discount,
+                    original_amount=subtotal,
+                    final_amount=Decimal('0.00'),
+                    status='pending',
+                    stripe_payment_intent_id=free_intent_id,
+                )
+            _activate_package(
+                client.pk, package.pk, free_intent_id,
+                metadata={
+                    'discount_code': promo_code_str or '',
+                    'discount_amount': str(effective_discount),
+                    'credit_applied': str(credit_applied),
+                    'player_id': str(player_id_int or ''),
+                },
+            )
+        return JsonResponse({
+            'free': True,
+            'amount': '0.00',
+            'original_amount': str(subtotal),
+            'discount_amount': str(effective_discount),
+            'credit_applied': str(credit_applied),
+            'package_name': package.name,
+        })
+
+    amount_cents = int(final_amount * 100)
 
     try:
         customer_id = _get_or_create_stripe_customer(client)
@@ -203,7 +247,11 @@ def create_batch_package_payment_intent(request):
     if not settings.STRIPE_SECRET_KEY:
         return JsonResponse({'error': 'Payments not yet configured.'}, status=503)
 
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+
     promo_code_str = (data.get('promo_code') or '').strip().upper()
     apply_credit = data.get('apply_credit', False)
 
@@ -215,6 +263,9 @@ def create_batch_package_payment_intent(request):
         if not package_id or not player_ids:
             return JsonResponse({'error': 'Package and at least one player required.'}, status=400)
         items_input = [{'package_id': package_id, 'player_ids': player_ids}]
+
+    if len(items_input) > 20:
+        return JsonResponse({'error': 'Too many items in cart.'}, status=400)
 
     client, _ = Client.objects.get_or_create(user=request.user)
     s = _stripe()
@@ -278,26 +329,28 @@ def create_batch_package_payment_intent(request):
         return JsonResponse({'error': 'Cart is empty.'}, status=400)
 
     # Promo code (applied to subtotal after sibling discounts)
+    # select_for_update prevents concurrent requests from double-redeeming the same code
     discount_code = None
     discount_amount = Decimal('0')
     if promo_code_str:
         try:
-            dc = DiscountCode.objects.get(code=promo_code_str, is_active=True)
-            ok, _ = dc.is_valid_now()
-            if ok and dc.scope in ('all', 'packages'):
-                # If code is restricted to specific packages, check overlap
-                if dc.specific_packages.exists():
-                    cart_pkg_ids = set(packages_map.keys())
-                    valid_pkg_ids = set(dc.specific_packages.values_list('pk', flat=True))
-                    if not cart_pkg_ids & valid_pkg_ids:
+            with transaction.atomic():
+                dc = DiscountCode.objects.select_for_update().get(code=promo_code_str, is_active=True)
+                ok, _ = dc.is_valid_now()
+                if ok and dc.scope in ('all', 'packages'):
+                    # If code is restricted to specific packages, check overlap
+                    if dc.specific_packages.exists():
+                        cart_pkg_ids = set(packages_map.keys())
+                        valid_pkg_ids = set(dc.specific_packages.values_list('pk', flat=True))
+                        if not cart_pkg_ids & valid_pkg_ids:
+                            dc = None
+                    if dc and dc.min_purchase_amount and subtotal < dc.min_purchase_amount:
                         dc = None
-                if dc and dc.min_purchase_amount and subtotal < dc.min_purchase_amount:
-                    dc = None
-                if dc:
-                    client_uses = dc.uses.filter(client=client, status='applied').count()
-                    if client_uses < dc.max_uses_per_client:
-                        discount_amount = dc.compute_discount(subtotal)
-                        discount_code = dc
+                    if dc:
+                        client_uses = dc.uses.filter(client=client, status='applied').count()
+                        if client_uses < dc.max_uses_per_client:
+                            discount_amount = dc.compute_discount(subtotal)
+                            discount_code = dc
         except DiscountCode.DoesNotExist:
             pass
 
@@ -323,32 +376,33 @@ def create_batch_package_payment_intent(request):
     # Free order — 100% discount applied, skip Stripe and activate immediately
     if final_amount == Decimal('0'):
         import uuid
-        free_intent_id = f'FREE-{uuid.uuid4().hex[:12]}'
-        Payment.objects.create(
-            client=client,
-            amount=Decimal('0'),
-            stripe_payment_intent_id=free_intent_id,
-            description=f'Packages (free): {description}',
-            status='succeeded',
-        )
-        if discount_code and discount_amount > 0:
-            DiscountCodeUse.objects.create(
-                code=discount_code,
+        free_intent_id = f'FREE-{uuid.uuid4().hex}'
+        with transaction.atomic():
+            Payment.objects.create(
                 client=client,
-                discount_amount=discount_amount,
-                original_amount=subtotal,
-                final_amount=Decimal('0'),
-                status='pending',
+                amount=Decimal('0'),
                 stripe_payment_intent_id=free_intent_id,
+                description=f'Packages (free): {description}',
+                status='succeeded',
             )
-        _activate_multi_packages(
-            client.pk, items_meta, free_intent_id,
-            metadata={
-                'discount_code': promo_code_str or '',
-                'discount_amount': str(discount_amount),
-                'credit_applied': str(credit_applied),
-            },
-        )
+            if discount_code and discount_amount > 0:
+                DiscountCodeUse.objects.create(
+                    code=discount_code,
+                    client=client,
+                    discount_amount=discount_amount,
+                    original_amount=subtotal,
+                    final_amount=Decimal('0'),
+                    status='pending',
+                    stripe_payment_intent_id=free_intent_id,
+                )
+            _activate_multi_packages(
+                client.pk, items_meta, free_intent_id,
+                metadata={
+                    'discount_code': promo_code_str or '',
+                    'discount_amount': str(discount_amount),
+                    'credit_applied': str(credit_applied),
+                },
+            )
         return JsonResponse({
             'free': True,
             'amount': '0.00',
