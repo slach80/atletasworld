@@ -16,6 +16,7 @@ from decimal import Decimal
 from .models import SessionType, AvailabilitySlot, Booking
 from coaches.models import Coach, ScheduleBlock
 from clients.models import Client, ClientPackage, Package, Player
+from clients.services import _location_map_url
 from bookings.utils import (
     apply_select_discount,
     get_client_select_membership,
@@ -121,6 +122,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'coach_name': str(slot.coach),
                     'location_id': getattr(slot, 'location_id', None),
                     'location': slot.session_type.location or '',
+                    'location_map_url': _location_map_url(slot.session_type.location or ''),
                     'session_type_id': slot.session_type.id,
                     'session_type_name': slot.session_type.name,
                     'status': slot.status,
@@ -227,6 +229,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     ],
                     'duration': dur,
                     'location': block.location_override or (catalog_types[0].location if catalog_types else ''),
+                    'location_map_url': _location_map_url(block.location_override or (catalog_types[0].location if catalog_types else '')),
                 }
             })
 

@@ -531,6 +531,11 @@ def bookings_list(request):
     ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')
 
     from django.conf import settings as django_settings
+    from clients.services import _booking_location, _location_map_url
+    for b in list(upcoming_bookings) + list(past_bookings):
+        b.effective_location = _booking_location(b)
+        b.effective_location_map_url = _location_map_url(b.effective_location)
+
     context = {
         'client': client,
         'upcoming_bookings': upcoming_bookings,

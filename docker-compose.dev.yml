@@ -1,0 +1,55 @@
+# Dev services only — Django runs locally, these services provide the backing infrastructure.
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   source .env.dev && cd src && python manage.py runserver
+#   pytest --tb=short -q
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: atletasworld_dev
+      POSTGRES_USER: atletasworld
+      POSTGRES_PASSWORD: atletasworld
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atletasworld"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    # Traps all outgoing email — view at http://localhost:8025
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+  stripe-cli:
+    # Forwards Stripe webhooks to your local Django server.
+    # Requires STRIPE_API_KEY set in .env.dev (use your test secret key).
+    # Webhook secret is printed on startup — copy it to STRIPE_WEBHOOK_SECRET in .env.dev
+    image: stripe/stripe-cli:latest
+    command: listen --forward-to host.docker.internal:8000/payments/webhook/
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
+
+volumes:
+  postgres_dev_data:

@@ -123,7 +123,7 @@ def book_redirect_view(request):
         del params['coach']
 
     if request.user.is_authenticated:
-        url = reverse('clients:book')
+        url = reverse('clients:book_v2')
         qs = params.urlencode()
         if qs:
             url = f"{url}?{qs}"
@@ -132,7 +132,7 @@ def book_redirect_view(request):
     # Unauthenticated — show public booking landing with sign-up / login CTA
     from django.shortcuts import render as _render
     qs = params.urlencode()
-    login_url = reverse('account_login') + (f'?next=/portal/book/?{qs}' if qs else f'?next={reverse("clients:book")}')
+    login_url = reverse('account_login') + (f'?next=/portal/book-v2/?{qs}' if qs else f'?next={reverse("clients:book_v2")}')
     signup_url = reverse('account_signup')
     return _render(request, 'book_landing.html', {'login_url': login_url, 'signup_url': signup_url})
 

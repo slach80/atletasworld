@@ -25,6 +25,7 @@ build/
 
 # Environment files
 .env
+.env.dev
 .env.local
 .env.*.local
 

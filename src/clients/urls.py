@@ -31,9 +31,9 @@ urlpatterns = [
     path('bookings/<int:booking_id>/cancel/', views.booking_cancel, name='booking_cancel'),
     path('bookings/<int:booking_id>/reschedule/', views.booking_reschedule, name='booking_reschedule'),
 
-    # Book new sessions
-    path('book/', views.booking_page, name='book'),
-    path('book-v2/', views.booking_page_v2, name='book_v2'),  # New responsive layout
+    # Book new sessions (v1 redirects to v2)
+    path('book/', RedirectView.as_view(pattern_name='clients:book_v2', permanent=False, query_string=True), name='book'),
+    path('book-v2/', views.booking_page_v2, name='book_v2'),
     path('book/reserve/', views.reserve_session, name='reserve_session'),
     path('book/cancel-reservation/', views.cancel_reservation, name='cancel_reservation'),
     path('book/confirm/', views.confirm_booking, name='confirm_booking'),
