@@ -1194,6 +1194,7 @@ def create_batch_booking_payment_intent(request):
 
     data = json.loads(request.body)
     items = data.get('items', [])
+    promo_code_str = data.get('promo_code', '').strip().upper()
     if not items:
         return JsonResponse({'error': 'No items provided.'}, status=400)
 
@@ -1229,6 +1230,31 @@ def create_batch_booking_payment_intent(request):
     if total <= 0:
         return JsonResponse({'error': 'Cannot determine payment amount.'}, status=400)
 
+    # Apply promo code discount (atomic check, sessions scope)
+    from clients.models import DiscountCode, DiscountCodeUse
+    discount_code = None
+    discount_amount = Decimal('0.00')
+    if promo_code_str:
+        try:
+            with transaction.atomic():
+                dc = DiscountCode.objects.select_for_update().get(code=promo_code_str, is_active=True)
+                valid, err = dc.is_valid_now()
+                if not valid:
+                    return JsonResponse({'error': err}, status=400)
+                if dc.scope == 'packages':
+                    return JsonResponse({'error': 'This code is only valid for package purchases.'}, status=400)
+                already_used = DiscountCodeUse.objects.filter(
+                    code=dc, client=client, status='applied'
+                ).count()
+                if already_used >= dc.max_uses_per_client:
+                    return JsonResponse({'error': 'You have already used this code.'}, status=400)
+                discount_amount = dc.compute_discount(total)
+                discount_code = dc
+        except DiscountCode.DoesNotExist:
+            return JsonResponse({'error': 'Invalid promo code.'}, status=400)
+
+    final_amount = max(total - discount_amount, Decimal('0.00'))
+
     s = _stripe()
     customer_id = _get_or_create_stripe_customer(client)
 
@@ -1237,20 +1263,35 @@ def create_batch_booking_payment_intent(request):
 
     try:
         pi = s.PaymentIntent.create(
-            amount=int(total * 100),
+            amount=int(final_amount * 100),
             currency='usd',
             customer=customer_id,
             metadata={
                 'type': 'drop_in_booking',
                 'client_id': client.pk,
                 'items': items_json,
+                'promo_code': promo_code_str,
+                'discount_amount': str(discount_amount),
+                'original_amount': str(total),
             },
             description=f"Drop-in: {'; '.join(descriptions)}",
         )
 
+        # Record pending discount use so it can be finalised by webhook
+        if discount_code and discount_amount > 0:
+            DiscountCodeUse.objects.create(
+                code=discount_code,
+                client=client,
+                discount_amount=discount_amount,
+                original_amount=total,
+                final_amount=final_amount,
+                status='pending',
+                stripe_payment_intent_id=pi.id,
+            )
+
         return JsonResponse({
             'client_secret': pi.client_secret,
-            'amount': str(total),
+            'amount': str(final_amount),
         })
     except stripe.error.StripeError as e:
         logger.error('Batch booking payment intent error: %s', e)
@@ -1293,13 +1334,13 @@ def _confirm_booking_paid(booking_id, payment_intent_id, amount):
         logger.warning('_confirm_booking_paid: booking %s not found or already paid', booking_id)
 
 
-def _create_paid_bookings(client_id, items_json, payment_intent_id):
+def _create_paid_bookings(client_id, items_json, payment_intent_id, metadata=None):
     """Create confirmed bookings after successful drop-in payment (no pending state)."""
     import json
     from decimal import Decimal
     from bookings.models import Booking
     from coaches.models import ScheduleBlock
-    from clients.models import Client, Player
+    from clients.models import Client, Player, DiscountCodeUse
 
     try:
         items = json.loads(items_json)
@@ -1308,6 +1349,7 @@ def _create_paid_bookings(client_id, items_json, payment_intent_id):
         logger.error('_create_paid_bookings: invalid data — %s', e)
         return
 
+    created_bookings = []
     for item in items:
         try:
             block = ScheduleBlock.objects.select_related('coach').prefetch_related('catalog_session_types').get(id=item['block_id'])
@@ -1327,6 +1369,7 @@ def _create_paid_bookings(client_id, items_json, payment_intent_id):
                 payment_status='paid',
                 amount_paid=Decimal(item.get('amount', '0')),
             )
+            created_bookings.append(booking)
 
             # Update block availability
             block.current_participants += 1
@@ -1350,3 +1393,15 @@ def _create_paid_bookings(client_id, items_json, payment_intent_id):
 
         except Exception as e:
             logger.exception('_create_paid_bookings: failed to create booking for item %s — %s', item, e)
+
+    # Finalise pending discount code use if one was applied
+    try:
+        DiscountCodeUse.objects.filter(
+            stripe_payment_intent_id=payment_intent_id,
+            status='pending',
+        ).update(
+            status='applied',
+            applied_to_booking=created_bookings[0] if created_bookings else None,
+        )
+    except Exception as e:
+        logger.warning('_create_paid_bookings: could not finalise discount use for %s — %s', payment_intent_id, e)
