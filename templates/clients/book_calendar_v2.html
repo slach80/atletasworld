@@ -803,6 +803,8 @@ function fmtTime(iso){ const t=iso.includes('T')?iso.split('T')[1]:iso; const[h,
 {% if stripe_public_key %}
 let _stripeJs=null, _bookingElements=null;
 let _bookingPromoCode='', _bookingPromoDiscount=0, _bookingItems=[], _bookingSubtotal=0;
+let _bookingApplyCredit=false, _bookingCreditApplied=0;
+const _bookingCreditBalance={{ select_credit_balance|default:0 }};
 
 async function applyBookingPromoCode(){
     const code=(document.getElementById('booking-promo-input').value||'').trim().toUpperCase();
@@ -839,13 +841,25 @@ async function payBookings(items, label, total){
     _bookingSubtotal=parseFloat(total);
     _bookingPromoCode='';
     _bookingPromoDiscount=0;
+    _bookingApplyCredit=false;
+    _bookingCreditApplied=0;
     document.getElementById('booking-promo-input').value='';
     const promoResult=document.getElementById('booking-promo-result');
     promoResult.textContent='';promoResult.classList.add('hidden');
+    // Reset credit checkbox
+    const creditCb=document.getElementById('booking-credit-cb');
+    if(creditCb) creditCb.checked=false;
+    const creditRow=document.getElementById('booking-credit-row');
+    if(creditRow) creditRow.classList.toggle('hidden', _bookingCreditBalance<=0);
     document.getElementById('booking-pay-label').innerText=label;
     document.getElementById('booking-pay-total').textContent=`$${total}`;
     document.getElementById('booking-pay-modal').classList.remove('hidden');
     await initBookingPaymentElements(items);
+}
+
+function toggleBookingCredit(){
+    _bookingApplyCredit=document.getElementById('booking-credit-cb').checked;
+    initBookingPaymentElements(_bookingItems);
 }
 
 async function initBookingPaymentElements(items){
@@ -859,12 +873,26 @@ async function initBookingPaymentElements(items){
         const res=await fetch('/payments/bookings/pay/',{
             method:'POST',
             headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
-            body:JSON.stringify({items:items,promo_code:_bookingPromoCode||''})
+            body:JSON.stringify({items:items,promo_code:_bookingPromoCode||'',apply_credit:_bookingApplyCredit})
         });
         const data=await res.json();
         if(!res.ok){showBookingPayError(data.error||'Could not initialize payment.');return;}
 
-        document.getElementById('booking-pay-total').textContent=`$${parseFloat(data.amount).toFixed(2)}`;
+        const amt=parseFloat(data.amount).toFixed(2);
+        _bookingCreditApplied=parseFloat(data.credit_applied||0);
+        document.getElementById('booking-pay-total').textContent=`$${amt}`;
+
+        // Free order — no card needed
+        if(data.free){
+            document.getElementById('booking-pay-loading').classList.add('hidden');
+            document.getElementById('booking-pay-element').classList.add('hidden');
+            const btn=document.getElementById('booking-pay-btn');
+            btn.textContent='Confirm Free Booking';
+            btn.onclick=confirmFreeBooking;
+            btn.classList.remove('hidden');
+            return;
+        }
+
         _bookingElements=_stripeJs.elements({
             clientSecret:data.client_secret,
             appearance:{theme:'stripe',variables:{colorPrimary:'#eab308',borderRadius:'12px'}}
@@ -872,10 +900,28 @@ async function initBookingPaymentElements(items){
         _bookingElements.create('payment',{layout:'tabs'}).mount('#booking-pay-element');
         document.getElementById('booking-pay-loading').classList.add('hidden');
         document.getElementById('booking-pay-element').classList.remove('hidden');
-        document.getElementById('booking-pay-btn').classList.remove('hidden');
+        const btn=document.getElementById('booking-pay-btn');
+        btn.textContent='Pay Now';
+        btn.onclick=submitBookingPayment;
+        btn.classList.remove('hidden');
     }catch(e){
         showBookingPayError('Network error — please try again.');
     }
+}
+
+function confirmFreeBooking(){
+    // Booking already created server-side; just show success
+    cart=[];
+    localStorage.removeItem('bookingCart');
+    updateCartBadge();
+    closeBookingPayModal();
+    const successEl=document.getElementById('success-overlay');
+    const detailsEl=document.getElementById('success-details');
+    if(successEl){
+        if(detailsEl) detailsEl.innerHTML='<p class="text-green-700 font-bold">Session confirmed — no charge (credit applied)!</p>';
+        successEl.classList.remove('hidden');
+    }
+    setTimeout(()=>location.reload(),2000);
 }
 
 async function submitBookingPayment(){
@@ -939,6 +985,16 @@ function showBookingPayError(msg){
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold mb-1">Complete Payment</h2>
         <p id="booking-pay-label" class="text-gray-600 text-sm mb-2 whitespace-pre-line"></p>
+        <!-- APC Select credit -->
+        {% if select_credit_balance > 0 %}
+        <div id="booking-credit-row" class="mb-3 flex items-center gap-3 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <input type="checkbox" id="booking-credit-cb" onchange="toggleBookingCredit()"
+                   class="w-4 h-4 rounded accent-yellow-500">
+            <label for="booking-credit-cb" class="text-sm text-gray-800 cursor-pointer">
+                Apply <strong>${{ select_credit_balance|floatformat:2 }}</strong> APC Select credit
+            </label>
+        </div>
+        {% endif %}
         <!-- Promo code -->
         <div class="mb-3">
             <div class="flex gap-2">

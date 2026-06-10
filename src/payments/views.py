@@ -640,6 +640,7 @@ def _handle_payment_succeeded(intent):
             client_id=metadata.get('client_id'),
             items_json=metadata.get('items', '[]'),
             payment_intent_id=intent['id'],
+            metadata=metadata,
         )
 
     elif metadata.get('booking_ids'):
@@ -857,15 +858,16 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
     # APC Select: auto-grant 6×$40 monthly credits (staggered, one per month)
     if package.package_type == 'select':
         from clients.models import ClientCredit
+        from datetime import date
+        year_end = date(timezone.localdate().year, 12, 31)
         for month in range(1, 7):
-            credit_date = timezone.localdate() + timedelta(weeks=4 * month)
             ClientCredit.objects.create(
                 client=client,
                 amount=Decimal('40.00'),
                 credit_type='select_monthly',
                 source_package=cp,
-                expires_at=credit_date + timedelta(weeks=4),
-                notes=f'APC Select — Month {month} training credit ($40 toward any APC Training package)',
+                expires_at=year_end,
+                notes=f'APC Select — Month {month} training credit ($40 toward any APC Training session or package)',
             )
         logger.info('APC Select: 6 monthly credits created for %s', client)
 
@@ -1195,6 +1197,7 @@ def create_batch_booking_payment_intent(request):
     data = json.loads(request.body)
     items = data.get('items', [])
     promo_code_str = data.get('promo_code', '').strip().upper()
+    apply_credit = data.get('apply_credit', False)
     if not items:
         return JsonResponse({'error': 'No items provided.'}, status=400)
 
@@ -1253,7 +1256,56 @@ def create_batch_booking_payment_intent(request):
         except DiscountCode.DoesNotExist:
             return JsonResponse({'error': 'Invalid promo code.'}, status=400)
 
-    final_amount = max(total - discount_amount, Decimal('0.00'))
+    # APC Select credit
+    credit_applied = Decimal('0.00')
+    if apply_credit:
+        remaining = total - discount_amount
+        for credit in client.credits.filter(status='available').order_by('expires_at'):
+            if credit.is_usable and remaining > 0:
+                use_amount = min(credit.amount, remaining)
+                credit_applied += use_amount
+                remaining -= use_amount
+
+    final_amount = max(total - discount_amount - credit_applied, Decimal('0.00'))
+
+    # Free order — full credit/discount cover, skip Stripe entirely
+    if final_amount == Decimal('0.00'):
+        import uuid
+        free_intent_id = f'FREE-{uuid.uuid4().hex}'
+        with transaction.atomic():
+            Payment.objects.create(
+                client=client,
+                amount=Decimal('0.00'),
+                stripe_payment_intent_id=free_intent_id,
+                description=f"Drop-in (free): {'; '.join(descriptions)}",
+                status='succeeded',
+            )
+            if discount_code and discount_amount > 0:
+                DiscountCodeUse.objects.create(
+                    code=discount_code,
+                    client=client,
+                    discount_amount=discount_amount,
+                    original_amount=total,
+                    final_amount=Decimal('0.00'),
+                    status='pending',
+                    stripe_payment_intent_id=free_intent_id,
+                )
+            _create_paid_bookings(
+                client_id=client.pk,
+                items_json=json.dumps(validated),
+                payment_intent_id=free_intent_id,
+                metadata={
+                    'credit_applied': str(credit_applied),
+                    'discount_amount': str(discount_amount),
+                },
+            )
+        return JsonResponse({
+            'free': True,
+            'amount': '0.00',
+            'original_amount': str(total),
+            'discount_amount': str(discount_amount),
+            'credit_applied': str(credit_applied),
+        })
 
     s = _stripe()
     customer_id = _get_or_create_stripe_customer(client)
@@ -1273,6 +1325,7 @@ def create_batch_booking_payment_intent(request):
                 'promo_code': promo_code_str,
                 'discount_amount': str(discount_amount),
                 'original_amount': str(total),
+                'credit_applied': str(credit_applied),
             },
             description=f"Drop-in: {'; '.join(descriptions)}",
         )
@@ -1292,6 +1345,7 @@ def create_batch_booking_payment_intent(request):
         return JsonResponse({
             'client_secret': pi.client_secret,
             'amount': str(final_amount),
+            'credit_applied': str(credit_applied),
         })
     except stripe.error.StripeError as e:
         logger.error('Batch booking payment intent error: %s', e)
@@ -1405,3 +1459,20 @@ def _create_paid_bookings(client_id, items_json, payment_intent_id, metadata=Non
         )
     except Exception as e:
         logger.warning('_create_paid_bookings: could not finalise discount use for %s — %s', payment_intent_id, e)
+
+    # Finalise APC Select credits that were applied during checkout
+    if metadata:
+        credit_applied_str = metadata.get('credit_applied', '0')
+        try:
+            remaining = Decimal(credit_applied_str)
+        except Exception:
+            remaining = Decimal('0')
+        if remaining > 0:
+            from clients.models import ClientCredit
+            for credit in client.credits.filter(status='available').order_by('expires_at'):
+                if credit.is_usable and remaining > 0:
+                    use_amount = min(credit.amount, remaining)
+                    credit.status = 'applied'
+                    credit.applied_at = timezone.now()
+                    credit.save(update_fields=['status', 'applied_at'])
+                    remaining -= use_amount

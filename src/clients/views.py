@@ -1026,7 +1026,7 @@ def booking_page(request):
         status='available'
     ).filter(
         Q(expires_at__isnull=True) | Q(expires_at__gte=today)
-    ).aggregate(total=Sum('amount'))['total'] or 0 if has_select_membership else 0
+    ).aggregate(total=Sum('amount'))['total'] or 0
 
     # Get favorite coach IDs for template
     favorite_coach_ids = list(booking_prefs.favorite_coaches.values_list('id', flat=True))
