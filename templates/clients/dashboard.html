@@ -203,6 +203,43 @@
                     {% endif %}
                 </div>
 
+                <!-- APC Select Member Card -->
+                {% if has_select_membership %}
+                <div class="rounded-2xl mb-4 overflow-hidden border-2 border-primary bg-gradient-to-br from-gray-900 to-primary">
+                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded mb-1.5">Active Membership</span>
+                            <h2 class="text-xl font-black text-white uppercase tracking-tight">APC Select</h2>
+                            {% if select_pkg.expiry_date %}
+                            <p class="text-gray-400 text-xs mt-0.5">Expires {{ select_pkg.expiry_date|date:"M j, Y" }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="bg-white/10 border border-white/20 rounded-xl px-5 py-3 text-center shrink-0">
+                            <p class="text-xs text-gray-400 uppercase tracking-widest">Credit Balance</p>
+                            <p class="text-3xl font-black text-secondary">${{ select_credit_balance|floatformat:2 }}</p>
+                            <p class="text-xs text-gray-400">expires Dec 31</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/5 border-t border-white/10 px-6 py-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Your Member Discounts</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                                <span class="text-secondary font-black text-lg leading-none">$40</span>
+                                <span class="text-white text-xs leading-tight">monthly credit<br><span class="text-gray-400">toward any training</span></span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                                <span class="text-secondary font-black text-lg leading-none">$5</span>
+                                <span class="text-white text-xs leading-tight">pickup games<br><span class="text-gray-400">flat rate (auto-applied)</span></span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                                <span class="text-secondary font-black text-lg leading-none">10%</span>
+                                <span class="text-white text-xs leading-tight">off clinics &amp; camps<br><span class="text-gray-400">auto-applied at checkout</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Active Packages -->
                 <div class="bg-white rounded-xl shadow-md p-6">
                     <div class="flex justify-between items-center mb-6">

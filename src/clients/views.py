@@ -99,6 +99,16 @@ def dashboard(request):
         b.effective_location = _booking_location(b)
         b.effective_location_map_url = _location_map_url(b.effective_location)
 
+    # APC Select membership
+    from django.db.models import Q, Sum
+    select_pkg = active_packages.filter(package__package_type='select').select_related('package').first()
+    has_select_membership = select_pkg is not None
+    select_credit_balance = client.credits.filter(
+        status='available'
+    ).filter(
+        Q(expires_at__isnull=True) | Q(expires_at__gte=today)
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
     context = {
         'client': client,
         'players': players,
@@ -110,6 +120,9 @@ def dashboard(request):
         'sessions_completed_total': sessions_completed_total,
         'next_booking_soon': next_booking_soon,
         'expiring_soon': expiring_soon,
+        'has_select_membership': has_select_membership,
+        'select_credit_balance': select_credit_balance,
+        'select_pkg': select_pkg,
     }
     return render(request, 'clients/dashboard.html', context)
 
