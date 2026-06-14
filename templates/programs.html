@@ -118,7 +118,7 @@
                 <div class="text-4xl mb-3">🏃</div>
                 <p class="text-2xl font-black text-gray-900 group-hover:text-secondary">U11 – U13</p>
                 <p class="text-xs text-gray-500 group-hover:text-gray-300 mt-1 uppercase tracking-wide">Ages 10–13</p>
-                <p class="text-sm text-gray-600 group-hover:text-gray-400 mt-3">Serie A Class · Summer Camp · Select Tryouts</p>
+                <p class="text-sm text-gray-600 group-hover:text-gray-400 mt-3">Serie A Class · Summer Camp · APC Select</p>
                 <span class="inline-block mt-4 text-xs font-bold text-secondary opacity-0 group-hover:opacity-100 transition uppercase tracking-wide">See Programs →</span>
             </a>
             <a href="#select" class="group bg-gray-50 hover:bg-primary border-2 border-gray-200 hover:border-secondary rounded-2xl p-6 text-center transition card-hover">
@@ -180,8 +180,8 @@
                 A high-performance supplemental program built for serious youth players. Three elite teams training and competing year-round — without replacing your club commitments.
             </p>
             <div class="flex flex-col sm:flex-row gap-4">
-                <a href="#tryouts" class="bg-secondary text-gray-900 px-8 py-4 rounded-full text-lg font-black hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl uppercase tracking-wide">
-                    Register for Tryouts →
+                <a href="#details" class="bg-secondary text-gray-900 px-8 py-4 rounded-full text-lg font-black hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl uppercase tracking-wide">
+                    Apply for APC Select →
                 </a>
                 <a href="#details" class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-gray-900 transition">
                     Program Details
@@ -315,7 +315,7 @@
                     </div>
                     <p class="text-gray-300 mb-4">6-month commitment · Includes playing and training kits</p>
                     <div class="border-t border-gray-700 pt-4">
-                        <p class="text-secondary font-bold text-lg">Tryouts are FREE — No fee to attend.</p>
+                        <p class="text-secondary font-bold text-lg">Inquire below to join the next cohort.</p>
                     </div>
                 </div>
             </div>
@@ -324,93 +324,6 @@
     </div>
 </section>
 
-<!-- Tryout Schedule -->
-<section id="tryouts" class="py-20 bg-primary text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-14">
-            <span class="text-secondary font-bold uppercase tracking-widest text-sm">Coming Up</span>
-            <h2 class="text-4xl md:text-5xl font-black mt-2 uppercase">APC Select Tryout Schedule</h2>
-            <p class="text-secondary font-bold mt-2">Overland Park, KS — Free to Attend</p>
-            <p class="text-gray-400 mt-2 text-lg">No registration fee — just show up and play.</p>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
-            {% for session in tryout_sessions %}
-            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-secondary transition flex flex-col">
-                <div class="flex items-center space-x-4 mb-4">
-                    <div class="bg-secondary text-gray-900 rounded-xl px-4 py-2 text-center shrink-0">
-                        <div class="text-xs font-bold uppercase">May</div>
-                        <div class="text-3xl font-black leading-none">{{ session.day_num }}</div>
-                    </div>
-                    <div>
-                        <p class="text-white font-bold text-lg">{{ session.label }}</p>
-                        <a href="https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9" target="_blank" rel="noopener noreferrer" class="text-gray-400 text-sm hover:text-secondary transition">📍 {{ session.location }}</a>
-                    </div>
-                </div>
-                <div class="space-y-2 text-sm flex-1">
-                    {% for slot in session.slots %}
-                    {% if slot.spots_remaining == 0 %}
-                    <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-gray-700/40 opacity-60 cursor-not-allowed">
-                        <div class="flex items-center gap-2 text-gray-400">
-                            <span>{{ slot.age_label }}</span>
-                            <span class="text-gray-600">·</span>
-                            <span class="font-semibold">{{ slot.time_str }}</span>
-                        </div>
-                        <span class="px-2 py-0.5 bg-red-900/60 text-red-300 text-xs rounded-full font-semibold">Full</span>
-                    </div>
-                    {% else %}
-                    <a href="{{ slot.book_url }}"
-                       class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-gray-700/40 hover:bg-secondary/20 hover:border-secondary border border-transparent transition group">
-                        <div class="flex items-center gap-2 text-gray-300 group-hover:text-white transition">
-                            <span>{{ slot.age_label }}</span>
-                            <span class="text-gray-600">·</span>
-                            <span class="font-semibold">{{ slot.time_str }}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            {% if slot.spots_remaining is not None %}
-                                {% if slot.spots_remaining <= 5 %}
-                                <span class="px-2 py-0.5 bg-orange-900/60 text-orange-300 text-xs rounded-full font-semibold">⚡ {{ slot.spots_remaining }} left</span>
-                                {% else %}
-                                <span class="px-2 py-0.5 bg-gray-600 text-gray-300 text-xs rounded-full">{{ slot.registered }} / {{ slot.max_participants }} registered</span>
-                                {% endif %}
-                            {% endif %}
-                            <svg class="w-4 h-4 text-secondary opacity-0 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </div>
-                    </a>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-                {% with session.slots|first as first_slot %}
-                {% if first_slot.spots_remaining != 0 %}
-                <a href="{{ first_slot.book_url }}"
-                   class="mt-4 block text-center py-2 bg-secondary text-gray-900 rounded-xl text-sm font-black hover:bg-[#b8e000] transition">
-                    Register →
-                </a>
-                {% else %}
-                <div class="mt-4 block text-center py-2 bg-gray-700 text-gray-500 rounded-xl text-sm font-semibold cursor-not-allowed">
-                    Session Full
-                </div>
-                {% endif %}
-                {% endwith %}
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="text-center">
-            <p class="text-gray-300 mb-6 text-lg">Register under <strong class="text-white">"APC Select Tryout"</strong> on our website.</p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'book' %}" class="bg-secondary text-gray-900 px-10 py-4 rounded-full text-lg font-black hover:bg-[#b8e000] transition transform hover:scale-105 shadow-xl uppercase tracking-wide">
-                    Register Now
-                </a>
-                <a href="mailto:info@atletasperformancecenter.com" class="border-2 border-gray-600 text-gray-300 px-10 py-4 rounded-full text-lg font-semibold hover:border-secondary hover:text-secondary transition">
-                    Questions? Email Us
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
 
 </div><!-- end #select wrapper -->
 
@@ -614,36 +527,6 @@
     </div>
 </section>
 
-<!-- Testimonials — replace placeholder quotes with real ones from client -->
-<section class="py-14 bg-gray-50 border-t border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-10">
-            <span class="bg-primary text-secondary text-xs font-black uppercase tracking-widest px-3 py-1 rounded inline-block mb-3">Parent Reviews</span>
-            <h2 class="text-3xl font-black text-gray-900 uppercase">
-                What Kansas City Families Are Saying
-            </h2>
-            <p class="text-gray-500 mt-2">Real feedback from APC families across Overland Park and the KC metro.</p>
-        </div>
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                <div class="text-secondary text-xl mb-4">★★★★★</div>
-                <p class="text-gray-700 italic leading-relaxed mb-5">"My son has improved more in 3 months at APC than in two years of club soccer alone. The coaches see each player as an individual."</p>
-                <p class="text-sm font-bold text-gray-900">— Parent of U14 player, Overland Park</p>
-            </div>
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                <div class="text-secondary text-xl mb-4">★★★★★</div>
-                <p class="text-gray-700 italic leading-relaxed mb-5">"The Serie A Sunday class is unlike anything in Kansas City. My daughter went from bench player to starter in her club team within one season."</p>
-                <p class="text-sm font-bold text-gray-900">— Parent of U16 player, Leawood</p>
-            </div>
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                <div class="text-secondary text-xl mb-4">★★★★★</div>
-                <p class="text-gray-700 italic leading-relaxed mb-5">"Best summer soccer camp in the KC area. The coaching staff is professional, the facility is great, and my kids can't wait to come back next year."</p>
-                <p class="text-sm font-bold text-gray-900">— Parent of U10 &amp; U13 players, Shawnee</p>
-            </div>
-        </div>
-        <p class="text-center text-xs text-gray-400 mt-6">* Placeholder testimonials — replace with real client quotes</p>
-    </div>
-</section>
 
 <!-- Bottom CTA -->
 <section class="py-20 bg-primary text-white">
@@ -664,7 +547,7 @@
             </a>
         </div>
         <div class="mt-8 flex flex-col sm:flex-row justify-center gap-6 text-sm text-gray-500">
-            <span>No tryout fee for APC Select</span>
+            <span>APC Select now enrolling</span>
             <span class="hidden sm:inline text-gray-700">·</span>
             <span>Sessions as low as $40 / class</span>
             <span class="hidden sm:inline text-gray-700">·</span>

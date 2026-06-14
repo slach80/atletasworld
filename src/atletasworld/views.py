@@ -7,7 +7,7 @@ from django.db.models import Count, Q, Prefetch
 from clients.models import Package
 from bookings.models import SessionType
 from coaches.models import ScheduleBlock
-from atletasworld.utils import fmt_times as _fmt_times, tryout_label as _tryout_label
+from atletasworld.utils import fmt_times as _fmt_times
 
 
 def apple_pay_verification(request):
@@ -99,63 +99,7 @@ def adi_view(request):
 
 
 def programs_view(request):
-    """Special Projects & Events page — APC Select with live tryout spot counts."""
-    import datetime
-
-    TRYOUT_SESSIONS = [
-        # (date, location, slots, is_outdoor)
-        (datetime.date(2026, 5, 21), 'Atletas Performance Center',
-         [('2016s', '6:00 PM', '18:00'), ('2015s', '7:00 PM', '19:00'), ('2014s', '8:00 PM', '20:00')], False),
-        (datetime.date(2026, 5, 22), 'Atletas Performance Center',
-         [('2016s', '7:00 PM', '19:00'), ('2015s', '8:00 PM', '20:00'), ('2014s', '9:00 PM', '21:00')], False),
-        (datetime.date(2026, 5, 23), 'Hocker Grove Middle School',
-         [('All Ages', '9:00 AM – 11:00 AM', '09:00')], True),
-        (datetime.date(2026, 5, 24), 'Indian Woods Middle School',
-         [('All Ages', '9:00 AM – 11:00 AM', '09:00')], True),
-    ]
-
-    # Build a map: (date, start_time) -> {spots_remaining, max_participants, session_type_id}
-    tryout_blocks = ScheduleBlock.objects.filter(
-        date__in=[s[0] for s in TRYOUT_SESSIONS],
-        status='available',
-    ).prefetch_related('catalog_session_types')
-
-    block_map = {}
-    for b in tryout_blocks:
-        cat = list(b.catalog_session_types.all())
-        block_map[(b.date, b.start_time.strftime('%H:%M'))] = {
-            'spots_remaining': b.spots_remaining,
-            'max_participants': b.max_participants,
-            'session_type_id': cat[0].id if cat else None,
-        }
-
-    # Enrich TRYOUT_SESSIONS with spot data
-    sessions_enriched = []
-    for date, location, slots, is_outdoor in TRYOUT_SESSIONS:
-        slots_enriched = []
-        for age_label, time_str, time_24 in slots:
-            bdata = block_map.get((date, time_24), {})
-            st_id = bdata.get('session_type_id')
-            spots_remaining = bdata.get('spots_remaining')
-            max_participants = bdata.get('max_participants')
-            registered = (max_participants - spots_remaining) if (spots_remaining is not None and max_participants) else None
-            slots_enriched.append({
-                'age_label': age_label,
-                'time_str': time_str,
-                'spots_remaining': spots_remaining,
-                'max_participants': max_participants,
-                'registered': registered,
-                'book_url': f"/book/?st={st_id}" if st_id else "/book/",
-            })
-        sessions_enriched.append({
-            'date': date,
-            'label': _tryout_label(date),
-            'day_num': date.day,
-            'location': location,
-            'slots': slots_enriched,
-            'is_outdoor': is_outdoor,
-        })
-
+    """Special Projects & Events page — APC Select, Serie A, Camps."""
     # Serie A session type IDs for direct booking links
     serie_a = {}
     for st in SessionType.objects.filter(name__icontains='Serie A Elite Scouts'):
@@ -165,6 +109,5 @@ def programs_view(request):
             serie_a['u19_id'] = st.id
 
     return render(request, 'programs.html', {
-        'tryout_sessions': sessions_enriched,
         'serie_a': serie_a,
     })
