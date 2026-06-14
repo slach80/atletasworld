@@ -490,37 +490,55 @@
                 <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight text-gray-900 mb-4">
                     Kansas City Youth<br>Soccer Tournament
                 </h2>
-                <p class="text-gray-500 font-semibold text-sm uppercase tracking-widest mb-4">APC 4v4 Format · Overland Park · Community Event 2026</p>
+                <p class="text-gray-500 font-semibold text-sm uppercase tracking-widest mb-4">FIFA Street Format &nbsp;·&nbsp; Overland Park &nbsp;·&nbsp; June 22–26</p>
                 <p class="text-gray-600 text-lg leading-relaxed mb-6">
-                    Compete on the pitch. APC's 4v4 on-field tournament brings our community together for a fun, competitive day of small-sided soccer — open to players, parents, and fans.
+                    8 national teams. 3 group-stage matchdays. Single-elimination knockout bracket on June 26 — quarterfinals through the final all in one night.
                 </p>
                 <div class="space-y-3 mb-8 text-gray-700">
                     <div class="flex items-center gap-3">
                         <span class="text-xl">📅</span>
-                        <span>4v4 small-sided format &mdash; date coming soon</span>
+                        <span>June 22, 23, 24 &amp; 26 &nbsp;·&nbsp; Games start 7 PM nightly</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="text-xl">📍</span>
-                        <a href="https://www.google.com/maps/search/?api=1&query=Atletas+Performance+Center" target="_blank" rel="noopener" class="hover:text-secondary transition">Atletas Performance Center</a>
+                        <span class="text-xl">👕</span>
+                        <span>FIFA Street jerseys — pickup June 22 at 6:30 PM</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-xl">🏆</span>
-                        <span>Prizes for top finishers</span>
+                        <span>Final: June 26 at 11:00 PM</span>
                     </div>
                 </div>
-                <a href="mailto:info@atletasperformancecenter.com?subject=APC%204x4%20FIFA%20Tournament%20%E2%80%94%20Notify%20Me"
+                <a href="{% url 'tournament' %}"
                    class="inline-block bg-primary text-secondary px-8 py-4 rounded-full font-black uppercase tracking-wide hover:bg-gray-800 transition">
-                    Get Notified →
+                    Full Schedule &amp; Bracket →
                 </a>
             </div>
 
-            <div class="bg-gray-50 rounded-3xl p-10 border border-gray-100 text-center">
-                <div class="text-8xl mb-6">⚽</div>
-                <h3 class="text-2xl font-black text-gray-900 uppercase mb-3">Coming Soon</h3>
-                <p class="text-gray-500 leading-relaxed">Details on bracket format, registration, and prizes will be announced shortly. Email us to be added to the notification list.</p>
-                <div class="mt-8 p-4 bg-primary rounded-xl">
-                    <p class="text-secondary font-bold">Stay tuned — APC 4x4 FIFA Tournament 2026</p>
+            <div class="bg-gray-50 rounded-3xl p-8 border border-gray-100">
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Groups</p>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-2">Group A</p>
+                        <ul class="space-y-1 text-sm font-semibold text-gray-800">
+                            <li>🇮🇹 Italy</li>
+                            <li>🇦🇷 Argentina</li>
+                            <li>🇫🇷 France</li>
+                            <li>🇩🇪 Germany</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-2">Group B</p>
+                        <ul class="space-y-1 text-sm font-semibold text-gray-800">
+                            <li>🇺🇸 USA</li>
+                            <li>🇧🇷 Brazil</li>
+                            <li>🇨🇴 Colombia</li>
+                            <li>🇭🇳 Honduras</li>
+                        </ul>
+                    </div>
                 </div>
+                <a href="{% url 'tournament' %}" class="block text-center py-3 bg-primary text-secondary rounded-xl text-sm font-black uppercase tracking-wide hover:bg-gray-800 transition">
+                    View Full Bracket →
+                </a>
             </div>
 
         </div>

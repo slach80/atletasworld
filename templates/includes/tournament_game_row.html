@@ -1,0 +1,12 @@
+<div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 last:border-0">
+    <span class="text-gray-400 text-xs font-bold w-16 shrink-0">{{ time }}</span>
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+        <div class="team-flag flag-{{ home_flag }}"></div>
+        <span class="font-bold text-gray-800 truncate">{{ home }}</span>
+    </div>
+    <span class="text-xs font-black text-gray-400 shrink-0">vs</span>
+    <div class="flex items-center gap-2 flex-1 min-w-0 justify-end">
+        <span class="font-bold text-gray-800 truncate text-right">{{ away }}</span>
+        <div class="team-flag flag-{{ away_flag }}"></div>
+    </div>
+</div>

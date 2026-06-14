@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-touch-icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="APC Kansas City Youth Soccer Tournament 2026 — FIFA Street format, June 22–26 at Atletas Performance Center, Overland Park KS. Full schedule, groups, and bracket.">
+    <title>KC Youth Soccer Tournament 2026 — Atletas Performance Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a1a2e',
+                        secondary: '#c8f000',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #f8f8f8; }
+
+        /* Bracket connector lines */
+        .bracket-match { position: relative; }
+        .connector-right::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            width: 1px;
+            height: 100%;
+            background: #d1d5db;
+            transform: translateY(-50%);
+        }
+        .connector-top::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            width: 20px;
+            height: 1px;
+            background: #d1d5db;
+        }
+        .connector-pair-top::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            width: 20px;
+            height: 50%;
+            border-right: 1px solid #d1d5db;
+            border-top: 1px solid #d1d5db;
+        }
+        .connector-pair-bottom::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            bottom: 50%;
+            width: 20px;
+            height: 50%;
+            border-right: 1px solid #d1d5db;
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        /* Jersey flag colors */
+        .flag-italy    { background: linear-gradient(to right, #009246 33%, #fff 33%, #fff 66%, #ce2b37 66%); }
+        .flag-argentina{ background: linear-gradient(to bottom, #74ACDF 33%, #fff 33%, #fff 66%, #74ACDF 66%); }
+        .flag-france   { background: linear-gradient(to right, #002395 33%, #fff 33%, #fff 66%, #ED2939 66%); }
+        .flag-germany  { background: linear-gradient(to bottom, #000 33%, #D00 33%, #D00 66%, #FFCE00 66%); }
+        .flag-usa      { background: linear-gradient(to bottom, #B22234 25%, #fff 25%, #fff 50%, #B22234 50%, #B22234 75%, #fff 75%); }
+        .flag-brazil   { background: #009c3b; }
+        .flag-colombia { background: linear-gradient(to bottom, #FCD116 30%, #003087 30%, #003087 65%, #CE1126 65%); }
+        .flag-honduras { background: linear-gradient(to bottom, #0073CF 33%, #fff 33%, #fff 66%, #0073CF 66%); }
+
+        .team-flag {
+            width: 28px;
+            height: 20px;
+            border-radius: 2px;
+            border: 1px solid rgba(0,0,0,0.12);
+            flex-shrink: 0;
+        }
+
+        /* Highlight today's games */
+        .game-today { border-left: 3px solid #c8f000; }
+    </style>
+</head>
+<body class="font-sans text-gray-900">
+
+{% include "includes/public_nav.html" %}
+
+<!-- Hero -->
+<section class="bg-primary text-white py-14 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+        <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-3 py-1 rounded mb-4">Community Event 2026</span>
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tight mb-3">
+            Kansas City Youth<br>Soccer Tournament
+        </h1>
+        <p class="text-gray-300 text-lg mb-2">FIFA Street Format &nbsp;·&nbsp; Overland Park, KS &nbsp;·&nbsp; June 22–26</p>
+        <p class="text-secondary font-bold text-sm uppercase tracking-wide">8 National Teams &nbsp;·&nbsp; 2 Groups &nbsp;·&nbsp; Single Elimination Bracket</p>
+    </div>
+</section>
+
+<!-- Jersey Pickup Banner -->
+<div class="bg-secondary text-gray-900 py-4 px-4">
+    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 text-center sm:text-left">
+        <span class="text-2xl">👕</span>
+        <div>
+            <span class="font-black text-sm uppercase tracking-wide">Jersey Pickup — Monday June 22 · 6:30 PM</span>
+            <span class="hidden sm:inline text-gray-700 mx-2">·</span>
+            <span class="text-sm font-semibold">All participants must arrive 6:30–7:00 PM to collect jersey, hear rules &amp; take group photo</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="max-w-5xl mx-auto px-4 py-10 space-y-12">
+
+    <!-- Groups -->
+    <div>
+        <h2 class="text-2xl font-black uppercase tracking-tight mb-6 text-gray-900">Groups</h2>
+        <div class="grid sm:grid-cols-2 gap-6">
+
+            <!-- Group A -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-primary text-secondary px-5 py-3 font-black uppercase tracking-widest text-sm">Group A</div>
+                <ul class="divide-y divide-gray-100">
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-italy"></div>
+                        <span class="font-bold text-gray-800">Italy</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-argentina"></div>
+                        <span class="font-bold text-gray-800">Argentina</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-france"></div>
+                        <span class="font-bold text-gray-800">France</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-germany"></div>
+                        <span class="font-bold text-gray-800">Germany</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Group B -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-primary text-secondary px-5 py-3 font-black uppercase tracking-widest text-sm">Group B</div>
+                <ul class="divide-y divide-gray-100">
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-usa"></div>
+                        <span class="font-bold text-gray-800">USA</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-brazil"></div>
+                        <span class="font-bold text-gray-800">Brazil</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-colombia"></div>
+                        <span class="font-bold text-gray-800">Colombia</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-5 py-3">
+                        <div class="team-flag flag-honduras"></div>
+                        <span class="font-bold text-gray-800">Honduras</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">You do not need to stay for all games each evening — show up before your game only.</p>
+    </div>
+
+    <!-- Schedule -->
+    <div>
+        <h2 class="text-2xl font-black uppercase tracking-tight mb-6 text-gray-900">Match Schedule</h2>
+        <div class="space-y-6">
+
+            <!-- June 22 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gray-900 text-secondary px-5 py-3 flex items-center justify-between">
+                    <span class="font-black uppercase tracking-wide text-sm">Sunday, June 22</span>
+                    <span class="text-gray-400 text-xs font-semibold">Group Stage — Matchday 1</span>
+                </div>
+                <div class="bg-secondary/10 border-b border-secondary/30 px-5 py-3 flex items-center gap-3">
+                    <span class="text-xl">👕</span>
+                    <div>
+                        <p class="text-sm font-black text-gray-900">6:30 – 7:00 PM &nbsp;·&nbsp; JERSEY PICKUP + GROUP PHOTO</p>
+                        <p class="text-xs text-gray-600">All teams must be present. Rules briefing + team photo with jerseys.</p>
+                    </div>
+                </div>
+                {% include "includes/tournament_game_row.html" with time="7:00 PM" home="Italy" away="Argentina" home_flag="italy" away_flag="argentina" %}
+                {% include "includes/tournament_game_row.html" with time="7:40 PM" home="France" away="Germany" home_flag="france" away_flag="germany" %}
+                {% include "includes/tournament_game_row.html" with time="8:20 PM" home="USA" away="Brazil" home_flag="usa" away_flag="brazil" %}
+                {% include "includes/tournament_game_row.html" with time="9:00 PM" home="Colombia" away="Honduras" home_flag="colombia" away_flag="honduras" %}
+            </div>
+
+            <!-- June 23 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gray-900 text-secondary px-5 py-3 flex items-center justify-between">
+                    <span class="font-black uppercase tracking-wide text-sm">Monday, June 23</span>
+                    <span class="text-gray-400 text-xs font-semibold">Group Stage — Matchday 2</span>
+                </div>
+                {% include "includes/tournament_game_row.html" with time="7:00 PM" home="Germany" away="Argentina" home_flag="germany" away_flag="argentina" %}
+                {% include "includes/tournament_game_row.html" with time="7:40 PM" home="France" away="Italy" home_flag="france" away_flag="italy" %}
+                {% include "includes/tournament_game_row.html" with time="8:20 PM" home="USA" away="Honduras" home_flag="usa" away_flag="honduras" %}
+                {% include "includes/tournament_game_row.html" with time="9:00 PM" home="Brazil" away="Colombia" home_flag="brazil" away_flag="colombia" %}
+            </div>
+
+            <!-- June 24 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gray-900 text-secondary px-5 py-3 flex items-center justify-between">
+                    <span class="font-black uppercase tracking-wide text-sm">Tuesday, June 24</span>
+                    <span class="text-gray-400 text-xs font-semibold">Group Stage — Matchday 3</span>
+                </div>
+                {% include "includes/tournament_game_row.html" with time="7:00 PM" home="Germany" away="Italy" home_flag="germany" away_flag="italy" %}
+                {% include "includes/tournament_game_row.html" with time="7:40 PM" home="France" away="Argentina" home_flag="france" away_flag="argentina" %}
+                {% include "includes/tournament_game_row.html" with time="8:20 PM" home="USA" away="Colombia" home_flag="usa" away_flag="colombia" %}
+                {% include "includes/tournament_game_row.html" with time="9:00 PM" home="Brazil" away="Honduras" home_flag="brazil" away_flag="honduras" %}
+            </div>
+
+            <!-- June 26 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gray-900 text-secondary px-5 py-3 flex items-center justify-between">
+                    <span class="font-black uppercase tracking-wide text-sm">Thursday, June 26</span>
+                    <span class="text-gray-400 text-xs font-semibold">Knockout Stage</span>
+                </div>
+                <div class="px-5 py-3 bg-yellow-50 border-b border-yellow-100">
+                    <p class="text-xs font-bold text-yellow-800 uppercase tracking-wide">Quarterfinals</p>
+                </div>
+                <div class="px-5 py-3 border-b border-gray-100">
+                    <p class="text-sm font-bold text-gray-700">7:00 PM &nbsp;·&nbsp; QF 1 — 1st Group A vs 4th Group B</p>
+                </div>
+                <div class="px-5 py-3 border-b border-gray-100">
+                    <p class="text-sm font-bold text-gray-700">7:40 PM &nbsp;·&nbsp; QF 2 — 1st Group B vs 4th Group A</p>
+                </div>
+                <div class="px-5 py-3 border-b border-gray-100">
+                    <p class="text-sm font-bold text-gray-700">8:20 PM &nbsp;·&nbsp; QF 3 — 2nd Group A vs 3rd Group B</p>
+                </div>
+                <div class="px-5 py-3 border-b border-gray-100">
+                    <p class="text-sm font-bold text-gray-700">9:00 PM &nbsp;·&nbsp; QF 4 — 2nd Group B vs 3rd Group A</p>
+                </div>
+                <div class="px-5 py-3 bg-orange-50 border-b border-orange-100">
+                    <p class="text-xs font-bold text-orange-800 uppercase tracking-wide">Semifinals</p>
+                </div>
+                <div class="px-5 py-3 border-b border-gray-100">
+                    <p class="text-sm font-bold text-gray-700">9:45 PM &nbsp;·&nbsp; Semi 1 — Winner QF1 vs Winner QF3</p>
+                </div>
+                <div class="px-5 py-3 border-b border-gray-100">
+                    <p class="text-sm font-bold text-gray-700">10:20 PM &nbsp;·&nbsp; Semi 2 — Winner QF2 vs Winner QF4</p>
+                </div>
+                <div class="px-5 py-3 bg-secondary/10 border-b border-secondary/30">
+                    <p class="text-xs font-bold text-gray-800 uppercase tracking-wide">Final</p>
+                </div>
+                <div class="px-5 py-4">
+                    <p class="text-base font-black text-gray-900">🏆 11:00 PM &nbsp;·&nbsp; FINAL — Winner Semi 1 vs Winner Semi 2</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bracket -->
+    <div>
+        <h2 class="text-2xl font-black uppercase tracking-tight mb-2 text-gray-900">Tournament Bracket</h2>
+        <p class="text-sm text-gray-500 mb-6">Bracket fills in after group stage concludes (June 24). Seeds shown once standings are final.</p>
+
+        <!-- Mobile: stacked list view -->
+        <div class="sm:hidden space-y-4">
+
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="bg-gray-100 px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-600">Quarterfinals — June 26</div>
+                <div class="divide-y divide-gray-100">
+                    <div class="px-4 py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">7:00 PM · QF 1</p>
+                        <div class="flex justify-between items-center">
+                            <span id="m-qf1-home" class="font-bold text-gray-700">1st Group A</span>
+                            <span class="text-xs text-gray-400 font-bold px-2">vs</span>
+                            <span id="m-qf1-away" class="font-bold text-gray-700">4th Group B</span>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">7:40 PM · QF 2</p>
+                        <div class="flex justify-between items-center">
+                            <span id="m-qf2-home" class="font-bold text-gray-700">1st Group B</span>
+                            <span class="text-xs text-gray-400 font-bold px-2">vs</span>
+                            <span id="m-qf2-away" class="font-bold text-gray-700">4th Group A</span>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">8:20 PM · QF 3</p>
+                        <div class="flex justify-between items-center">
+                            <span id="m-qf3-home" class="font-bold text-gray-700">2nd Group A</span>
+                            <span class="text-xs text-gray-400 font-bold px-2">vs</span>
+                            <span id="m-qf3-away" class="font-bold text-gray-700">3rd Group B</span>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">9:00 PM · QF 4</p>
+                        <div class="flex justify-between items-center">
+                            <span id="m-qf4-home" class="font-bold text-gray-700">2nd Group B</span>
+                            <span class="text-xs text-gray-400 font-bold px-2">vs</span>
+                            <span id="m-qf4-away" class="font-bold text-gray-700">3rd Group A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="bg-gray-100 px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-600">Semifinals — June 26</div>
+                <div class="divide-y divide-gray-100">
+                    <div class="px-4 py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">9:45 PM · Semi 1</p>
+                        <div class="flex justify-between items-center">
+                            <span id="m-sf1-home" class="font-bold text-gray-700">W QF1</span>
+                            <span class="text-xs text-gray-400 font-bold px-2">vs</span>
+                            <span id="m-sf1-away" class="font-bold text-gray-700">W QF3</span>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">10:20 PM · Semi 2</p>
+                        <div class="flex justify-between items-center">
+                            <span id="m-sf2-home" class="font-bold text-gray-700">W QF2</span>
+                            <span class="text-xs text-gray-400 font-bold px-2">vs</span>
+                            <span id="m-sf2-away" class="font-bold text-gray-700">W QF4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-secondary/50 overflow-hidden">
+                <div class="bg-secondary px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-900">Final — June 26 · 11:00 PM</div>
+                <div class="px-4 py-4">
+                    <div class="flex justify-between items-center">
+                        <span id="m-final-home" class="font-black text-gray-800 text-lg">W Semi 1</span>
+                        <span class="text-base font-black text-gray-400 px-3">🏆</span>
+                        <span id="m-final-away" class="font-black text-gray-800 text-lg">W Semi 2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop: visual bracket -->
+        <div class="hidden sm:block overflow-x-auto pb-4">
+            <div class="min-w-[700px]">
+                <div class="flex items-stretch gap-0">
+
+                    <!-- QF column -->
+                    <div class="flex flex-col justify-around gap-3 w-48 pr-5">
+                        <div class="text-xs font-black uppercase text-gray-400 tracking-widest text-center mb-1">Quarterfinals</div>
+
+                        <!-- QF1 -->
+                        <div class="relative connector-pair-top">
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs mb-0.5">
+                                <p class="font-semibold text-gray-400 mb-1">7:00 PM · QF 1</p>
+                                <p id="qf1-home" class="font-bold text-gray-800">1st Group A</p>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                                <p id="qf1-away" class="font-bold text-gray-800">4th Group B</p>
+                            </div>
+                        </div>
+
+                        <!-- QF2 -->
+                        <div class="relative connector-pair-bottom">
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs mb-0.5">
+                                <p class="font-semibold text-gray-400 mb-1">7:40 PM · QF 2</p>
+                                <p id="qf2-home" class="font-bold text-gray-800">1st Group B</p>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                                <p id="qf2-away" class="font-bold text-gray-800">4th Group A</p>
+                            </div>
+                        </div>
+
+                        <!-- QF3 -->
+                        <div class="relative connector-pair-top">
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs mb-0.5">
+                                <p class="font-semibold text-gray-400 mb-1">8:20 PM · QF 3</p>
+                                <p id="qf3-home" class="font-bold text-gray-800">2nd Group A</p>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                                <p id="qf3-away" class="font-bold text-gray-800">3rd Group B</p>
+                            </div>
+                        </div>
+
+                        <!-- QF4 -->
+                        <div class="relative connector-pair-bottom">
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs mb-0.5">
+                                <p class="font-semibold text-gray-400 mb-1">9:00 PM · QF 4</p>
+                                <p id="qf4-home" class="font-bold text-gray-800">2nd Group B</p>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                                <p id="qf4-away" class="font-bold text-gray-800">3rd Group A</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SF column -->
+                    <div class="flex flex-col justify-around gap-3 w-44 px-5">
+                        <div class="text-xs font-black uppercase text-gray-400 tracking-widest text-center mb-1">Semifinals</div>
+
+                        <div class="relative connector-pair-top">
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs mb-0.5">
+                                <p class="font-semibold text-gray-400 mb-1">9:45 PM · Semi 1</p>
+                                <p id="sf1-home" class="font-bold text-gray-700">W QF1</p>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                                <p id="sf1-away" class="font-bold text-gray-700">W QF3</p>
+                            </div>
+                        </div>
+
+                        <div class="relative connector-pair-bottom">
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs mb-0.5">
+                                <p class="font-semibold text-gray-400 mb-1">10:20 PM · Semi 2</p>
+                                <p id="sf2-home" class="font-bold text-gray-700">W QF2</p>
+                            </div>
+                            <div class="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                                <p id="sf2-away" class="font-bold text-gray-700">W QF4</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Final column -->
+                    <div class="flex flex-col justify-center w-44 pl-5">
+                        <div class="text-xs font-black uppercase text-gray-400 tracking-widest text-center mb-3">Final</div>
+                        <div class="bg-primary rounded-2xl border-2 border-secondary p-4 text-center shadow-lg">
+                            <p class="text-secondary text-xs font-bold mb-2">11:00 PM · June 26</p>
+                            <p id="final-home" class="text-white font-black text-sm">W Semi 1</p>
+                            <p class="text-secondary font-black my-1">🏆</p>
+                            <p id="final-away" class="text-white font-black text-sm">W Semi 2</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location + Info -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-black uppercase text-gray-900 mb-4">Venue &amp; Details</h3>
+        <div class="grid sm:grid-cols-2 gap-4 text-sm text-gray-700">
+            <div class="flex items-start gap-3">
+                <span class="text-xl mt-0.5">📍</span>
+                <div>
+                    <p class="font-bold">Atletas Performance Center</p>
+                    <a href="https://www.google.com/maps/search/?api=1&query=Atletas+Performance+Center+Overland+Park+KS" target="_blank" rel="noopener" class="text-blue-600 hover:underline text-xs">Get Directions →</a>
+                </div>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-xl mt-0.5">📅</span>
+                <div>
+                    <p class="font-bold">June 22, 23, 24 &amp; 26</p>
+                    <p class="text-gray-500 text-xs">Group stage Mon–Wed, Knockouts Thu</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-xl mt-0.5">👕</span>
+                <div>
+                    <p class="font-bold">FIFA Street Jerseys</p>
+                    <p class="text-gray-500 text-xs">Every participant receives their team jersey on June 22 at 6:30 PM</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-xl mt-0.5">📸</span>
+                <div>
+                    <p class="font-bold">Group Photo</p>
+                    <p class="text-gray-500 text-xs">All teams photo together in jerseys — arrive 6:30–7:00 PM on June 22</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% include "includes/public_footer.html" %}
+
+</body>
+</html>

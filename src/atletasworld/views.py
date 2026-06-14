@@ -98,6 +98,11 @@ def adi_view(request):
     return HttpResponse('<h1>ADI page not found</h1>', status=404)
 
 
+def tournament_view(request):
+    """Kansas City Youth Soccer Tournament 2026 — schedule, groups, bracket."""
+    return render(request, 'tournament.html')
+
+
 def programs_view(request):
     """Special Projects & Events page — APC Select, Serie A, Camps."""
     # Serie A session type IDs for direct booking links

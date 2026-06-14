@@ -13,7 +13,7 @@ from django.contrib.sitemaps.views import sitemap
 from coaches.views import coach_public_profile
 from .sitemaps import StaticSitemap, CoachProfileSitemap, BlogPostSitemap
 from blog.views import blog_list, blog_detail
-from .views import home_view, about_view, apple_pay_verification, programs_view, adi_view
+from .views import home_view, about_view, apple_pay_verification, programs_view, adi_view, tournament_view
 from clients.views import unsubscribe_landing
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
@@ -260,6 +260,7 @@ urlpatterns = [
     path('book/', book_redirect_view, name='book'),  # Redirects to portal booking
     path('comparison/', TemplateView.as_view(template_name='comparison.html'), name='comparison'),
     path('programs/', programs_view, name='programs'),
+    path('tournament/', tournament_view, name='tournament'),
     path('faq/', TemplateView.as_view(template_name='faq.html'), name='faq'),
     path('blog/', blog_list, name='blog_list'),
     path('blog/<slug:slug>/', blog_detail, name='blog_detail'),
