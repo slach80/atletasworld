@@ -692,6 +692,16 @@ def notification_settings(request):
         prefs.assessment_notifications = request.POST.get('assessment_notifications', 'email')
         prefs.promotional_updates = request.POST.get('promotional_updates', 'none')
         prefs.reminder_hours_before = int(request.POST.get('reminder_hours_before', 24))
+
+        # Master email opt-out (checkbox present == unsubscribe from everything).
+        from .models import EmailSuppression
+        opt_out = request.POST.get('email_opt_out') == 'on'
+        prefs.email_opt_out = opt_out
+        prefs.email_opt_out_at = timezone.now() if opt_out else None
+        if opt_out:
+            EmailSuppression.suppress(request.user.email, reason='portal preferences')
+        else:
+            EmailSuppression.resubscribe(request.user.email)
         prefs.save()
 
         messages.success(request, 'Notification preferences updated!')
@@ -2235,6 +2245,57 @@ def unsubscribe_landing(request, token):
         'prefs': prefs,
         'token': token,
         'reasons': reasons,
+    })
+
+
+def unsubscribe_oneclick(request, token):
+    """One-click, no-questions-asked unsubscribe via a signed email-address token.
+
+    The signed token works for ANY recipient — clients, coaches, or bare contacts —
+    so the link in every email footer immediately stops all future emails. For a
+    matching Client we also flip the master ``email_opt_out`` flag so granular
+    preferences stay in sync. A resubscribe link is offered on the confirmation page.
+    """
+    from django.core import signing
+    from .models import EmailSuppression, UNSUBSCRIBE_SALT
+
+    try:
+        email = signing.loads(token, salt=UNSUBSCRIBE_SALT)
+    except signing.BadSignature:
+        return render(request, 'clients/unsubscribe.html', {'invalid': True})
+
+    resubscribe = request.GET.get('resubscribe') == '1' or request.POST.get('resubscribe') == '1'
+
+    if resubscribe:
+        EmailSuppression.resubscribe(email)
+        client = Client.objects.filter(user__email__iexact=email).first()
+        if client:
+            try:
+                prefs = client.notification_preferences
+                prefs.email_opt_out = False
+                prefs.email_opt_out_at = None
+                prefs.save(update_fields=['email_opt_out', 'email_opt_out_at'])
+            except NotificationPreference.DoesNotExist:
+                pass
+        return render(request, 'clients/unsubscribe.html', {
+            'resubscribed': True,
+            'email': email,
+            'token': token,
+        })
+
+    # No questions asked — suppress immediately.
+    EmailSuppression.suppress(email, reason='one-click email footer')
+    client = Client.objects.filter(user__email__iexact=email).first()
+    if client:
+        prefs, _ = NotificationPreference.objects.get_or_create(client=client)
+        prefs.email_opt_out = True
+        prefs.email_opt_out_at = timezone.now()
+        prefs.save(update_fields=['email_opt_out', 'email_opt_out_at'])
+
+    return render(request, 'clients/unsubscribe.html', {
+        'oneclick_done': True,
+        'email': email,
+        'token': token,
     })
 
 

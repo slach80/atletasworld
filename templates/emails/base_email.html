@@ -165,9 +165,9 @@
 
             <p style="margin-top: 20px;">
                 <a href="{{ site_url }}/portal/notifications/">Manage Notification Preferences</a>
-                {% if unsubscribe_token %}
+                {% if unsubscribe_url or unsubscribe_token %}
                 &nbsp;&middot;&nbsp;
-                <a href="{{ site_url }}/unsubscribe/{{ unsubscribe_token }}/" style="color: #aaaaaa;">Unsubscribe</a>
+                <a href="{% if unsubscribe_url %}{{ unsubscribe_url }}{% else %}{{ site_url }}/unsubscribe/{{ unsubscribe_token }}/{% endif %}" style="color: #aaaaaa;">Unsubscribe</a>
                 {% endif %}
             </p>
 

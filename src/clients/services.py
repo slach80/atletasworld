@@ -83,15 +83,37 @@ class NotificationService:
 
     @staticmethod
     def send_email(to_email, subject, html_content, text_content, context=None, ics_attachment=None):
-        """Send email with HTML and plain text versions, optional .ics attachment."""
+        """Send email with HTML and plain text versions, optional .ics attachment.
+
+        Honors the universal email opt-out: any recipient on the suppression list
+        is silently skipped. Every wrapped email gets a one-click unsubscribe URL
+        injected into its footer automatically.
+        """
+        from .models import EmailSuppression, make_unsubscribe_url
+
+        # Normalize recipients to a list and drop any that have unsubscribed.
+        recipients = [to_email] if isinstance(to_email, str) else list(to_email)
+        allowed = [e for e in recipients if not EmailSuppression.is_suppressed(e)]
+        if not allowed:
+            logger.info(f"Email suppressed (recipient opted out): {recipients} — {subject}")
+            return False, "Recipient unsubscribed"
+
         try:
             # Wrap in base email template if context provided
             if context:
-                full_html = render_to_string('emails/base_email.html', {
+                ctx = {
                     'content': html_content,
                     'subject': subject,
-                    **context
-                })
+                    **context,
+                }
+                # Inject a signed one-click unsubscribe link for the (first) recipient
+                # unless the caller already supplied one.
+                if not ctx.get('unsubscribe_url'):
+                    try:
+                        ctx['unsubscribe_url'] = make_unsubscribe_url(allowed[0])
+                    except Exception:
+                        pass
+                full_html = render_to_string('emails/base_email.html', ctx)
             else:
                 full_html = html_content
 
@@ -99,7 +121,7 @@ class NotificationService:
                 subject=subject,
                 body=text_content,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[to_email] if isinstance(to_email, str) else to_email
+                to=allowed
             )
             msg.attach_alternative(full_html, "text/html")
             if ics_attachment:

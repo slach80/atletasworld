@@ -14,7 +14,7 @@ from coaches.views import coach_public_profile
 from .sitemaps import StaticSitemap, CoachProfileSitemap, BlogPostSitemap
 from blog.views import blog_list, blog_detail
 from .views import home_view, about_view, apple_pay_verification, programs_view, adi_view, tournament_view
-from clients.views import unsubscribe_landing
+from clients.views import unsubscribe_landing, unsubscribe_oneclick
 from .admin_views import (
     owner_dashboard, owner_notifications, owner_send_notification,
     owner_packages, owner_package_add, owner_package_edit, owner_package_delete,
@@ -273,6 +273,7 @@ urlpatterns = [
     path('coach/<slug:slug>/', coach_public_profile, name='coach_public_profile'),
 
     # Email unsubscribe (public, no login required)
+    path('unsubscribe/one-click/<str:token>/', unsubscribe_oneclick, name='email_unsubscribe_oneclick'),
     path('unsubscribe/<str:token>/', unsubscribe_landing, name='email_unsubscribe'),
 
     # Grappelli admin (must be before admin)

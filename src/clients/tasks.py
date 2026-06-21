@@ -209,11 +209,15 @@ def send_booking_reminders(self):
                 prefs = client.notification_preferences
                 hours_before = prefs.reminder_hours_before or 24
                 method = prefs.booking_reminders
+                opted_out = prefs.email_opt_out
             except NotificationPreference.DoesNotExist:
                 hours_before = 24
                 method = 'email'
+                opted_out = False
 
-            if method == 'none':
+            # Master opt-out / suppression list — no email of any kind.
+            from .models import EmailSuppression
+            if opted_out or method == 'none' or EmailSuppression.is_suppressed(client.user.email):
                 continue
 
             # Filter to bookings that are in the reminder window and not yet reminded
@@ -267,6 +271,7 @@ def send_booking_reminders(self):
             else:
                 subject = "⏰ Reminder: Upcoming Training Session"
 
+            from .models import make_unsubscribe_url
             ctx = {
                 'client_name':  client_name,
                 'sessions':     sessions,
@@ -274,6 +279,7 @@ def send_booking_reminders(self):
                 'booking_link': f"{site_url}/portal/bookings/",
                 'site_url':     site_url,
                 'current_year': timezone.now().year,
+                'unsubscribe_url': make_unsubscribe_url(client.user.email, site_url),
             }
 
             html_body = render_to_string('emails/booking_reminder.html', ctx)
@@ -730,6 +736,8 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
         </p>
         <p style="margin-top: 8px;">
             <a href="{site_url}/portal/notifications/" style="color:#aaaaaa;font-size:11px;">Manage Notification Preferences</a>
+            &nbsp;|&nbsp;
+            <a href="__UNSUBSCRIBE_URL__" style="color:#aaaaaa;font-size:11px;">Unsubscribe</a>
         </p>
         <p style="margin-top: 12px; font-size: 11px; color: #555555;">
             &copy; 2026 Atletas Performance Center. All rights reserved.
@@ -742,7 +750,8 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
         body = message + (
             f"\n\n--\nAtletas Performance Center\nHigh Performance & Athletic Development\n"
             f"info@atletasperformancecenter.com\n{site_url}\n"
-            f"Manage preferences: {site_url}/portal/notifications/"
+            f"Manage preferences: {site_url}/portal/notifications/\n"
+            f"Unsubscribe: __UNSUBSCRIBE_URL__"
         )
 
     # Load attachment file data from disk (saved by the view before dispatching to Celery)
@@ -780,6 +789,7 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
         return f"Sent 0, failed {len(recipients)} (SMTP connection failed)"
 
     try:
+        from .models import EmailSuppression, make_unsubscribe_url
         for email_addr in recipients:
             # Skip malformed addresses (commas, spaces, missing domain dot)
             if not re.match(r'^[^@\s,]+@[^@\s,]+\.[^@\s,]+$', email_addr):
@@ -787,10 +797,22 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
                 logger.warning(f"send_bulk_email_task: skipping malformed address: {email_addr!r}")
                 continue
 
+            # Honor the universal opt-out — never email anyone who unsubscribed.
+            if EmailSuppression.is_suppressed(email_addr):
+                logger.info(f"send_bulk_email_task: skipping unsubscribed address: {email_addr!r}")
+                continue
+
+            # Substitute the per-recipient one-click unsubscribe link.
+            try:
+                unsub_url = make_unsubscribe_url(email_addr, site_url)
+            except Exception:
+                unsub_url = f"{site_url}/portal/notifications/"
+            recipient_body = body.replace('__UNSUBSCRIBE_URL__', unsub_url)
+
             try:
                 if inline_image_file or (send_as_html and attachment_files):
                     # HTML email with inline image or HTML + attachments
-                    this_body = body
+                    this_body = recipient_body
                     if inline_image_file:
                         img_name, img_data, img_ctype = inline_image_file
                         img_tag = '<img src="cid:inline_image" style="max-width:100%;height:auto;margin:20px 0"><br><br>'
@@ -809,7 +831,7 @@ def send_bulk_email_task(self, recipients=None, subject='', message='', from_ema
                     for att_name, att_data, att_ctype in attachment_files:
                         email_msg.attach(att_name, att_data, att_ctype)
                 else:
-                    email_msg = EmailMessage(subject=subject, body=body,
+                    email_msg = EmailMessage(subject=subject, body=recipient_body,
                                              from_email=from_email, to=[email_addr],
                                              connection=connection)
                     if send_as_html:

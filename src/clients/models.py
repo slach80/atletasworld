@@ -502,6 +502,63 @@ class UnsubscribeToken(models.Model):
         return timezone.now() < self.expires_at
 
 
+# Salt for signed one-click unsubscribe links. The signed value is just the
+# recipient's email address, so any recipient (client, coach, or bare contact)
+# gets a working unsubscribe link with no DB token to pre-provision.
+UNSUBSCRIBE_SALT = 'atletas.email.unsubscribe'
+
+
+def make_unsubscribe_url(email, site_url=None):
+    """Return an absolute, signed one-click unsubscribe URL for any email address."""
+    from django.core import signing
+    from django.urls import reverse
+    if site_url is None:
+        site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+    token = signing.dumps(email, salt=UNSUBSCRIBE_SALT)
+    return f"{site_url.rstrip('/')}{reverse('email_unsubscribe_oneclick', args=[token])}"
+
+
+class EmailSuppression(models.Model):
+    """Universal email opt-out list keyed by address.
+
+    Covers everyone we email — clients, coaches, and un-registered contacts —
+    so suppression works even for recipients with no Client/NotificationPreference
+    row. The presence of a row (active=True) means: send no further emails.
+    """
+    email = models.EmailField(unique=True, db_index=True)
+    active = models.BooleanField(default=True)
+    reason = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.email} ({'suppressed' if self.active else 'resubscribed'})"
+
+    @classmethod
+    def is_suppressed(cls, email):
+        if not email:
+            return False
+        return cls.objects.filter(email__iexact=email.strip(), active=True).exists()
+
+    @classmethod
+    def suppress(cls, email, reason=''):
+        email = (email or '').strip()
+        if not email:
+            return None
+        obj, _ = cls.objects.update_or_create(
+            email=email,
+            defaults={'active': True, 'reason': reason},
+        )
+        return obj
+
+    @classmethod
+    def resubscribe(cls, email):
+        email = (email or '').strip()
+        if not email:
+            return
+        cls.objects.filter(email__iexact=email).update(active=False)
+
+
 class NotificationPreference(models.Model):
     """Client notification preferences."""
     NOTIFICATION_METHOD_CHOICES = [
@@ -512,6 +569,14 @@ class NotificationPreference(models.Model):
     ]
 
     client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='notification_preferences')
+
+    # Master kill-switch — when True, NO emails of any kind are sent to this client.
+    # Set by the one-click "Unsubscribe" link in every email footer.
+    email_opt_out = models.BooleanField(
+        default=False,
+        help_text="When checked, the client receives no emails at all (one-click unsubscribe).",
+    )
+    email_opt_out_at = models.DateTimeField(null=True, blank=True)
 
     # Notification types
     booking_confirmations = models.CharField(max_length=10, choices=NOTIFICATION_METHOD_CHOICES, default='email')
@@ -588,20 +653,25 @@ class Notification(models.Model):
         from django.template.loader import render_to_string
         import html as _html
         try:
+            to_email = self.client.user.email
+            # Respect the universal opt-out — no email if this address unsubscribed.
+            if EmailSuppression.is_suppressed(to_email):
+                self.status = 'failed'
+                self.save()
+                return
             site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
             # Convert plain message text to simple HTML paragraphs
             body_html = ''.join(
                 f'<p>{_html.escape(line)}</p>' if line.strip() else '<br>'
                 for line in self.message.splitlines()
             )
-            unsub = UnsubscribeToken.get_or_create_for_client(self.client)
             html_content = render_to_string('emails/base_email.html', {
                 'subject':     self.title,
                 'client_name': self.client.user.first_name or self.client.user.username,
                 'content':     body_html,
                 'site_url':    site_url,
                 'current_year': timezone.now().year,
-                'unsubscribe_token': unsub.token,
+                'unsubscribe_url': make_unsubscribe_url(to_email, site_url),
             })
             msg = EmailMultiAlternatives(
                 subject=self.title,

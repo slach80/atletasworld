@@ -141,6 +141,18 @@
                     </div>
                 </div>
 
+                <!-- Master opt-out -->
+                <div class="border-t pt-6">
+                    <label class="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-red-300">
+                        <input type="checkbox" name="email_opt_out" class="mt-1 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                            {% if prefs.email_opt_out %}checked{% endif %}>
+                        <span class="text-sm">
+                            <span class="font-semibold text-gray-800">Unsubscribe from all emails</span>
+                            <span class="block text-gray-500 text-xs mt-0.5">Turn off every email notification, no exceptions. The settings above are ignored while this is checked.</span>
+                        </span>
+                    </label>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 pt-4">
                     <a href="{% url 'clients:dashboard' %}" class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 text-center font-semibold hover:bg-gray-100 hover:border-gray-400 transition-all duration-150">Cancel</a>
                     <button type="submit" class="px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">Save Settings</button>
