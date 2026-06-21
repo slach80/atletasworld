@@ -106,11 +106,15 @@ class NotificationService:
                     'subject': subject,
                     **context,
                 }
+                # Ensure an absolute site_url so logos/links in the base template
+                # resolve in email clients (relative paths break in Gmail, etc.).
+                if not ctx.get('site_url'):
+                    ctx['site_url'] = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
                 # Inject a signed one-click unsubscribe link for the (first) recipient
                 # unless the caller already supplied one.
                 if not ctx.get('unsubscribe_url'):
                     try:
-                        ctx['unsubscribe_url'] = make_unsubscribe_url(allowed[0])
+                        ctx['unsubscribe_url'] = make_unsubscribe_url(allowed[0], ctx['site_url'])
                     except Exception:
                         pass
                 full_html = render_to_string('emails/base_email.html', ctx)
