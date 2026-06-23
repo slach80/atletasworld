@@ -1,12 +1,16 @@
-<div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 last:border-0">
+<div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 last:border-0{% if completed %} bg-gray-50/50{% endif %}">
     <span class="text-gray-400 text-xs font-bold w-16 shrink-0">{{ time }}</span>
     <div class="flex items-center gap-2 flex-1 min-w-0">
         <div class="team-flag flag-{{ home_flag }}"></div>
-        <span class="font-bold text-gray-800 truncate">{{ home }}</span>
+        <span class="font-bold {% if completed and winner == 'home' %}text-gray-900{% elif completed %}text-gray-400{% else %}text-gray-800{% endif %} truncate">{{ home }}</span>
     </div>
+    {% if completed %}
+    <span class="text-sm font-black text-gray-800 shrink-0 tabular-nums">{{ home_score }}–{{ away_score }}</span>
+    {% else %}
     <span class="text-xs font-black text-gray-400 shrink-0">vs</span>
+    {% endif %}
     <div class="flex items-center gap-2 flex-1 min-w-0 justify-end">
-        <span class="font-bold text-gray-800 truncate text-right">{{ away }}</span>
+        <span class="font-bold {% if completed and winner == 'away' %}text-gray-900{% elif completed %}text-gray-400{% else %}text-gray-800{% endif %} truncate text-right">{{ away }}</span>
         <div class="team-flag flag-{{ away_flag }}"></div>
     </div>
 </div>
