@@ -95,6 +95,44 @@ def generate_referral_code(sender, instance, created, **kwargs):
     ReferralCode.objects.create(user=instance, code=code)
 
 
+@receiver(post_save, sender='clients.ClientPackage')
+def seed_select_credits(sender, instance, created, **kwargs):
+    """Seed 6×$40 monthly training credits whenever an APC Select package is activated.
+
+    Runs on every save where status becomes 'active', so it covers admin assignments,
+    manual creation, and any future path that bypasses the Stripe webhook.
+    Guard: skips if the client already has any select_monthly credits from this package
+    so it's safe to call multiple times (e.g. status toggled active → inactive → active).
+    """
+    if instance.status != 'active':
+        return
+    if instance.package.package_type != 'select':
+        return
+
+    from clients.models import ClientCredit
+    from decimal import Decimal
+    import datetime
+
+    already = ClientCredit.objects.filter(
+        client=instance.client,
+        credit_type='select_monthly',
+        source_package=instance,
+    ).exists()
+    if already:
+        return
+
+    year_end = datetime.date(instance.expiry_date.year, 12, 31)
+    for month in range(1, 7):
+        ClientCredit.objects.create(
+            client=instance.client,
+            amount=Decimal('40.00'),
+            credit_type='select_monthly',
+            source_package=instance,
+            expires_at=year_end,
+            notes=f'APC Select — Month {month} training credit ($40 toward any APC Training session or package)',
+        )
+
+
 @receiver(user_signed_up)
 def track_referral_on_signup(sender, request, user, **kwargs):
     """
