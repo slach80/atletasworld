@@ -1776,7 +1776,12 @@ def owner_players(request):
     if session_type_id:
         qs = qs.filter(bookings__session_type_id=session_type_id).distinct()
     if package_id:
-        qs = qs.filter(client__packages__package_id=package_id, client__packages__status='active').distinct()
+        today = timezone.localdate()
+        qs = qs.filter(
+            client__packages__package_id=package_id,
+            client__packages__status='active',
+            client__packages__expiry_date__gte=today,
+        ).distinct()
     if search:
         qs = qs.filter(
             Q(first_name__icontains=search) |
