@@ -598,7 +598,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             # If requires_package=True and no package provided:
             #   - drop_in_price set  → allow as drop-in at that price
             #   - drop_in_price null → block entirely (package required)
-            if not package and _st and _st.requires_package:
+            # Owner/staff/coaches are exempt from package requirements.
+            if not is_exempt and not package and _st and _st.requires_package:
                 has_drop_in = _st.drop_in_price is not None and _st.drop_in_price > 0
                 if not has_drop_in:
                     booking.delete()  # clean up the just-created booking
@@ -610,7 +611,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 # drop_in_price is set — allow, amount_due already calculated from drop_in_price
 
             # If session has specific linked packages, verify client's package is one of them
-            if package and _st and _st.linked_packages.exists():
+            # Owner/staff/coaches can book any session type regardless of linked packages.
+            if not is_exempt and package and _st and _st.linked_packages.exists():
                 linked_ids = set(_st.linked_packages.values_list('pk', flat=True))
                 if package.package.pk not in linked_ids:
                     if _st.requires_package:

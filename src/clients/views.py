@@ -1230,8 +1230,8 @@ def reserve_session(request):
             sessions_remaining=0
         ).order_by('-sessions_remaining').first()
 
-    # Check if we have a valid package
-    if not block_is_free:
+    # Check if we have a valid package (owner/staff/coaches bypass this check)
+    if not block_is_free and not is_exempt:
         if not active_package:
             return JsonResponse({'success': False, 'error': 'No active package found for this player'})
         if active_package.package.sessions_included > 0 and active_package.sessions_remaining <= 0:
