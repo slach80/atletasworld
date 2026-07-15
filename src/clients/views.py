@@ -1155,6 +1155,17 @@ def booking_page_v2(request):
         for pid, d, t in existing_bookings
     ]
 
+    has_select_membership = client.packages.filter(
+        package__package_type='select',
+        status='active',
+        expiry_date__gte=today,
+    ).exists()
+    select_credit_balance = client.credits.filter(
+        status='available'
+    ).filter(
+        Q(expires_at__isnull=True) | Q(expires_at__gte=today)
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
     context = {
         'client': client,
         'active_package': active_package,
@@ -1163,6 +1174,8 @@ def booking_page_v2(request):
         'has_package': active_package is not None,
         'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
         'booked_set_json': json.dumps(booked_set),
+        'has_select_membership': has_select_membership,
+        'select_credit_balance': select_credit_balance,
     }
     return render(request, 'clients/book_calendar_v2.html', context)
 
