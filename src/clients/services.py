@@ -508,6 +508,86 @@ class NotificationService:
         cls.send_notification_from_template(booking.client, template, context)
 
     @classmethod
+    def send_booking_cancellation(cls, booking, rescheduled=False):
+        """Send booking cancellation (or rescheduled) email to the client."""
+        from django.template.loader import render_to_string
+        from django.conf import settings as _settings
+        from django.utils import timezone as _tz
+        from .models import Notification, UnsubscribeToken
+
+        try:
+            prefs = booking.client.notification_preferences
+            if getattr(prefs, 'booking_cancellations', 'email') == 'none':
+                return
+        except Exception:
+            pass
+
+        site_url = getattr(_settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+        client_name = booking.client.user.first_name or booking.client.user.username
+
+        sessions_returned = (
+            booking.client_package is not None and booking.payment_status == 'package'
+        )
+        ctx = {
+            'client_name': client_name,
+            'session_type': booking.session_type.name if booking.session_type else 'Training Session',
+            'session_format': booking.session_type.get_session_format_display() if booking.session_type else '',
+            'session_duration': f"{booking.session_type.duration_minutes} min" if booking.session_type else '',
+            'location': _booking_location(booking),
+            'coach_name': booking.coach.user.get_full_name() or str(booking.coach),
+            'date': booking.scheduled_date.strftime('%A, %B %-d, %Y'),
+            'time': booking.scheduled_time.strftime('%-I:%M %p'),
+            'player_name': booking.player.first_name if booking.player else '',
+            'booking_link': f"{site_url}/portal/bookings/",
+            'sessions_returned': sessions_returned,
+            'rescheduled': rescheduled,
+            'site_url': site_url,
+            'current_year': _tz.now().year,
+        }
+        if sessions_returned:
+            ctx['package_name'] = booking.client_package.package.name
+            ctx['sessions_remaining'] = booking.client_package.sessions_remaining
+        try:
+            ctx['unsubscribe_token'] = UnsubscribeToken.get_or_create_for_client(booking.client).token
+        except Exception:
+            pass
+
+        if rescheduled:
+            subject = 'Your APC Session Has Been Rescheduled'
+        else:
+            subject = 'Booking Cancelled'
+
+        html_content = render_to_string('emails/booking_cancellation.html', ctx)
+        text_content = (
+            f"{subject}\n\n"
+            f"Hi {client_name},\n\n"
+            f"Your {ctx['session_type']} on {ctx['date']} at {ctx['time']} has been "
+            f"{'rescheduled' if rescheduled else 'cancelled'}.\n\n"
+            f"View your bookings: {site_url}/portal/bookings/"
+        )
+
+        success, msg = cls.send_email(
+            to_email=booking.client.user.email,
+            subject=subject,
+            html_content=html_content,
+            text_content=text_content,
+            context=ctx,
+        )
+
+        Notification.objects.create(
+            client=booking.client,
+            notification_type='booking_cancelled',
+            title=subject,
+            message=text_content[:500],
+            method='email',
+            status='sent' if success else 'failed',
+            sent_at=_tz.now() if success else None,
+        )
+
+        if not success:
+            logger.error('send_booking_cancellation: email failed for %s — %s', booking.client, msg)
+
+    @classmethod
     def send_assessment_notification(cls, assessment):
         """Send assessment ready notification to parent."""
         from .models import NotificationTemplate

@@ -590,6 +590,11 @@ def booking_cancel(request, booking_id):
             except ScheduleBlock.DoesNotExist:
                 pass
             messages.success(request, 'Booking has been cancelled.')
+        try:
+            from clients.services import NotificationService
+            NotificationService.send_booking_cancellation(booking)
+        except Exception:
+            pass
     else:
         messages.error(request, 'This booking cannot be cancelled.')
 
@@ -648,6 +653,12 @@ def booking_reschedule(request, booking_id):
                     group_key=f'booking_{new_booking.id}',
                     window_seconds=30,
                 )
+            except Exception:
+                pass
+            # Send rescheduled notice for the old (cancelled) booking
+            try:
+                from clients.services import NotificationService
+                NotificationService.send_booking_cancellation(booking, rescheduled=True)
             except Exception:
                 pass
             messages.success(request, f'Booking rescheduled to {new_block.date.strftime("%B %-d")} at {new_block.start_time.strftime("%-I:%M %p")}.')
