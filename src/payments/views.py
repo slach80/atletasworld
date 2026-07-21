@@ -1132,10 +1132,13 @@ def _handle_subscription_renewed(invoice):
     if not cp:
         return
 
-    weeks = _BILLING_TIER_WEEKS.get(cp.package.billing_tier, 4)
+    tier = cp.package.billing_tier or 'monthly'
+    weeks = _BILLING_TIER_WEEKS.get(tier, 4)
+    if tier not in _BILLING_TIER_WEEKS:
+        logger.warning('Subscription renewed: unknown billing_tier %r on package %s — defaulting to 4 weeks', tier, cp.package_id)
     cp.expiry_date = timezone.localdate() + timedelta(weeks=weeks)
     cp.save(update_fields=['expiry_date'])
-    logger.info('Subscription renewed: ClientPackage #%s extended to %s (%s weeks)', cp.pk, cp.expiry_date, weeks)
+    logger.info('Subscription renewed: ClientPackage #%s extended to %s (%s weeks, tier=%s)', cp.pk, cp.expiry_date, weeks, tier)
 
     # Notify the member
     try:

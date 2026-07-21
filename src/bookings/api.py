@@ -598,11 +598,17 @@ class BookingViewSet(viewsets.ModelViewSet):
                                 session_format='select_practice', is_active=True
                             ).values_list('id', flat=True)
                         )
+                        # Upper bound: first day of next month
+                        if month_start.month == 12:
+                            month_end = month_start.replace(year=month_start.year + 1, month=1)
+                        else:
+                            month_end = month_start.replace(month=month_start.month + 1)
                         month_count = Booking.objects.filter(
                             player_id=player_id,
                             session_type_id__in=select_practice_type_ids,
                             status='confirmed',
                             scheduled_date__gte=month_start,
+                            scheduled_date__lt=month_end,
                         ).exclude(pk=booking.pk).count()
                         if month_count < 2:
                             booking.payment_status = 'paid'
