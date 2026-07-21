@@ -51,4 +51,8 @@ urlpatterns = [
     # Blog — submit drafts for owner to publish
     path('blog/', views.coach_blog_posts, name='blog_posts'),
     path('blog/submit/', views.coach_blog_submit, name='blog_submit'),
+
+    # APC Select Games
+    path('select/games/', views.coach_select_games, name='select_games'),
+    path('select/games/<int:game_id>/', views.coach_select_game_detail, name='select_game_detail'),
 ]

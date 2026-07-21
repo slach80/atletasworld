@@ -51,6 +51,8 @@ from .admin_views import (
     owner_naming_ai_assist,
     owner_notification_ai_assist,
     owner_upcoming_sessions,
+    owner_select_games,
+    owner_select_game_detail,
 )
 
 
@@ -232,6 +234,10 @@ urlpatterns = [
     path('owner-portal/naming-ai-assist/', owner_naming_ai_assist, name='owner_naming_ai_assist'),
     path('owner-portal/notification-ai-assist/', owner_notification_ai_assist, name='owner_notification_ai_assist'),
     path('owner-portal/upcoming-sessions/', owner_upcoming_sessions, name='owner_upcoming_sessions'),
+
+    # APC Select Games
+    path('owner-portal/select/games/', owner_select_games, name='owner_select_games'),
+    path('owner-portal/select/games/<int:game_id>/', owner_select_game_detail, name='owner_select_game_detail'),
 
     # Owner - Service Catalog
     path('owner-portal/services/', owner_services, name='owner_services'),

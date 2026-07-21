@@ -105,6 +105,11 @@ class Player(ExportModelOperationsMixin("player"), models.Model):
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='players')
     team = models.ForeignKey('Team', on_delete=models.SET_NULL, null=True, blank=True, related_name='players')
+    select_teams = models.ManyToManyField(
+        'Team', blank=True, related_name='select_guest_players',
+        limit_choices_to={'is_select': True},
+        help_text="Additional Select teams this player is eligible for (guest callups)"
+    )
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     GRADE_CHOICES = [
@@ -229,6 +234,17 @@ class Package(models.Model):
     event_location = models.CharField(max_length=200, blank=True, help_text="Location for special event")
     max_participants = models.IntegerField(default=0, help_text="Max participants, 0 for unlimited")
     age_group = models.CharField(max_length=50, blank=True, help_text="Target age group (e.g., U13, U15)")
+
+    BILLING_TIER_CHOICES = [
+        ('monthly', 'Monthly'),
+        ('thirds',  'Every 4 Months (Thirds)'),
+        ('half',    'Every 3 Months (Half)'),
+        ('full',    'Annual (Full Year)'),
+    ]
+    billing_tier = models.CharField(
+        max_length=20, choices=BILLING_TIER_CHOICES, blank=True, default='',
+        help_text="Billing interval for Select membership tiers. Leave blank for one-time packages."
+    )
 
     def __str__(self):
         return f"{self.name} - ${self.price}"
@@ -849,6 +865,7 @@ class Team(models.Model):
     manager = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='managed_teams')
     coaches = models.ManyToManyField('coaches.Coach', related_name='teams', blank=True)
     
+    is_select = models.BooleanField(default=False, help_text="APC Select team (2014, 2015, 2016, etc.)")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

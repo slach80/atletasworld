@@ -123,6 +123,12 @@ class ScheduleBlock(models.Model):
         max_length=200, blank=True,
         help_text="Overrides session type location for this block (e.g. outdoor venue)"
     )
+    select_team = models.ForeignKey(
+        'clients.Team', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='schedule_blocks',
+        limit_choices_to={'is_select': True},
+        help_text="Restrict this block to a specific Select team. Leave blank for all-Select or non-Select sessions."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property

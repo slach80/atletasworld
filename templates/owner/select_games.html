@@ -1,0 +1,138 @@
+{% extends "owner/base.html" %}
+{% block title %}APC Select Games{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-black uppercase tracking-tight">APC Select Games</h1>
+      <p class="text-sm text-gray-500">Create and manage Select team games. Published games notify all eligible team members.</p>
+    </div>
+    <button onclick="document.getElementById('create-modal').classList.remove('hidden')"
+            class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700">
+      + New Game
+    </button>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+    <div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium {% if msg.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+      {{ msg }}
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Upcoming -->
+  <h2 class="text-lg font-bold mb-3">Upcoming</h2>
+  {% if upcoming_games %}
+  <div class="space-y-3 mb-8">
+    {% for game in upcoming_games %}
+    <a href="{% url 'owner_select_game_detail' game.id %}"
+       class="block bg-white rounded-xl border border-gray-200 px-5 py-4 hover:border-indigo-400 transition-colors">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-indigo-600">{{ game.team.name }}</span>
+          <p class="font-black text-lg">{{ game.date|date:"l, F j" }} &middot; {{ game.start_time|time:"g:i A" }}</p>
+          <p class="text-sm text-gray-500">{{ game.location }}</p>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+          <span class="text-green-700 font-bold">✅ {{ game.coming_count }}</span>
+          <span class="text-gray-400">⏳ {{ game.pending_count }}</span>
+          <span class="px-2 py-0.5 rounded text-xs font-bold
+            {% if game.status == 'published' %}bg-green-100 text-green-700
+            {% elif game.status == 'draft' %}bg-yellow-100 text-yellow-700
+            {% else %}bg-red-100 text-red-600{% endif %}">
+            {{ game.get_status_display }}
+          </span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-400 mb-8">No upcoming games scheduled.</p>
+  {% endif %}
+
+  <!-- Past -->
+  {% if past_games %}
+  <h2 class="text-lg font-bold mb-3">Past</h2>
+  <div class="space-y-2">
+    {% for game in past_games %}
+    <a href="{% url 'owner_select_game_detail' game.id %}"
+       class="flex items-center justify-between bg-white rounded-lg border border-gray-100 px-4 py-3 text-sm hover:border-indigo-300 transition-colors">
+      <span class="font-bold">{{ game.team.name }} &middot; {{ game.date|date:"M j, Y" }}</span>
+      <span class="text-gray-400">{{ game.location }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Create Game Modal -->
+<div id="create-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-lg p-6">
+    <h2 class="text-xl font-black mb-5">New Select Game</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="col-span-2">
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Team *</label>
+          <select name="team_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <option value="">Select team...</option>
+            {% for team in select_teams %}
+            <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Date *</label>
+          <input type="date" name="date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Start Time *</label>
+          <input type="time" name="start_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">End Time</label>
+          <input type="time" name="end_time" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Coach</label>
+          <select name="coach_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <option value="">Unassigned</option>
+            {% for coach in coaches %}
+            <option value="{{ coach.id }}">{{ coach.user.get_full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Location *</label>
+          <input type="text" name="location" required placeholder="Field name, address..."
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Notes (opponent, field #, etc.)</label>
+          <textarea name="notes" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2 border-t border-gray-100">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" name="publish" value="1" class="rounded">
+          Publish immediately (notifies all team members)
+        </label>
+      </div>
+
+      <div class="flex gap-3 mt-5">
+        <button type="button" onclick="document.getElementById('create-modal').classList.add('hidden')"
+                class="flex-1 border border-gray-300 rounded-lg py-2 text-sm font-bold hover:bg-gray-50">Cancel</button>
+        <button type="submit" class="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-indigo-700">Create Game</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -41,6 +41,8 @@ class SessionType(ExportModelOperationsMixin("session_type"), models.Model):
         ('pickup', 'Pick Up Game'),
         ('tryout', 'Tryout'),
         ('tournament', 'Tournament'),
+        ('select_practice', 'APC Select Practice'),
+        ('select_game', 'APC Select Game'),
     ]
 
     name = models.CharField(max_length=100)
@@ -622,3 +624,70 @@ class Session(models.Model):
     class Meta:
         ordering = ['date', 'start_time']
         unique_together = ['program', 'coach', 'date', 'start_time']
+
+
+class SelectGame(models.Model):
+    """Team-specific APC Select game event with RSVP tracking."""
+    STATUS_CHOICES = [
+        ('draft',     'Draft'),
+        ('published', 'Published'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    team = models.ForeignKey(
+        'clients.Team', on_delete=models.CASCADE, related_name='select_games',
+        limit_choices_to={'is_select': True}
+    )
+    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True,
+                                   related_name='created_select_games')
+    coach = models.ForeignKey(Coach, on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name='select_games')
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField(null=True, blank=True)
+    location = models.CharField(max_length=200)
+    notes = models.TextField(blank=True, help_text="Opponent, field number, instructions, etc.")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    guest_invitees = models.ManyToManyField(
+        'clients.Client', blank=True, related_name='game_invites',
+        help_text="Non-Select clients manually invited by owner/coach"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.team.name} game — {self.date} {self.start_time}"
+
+    class Meta:
+        ordering = ['date', 'start_time']
+        indexes = [
+            models.Index(fields=['team', 'date']),
+            models.Index(fields=['status', 'date']),
+        ]
+
+
+class SelectGameRSVP(models.Model):
+    """RSVP record for a Select game — one per client per game."""
+    STATUS_CHOICES = [
+        ('pending',     'No Response'),
+        ('coming',      'Coming'),
+        ('not_coming',  'Not Coming'),
+    ]
+
+    game = models.ForeignKey(SelectGame, on_delete=models.CASCADE, related_name='rsvps')
+    client = models.ForeignKey('clients.Client', on_delete=models.CASCADE, related_name='game_rsvps')
+    player = models.ForeignKey('clients.Player', on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='game_rsvps')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.client} — {self.game} ({self.get_status_display()})"
+
+    class Meta:
+        unique_together = ('game', 'client')
+        ordering = ['game', 'client']
+        indexes = [
+            models.Index(fields=['client', 'status']),
+            models.Index(fields=['game', 'status']),
+        ]

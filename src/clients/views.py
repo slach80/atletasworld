@@ -109,6 +109,40 @@ def dashboard(request):
         Q(expires_at__isnull=True) | Q(expires_at__gte=today)
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    # Select team, practice counter, and upcoming game RSVPs
+    select_team = None
+    select_practices_this_month = 0
+    select_practices_remaining = 2
+    upcoming_game_rsvps = []
+    if has_select_membership:
+        from bookings.models import Booking as _Booking, SessionType as _ST, SelectGameRSVP
+        month_start = today.replace(day=1)
+        select_practice_type_ids = list(
+            _ST.objects.filter(session_format='select_practice', is_active=True).values_list('id', flat=True)
+        )
+        # Combine across all active players for this client
+        select_practices_this_month = _Booking.objects.filter(
+            client=client,
+            session_type_id__in=select_practice_type_ids,
+            status='confirmed',
+            scheduled_date__gte=month_start,
+        ).count()
+        select_practices_remaining = max(0, 2 - select_practices_this_month)
+
+        # Select team from any active player's primary team
+        active_players = client.players.filter(is_active=True).select_related('team')
+        for p in active_players:
+            if p.team and p.team.is_select:
+                select_team = p.team
+                break
+
+        # Upcoming game RSVPs for this client
+        upcoming_game_rsvps = SelectGameRSVP.objects.filter(
+            client=client,
+            game__date__gte=today,
+            game__status='published',
+        ).select_related('game__team').order_by('game__date', 'game__start_time')
+
     context = {
         'client': client,
         'players': players,
@@ -123,6 +157,10 @@ def dashboard(request):
         'has_select_membership': has_select_membership,
         'select_credit_balance': select_credit_balance,
         'select_pkg': select_pkg,
+        'select_team': select_team,
+        'select_practices_this_month': select_practices_this_month,
+        'select_practices_remaining': select_practices_remaining,
+        'upcoming_game_rsvps': upcoming_game_rsvps,
     }
     return render(request, 'clients/dashboard.html', context)
 
@@ -2429,3 +2467,41 @@ def add_referral_code(request):
         messages.error(request, "An error occurred. Please try again or contact support.")
 
     return redirect('clients:referral')
+
+    return redirect('clients:referral')
+
+
+# ============================================================================
+# APC SELECT — RSVP
+# ============================================================================
+
+@login_required
+def select_game_rsvp(request, game_id):
+    """Client RSVP endpoint for a Select game. POST only."""
+    from bookings.models import SelectGame, SelectGameRSVP
+    from django.http import JsonResponse as _JsonResponse
+
+    if request.method != 'POST':
+        return _JsonResponse({'error': 'POST required'}, status=405)
+
+    client, _ = Client.objects.get_or_create(user=request.user)
+
+    try:
+        game = SelectGame.objects.get(pk=game_id, status='published')
+    except SelectGame.DoesNotExist:
+        return _JsonResponse({'error': 'Game not found'}, status=404)
+
+    # Must have an RSVP record (created by fan-out signal) to respond
+    try:
+        rsvp = SelectGameRSVP.objects.get(game=game, client=client)
+    except SelectGameRSVP.DoesNotExist:
+        return _JsonResponse({'error': 'You are not invited to this game'}, status=403)
+
+    rsvp_status = request.POST.get('status')
+    if rsvp_status not in ('coming', 'not_coming'):
+        return _JsonResponse({'error': 'Invalid status'}, status=400)
+
+    rsvp.status = rsvp_status
+    rsvp.save(update_fields=['status', 'updated_at'])
+
+    return _JsonResponse({'ok': True, 'status': rsvp.status})

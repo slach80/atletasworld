@@ -59,6 +59,31 @@ def get_client_select_membership(user):
     ).exists()
 
 
+def get_player_select_team_ids(user):
+    """Return a list of Select team IDs the user's players are eligible for.
+
+    Includes both primary teams and guest-callup teams via Player.select_teams M2M.
+    Used to filter which team-specific Select practice blocks are visible.
+
+    Args:
+        user: A Django User instance.
+
+    Returns:
+        list[int]: Team PKs. Empty list if user has no players or no Select membership.
+    """
+    if not user.is_authenticated or not hasattr(user, 'client'):
+        return []
+    from clients.models import Player
+    players = Player.objects.filter(client=user.client, is_active=True)
+    team_ids = set()
+    for player in players:
+        if player.team_id and getattr(player.team, 'is_select', False):
+            team_ids.add(player.team_id)
+        for t in player.select_teams.values_list('id', flat=True):
+            team_ids.add(t)
+    return list(team_ids)
+
+
 def is_team_coach(user):
     """Return True if the user should see team session types in the booking calendar.
 

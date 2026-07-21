@@ -20,6 +20,7 @@ from clients.services import _location_map_url
 from bookings.utils import (
     apply_select_discount,
     get_client_select_membership,
+    get_player_select_team_ids,
     is_team_coach,
     notify_pending_payment as _notify_pending_payment,
     SELECT_PICKUP_PRICE,
@@ -163,10 +164,25 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
             sb_queryset = sb_queryset.filter(coach_id=coach_id)
 
         team_coach = is_team_coach(request.user)
+        is_select_owner_or_coach = request.user.is_staff or request.user.is_superuser or team_coach or request.user.groups.filter(name__in=['Owner', 'Coach']).exists()
+        select_team_ids = get_player_select_team_ids(request.user) if is_select_member else []
 
         for block in sb_queryset:
             cal = SCHEDULE_BLOCK_CALENDARS.get(block.session_type, SCHEDULE_BLOCK_CALENDARS['group'])
             catalog_types = list(block.catalog_session_types.all())
+
+            # --- Select visibility filter ---
+            if catalog_types:
+                select_formats = {'select_practice', 'select_game'}
+                block_formats = {st.session_format for st in catalog_types}
+                is_select_block = bool(block_formats & select_formats)
+                if is_select_block and not is_select_owner_or_coach:
+                    if not is_select_member:
+                        continue  # non-Select clients: hide entirely
+                    # Select member: show only all-team blocks or blocks for their team(s)
+                    if block.select_team_id is not None and block.select_team_id not in select_team_ids:
+                        continue  # team-specific block for a different team
+
             # Skip blocks that are exclusively team session types for non-team-coach clients
             if catalog_types and not team_coach:
                 non_team = [st for st in catalog_types if st.session_format != 'team']
@@ -230,6 +246,7 @@ class AvailabilitySlotViewSet(viewsets.ModelViewSet):
                     'duration': dur,
                     'location': block.location_override or (catalog_types[0].location if catalog_types else ''),
                     'location_map_url': _location_map_url(block.location_override or (catalog_types[0].location if catalog_types else '')),
+                    'select_team_name': block.select_team.name if block.select_team_id else None,
                 }
             })
 
@@ -532,6 +549,88 @@ class BookingViewSet(viewsets.ModelViewSet):
                 block.save()
 
                 session_name = session_type.name if session_type else SCHEDULE_BLOCK_CALENDARS.get(block.session_type, {}).get('name', 'Training Session')
+
+                # --- APC Select routing ---
+                sf_check = catalog_types[0].session_format if catalog_types else None
+                if sf_check in ('select_practice', 'select_game') and not is_exempt:
+                    if not get_client_select_membership(request.user):
+                        booking.delete()
+                        block.current_participants -= 1
+                        if block.status == 'booked':
+                            block.status = 'available'
+                        block.save()
+                        return Response(
+                            {'error': 'APC Select membership required to book this session.'},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    if sf_check == 'select_game':
+                        booking.payment_status = 'paid'
+                        booking.amount_paid = Decimal('0.00')
+                        booking.save(update_fields=['payment_status', 'amount_paid'])
+                        booking.confirm()
+                        try:
+                            from clients.notification_utils import queue_grouped_notification
+                            queue_grouped_notification(
+                                client=booking.client,
+                                event_type='booking_confirmed',
+                                context={'booking_id': booking.id, 'payment_method': 'select'},
+                                group_key=f'booking_{booking.id}',
+                                window_seconds=45,
+                            )
+                        except Exception:
+                            pass
+                        return Response({
+                            'id': booking.id, 'payment_required': False,
+                            'amount_due': '0.00', 'discount_applied': '0.00',
+                            'sibling_discount': '0.00', 'booking_status': booking.status,
+                            'message': 'Booking created successfully',
+                            'booking': {
+                                'date': str(booking.scheduled_date), 'time': str(booking.scheduled_time),
+                                'session_type': session_name, 'coach': str(booking.coach),
+                            },
+                        }, status=status.HTTP_201_CREATED)
+                    if sf_check == 'select_practice':
+                        month_start = timezone.localdate().replace(day=1)
+                        # Count confirmed Select practice bookings this month for this player
+                        # Match by session_type FK (the APC Select Practice session type)
+                        select_practice_type_ids = list(
+                            SessionType.objects.filter(
+                                session_format='select_practice', is_active=True
+                            ).values_list('id', flat=True)
+                        )
+                        month_count = Booking.objects.filter(
+                            player_id=player_id,
+                            session_type_id__in=select_practice_type_ids,
+                            status='confirmed',
+                            scheduled_date__gte=month_start,
+                        ).exclude(pk=booking.pk).count()
+                        if month_count < 2:
+                            booking.payment_status = 'paid'
+                            booking.amount_paid = Decimal('0.00')
+                            booking.save(update_fields=['payment_status', 'amount_paid'])
+                            booking.confirm()
+                            try:
+                                from clients.notification_utils import queue_grouped_notification
+                                queue_grouped_notification(
+                                    client=booking.client,
+                                    event_type='booking_confirmed',
+                                    context={'booking_id': booking.id, 'payment_method': 'select'},
+                                    group_key=f'booking_{booking.id}',
+                                    window_seconds=45,
+                                )
+                            except Exception:
+                                pass
+                            return Response({
+                                'id': booking.id, 'payment_required': False,
+                                'amount_due': '0.00', 'discount_applied': '0.00',
+                                'sibling_discount': '0.00', 'booking_status': booking.status,
+                                'message': 'Booking created successfully',
+                                'booking': {
+                                    'date': str(booking.scheduled_date), 'time': str(booking.scheduled_time),
+                                    'session_type': session_name, 'coach': str(booking.coach),
+                                },
+                            }, status=status.HTTP_201_CREATED)
+                        # 3rd+ practice — fall through to normal package/drop-in flow
 
             else:
                 # Book against an AvailabilitySlot — only fetch publicly available slots

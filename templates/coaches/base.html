@@ -90,7 +90,8 @@
                     <div class="absolute left-0 top-full mt-1 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                         <a href="{% url 'coaches:todays_sessions' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'todays_sessions' %}text-secondary{% endif %} rounded-t-lg">📅 Today's Sessions</a>
                         <a href="{% url 'coaches:schedule' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'schedule' %}text-secondary{% endif %}">📆 Schedule</a>
-                        <a href="{% url 'coaches:add_bulk_schedule' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'add_bulk_schedule' %}text-secondary{% endif %} rounded-b-lg">⏰ Add Availability</a>
+                        <a href="{% url 'coaches:add_bulk_schedule' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if request.resolver_match.url_name == 'add_bulk_schedule' %}text-secondary{% endif %}">⏰ Add Availability</a>
+                        <a href="{% url 'coaches:select_games' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'select_game' in request.resolver_match.url_name %}text-secondary{% endif %} rounded-b-lg">⚽ Select Games</a>
                     </div>
                 </div>
                 <a href="{% url 'coaches:notify_parents' %}"
@@ -137,6 +138,7 @@
         <a href="{% url 'coaches:todays_sessions' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📅 Today's Sessions</a>
         <a href="{% url 'coaches:schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">📆 Schedule</a>
         <a href="{% url 'coaches:add_bulk_schedule' %}" class="block px-6 py-2 hover:bg-white/10 rounded">⏰ Add Availability</a>
+        <a href="{% url 'coaches:select_games' %}" class="block px-6 py-2 hover:bg-white/10 rounded">⚽ Select Games</a>
         <a href="{% url 'coaches:notify_parents' %}" class="block px-4 py-2 hover:bg-white/10 rounded">🔔 Notify</a>
         {% if teams %}<a href="{% url 'coaches:my_players' %}" class="block px-4 py-2 hover:bg-white/10 rounded">Teams</a>{% endif %}
         <a href="{% url 'coaches:referral' %}" class="block px-4 py-2 hover:bg-white/10 rounded">🎁 Referrals</a>

@@ -180,3 +180,66 @@ def track_referral_on_signup(sender, request, user, **kwargs):
         status='pending',
         referral_window_expires=timezone.now() + timedelta(days=60),
     )
+
+
+@receiver(post_save, sender='bookings.SelectGame')
+def fanout_select_game_rsvps(sender, instance, **kwargs):
+    """When a SelectGame is published, create RSVP records for all eligible players
+    and send them a notification.
+
+    Idempotent: uses get_or_create so re-publishing or re-saving is safe.
+    Only fires on transition to 'published' — drafts and cancellations do nothing.
+    """
+    if instance.status != 'published':
+        return
+
+    from bookings.models import SelectGameRSVP
+    from clients.models import ClientPackage, Notification
+
+    today = timezone.localdate()
+
+    # Active Select members on this team (primary team) or guest-called-up to it
+    team_client_ids = set()
+
+    # Primary team members
+    for cp in ClientPackage.objects.filter(
+        package__package_type='select',
+        status='active',
+        expiry_date__gte=today,
+    ).select_related('client__user', 'player'):
+        if cp.player_id:
+            player = cp.player
+            if (player.team_id == instance.team_id or
+                    instance.team_id in player.select_teams.values_list('id', flat=True)):
+                team_client_ids.add(cp.client_id)
+
+    # Guest invitees added manually
+    for client in instance.guest_invitees.all():
+        team_client_ids.add(client.pk)
+
+    from clients.models import Client as ClientModel
+    for client_id in team_client_ids:
+        try:
+            client = ClientModel.objects.get(pk=client_id)
+        except ClientModel.DoesNotExist:
+            continue
+        _, created = SelectGameRSVP.objects.get_or_create(
+            game=instance,
+            client=client,
+            defaults={'status': 'pending'},
+        )
+        if created:
+            date_str = instance.date.strftime('%A, %B %-d')
+            try:
+                Notification.objects.create(
+                    client=client,
+                    notification_type='promotional',
+                    title=f'APC Select Game — {date_str}',
+                    message=(
+                        f'{instance.team.name} has a game on {date_str} at {instance.start_time.strftime("%-I:%M %p")} '
+                        f'at {instance.location}. Please RSVP on your dashboard.'
+                    ),
+                    method='in_app',
+                )
+            except Exception:
+                pass  # never block fan-out on notification failure

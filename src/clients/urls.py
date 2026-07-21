@@ -77,4 +77,7 @@ urlpatterns = [
     # Referral Program
     path('referral/', views.referral_page, name='referral'),
     path('referral/add-code/', views.add_referral_code, name='add_referral_code'),
+
+    # APC Select Games — RSVP
+    path('select/games/<int:game_id>/rsvp/', views.select_game_rsvp, name='select_game_rsvp'),
 ]

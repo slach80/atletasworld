@@ -122,7 +122,8 @@
                             <a href="{% url 'owner_field_slots' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'field' in request.resolver_match.url_name %}text-owner{% endif %}">
                                 🏟️ Rentals{% if pending_field_count > 0 %}<span class="ml-auto bg-accent text-gray-900 text-xs px-1.5 py-0.5 rounded-full">{{ pending_field_count }}</span>{% endif %}
                             </a>
-                            <a href="{% url 'owner_credits' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'credit' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">💳 Credits</a>
+                            <a href="{% url 'owner_credits' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'credit' in request.resolver_match.url_name %}text-owner{% endif %}">💳 Credits</a>
+                            <a href="{% url 'owner_select_games' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-700 {% if 'select_game' in request.resolver_match.url_name %}text-owner{% endif %} rounded-b-lg">⚽ Select Games</a>
                         </div>
                     </div>
 
@@ -183,6 +184,7 @@
                 <a href="{% url 'owner_packages' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">📦 Packages</a>
                 <a href="{% url 'owner_field_slots' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">🏟️ Rentals</a>
                 <a href="{% url 'owner_credits' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">💳 Credits</a>
+                <a href="{% url 'owner_select_games' %}" class="block px-3 py-2 rounded hover:bg-white/10 pl-5">⚽ Select Games</a>
                 <div class="border-t border-gray-700 mt-2 pt-2">
                     <a href="{% url 'owner_notifications' %}" class="block px-3 py-2 rounded hover:bg-white/10">Notify</a>
                     <a href="{% url 'owner_blog_list' %}" class="block px-3 py-2 rounded hover:bg-white/10">✍️ Blog</a>
