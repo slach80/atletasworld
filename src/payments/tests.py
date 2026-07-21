@@ -164,6 +164,7 @@ class TestWebhook:
             package_id=str(package_basic4.pk),
             payment_intent_id='pi_test_pkg',
             metadata=intent['metadata'],
+            subscription_id='',
         )
 
     @patch('payments.views._send_payment_receipt')
