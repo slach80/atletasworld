@@ -40,7 +40,24 @@ Before auto-renewal works, each billing tier needs a matching recurring Price in
 
 Once Stripe Price IDs are saved, the **Join APC Select** button on the client Packages page will route through Stripe Subscriptions and auto-renew will be live.
 
-### 1.3 Mark existing teams as Select teams
+### 1.3 Enable subscription webhook events in Stripe
+
+The webhook endpoint is already registered at `https://atletasperformancecenter.com/payments/webhook/` and handles one-time payment events. For subscriptions to work you need to add four more events:
+
+1. Go to **Stripe Dashboard → Developers → Webhooks**
+2. Click the existing `atletasperformancecenter.com` endpoint
+3. Click **Add events** and enable:
+
+| Event | What it triggers |
+|---|---|
+| `invoice.payment_succeeded` | Extends membership on each successful renewal charge |
+| `invoice.payment_failed` | Alerts the member to update their card (first attempt only) |
+| `invoice.upcoming` | Sends a 7-day advance notice before the next charge |
+| `customer.subscription.deleted` | Marks the package inactive when a subscription is cancelled in Stripe |
+
+4. Save. No code changes needed — the handlers are already wired in.
+
+### 1.4 Mark existing teams as Select teams
 
 This should already be done automatically for the 2014, 2015, and 2016 teams. To verify or add a new team:
 
@@ -48,7 +65,7 @@ This should already be done automatically for the 2014, 2015, and 2016 teams. To
 2. Edit the team → confirm **Is Select Team** is checked
 3. For any future year group, create the team and check **Is Select Team**
 
-### 1.4 Reassign old "APC select game" schedule blocks
+### 1.5 Reassign old "APC select game" schedule blocks
 
 Old workaround game blocks in the coach schedule need to be cleaned up:
 
