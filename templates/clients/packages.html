@@ -102,10 +102,29 @@
 
             <div class="bg-white p-8">
                 {% if has_select_membership %}
-                <div class="flex items-center gap-3 mb-6 p-4 bg-secondary/10 rounded-xl border border-secondary/30">
-                    <svg class="w-5 h-5 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-sm font-semibold text-gray-800">You're an active APC Select member. Your discounts and credits are applied automatically when booking.</p>
+                {% with select_cp=active_packages|dictsort:"id"|first %}
+                <div class="flex items-start justify-between gap-4 mb-6 p-4 bg-secondary/10 rounded-xl border border-secondary/30">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800">You're an active APC Select member. Your discounts and credits are applied automatically when booking.</p>
+                            {% for cp in active_packages %}{% if cp.package.package_type == 'select' %}
+                            {% if cp.stripe_subscription_id %}
+                            <p class="text-xs text-gray-500 mt-1">Auto-renews on {{ cp.expiry_date|date:"M j, Y" }} &middot;
+                                <form method="post" action="{% url 'clients:select_cancel_subscription' cp.id %}" class="inline"
+                                      onsubmit="return confirm('Cancel your APC Select auto-renewal? Your access continues until {{ cp.expiry_date|date:"M j, Y" }}.')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-500 hover:underline text-xs">Cancel auto-renewal</button>
+                                </form>
+                            </p>
+                            {% else %}
+                            <p class="text-xs text-gray-500 mt-1">Manual renewal &middot; Expires {{ cp.expiry_date|date:"M j, Y" }}</p>
+                            {% endif %}
+                            {% endif %}{% endfor %}
+                        </div>
+                    </div>
                 </div>
+                {% endwith %}
                 {% endif %}
 
                 <div class="grid md:grid-cols-2 gap-8 items-start">
@@ -126,23 +145,177 @@
                     </div>
 
                     <div>
-                        {% for package in select_packages %}
-                        <div class="border-2 border-primary rounded-2xl p-6">
+                        {% if has_select_membership %}
+                        <div class="border-2 border-primary rounded-2xl p-6 text-center">
+                            <div class="w-full py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold cursor-default">Already a Member</div>
+                        </div>
+                        {% elif select_packages %}
+                        <!-- Billing tier picker -->
+                        <div id="select-tier-picker" class="space-y-3">
+                            {% for package in select_packages %}
+                            <label class="flex items-center justify-between border-2 rounded-xl px-4 py-3 cursor-pointer transition-colors
+                                          peer-checked:border-primary hover:border-primary/50
+                                          {% if forloop.first %}border-primary bg-primary/5{% else %}border-gray-200{% endif %}"
+                                   id="tier-label-{{ package.pk }}"
+                                   onclick="selectTier({{ package.pk }}, {{ package.price }}, '{{ package.name|escapejs }}', '{{ package.billing_tier }}')">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-4 h-4 rounded-full border-2 border-primary flex items-center justify-center shrink-0" id="tier-dot-{{ package.pk }}">
+                                        {% if forloop.first %}<div class="w-2 h-2 bg-primary rounded-full"></div>{% endif %}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-sm text-gray-800">
+                                            {% if package.billing_tier == 'monthly' %}Monthly
+                                            {% elif package.billing_tier == 'thirds' %}Every 4 Months
+                                            {% elif package.billing_tier == 'half' %}Every 3 Months
+                                            {% elif package.billing_tier == 'full' %}Full Year
+                                            {% else %}{{ package.name }}{% endif %}
+                                        </p>
+                                        <p class="text-xs text-gray-400">
+                                            {% if package.billing_tier == 'thirds' %}Billed 3× per year
+                                            {% elif package.billing_tier == 'half' %}Billed 2× per year
+                                            {% elif package.billing_tier == 'full' %}Billed once annually
+                                            {% else %}Billed monthly{% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <p class="text-xl font-black text-primary">${{ package.price }}</p>
+                                    <p class="text-xs text-gray-400">per payment</p>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+
+                        {% if stripe_public_key %}
+                        <!-- Selected tier summary + join button -->
+                        <div class="mt-4 border-2 border-primary rounded-2xl p-5">
                             <div class="flex items-end gap-2 mb-1">
-                                <span class="text-5xl font-black text-primary">${{ package.price }}</span>
-                                <span class="text-gray-400 text-lg pb-1">/month</span>
+                                <span class="text-4xl font-black text-primary" id="selected-price">${{ select_packages.first.price }}</span>
+                                <span class="text-gray-400 pb-1 text-sm" id="selected-interval">
+                                    {% with pkg=select_packages.first %}
+                                    {% if pkg.billing_tier == 'thirds' %}/every 4 months
+                                    {% elif pkg.billing_tier == 'half' %}/every 3 months
+                                    {% elif pkg.billing_tier == 'full' %}/year
+                                    {% else %}/month{% endif %}
+                                    {% endwith %}
+                                </span>
                             </div>
-                            <p class="text-sm text-gray-500 mb-5">6-month commitment</p>
-                            {% if has_select_membership %}
-                            <div class="w-full text-center py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold cursor-default">Already a Member</div>
-                            {% elif stripe_public_key %}
-                            <button onclick="addToCart({{ package.pk }}, '{{ package.name|escapejs }}', {{ package.price }}, 'select')"
-                                    class="w-full py-3 bg-primary text-secondary rounded-xl font-black hover:bg-secondary hover:text-primary hover:scale-[1.02] active:scale-100 transition-all duration-150 text-sm uppercase tracking-wide">
-                                Add to Cart — ${{ package.price }}/mo
+                            {% if select_packages.first.stripe_price_id %}
+                            <button id="select-join-btn"
+                                    onclick="startSelectSubscription()"
+                                    class="w-full mt-3 py-3 bg-primary text-secondary rounded-xl font-black hover:bg-secondary hover:text-primary transition-all text-sm uppercase tracking-wide">
+                                Join APC Select
+                            </button>
+                            {% else %}
+                            <button onclick="addToCart({{ select_packages.first.pk }}, '{{ select_packages.first.name|escapejs }}', {{ select_packages.first.price }}, 'select')"
+                                    id="select-join-btn"
+                                    class="w-full mt-3 py-3 bg-primary text-secondary rounded-xl font-black hover:bg-secondary hover:text-primary transition-all text-sm uppercase tracking-wide">
+                                Join APC Select — ${{ select_packages.first.price }}
                             </button>
                             {% endif %}
+                            <p class="text-xs text-gray-400 text-center mt-2">Cancel anytime from your account</p>
                         </div>
-                        {% endfor %}
+
+                        <script>
+                        // Tier selection state
+                        var _selectedTierId = {{ select_packages.first.pk }};
+                        var _selectedTierPrice = {{ select_packages.first.price }};
+                        var _selectedTierName = '{{ select_packages.first.name|escapejs }}';
+                        var _selectedTierHasStripe = {{ select_packages.first.stripe_price_id|yesno:"true,false" }};
+
+                        var _tierIntervalLabels = {
+                            'monthly': '/month',
+                            'thirds':  '/every 4 months',
+                            'half':    '/every 3 months',
+                            'full':    '/year',
+                            '':        '/month',
+                        };
+
+                        // Per-tier Stripe availability (populated from Django context)
+                        var _tierHasStripe = {
+                            {% for p in select_packages %}
+                            {{ p.pk }}: {{ p.stripe_price_id|yesno:"true,false" }},
+                            {% endfor %}
+                        };
+
+                        function selectTier(pkgId, price, name, tier) {
+                            _selectedTierId = pkgId;
+                            _selectedTierPrice = price;
+                            _selectedTierName = name;
+
+                            // Update radio dots
+                            {% for p in select_packages %}
+                            document.getElementById('tier-dot-{{ p.pk }}').innerHTML = '';
+                            document.getElementById('tier-label-{{ p.pk }}').classList.remove('border-primary', 'bg-primary/5');
+                            document.getElementById('tier-label-{{ p.pk }}').classList.add('border-gray-200');
+                            {% endfor %}
+                            var dot = document.getElementById('tier-dot-' + pkgId);
+                            if (dot) dot.innerHTML = '<div class="w-2 h-2 bg-primary rounded-full"></div>';
+                            var lbl = document.getElementById('tier-label-' + pkgId);
+                            if (lbl) { lbl.classList.add('border-primary', 'bg-primary/5'); lbl.classList.remove('border-gray-200'); }
+
+                            // Update summary
+                            document.getElementById('selected-price').textContent = '$' + price;
+                            document.getElementById('selected-interval').textContent = _tierIntervalLabels[tier] || '/month';
+
+                            // Update join button behaviour
+                            var btn = document.getElementById('select-join-btn');
+                            if (_tierHasStripe[pkgId]) {
+                                btn.textContent = 'Join APC Select';
+                                btn.onclick = startSelectSubscription;
+                            } else {
+                                btn.textContent = 'Join APC Select — $' + price;
+                                btn.onclick = function() { addToCart(pkgId, name, price, 'select'); };
+                            }
+                        }
+
+                        function startSelectSubscription() {
+                            var btn = document.getElementById('select-join-btn');
+                            btn.disabled = true;
+                            btn.textContent = 'Processing…';
+
+                            // Create PaymentMethod first via Stripe.js, then subscribe
+                            var stripe = Stripe('{{ stripe_public_key }}');
+                            stripe.createPaymentMethod({
+                                type: 'card',
+                                card: _cardElement,  // reuse the existing card element if present
+                            }).then(function(result) {
+                                if (result.error) {
+                                    btn.disabled = false;
+                                    btn.textContent = 'Join APC Select';
+                                    showError(result.error.message);
+                                    return;
+                                }
+                                fetch('/payments/subscribe/' + _selectedTierId + '/', {
+                                    method: 'POST',
+                                    headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
+                                    body: 'payment_method_id=' + encodeURIComponent(result.paymentMethod.id),
+                                }).then(r => r.json()).then(function(data) {
+                                    if (data.error) {
+                                        btn.disabled = false;
+                                        btn.textContent = 'Join APC Select';
+                                        showError(data.error);
+                                        return;
+                                    }
+                                    if (data.client_secret) {
+                                        stripe.confirmCardPayment(data.client_secret).then(function(res) {
+                                            if (res.error) {
+                                                btn.disabled = false;
+                                                btn.textContent = 'Join APC Select';
+                                                showError(res.error.message);
+                                            } else {
+                                                window.location.href = '/portal/packages/?select_joined=1';
+                                            }
+                                        });
+                                    } else {
+                                        window.location.href = '/portal/packages/?select_joined=1';
+                                    }
+                                });
+                            });
+                        }
+                        </script>
+                        {% endif %}
+                        {% endif %}
                     </div>
                 </div>
             </div>

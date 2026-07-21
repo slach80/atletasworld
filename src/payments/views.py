@@ -525,8 +525,19 @@ def create_package_subscription(request, package_id):
             customer=customer_id,
             items=[{'price': package.stripe_price_id}],
             expand=['latest_invoice.payment_intent'],
-            metadata={'client_id': str(client.pk), 'package_id': str(package.pk)},
+            metadata={
+                'client_id': str(client.pk),
+                'package_id': str(package.pk),
+                'subscription_id': '',  # placeholder — overwritten below after creation
+            },
         )
+
+        # Persist subscription_id in its own metadata so _activate_package can store it
+        s.Subscription.modify(subscription.id, metadata={
+            'client_id': str(client.pk),
+            'package_id': str(package.pk),
+            'subscription_id': subscription.id,
+        })
 
         return JsonResponse({
             'subscription_id': subscription.id,
@@ -550,7 +561,8 @@ def payments_webhook(request):
     Register at: https://dashboard.stripe.com/webhooks
     URL: https://atletasperformancecenter.com/payments/webhook/
     Events to subscribe: payment_intent.succeeded, payment_intent.payment_failed,
-                         invoice.payment_succeeded, customer.subscription.deleted, charge.refunded
+                         invoice.payment_succeeded, invoice.payment_failed, invoice.upcoming,
+                         customer.subscription.deleted, charge.refunded
     """
     payload    = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
@@ -576,6 +588,8 @@ def payments_webhook(request):
         'payment_intent.succeeded':       _handle_payment_succeeded,
         'payment_intent.payment_failed':  _handle_payment_failed,
         'invoice.payment_succeeded':      _handle_subscription_renewed,
+        'invoice.payment_failed':         _handle_subscription_payment_failed,
+        'invoice.upcoming':               _handle_invoice_upcoming,
         'customer.subscription.deleted':  _handle_subscription_cancelled,
         'charge.refunded':                _handle_refund,
     }
@@ -610,6 +624,7 @@ def _handle_payment_succeeded(intent):
             package_id=metadata.get('package_id'),
             payment_intent_id=intent['id'],
             metadata=metadata,
+            subscription_id=metadata.get('subscription_id', ''),
         )
 
     elif payment_type == 'batch_package_purchase':
@@ -793,7 +808,7 @@ def _send_payment_receipt(intent, metadata):
         logger.exception('Failed to send payment receipt for %s', payment_intent_id)
 
 
-def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
+def _activate_package(client_id, package_id, payment_intent_id, metadata=None, subscription_id=''):
     """Create an active ClientPackage after successful payment."""
     from datetime import timedelta
     from decimal import Decimal
@@ -804,6 +819,10 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
         logger.error('activate_package: client %s or package %s not found', client_id, package_id)
         return
 
+    # Extract subscription_id from metadata if not passed directly
+    if not subscription_id and metadata:
+        subscription_id = metadata.get('subscription_id', '')
+
     cp = ClientPackage.objects.create(
         client=client,
         package=package,
@@ -812,6 +831,7 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None):
         expiry_date=package.event_end_date if package.event_end_date else timezone.localdate() + timedelta(weeks=package.validity_weeks),
         sessions_remaining=package.sessions_included,
         stripe_payment_id=payment_intent_id,
+        stripe_subscription_id=subscription_id or '',
     )
     logger.info('ClientPackage #%s activated for %s — %s', cp.pk, client, package.name)
     # Queue package activation email (45-second window)
@@ -1092,27 +1112,145 @@ def _handle_payment_failed(intent):
         pass
 
 
+_BILLING_TIER_WEEKS = {
+    'monthly': 4,
+    'thirds':  16,
+    'half':    12,
+    'full':    52,
+}
+
+
 def _handle_subscription_renewed(invoice):
-    """Monthly subscription renewed → extend ClientPackage expiry."""
+    """Subscription billing cycle succeeded → extend ClientPackage expiry and notify member."""
     from datetime import timedelta
     subscription_id = invoice.get('subscription')
     if not subscription_id:
         return
     cp = ClientPackage.objects.filter(
         stripe_subscription_id=subscription_id, status='active'
-    ).first()
-    if cp:
-        cp.expiry_date = timezone.localdate() + timedelta(weeks=4)
-        cp.save(update_fields=['expiry_date'])
-        logger.info('Subscription renewed: ClientPackage #%s extended to %s', cp.pk, cp.expiry_date)
+    ).select_related('package', 'client').first()
+    if not cp:
+        return
+
+    weeks = _BILLING_TIER_WEEKS.get(cp.package.billing_tier, 4)
+    cp.expiry_date = timezone.localdate() + timedelta(weeks=weeks)
+    cp.save(update_fields=['expiry_date'])
+    logger.info('Subscription renewed: ClientPackage #%s extended to %s (%s weeks)', cp.pk, cp.expiry_date, weeks)
+
+    # Notify the member
+    try:
+        from clients.models import Notification
+        Notification.objects.create(
+            client=cp.client,
+            notification_type='promotional',
+            title='APC Select Membership Renewed',
+            message=(
+                f'Your APC Select membership has been renewed. '
+                f'Access continues through {cp.expiry_date.strftime("%B %-d, %Y")}.'
+            ),
+            method='in_app',
+        )
+    except Exception:
+        logger.exception('_handle_subscription_renewed: notification failed for cp %s', cp.pk)
+
+
+def _handle_subscription_payment_failed(invoice):
+    """Subscription payment failed → notify member to update their card."""
+    subscription_id = invoice.get('subscription')
+    if not subscription_id:
+        return
+    # Only notify on the first failure attempt (attempt_count == 1) to avoid spam
+    if invoice.get('attempt_count', 1) != 1:
+        return
+    cp = ClientPackage.objects.filter(
+        stripe_subscription_id=subscription_id, status='active'
+    ).select_related('client').first()
+    if not cp:
+        return
+    try:
+        from clients.models import Notification
+        from django.conf import settings as _s
+        site_url = getattr(_s, 'SITE_URL', 'https://atletasperformancecenter.com')
+        Notification.objects.create(
+            client=cp.client,
+            notification_type='promotional',
+            title='APC Select — Payment Failed',
+            message=(
+                f'Your APC Select membership payment could not be processed. '
+                f'Please update your payment method at {site_url}/portal/packages/ '
+                f'to keep your membership active. Stripe will retry automatically.'
+            ),
+            method='in_app',
+        )
+    except Exception:
+        logger.exception('_handle_subscription_payment_failed: notification failed for cp %s', cp.pk)
+
+
+def _handle_invoice_upcoming(invoice):
+    """Upcoming invoice (7 days before renewal) → remind member of upcoming charge."""
+    subscription_id = invoice.get('subscription')
+    if not subscription_id:
+        return
+    cp = ClientPackage.objects.filter(
+        stripe_subscription_id=subscription_id, status='active'
+    ).select_related('package', 'client').first()
+    if not cp:
+        return
+    try:
+        from clients.models import Notification
+        from decimal import Decimal
+        amount_cents = invoice.get('amount_due', 0)
+        amount = Decimal(amount_cents) / 100
+        period_end_ts = invoice.get('period_end')
+        if period_end_ts:
+            import datetime
+            renewal_date = datetime.datetime.utcfromtimestamp(period_end_ts).strftime('%B %-d, %Y')
+        else:
+            renewal_date = 'soon'
+        Notification.objects.create(
+            client=cp.client,
+            notification_type='promotional',
+            title='APC Select Renewing Soon',
+            message=(
+                f'Your APC Select membership will automatically renew on {renewal_date} '
+                f'for ${amount:.2f}. No action needed — your card on file will be charged.'
+            ),
+            method='in_app',
+        )
+    except Exception:
+        logger.exception('_handle_invoice_upcoming: notification failed for cp %s', cp.pk)
 
 
 def _handle_subscription_cancelled(subscription):
-    """Subscription cancelled/deleted → expire ClientPackage."""
+    """Subscription cancelled/deleted → expire ClientPackage and notify member."""
     updated = ClientPackage.objects.filter(
         stripe_subscription_id=subscription['id']
     ).update(status='expired')
     logger.info('Subscription cancelled: %s ClientPackage(s) expired', updated)
+
+    # Notify the member
+    try:
+        cp = ClientPackage.objects.filter(
+            stripe_subscription_id=subscription['id']
+        ).select_related('client').first()
+        if cp:
+            from clients.models import Notification
+            cancel_at = subscription.get('cancel_at') or subscription.get('canceled_at')
+            if cancel_at:
+                import datetime
+                end_date = datetime.datetime.utcfromtimestamp(cancel_at).strftime('%B %-d, %Y')
+                msg = f'Your APC Select membership has been cancelled. Access ends on {end_date}.'
+            else:
+                msg = 'Your APC Select membership has been cancelled.'
+            Notification.objects.create(
+                client=cp.client,
+                notification_type='promotional',
+                title='APC Select Membership Cancelled',
+                message=msg,
+                method='in_app',
+            )
+    except Exception:
+        logger.exception('_handle_subscription_cancelled: notification failed')
 
 
 def _handle_refund(charge):

@@ -479,6 +479,34 @@ def package_subscribe(request, package_id):
 
 @login_required
 @require_POST
+def select_cancel_subscription(request, client_package_id):
+    """Cancel an APC Select Stripe subscription at period end."""
+    from django.http import JsonResponse as _JsonResponse
+    from django.conf import settings as _s
+    import stripe as _stripe_lib
+
+    client, _ = Client.objects.get_or_create(user=request.user)
+    cp = get_object_or_404(ClientPackage, pk=client_package_id, client=client,
+                           package__package_type='select', status='active')
+
+    if not cp.stripe_subscription_id:
+        return _JsonResponse({'error': 'No active subscription found. Contact us to cancel.'}, status=400)
+
+    if not _s.STRIPE_SECRET_KEY:
+        return _JsonResponse({'error': 'Payments not configured.'}, status=503)
+
+    try:
+        _stripe_lib.api_key = _s.STRIPE_SECRET_KEY
+        _stripe_lib.Subscription.modify(cp.stripe_subscription_id, cancel_at_period_end=True)
+        messages.success(request, 'Your APC Select membership will not renew after the current period ends.')
+    except _stripe_lib.error.StripeError as e:
+        return _JsonResponse({'error': str(e.user_message)}, status=400)
+
+    return redirect('clients:packages')
+
+
+@login_required
+@require_POST
 def package_assign(request, package_id):
     """Assign or reassign a package to a specific player (AJAX endpoint for client portal)."""
     import json

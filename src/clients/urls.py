@@ -24,6 +24,7 @@ urlpatterns = [
     path('packages/<int:package_id>/pay/', views.package_payment_intent, name='package_pay'),
     path('packages/batch-pay/', views.batch_package_payment_intent, name='batch_package_pay'),
     path('packages/<int:package_id>/subscribe/', views.package_subscribe, name='package_subscribe'),
+    path('packages/<int:client_package_id>/cancel-select/', views.select_cancel_subscription, name='select_cancel_subscription'),
     path('packages/<int:package_id>/assign/', views.package_assign, name='package_assign'),
 
     # Bookings

@@ -427,6 +427,42 @@ def check_expiring_packages(self):
         except Exception as e:
             logger.error(f"Failed to send package expiring soon notification: {e}")
 
+    # APC Select — manual-renewal reminders (30-day and 7-day)
+    # Only fires for Select packages WITHOUT a Stripe subscription (manual-pay members)
+    for days_ahead in (30, 7):
+        select_expiry = timezone.localdate() + timedelta(days=days_ahead)
+        manual_select = ClientPackage.objects.filter(
+            package__package_type='select',
+            status='active',
+            expiry_date=select_expiry,
+            stripe_subscription_id='',   # auto-renew subs handled by Stripe webhooks
+        ).select_related('client__user', 'package')
+        for cp in manual_select:
+            try:
+                already = Notification.objects.filter(
+                    client=cp.client,
+                    notification_type='promotional',
+                    title__contains='APC Select Renewal',
+                    created_at__gte=timezone.now() - timedelta(days=days_ahead - 1),
+                ).exists()
+                if already:
+                    continue
+                site_url = getattr(settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+                Notification.objects.create(
+                    client=cp.client,
+                    notification_type='promotional',
+                    title=f'APC Select Renewal Reminder — {days_ahead} Days',
+                    message=(
+                        f'Your APC Select membership expires on {cp.expiry_date.strftime("%B %-d, %Y")} '
+                        f'({days_ahead} days from now). Renew at {site_url}/portal/packages/ '
+                        f'to keep your membership and team access.'
+                    ),
+                    method='in_app',
+                )
+                sent_count += 1
+            except Exception as e:
+                logger.error('Failed to send Select renewal reminder for %s: %s', cp, e)
+
     logger.info(f"Sent package expiring notifications to {sent_count} clients")
     return f"Sent package expiring notifications to {sent_count} clients"
 
@@ -1043,3 +1079,86 @@ def expire_stale_referrals():
 
     logger.info(f"expire_stale_referrals: marked {expired_count} referrals as expired")
     return f"Marked {expired_count} referrals as expired"
+
+
+@shared_task
+def send_game_day_digest():
+    """Send a 24-hour pre-game attendance digest to owner and creating coach.
+
+    Runs daily at 8 AM via Celery Beat.
+    Finds all published SelectGames scheduled for tomorrow and emails the
+    attendance summary (coming / not coming / no response) to the creator and coach.
+    """
+    from bookings.models import SelectGame
+    from django.core.mail import send_mail
+    from django.conf import settings as _s
+    from django.db.models import Count, Q
+
+    tomorrow = timezone.localdate() + timedelta(days=1)
+    games = SelectGame.objects.filter(
+        date=tomorrow,
+        status='published',
+    ).select_related('team', 'created_by', 'coach__user').prefetch_related(
+        'rsvps__client__user', 'rsvps__player'
+    ).annotate(
+        coming_count=Count('rsvps', filter=Q(rsvps__status='coming')),
+        not_coming_count=Count('rsvps', filter=Q(rsvps__status='not_coming')),
+        pending_count=Count('rsvps', filter=Q(rsvps__status='pending')),
+    )
+
+    if not games:
+        return 'No games tomorrow'
+
+    sent = 0
+    for game in games:
+        # Build roster text
+        lines = [
+            f'APC Select Game — {game.team.name}',
+            f'{game.date.strftime("%A, %B %-d, %Y")} at {game.start_time.strftime("%-I:%M %p")}',
+            f'Location: {game.location}',
+            '',
+            f'✅ Coming: {game.coming_count}',
+            f'❌ Not Coming: {game.not_coming_count}',
+            f'⏳ No Response: {game.pending_count}',
+            '',
+        ]
+        coming_rsvps = [r for r in game.rsvps.all() if r.status == 'coming']
+        if coming_rsvps:
+            lines.append('CONFIRMED ATTENDANCE:')
+            for r in coming_rsvps:
+                name = str(r.player) if r.player else str(r.client)
+                lines.append(f'  • {name}')
+
+        not_coming_rsvps = [r for r in game.rsvps.all() if r.status == 'not_coming']
+        if not_coming_rsvps:
+            lines.append('')
+            lines.append('NOT COMING:')
+            for r in not_coming_rsvps:
+                name = str(r.player) if r.player else str(r.client)
+                lines.append(f'  • {name}')
+
+        body = '\n'.join(lines)
+        subject = f'[APC Select] Game Day Tomorrow — {game.team.name}'
+        from_email = getattr(_s, 'DEFAULT_FROM_EMAIL', 'noreply@atletasperformancecenter.com')
+
+        recipients = []
+        if game.created_by and game.created_by.email:
+            recipients.append(game.created_by.email)
+        if game.coach and game.coach.user.email and game.coach.user.email not in recipients:
+            recipients.append(game.coach.user.email)
+        # Also notify all Owner group users
+        from django.contrib.auth.models import User
+        for owner in User.objects.filter(groups__name='Owner', is_active=True):
+            if owner.email and owner.email not in recipients:
+                recipients.append(owner.email)
+
+        if recipients and getattr(_s, 'PRODUCTION_EMAIL_ENABLED', False):
+            try:
+                send_mail(subject, body, from_email, recipients, fail_silently=True)
+                sent += 1
+            except Exception as e:
+                logger.error('send_game_day_digest: email failed for game %s: %s', game.pk, e)
+        else:
+            logger.info('send_game_day_digest (dev): game %s — %s', game.pk, body[:120])
+
+    return f'Game day digest sent for {sent}/{len(games)} games'

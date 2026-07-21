@@ -663,6 +663,8 @@ def owner_package_add(request):
                 package_type=request.POST.get('package_type'),
                 description=request.POST.get('description', ''),
                 price=request.POST.get('price'),
+                stripe_price_id=request.POST.get('stripe_price_id', '').strip(),
+                billing_tier=request.POST.get('billing_tier', ''),
                 sessions_included=request.POST.get('sessions_included', 0),
                 validity_weeks=request.POST.get('validity_weeks', 4),
                 is_active=request.POST.get('is_active') == 'on',
@@ -702,6 +704,8 @@ def owner_package_edit(request, pk):
             package.package_type = request.POST.get('package_type')
             package.description = request.POST.get('description', '')
             package.price = request.POST.get('price')
+            package.stripe_price_id = request.POST.get('stripe_price_id', '').strip()
+            package.billing_tier = request.POST.get('billing_tier', '')
             package.sessions_included = request.POST.get('sessions_included', 0)
             package.validity_weeks = request.POST.get('validity_weeks', 4)
             package.is_active      = request.POST.get('is_active') == 'on'
