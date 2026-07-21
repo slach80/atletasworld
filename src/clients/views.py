@@ -2496,8 +2496,6 @@ def add_referral_code(request):
 
     return redirect('clients:referral')
 
-    return redirect('clients:referral')
-
 
 # ============================================================================
 # APC SELECT — RSVP
