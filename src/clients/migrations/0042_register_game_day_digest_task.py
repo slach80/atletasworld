@@ -32,6 +32,10 @@ def reverse_game_day_digest(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # Must run outside a transaction: imports live django_celery_beat models
+    # which can trigger SQL errors that abort a Postgres transaction block,
+    # poisoning the connection for all subsequent test DB setup.
+    atomic = False
 
     dependencies = [
         ('clients', '0041_seed_select_teams_and_session_types'),
