@@ -2189,9 +2189,46 @@ def owner_session_type_roster(request, pk):
 @login_required
 @user_passes_test(is_owner)
 def owner_teams(request):
-    """List all teams with stats."""
+    """List all teams with stats; handle team creation via POST."""
     from clients.models import Team, ClientPackage
     from django.db.models import Count, Q
+    from django.utils.text import slugify
+
+    if request.method == 'POST' and request.POST.get('action') == 'create':
+        name = request.POST.get('name', '').strip()
+        age_group = request.POST.get('age_group', '').strip()
+        skill_level = request.POST.get('skill_level', 'intermediate')
+        max_players = request.POST.get('max_players', 18)
+        description = request.POST.get('description', '').strip()
+        is_select = request.POST.get('is_select') == '1'
+
+        if name and age_group:
+            base_slug = slugify(name)
+            slug = base_slug
+            counter = 1
+            while Team.objects.filter(slug=slug).exists():
+                slug = f'{base_slug}-{counter}'
+                counter += 1
+            try:
+                max_players = int(max_players)
+            except (ValueError, TypeError):
+                max_players = 18
+            manager_client = Client.objects.filter(user__groups__name='Owner').first()
+            Team.objects.create(
+                name=name,
+                slug=slug,
+                age_group=age_group,
+                skill_level=skill_level,
+                max_players=max_players,
+                description=description,
+                is_select=is_select,
+                is_active=True,
+                manager=manager_client,
+            )
+            messages.success(request, f'Team "{name}" created.')
+        else:
+            messages.error(request, 'Name and age group are required.')
+        return redirect('owner_teams')
 
     teams = Team.objects.filter(is_active=True).annotate(
         active_player_count=Count('players', filter=Q(players__is_active=True)),
@@ -2202,7 +2239,7 @@ def owner_teams(request):
     total_teams = teams.count()
     total_players = Player.objects.filter(is_active=True, team__is_active=True).count()
     total_coaches = Coach.objects.filter(teams__is_active=True).distinct().count()
-    
+
     # Count active team packages
     active_packages = ClientPackage.objects.filter(
         status='active',
@@ -2222,12 +2259,34 @@ def owner_teams(request):
 @login_required
 @user_passes_test(is_owner)
 def owner_team_detail(request, pk):
-    """Show detailed team info with roster, coaches, and bookings."""
+    """Show detailed team info; handle team edit and deactivate via POST."""
     from clients.models import Team
     from django.shortcuts import get_object_or_404
     from datetime import timedelta
 
     team = get_object_or_404(Team.objects.select_related('manager__user'), pk=pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'edit':
+            team.name = request.POST.get('name', team.name).strip() or team.name
+            team.age_group = request.POST.get('age_group', team.age_group).strip() or team.age_group
+            team.skill_level = request.POST.get('skill_level', team.skill_level)
+            team.description = request.POST.get('description', '').strip()
+            team.is_select = request.POST.get('is_select') == '1'
+            try:
+                team.max_players = int(request.POST.get('max_players', team.max_players))
+            except (ValueError, TypeError):
+                pass
+            team.save()
+            messages.success(request, f'Team "{team.name}" updated.')
+        elif action == 'deactivate':
+            team.is_active = False
+            team.save()
+            messages.success(request, f'Team "{team.name}" deactivated.')
+            return redirect('owner_teams')
+        return redirect('owner_team_detail', pk=pk)
+
     today = timezone.localdate()
 
     # Get team players with details
