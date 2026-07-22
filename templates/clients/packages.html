@@ -286,7 +286,7 @@
                                     showError(result.error.message);
                                     return;
                                 }
-                                fetch('/payments/subscribe/' + _selectedTierId + '/', {
+                                fetch('/portal/packages/' + _selectedTierId + '/subscribe/', {
                                     method: 'POST',
                                     headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
                                     body: 'payment_method_id=' + encodeURIComponent(result.paymentMethod.id),
