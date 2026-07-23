@@ -49,23 +49,19 @@ def create_package_payment_intent(request, package_id):
     player_id_int = int(player_id_str) if player_id_str and player_id_str.isdigit() else None
 
     # --- Sibling discount: same exact package already active for another player ---
-    # Not applicable to Select memberships — each player pays the full subscription rate.
     sibling_discount_amount = Decimal('0.00')
     sibling_discount_found  = False
-    if package.package_type != 'select':
-        if player_id_int:
-            sibling_has_package = client.packages.filter(
-                package=package,
-                status='active',
-            ).exclude(player_id=player_id_int).exists()
-        else:
-            # No player selected — sibling discount if client already has same package active
-            sibling_has_package = client.packages.filter(
-                package=package,
-                status='active',
-            ).exists()
+    if player_id_int:
+        sibling_has_package = client.packages.filter(
+            package=package,
+            status='active',
+        ).exclude(player_id=player_id_int).exists()
     else:
-        sibling_has_package = False
+        # No player selected — sibling discount if client already has same package active
+        sibling_has_package = client.packages.filter(
+            package=package,
+            status='active',
+        ).exists()
     if sibling_has_package:
         sibling_discount_amount = (subtotal * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
         sibling_discount_found = True
@@ -297,24 +293,26 @@ def create_batch_package_payment_intent(request):
         if len(players) != len(p_ids):
             return JsonResponse({'error': 'One or more players not found.'}, status=400)
 
-        # Sibling discount per package
-        existing_active_player_ids = set(
-            client.packages.filter(package=package, status='active').values_list('player_id', flat=True)
-        )
-        # Track which players in this batch already have a full-price entry for this package
-        batch_full_price_exists = any(
+        # Sibling discount per package:
+        # Rule — first player overall pays full price, every additional sibling pays 50%.
+        # "Prior sibling" = a player NOT in this batch who already has this package active.
+        # Players in the same batch don't trigger each other's discount; batch order decides
+        # who is "first" (and therefore full-price) when no prior sibling exists.
+        batch_player_ids = {p.pk for p in players}
+        prior_sibling_exists = client.packages.filter(
+            package=package, status='active'
+        ).exclude(player_id__in=batch_player_ids).exists()
+
+        # Also respect full-price entries from earlier packages in this same cart
+        batch_full_price_exists = prior_sibling_exists or any(
             li['package_id'] == pkg_id and not li['sibling_discount'] for li in all_line_items
         )
 
         for player in players:
             price = package.price
-            sibling = False
-            if package.package_type != 'select':
-                has_existing = player.pk in existing_active_player_ids
-                another_active = existing_active_player_ids - {player.pk}
-                if has_existing or another_active or batch_full_price_exists:
-                    sibling = True
-                    price = (package.price * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+            sibling = batch_full_price_exists  # first in batch pays full if no prior sibling
+            if sibling:
+                price = (package.price * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
 
             all_line_items.append({
                 'package_id': pkg_id,
@@ -326,7 +324,7 @@ def create_batch_package_payment_intent(request):
                 'sibling_discount': sibling,
             })
             subtotal += price
-            batch_full_price_exists = batch_full_price_exists or not sibling
+            batch_full_price_exists = True  # every player after the first is a sibling
 
         description_parts.append(f'{package.name} x{len(players)}')
 
