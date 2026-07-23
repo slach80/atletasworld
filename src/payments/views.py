@@ -49,19 +49,23 @@ def create_package_payment_intent(request, package_id):
     player_id_int = int(player_id_str) if player_id_str and player_id_str.isdigit() else None
 
     # --- Sibling discount: same exact package already active for another player ---
+    # Not applicable to Select memberships — each player pays the full subscription rate.
     sibling_discount_amount = Decimal('0.00')
     sibling_discount_found  = False
-    if player_id_int:
-        sibling_has_package = client.packages.filter(
-            package=package,
-            status='active',
-        ).exclude(player_id=player_id_int).exists()
+    if package.package_type != 'select':
+        if player_id_int:
+            sibling_has_package = client.packages.filter(
+                package=package,
+                status='active',
+            ).exclude(player_id=player_id_int).exists()
+        else:
+            # No player selected — sibling discount if client already has same package active
+            sibling_has_package = client.packages.filter(
+                package=package,
+                status='active',
+            ).exists()
     else:
-        # No player selected — sibling discount if client already has same package active
-        sibling_has_package = client.packages.filter(
-            package=package,
-            status='active',
-        ).exists()
+        sibling_has_package = False
     if sibling_has_package:
         sibling_discount_amount = (subtotal * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
         sibling_discount_found = True
@@ -305,11 +309,12 @@ def create_batch_package_payment_intent(request):
         for player in players:
             price = package.price
             sibling = False
-            has_existing = player.pk in existing_active_player_ids
-            another_active = existing_active_player_ids - {player.pk}
-            if has_existing or another_active or batch_full_price_exists:
-                sibling = True
-                price = (package.price * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+            if package.package_type != 'select':
+                has_existing = player.pk in existing_active_player_ids
+                another_active = existing_active_player_ids - {player.pk}
+                if has_existing or another_active or batch_full_price_exists:
+                    sibling = True
+                    price = (package.price * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
 
             all_line_items.append({
                 'package_id': pkg_id,
