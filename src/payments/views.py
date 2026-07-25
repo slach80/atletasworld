@@ -524,24 +524,21 @@ def create_package_subscription(request, package_id):
             s.Customer.modify(customer_id,
                 invoice_settings={'default_payment_method': payment_method_id})
 
-        # Prorate legacy manual memberships: if the client has an expired manual Select
-        # package, carry its remaining time forward as a free trial so the first charge
-        # aligns with what was originally paid for.
-        import calendar as _cal
+        # Trial period only for members who already paid via Stripe for their current term.
+        # Manual/offline signups (no stripe_payment_id) pay immediately on subscription.
+        import datetime as _dt
         trial_end = None
-        legacy_cp = ClientPackage.objects.filter(
+        paid_legacy_cp = ClientPackage.objects.filter(
             client=client,
             package=package,
             status='expired',
             stripe_subscription_id='',
-        ).order_by('-expiry_date').first()
-        if legacy_cp and legacy_cp.expiry_date > timezone.localdate():
-            # Convert expiry_date to a UTC midnight timestamp for Stripe
-            import datetime as _dt
+        ).filter(stripe_payment_id__startswith='pi_').order_by('-expiry_date').first()
+        if paid_legacy_cp and paid_legacy_cp.expiry_date > timezone.localdate():
             trial_end = int(_dt.datetime.combine(
-                legacy_cp.expiry_date, _dt.time.min
+                paid_legacy_cp.expiry_date, _dt.time.min
             ).timestamp())
-            logger.info('Select subscription: using trial_end=%s for legacy cp #%s', legacy_cp.expiry_date, legacy_cp.pk)
+            logger.info('Select subscription: trial_end=%s for Stripe-paid legacy cp #%s', paid_legacy_cp.expiry_date, paid_legacy_cp.pk)
 
         sub_kwargs = dict(
             customer=customer_id,
@@ -565,8 +562,7 @@ def create_package_subscription(request, package_id):
             'subscription_id': subscription.id,
         })
 
-        # For trial subscriptions there is no payment_intent — activate the ClientPackage
-        # immediately so the member retains access during the trial period.
+        # For trial subscriptions activate the ClientPackage immediately.
         if subscription.status == 'trialing':
             _activate_package(
                 client_id=client.pk,
