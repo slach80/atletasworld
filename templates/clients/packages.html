@@ -274,22 +274,16 @@
                             btn.disabled = true;
                             btn.textContent = 'Processing…';
 
-                            // Create PaymentMethod first via Stripe.js, then subscribe
-                            var stripe = Stripe('{{ stripe_public_key }}');
-                            stripe.createPaymentMethod({
-                                type: 'card',
-                                card: _cardElement,  // reuse the existing card element if present
-                            }).then(function(result) {
-                                if (result.error) {
-                                    btn.disabled = false;
-                                    btn.textContent = 'Join APC Select';
-                                    showError(result.error.message);
-                                    return;
-                                }
+                            var stripeObj = Stripe('{{ stripe_public_key }}');
+
+                            function doSubscribe(paymentMethodId) {
+                                var body = paymentMethodId
+                                    ? 'payment_method_id=' + encodeURIComponent(paymentMethodId)
+                                    : '';
                                 fetch('/portal/packages/' + _selectedTierId + '/subscribe/', {
                                     method: 'POST',
                                     headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
-                                    body: 'payment_method_id=' + encodeURIComponent(result.paymentMethod.id),
+                                    body: body,
                                 }).then(r => r.json()).then(function(data) {
                                     if (data.error) {
                                         btn.disabled = false;
@@ -298,7 +292,8 @@
                                         return;
                                     }
                                     if (data.client_secret) {
-                                        stripe.confirmCardPayment(data.client_secret).then(function(res) {
+                                        // Payment required — confirm with card
+                                        stripeObj.confirmCardPayment(data.client_secret).then(function(res) {
                                             if (res.error) {
                                                 btn.disabled = false;
                                                 btn.textContent = 'Join APC Select';
@@ -308,10 +303,20 @@
                                             }
                                         });
                                     } else {
+                                        // Trial or $0 — no payment needed
                                         window.location.href = '/portal/packages/?select_joined=1';
                                     }
+                                }).catch(function() {
+                                    btn.disabled = false;
+                                    btn.textContent = 'Join APC Select';
+                                    showError('Something went wrong. Please try again.');
                                 });
-                            });
+                            }
+
+                            // Try subscribing without a card first (works for trial periods).
+                            // If Stripe returns a client_secret, a card element will be needed —
+                            // for now collect card via the existing checkout modal instead.
+                            doSubscribe(null);
                         }
                         </script>
                         {% endif %}
