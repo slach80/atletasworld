@@ -479,6 +479,34 @@ def package_subscribe(request, package_id):
 
 @login_required
 @require_POST
+def select_update_payment_method(request):
+    """Replace the default payment method on the client's Stripe customer."""
+    from django.http import JsonResponse as _JsonResponse
+    from django.conf import settings as _s
+    import stripe as _stripe_lib
+
+    if not _s.STRIPE_SECRET_KEY:
+        return _JsonResponse({'error': 'Payments not configured.'}, status=503)
+
+    client, _ = Client.objects.get_or_create(user=request.user)
+    payment_method_id = request.POST.get('payment_method_id', '').strip()
+    if not payment_method_id:
+        return _JsonResponse({'error': 'No payment method provided.'}, status=400)
+
+    _stripe_lib.api_key = _s.STRIPE_SECRET_KEY
+    try:
+        if not client.stripe_customer_id:
+            return _JsonResponse({'error': 'No billing account found. Please contact support.'}, status=400)
+        _stripe_lib.PaymentMethod.attach(payment_method_id, customer=client.stripe_customer_id)
+        _stripe_lib.Customer.modify(client.stripe_customer_id,
+            invoice_settings={'default_payment_method': payment_method_id})
+        return _JsonResponse({'ok': True})
+    except _stripe_lib.error.StripeError as e:
+        return _JsonResponse({'error': str(e.user_message)}, status=400)
+
+
+@login_required
+@require_POST
 def select_cancel_subscription(request, client_package_id):
     """Cancel an APC Select Stripe subscription at period end."""
     from django.http import JsonResponse as _JsonResponse

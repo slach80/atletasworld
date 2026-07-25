@@ -102,6 +102,7 @@
 
             <div class="bg-white p-8">
                 {% if has_select_membership %}
+                <script>var _stripeObj = typeof _stripeObj !== 'undefined' ? _stripeObj : Stripe('{{ stripe_public_key }}');</script>
                 {% with select_cp=active_packages|dictsort:"id"|first %}
                 <div class="flex items-start justify-between gap-4 mb-6 p-4 bg-secondary/10 rounded-xl border border-secondary/30">
                     <div class="flex items-center gap-3">
@@ -111,12 +112,23 @@
                             {% for cp in active_packages %}{% if cp.package.package_type == 'select' %}
                             {% if cp.stripe_subscription_id %}
                             <p class="text-xs text-gray-500 mt-1">Auto-renews on {{ cp.expiry_date|date:"M j, Y" }} &middot;
+                                <button type="button" onclick="toggleUpdateCard()" class="text-primary hover:underline text-xs">Update card</button>
+                                &middot;
                                 <form method="post" action="{% url 'clients:select_cancel_subscription' cp.id %}" class="inline"
                                       onsubmit="return confirm('Cancel your APC Select auto-renewal? Your access continues until {{ cp.expiry_date|date:"M j, Y" }}.')">
                                     {% csrf_token %}
                                     <button type="submit" class="text-red-500 hover:underline text-xs">Cancel auto-renewal</button>
                                 </form>
                             </p>
+                            <div id="update-card-wrap" class="hidden mt-3 p-3 bg-white border border-gray-200 rounded-lg">
+                                <div id="update-card-element" class="px-3 py-2 border border-gray-300 rounded-lg mb-2"></div>
+                                <div id="update-card-error" class="text-xs text-red-500 mb-2 hidden"></div>
+                                <button type="button" onclick="submitUpdateCard()" id="update-card-btn"
+                                        class="px-4 py-2 bg-primary text-secondary rounded-lg text-xs font-bold hover:bg-secondary hover:text-primary transition">
+                                    Save new card
+                                </button>
+                                <button type="button" onclick="toggleUpdateCard()" class="ml-2 text-xs text-gray-400 hover:underline">Cancel</button>
+                            </div>
                             {% else %}
                             <p class="text-xs text-gray-500 mt-1">Manual renewal &middot; Expires {{ cp.expiry_date|date:"M j, Y" }}</p>
                             {% endif %}
@@ -364,6 +376,61 @@
                                 btn.textContent = 'Join APC Select';
                                 showError('Something went wrong. Please try again.');
                             });
+                        }
+
+                        // ── Update card ──────────────────────────────────────
+                        var _updateCardElement = null;
+                        var _updateCardMounted = false;
+
+                        function toggleUpdateCard() {
+                            var wrap = document.getElementById('update-card-wrap');
+                            if (!wrap) return;
+                            var hidden = wrap.classList.contains('hidden');
+                            wrap.classList.toggle('hidden', !hidden);
+                            if (hidden && !_updateCardMounted) {
+                                var elements = _stripeObj.elements();
+                                _updateCardElement = elements.create('card', {style: {base: {fontSize: '15px'}}});
+                                _updateCardElement.mount('#update-card-element');
+                                _updateCardElement.on('change', function(e) {
+                                    var err = document.getElementById('update-card-error');
+                                    if (e.error) { err.textContent = e.error.message; err.classList.remove('hidden'); }
+                                    else { err.classList.add('hidden'); }
+                                });
+                                _updateCardMounted = true;
+                            }
+                        }
+
+                        function submitUpdateCard() {
+                            var btn = document.getElementById('update-card-btn');
+                            btn.disabled = true;
+                            btn.textContent = 'Saving…';
+                            _stripeObj.createPaymentMethod({type: 'card', card: _updateCardElement})
+                                .then(function(result) {
+                                    if (result.error) {
+                                        var err = document.getElementById('update-card-error');
+                                        err.textContent = result.error.message;
+                                        err.classList.remove('hidden');
+                                        btn.disabled = false;
+                                        btn.textContent = 'Save new card';
+                                        return;
+                                    }
+                                    fetch('/portal/packages/update-payment-method/', {
+                                        method: 'POST',
+                                        headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
+                                        body: 'payment_method_id=' + encodeURIComponent(result.paymentMethod.id),
+                                    }).then(r => r.json()).then(function(data) {
+                                        if (data.error) {
+                                            var err = document.getElementById('update-card-error');
+                                            err.textContent = data.error;
+                                            err.classList.remove('hidden');
+                                            btn.disabled = false;
+                                            btn.textContent = 'Save new card';
+                                        } else {
+                                            btn.textContent = '✓ Card updated';
+                                            setTimeout(function() { toggleUpdateCard(); }, 1200);
+                                        }
+                                    });
+                                });
                         }
                         </script>
                         {% endif %}
