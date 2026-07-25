@@ -552,7 +552,7 @@
 
 <!-- Payment Modal -->
 <div id="payment-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" style="color-scheme: light;">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold">Checkout</h2>
             <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 p-1">
@@ -809,7 +809,7 @@ async function initCheckoutPayment() {
             // Mount payment element
             paymentElements = stripeJs.elements({
                 clientSecret: data.client_secret,
-                appearance: { theme: 'stripe', variables: { colorPrimary: '#1a1a1a', borderRadius: '12px' } },
+                appearance: { theme: 'flat', variables: { colorPrimary: '#1a1a1a', borderRadius: '12px', colorBackground: '#ffffff', colorText: '#1a1a1a' } },
             });
             const pe = paymentElements.create('payment', { layout: 'tabs' });
             pe.mount('#payment-element');
@@ -901,7 +901,7 @@ function showPaymentForm(data) {
     // Mount Stripe
     paymentElements = stripeJs.elements({
         clientSecret: data.client_secret,
-        appearance: { theme: 'stripe', variables: { colorPrimary: '#1a1a1a', borderRadius: '12px', fontFamily: "'Archivo Condensed', system-ui, sans-serif" } },
+        appearance: { theme: 'flat', variables: { colorPrimary: '#1a1a1a', borderRadius: '12px', colorBackground: '#ffffff', colorText: '#1a1a1a', fontFamily: "'Archivo Condensed', system-ui, sans-serif" } },
     });
     const pe = paymentElements.create('payment', { layout: 'tabs' });
     pe.mount('#payment-element');
