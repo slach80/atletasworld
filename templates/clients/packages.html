@@ -351,6 +351,7 @@
                                         cardWrap.classList.remove('hidden');
                                         btn.disabled = false;
                                         btn.textContent = 'Subscribe — $' + _selectedTierPrice;
+                                        setTimeout(function() { cardWrap.scrollIntoView({behavior: 'smooth', block: 'center'}); }, 100);
                                         return;
                                     }
                                     btn.disabled = false;
