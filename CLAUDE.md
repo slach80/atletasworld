@@ -171,6 +171,7 @@ When a feature maps to a hustle module:
 
 ## Backlog
 
-- **Task #12 — APC Select Membership recurring billing**: Mirko wants parents to purchase by June 15, then auto-billed monthly on the 15th starting July. Use Stripe Subscriptions (`Package.stripe_price_id` field already exists). Need: Stripe recurring Price object, subscription creation on purchase, webhook handling for `invoice.paid` / `invoice.payment_failed`, June 15 purchase deadline enforced in packages view.
+- **Task #13 — Email players on Select game publish**: When a `SelectGame` is published, `fanout_select_game_rsvps` signal (`src/clients/signals.py:186`) sends in-app notifications only. Add email to each eligible player's parent (client) with game date/time/location and RSVP link. Hook into the existing fan-out loop after `Notification.objects.create`. Use the `base_email.html` template pattern; guard with `PRODUCTION_EMAIL_ENABLED`.
+- ~~**Task #12 — APC Select Membership recurring billing**~~ ✅ complete (2026-07-22) — Stripe webhooks live, subscription confirmed working in production.
 - **Task #11 — Enable Venmo in Stripe Dashboard**: No code changes needed, pure Stripe config.
 - **Task #7 — Google OAuth login**: Needs `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` in EC2 `.env` from Mirko, then enable social login buttons.
