@@ -213,8 +213,10 @@
                             {% if select_team %}
                             <p class="text-indigo-300 text-sm font-bold mt-0.5">{{ select_team.name }}</p>
                             {% endif %}
-                            {% if select_pkg.expiry_date %}
-                            <p class="text-gray-400 text-xs mt-0.5">Expires {{ select_pkg.expiry_date|date:"M j, Y" }}</p>
+                            {% if select_pkg.stripe_subscription_id %}
+                            <p class="text-gray-400 text-xs mt-0.5">Auto-renews {{ select_pkg.expiry_date|date:"M j, Y" }}</p>
+                            {% elif select_pkg.expiry_date %}
+                            <p class="text-gray-400 text-xs mt-0.5">Expires {{ select_pkg.expiry_date|date:"M j, Y" }} &middot; <a href="{% url 'clients:packages' %}" class="text-secondary hover:underline">Enable auto-renewal</a></p>
                             {% endif %}
                         </div>
                         <div class="flex flex-col sm:flex-row gap-3 shrink-0">
@@ -307,6 +309,17 @@
                 </div>
                 {% endif %}
 
+                {% elif client.select_invited %}
+                <!-- Invited but not yet subscribed -->
+                <div class="rounded-2xl mb-4 border-2 border-primary/40 bg-primary/5 px-6 py-5 flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-bold text-gray-800">You're invited to APC Select!</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Join the high-performance program and get $40/month training credits, discounted sessions, and more.</p>
+                    </div>
+                    <a href="{% url 'clients:packages' %}" class="shrink-0 px-4 py-2 bg-primary text-secondary rounded-xl font-black text-sm hover:bg-secondary hover:text-primary transition-all">
+                        Join Now
+                    </a>
+                </div>
                 {% endif %}
 
                 <!-- Active Packages -->
