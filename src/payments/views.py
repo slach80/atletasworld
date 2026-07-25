@@ -524,16 +524,39 @@ def create_package_subscription(request, package_id):
             s.Customer.modify(customer_id,
                 invoice_settings={'default_payment_method': payment_method_id})
 
-        subscription = s.Subscription.create(
+        # Prorate legacy manual memberships: if the client has an expired manual Select
+        # package, carry its remaining time forward as a free trial so the first charge
+        # aligns with what was originally paid for.
+        import calendar as _cal
+        trial_end = None
+        legacy_cp = ClientPackage.objects.filter(
+            client=client,
+            package=package,
+            status='expired',
+            stripe_subscription_id='',
+        ).order_by('-expiry_date').first()
+        if legacy_cp and legacy_cp.expiry_date > timezone.localdate():
+            # Convert expiry_date to a UTC midnight timestamp for Stripe
+            import datetime as _dt
+            trial_end = int(_dt.datetime.combine(
+                legacy_cp.expiry_date, _dt.time.min
+            ).timestamp())
+            logger.info('Select subscription: using trial_end=%s for legacy cp #%s', legacy_cp.expiry_date, legacy_cp.pk)
+
+        sub_kwargs = dict(
             customer=customer_id,
             items=[{'price': package.stripe_price_id}],
             expand=['latest_invoice.payment_intent'],
             metadata={
                 'client_id': str(client.pk),
                 'package_id': str(package.pk),
-                'subscription_id': '',  # placeholder — overwritten below after creation
+                'subscription_id': '',
             },
         )
+        if trial_end:
+            sub_kwargs['trial_end'] = trial_end
+
+        subscription = s.Subscription.create(**sub_kwargs)
 
         # Persist subscription_id in its own metadata so _activate_package can store it
         s.Subscription.modify(subscription.id, metadata={
@@ -541,6 +564,16 @@ def create_package_subscription(request, package_id):
             'package_id': str(package.pk),
             'subscription_id': subscription.id,
         })
+
+        # For trial subscriptions there is no payment_intent — activate the ClientPackage
+        # immediately so the member retains access during the trial period.
+        if subscription.status == 'trialing':
+            _activate_package(
+                client_id=client.pk,
+                package_id=package.pk,
+                payment_intent_id=f'trial_{subscription.id}',
+                subscription_id=subscription.id,
+            )
 
         return JsonResponse({
             'subscription_id': subscription.id,
