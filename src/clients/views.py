@@ -471,6 +471,31 @@ def batch_package_payment_intent(request):
 
 @login_required
 @require_POST
+def select_setup_intent(request):
+    """Create a Stripe SetupIntent to collect a card for Select subscription."""
+    from django.http import JsonResponse as _JsonResponse
+    from django.conf import settings as _s
+    import stripe as _stripe_lib
+    from payments.views import _get_or_create_stripe_customer
+
+    if not _s.STRIPE_SECRET_KEY:
+        return _JsonResponse({'error': 'Payments not configured.'}, status=503)
+
+    _stripe_lib.api_key = _s.STRIPE_SECRET_KEY
+    client, _ = Client.objects.get_or_create(user=request.user)
+    try:
+        customer_id = _get_or_create_stripe_customer(client)
+        si = _stripe_lib.SetupIntent.create(
+            customer=customer_id,
+            usage='off_session',
+        )
+        return _JsonResponse({'client_secret': si.client_secret})
+    except _stripe_lib.error.StripeError as e:
+        return _JsonResponse({'error': str(e.user_message)}, status=400)
+
+
+@login_required
+@require_POST
 def package_subscribe(request, package_id):
     """Proxy to payments app — create Stripe Subscription for recurring package."""
     from payments.views import create_package_subscription
