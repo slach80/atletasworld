@@ -102,7 +102,12 @@
 
             <div class="bg-white p-8">
                 {% if has_select_membership %}
-                <script>var _stripeObj = typeof _stripeObj !== 'undefined' ? _stripeObj : Stripe('{{ stripe_public_key }}');</script>
+                <script>
+                var _stripeObj = null;
+                window.addEventListener('load', function() {
+                    _stripeObj = typeof _stripeObj !== 'undefined' && _stripeObj ? _stripeObj : Stripe('{{ stripe_public_key }}');
+                });
+                </script>
                 {% with select_cp=active_packages|dictsort:"id"|first %}
                 <div class="flex items-start justify-between gap-4 mb-6 p-4 bg-secondary/10 rounded-xl border border-secondary/30">
                     <div class="flex items-center gap-3">
@@ -287,13 +292,14 @@
                             }
                         }
 
-                        var _stripeObj = Stripe('{{ stripe_public_key }}');
+                        var _stripeObj = null;
                         var _selectCardElement = null;
 
-                        // Mount card element immediately on page load
-                        document.addEventListener('DOMContentLoaded', function() {
+                        // Mount card element after Stripe.js loads (script is at bottom of page)
+                        window.addEventListener('load', function() {
                             var el = document.getElementById('select-card-element');
                             if (!el) return;
+                            _stripeObj = Stripe('{{ stripe_public_key }}');
                             var elements = _stripeObj.elements();
                             _selectCardElement = elements.create('card', {
                                 style: {base: {fontSize: '16px', color: '#374151', '::placeholder': {color: '#9ca3af'}}}
@@ -308,6 +314,10 @@
 
                         function startSelectSubscription() {
                             var btn = document.getElementById('select-join-btn');
+                            if (!_stripeObj || !_selectCardElement) {
+                                showError('Payment form not ready. Please refresh the page.');
+                                return;
+                            }
                             btn.disabled = true;
                             btn.textContent = 'Processing…';
 
