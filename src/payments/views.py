@@ -915,17 +915,25 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None, s
     if package.package_type == 'select':
         from clients.models import ClientCredit
         from datetime import date
-        year_end = date(timezone.localdate().year, 12, 31)
-        for month in range(1, 7):
-            ClientCredit.objects.create(
-                client=client,
-                amount=Decimal('40.00'),
-                credit_type='select_monthly',
-                source_package=cp,
-                expires_at=year_end,
-                notes=f'APC Select — Month {month} training credit ($40 toward any APC Training session or package)',
-            )
-        logger.info('APC Select: 6 monthly credits created for %s', client)
+        # Only create credits if the client has no unused select_monthly credits already.
+        # Prevents stacking on re-subscription or accidental duplicate activations.
+        existing = ClientCredit.objects.filter(
+            client=client, credit_type='select_monthly', status='available'
+        ).count()
+        if existing == 0:
+            year_end = date(timezone.localdate().year, 12, 31)
+            for month in range(1, 7):
+                ClientCredit.objects.create(
+                    client=client,
+                    amount=Decimal('40.00'),
+                    credit_type='select_monthly',
+                    source_package=cp,
+                    expires_at=year_end,
+                    notes=f'APC Select — Month {month} training credit ($40 toward any APC Training session or package)',
+                )
+            logger.info('APC Select: 6 monthly credits created for %s', client)
+        else:
+            logger.info('APC Select: skipped credit creation for %s — %s unused credits already exist', client, existing)
 
     # Referral activation: check if this is the referred user's first purchase
     try:
