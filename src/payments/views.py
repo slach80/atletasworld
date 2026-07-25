@@ -1265,33 +1265,46 @@ def _handle_invoice_upcoming(invoice):
 
 
 def _handle_subscription_cancelled(subscription):
-    """Subscription cancelled/deleted → expire ClientPackage and notify member."""
-    updated = ClientPackage.objects.filter(
+    """Subscription cancelled/deleted → expire ClientPackage only after paid period ends."""
+    import datetime as _dt
+
+    cp = ClientPackage.objects.filter(
         stripe_subscription_id=subscription['id']
-    ).update(status='expired')
-    logger.info('Subscription cancelled: %s ClientPackage(s) expired', updated)
+    ).select_related('client').first()
+    if not cp:
+        return
+
+    # Stripe fires this webhook at period end when cancel_at_period_end=True.
+    # The member already paid through expiry_date — keep the package active until then
+    # so they get what they paid for; a background task will expire it naturally.
+    # Only immediately expire if the cancel was immediate (canceled_at < current period end).
+    today = timezone.localdate()
+    if cp.expiry_date and cp.expiry_date > today:
+        # Still within paid period — clear subscription ID to stop auto-renewal but keep active
+        cp.stripe_subscription_id = ''
+        cp.save(update_fields=['stripe_subscription_id'])
+        logger.info('Subscription cancelled: ClientPackage #%s retains access until %s', cp.pk, cp.expiry_date)
+    else:
+        cp.status = 'expired'
+        cp.save(update_fields=['status'])
+        logger.info('Subscription cancelled: ClientPackage #%s expired immediately', cp.pk)
 
     # Notify the member
     try:
-        cp = ClientPackage.objects.filter(
-            stripe_subscription_id=subscription['id']
-        ).select_related('client').first()
-        if cp:
-            from clients.models import Notification
-            cancel_at = subscription.get('cancel_at') or subscription.get('canceled_at')
-            if cancel_at:
-                import datetime
-                end_date = datetime.datetime.utcfromtimestamp(cancel_at).strftime('%B %-d, %Y')
-                msg = f'Your APC Select membership has been cancelled. Access ends on {end_date}.'
-            else:
-                msg = 'Your APC Select membership has been cancelled.'
-            Notification.objects.create(
-                client=cp.client,
-                notification_type='promotional',
-                title='APC Select Membership Cancelled',
-                message=msg,
-                method='in_app',
-            )
+        from clients.models import Notification
+        if cp.expiry_date and cp.expiry_date > today:
+            msg = (f'Your APC Select auto-renewal has been cancelled. '
+                   f'Your access continues through {cp.expiry_date.strftime("%B %-d, %Y")} — '
+                   f'no further charges will be made.')
+        else:
+            msg = 'Your APC Select membership has been cancelled.'
+        Notification.objects.create(
+            client=cp.client,
+            notification_type='promotional',
+            title='APC Select Auto-Renewal Cancelled',
+            message=msg,
+            method='in_app',
+        )
     except Exception:
         logger.exception('_handle_subscription_cancelled: notification failed')
 
