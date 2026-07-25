@@ -201,6 +201,12 @@
                                 </span>
                             </div>
                             {% if select_packages.first.stripe_price_id %}
+                            <!-- Card element — hidden until payment is required (new members without a trial) -->
+                            <div id="select-card-wrap" class="hidden mt-3">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Card details</label>
+                                <div id="select-card-element" class="px-4 py-3 border border-gray-300 rounded-lg bg-white"></div>
+                                <div id="select-card-error" class="text-xs text-red-500 mt-1 hidden"></div>
+                            </div>
                             <button id="select-join-btn"
                                     onclick="startSelectSubscription()"
                                     class="w-full mt-3 py-3 bg-primary text-secondary rounded-xl font-black hover:bg-secondary hover:text-primary transition-all text-sm uppercase tracking-wide">
@@ -269,54 +275,95 @@
                             }
                         }
 
+                        var _stripeObj = Stripe('{{ stripe_public_key }}');
+                        var _selectCardElement = null;
+                        var _cardMounted = false;
+
+                        function _mountSelectCard() {
+                            if (_cardMounted) return;
+                            var elements = _stripeObj.elements();
+                            _selectCardElement = elements.create('card', {style: {base: {fontSize: '16px'}}});
+                            _selectCardElement.mount('#select-card-element');
+                            _selectCardElement.on('change', function(e) {
+                                var errDiv = document.getElementById('select-card-error');
+                                if (e.error) { errDiv.textContent = e.error.message; errDiv.classList.remove('hidden'); }
+                                else { errDiv.classList.add('hidden'); }
+                            });
+                            _cardMounted = true;
+                        }
+
                         function startSelectSubscription() {
                             var btn = document.getElementById('select-join-btn');
-                            btn.disabled = true;
-                            btn.textContent = 'Processing…';
+                            var cardWrap = document.getElementById('select-card-wrap');
 
-                            var stripeObj = Stripe('{{ stripe_public_key }}');
-
-                            function doSubscribe(paymentMethodId) {
-                                var body = paymentMethodId
-                                    ? 'payment_method_id=' + encodeURIComponent(paymentMethodId)
-                                    : '';
-                                fetch('/portal/packages/' + _selectedTierId + '/subscribe/', {
-                                    method: 'POST',
-                                    headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
-                                    body: body,
-                                }).then(r => r.json()).then(function(data) {
-                                    if (data.error) {
-                                        btn.disabled = false;
-                                        btn.textContent = 'Join APC Select';
-                                        showError(data.error);
-                                        return;
-                                    }
-                                    if (data.client_secret) {
-                                        // Payment required — confirm with card
-                                        stripeObj.confirmCardPayment(data.client_secret).then(function(res) {
-                                            if (res.error) {
-                                                btn.disabled = false;
-                                                btn.textContent = 'Join APC Select';
-                                                showError(res.error.message);
-                                            } else {
-                                                window.location.href = '/portal/packages/?select_joined=1';
-                                            }
-                                        });
-                                    } else {
-                                        // Trial or $0 — no payment needed
-                                        window.location.href = '/portal/packages/?select_joined=1';
-                                    }
-                                }).catch(function() {
-                                    btn.disabled = false;
-                                    btn.textContent = 'Join APC Select';
-                                    showError('Something went wrong. Please try again.');
-                                });
+                            // If card form is visible, collect card then subscribe
+                            if (cardWrap && !cardWrap.classList.contains('hidden')) {
+                                btn.disabled = true;
+                                btn.textContent = 'Processing…';
+                                _stripeObj.createPaymentMethod({type: 'card', card: _selectCardElement})
+                                    .then(function(result) {
+                                        if (result.error) {
+                                            btn.disabled = false;
+                                            btn.textContent = 'Subscribe — $' + _selectedTierPrice;
+                                            var errDiv = document.getElementById('select-card-error');
+                                            errDiv.textContent = result.error.message;
+                                            errDiv.classList.remove('hidden');
+                                            return;
+                                        }
+                                        _doSubscribe(result.paymentMethod.id);
+                                    });
+                                return;
                             }
 
-                            // Try subscribing without a card first (works for trial periods).
-                            // If Stripe returns a client_secret, a card element will be needed —
-                            // for now collect card via the existing checkout modal instead.
-                            doSubscribe(null);
+                            // First attempt: try without card (works for trial/legacy members)
+                            btn.disabled = true;
+                            btn.textContent = 'Processing…';
+                            _doSubscribe(null);
+                        }
+
+                        function _doSubscribe(paymentMethodId) {
+                            var btn = document.getElementById('select-join-btn');
+                            var body = paymentMethodId
+                                ? 'payment_method_id=' + encodeURIComponent(paymentMethodId)
+                                : '';
+                            fetch('/portal/packages/' + _selectedTierId + '/subscribe/', {
+                                method: 'POST',
+                                headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
+                                body: body,
+                            }).then(r => r.json()).then(function(data) {
+                                if (data.error) {
+                                    // No card on file and no trial — show card collection form
+                                    var cardWrap = document.getElementById('select-card-wrap');
+                                    if (!paymentMethodId && cardWrap) {
+                                        _mountSelectCard();
+                                        cardWrap.classList.remove('hidden');
+                                        btn.disabled = false;
+                                        btn.textContent = 'Subscribe — $' + _selectedTierPrice;
+                                        return;
+                                    }
+                                    btn.disabled = false;
+                                    btn.textContent = 'Join APC Select';
+                                    showError(data.error);
+                                    return;
+                                }
+                                if (data.client_secret) {
+                                    _stripeObj.confirmCardPayment(data.client_secret).then(function(res) {
+                                        if (res.error) {
+                                            btn.disabled = false;
+                                            btn.textContent = 'Join APC Select';
+                                            showError(res.error.message);
+                                        } else {
+                                            window.location.href = '/portal/packages/?select_joined=1';
+                                        }
+                                    });
+                                } else {
+                                    window.location.href = '/portal/packages/?select_joined=1';
+                                }
+                            }).catch(function() {
+                                btn.disabled = false;
+                                btn.textContent = 'Join APC Select';
+                                showError('Something went wrong. Please try again.');
+                            });
                         }
                         </script>
                         {% endif %}
