@@ -371,10 +371,10 @@
                                 } else {
                                     window.location.href = '/portal/packages/?select_joined=1';
                                 }
-                            }).catch(function() {
+                            }).catch(function(err) {
                                 btn.disabled = false;
                                 btn.textContent = 'Join APC Select';
-                                showError('Something went wrong. Please try again.');
+                                showError('Something went wrong. Please refresh the page and try again.');
                             });
                         }
 
