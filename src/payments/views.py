@@ -1180,21 +1180,37 @@ def _handle_subscription_renewed(invoice):
     cp.save(update_fields=['expiry_date'])
     logger.info('Subscription renewed: ClientPackage #%s extended to %s (%s weeks, tier=%s)', cp.pk, cp.expiry_date, weeks, tier)
 
-    # Notify the member
+    # Notify the member — in-app + email
+    msg = (f'Your APC Select membership has been renewed. '
+           f'Access continues through {cp.expiry_date.strftime("%B %-d, %Y")}.')
     try:
         from clients.models import Notification
         Notification.objects.create(
-            client=cp.client,
-            notification_type='promotional',
-            title='APC Select Membership Renewed',
-            message=(
-                f'Your APC Select membership has been renewed. '
-                f'Access continues through {cp.expiry_date.strftime("%B %-d, %Y")}.'
-            ),
-            method='in_app',
+            client=cp.client, notification_type='promotional',
+            title='APC Select Membership Renewed', message=msg, method='in_app',
         )
     except Exception:
-        logger.exception('_handle_subscription_renewed: notification failed for cp %s', cp.pk)
+        logger.exception('_handle_subscription_renewed: in-app notification failed for cp %s', cp.pk)
+    try:
+        from clients.services import NotificationService
+        amount_cents = invoice.get('amount_paid', 0)
+        amount = amount_cents / 100
+        html = (f'<h2>APC Select Membership Renewed</h2>'
+                f'<p>Your APC Select membership has been successfully renewed.</p>'
+                f'<div class="highlight-box"><div class="label">Amount Charged</div>'
+                f'<div class="value"><strong>${amount:.2f}</strong></div></div>'
+                f'<div class="highlight-box"><div class="label">Access Through</div>'
+                f'<div class="value"><strong>{cp.expiry_date.strftime("%B %-d, %Y")}</strong></div></div>'
+                f'<p style="text-align:center;margin-top:20px;">'
+                f'<a href="https://atletasperformancecenter.com/portal/packages/" class="btn">View My Membership</a></p>')
+        NotificationService.send_email(
+            cp.client.user.email,
+            'APC Select Membership Renewed',
+            html, msg,
+            context={'subject': 'APC Select Membership Renewed'},
+        )
+    except Exception:
+        logger.exception('_handle_subscription_renewed: email failed for cp %s', cp.pk)
 
 
 def _handle_subscription_payment_failed(invoice):
@@ -1210,23 +1226,34 @@ def _handle_subscription_payment_failed(invoice):
     ).select_related('client').first()
     if not cp:
         return
+    site_url = 'https://atletasperformancecenter.com'
+    msg = (f'Your APC Select membership payment could not be processed. '
+           f'Please update your payment method at {site_url}/portal/packages/ '
+           f'to keep your membership active. Stripe will retry automatically.')
     try:
         from clients.models import Notification
-        from django.conf import settings as _s
-        site_url = getattr(_s, 'SITE_URL', 'https://atletasperformancecenter.com')
         Notification.objects.create(
-            client=cp.client,
-            notification_type='promotional',
-            title='APC Select — Payment Failed',
-            message=(
-                f'Your APC Select membership payment could not be processed. '
-                f'Please update your payment method at {site_url}/portal/packages/ '
-                f'to keep your membership active. Stripe will retry automatically.'
-            ),
-            method='in_app',
+            client=cp.client, notification_type='promotional',
+            title='APC Select — Payment Failed', message=msg, method='in_app',
         )
     except Exception:
-        logger.exception('_handle_subscription_payment_failed: notification failed for cp %s', cp.pk)
+        logger.exception('_handle_subscription_payment_failed: in-app notification failed for cp %s', cp.pk)
+    try:
+        from clients.services import NotificationService
+        html = (f'<h2>APC Select — Payment Failed</h2>'
+                f'<p>We were unable to process your APC Select membership payment.</p>'
+                f'<p>Please update your payment method to keep your membership active. '
+                f'Stripe will automatically retry the charge.</p>'
+                f'<p style="text-align:center;margin-top:20px;">'
+                f'<a href="{site_url}/portal/packages/" class="btn">Update Payment Method</a></p>')
+        NotificationService.send_email(
+            cp.client.user.email,
+            'APC Select — Payment Failed',
+            html, msg,
+            context={'subject': 'APC Select — Payment Failed'},
+        )
+    except Exception:
+        logger.exception('_handle_subscription_payment_failed: email failed for cp %s', cp.pk)
 
 
 def _handle_invoice_upcoming(invoice):
@@ -1239,29 +1266,43 @@ def _handle_invoice_upcoming(invoice):
     ).select_related('package', 'client').first()
     if not cp:
         return
+    from decimal import Decimal
+    amount_cents = invoice.get('amount_due', 0)
+    amount = Decimal(amount_cents) / 100
+    period_end_ts = invoice.get('period_end')
+    if period_end_ts:
+        import datetime
+        renewal_date = datetime.datetime.utcfromtimestamp(period_end_ts).strftime('%B %-d, %Y')
+    else:
+        renewal_date = 'soon'
+    msg = (f'Your APC Select membership will automatically renew on {renewal_date} '
+           f'for ${amount:.2f}. No action needed — your card on file will be charged.')
     try:
         from clients.models import Notification
-        from decimal import Decimal
-        amount_cents = invoice.get('amount_due', 0)
-        amount = Decimal(amount_cents) / 100
-        period_end_ts = invoice.get('period_end')
-        if period_end_ts:
-            import datetime
-            renewal_date = datetime.datetime.utcfromtimestamp(period_end_ts).strftime('%B %-d, %Y')
-        else:
-            renewal_date = 'soon'
         Notification.objects.create(
-            client=cp.client,
-            notification_type='promotional',
-            title='APC Select Renewing Soon',
-            message=(
-                f'Your APC Select membership will automatically renew on {renewal_date} '
-                f'for ${amount:.2f}. No action needed — your card on file will be charged.'
-            ),
-            method='in_app',
+            client=cp.client, notification_type='promotional',
+            title='APC Select Renewing Soon', message=msg, method='in_app',
         )
     except Exception:
-        logger.exception('_handle_invoice_upcoming: notification failed for cp %s', cp.pk)
+        logger.exception('_handle_invoice_upcoming: in-app notification failed for cp %s', cp.pk)
+    try:
+        from clients.services import NotificationService
+        site_url = 'https://atletasperformancecenter.com'
+        html = (f'<h2>APC Select Membership Renewing Soon</h2>'
+                f'<p>Your APC Select membership will automatically renew on <strong>{renewal_date}</strong>.</p>'
+                f'<div class="highlight-box"><div class="label">Amount</div>'
+                f'<div class="value"><strong>${amount:.2f}</strong></div></div>'
+                f'<p>No action needed — your card on file will be charged automatically.</p>'
+                f'<p style="text-align:center;margin-top:20px;">'
+                f'<a href="{site_url}/portal/packages/" class="btn">Manage Membership</a></p>')
+        NotificationService.send_email(
+            cp.client.user.email,
+            'APC Select Membership Renewing Soon',
+            html, msg,
+            context={'subject': 'APC Select Membership Renewing Soon'},
+        )
+    except Exception:
+        logger.exception('_handle_invoice_upcoming: email failed for cp %s', cp.pk)
 
 
 def _handle_subscription_cancelled(subscription):
@@ -1289,24 +1330,44 @@ def _handle_subscription_cancelled(subscription):
         cp.save(update_fields=['status'])
         logger.info('Subscription cancelled: ClientPackage #%s expired immediately', cp.pk)
 
-    # Notify the member
+    # Notify the member — in-app + email
+    site_url = 'https://atletasperformancecenter.com'
+    if cp.expiry_date and cp.expiry_date > today:
+        msg = (f'Your APC Select auto-renewal has been cancelled. '
+               f'Your access continues through {cp.expiry_date.strftime("%B %-d, %Y")} — '
+               f'no further charges will be made.')
+        html = (f'<h2>APC Select Auto-Renewal Cancelled</h2>'
+                f'<p>Your APC Select auto-renewal has been cancelled.</p>'
+                f'<div class="highlight-box"><div class="label">Access Through</div>'
+                f'<div class="value"><strong>{cp.expiry_date.strftime("%B %-d, %Y")}</strong></div></div>'
+                f'<p>No further charges will be made. You can re-subscribe at any time.</p>'
+                f'<p style="text-align:center;margin-top:20px;">'
+                f'<a href="{site_url}/portal/packages/" class="btn">Manage Membership</a></p>')
+    else:
+        msg = 'Your APC Select membership has been cancelled.'
+        html = (f'<h2>APC Select Membership Cancelled</h2>'
+                f'<p>Your APC Select membership has been cancelled.</p>'
+                f'<p>You can re-subscribe at any time from your account.</p>'
+                f'<p style="text-align:center;margin-top:20px;">'
+                f'<a href="{site_url}/portal/packages/" class="btn">View Packages</a></p>')
     try:
         from clients.models import Notification
-        if cp.expiry_date and cp.expiry_date > today:
-            msg = (f'Your APC Select auto-renewal has been cancelled. '
-                   f'Your access continues through {cp.expiry_date.strftime("%B %-d, %Y")} — '
-                   f'no further charges will be made.')
-        else:
-            msg = 'Your APC Select membership has been cancelled.'
         Notification.objects.create(
-            client=cp.client,
-            notification_type='promotional',
-            title='APC Select Auto-Renewal Cancelled',
-            message=msg,
-            method='in_app',
+            client=cp.client, notification_type='promotional',
+            title='APC Select Auto-Renewal Cancelled', message=msg, method='in_app',
         )
     except Exception:
-        logger.exception('_handle_subscription_cancelled: notification failed')
+        logger.exception('_handle_subscription_cancelled: in-app notification failed')
+    try:
+        from clients.services import NotificationService
+        NotificationService.send_email(
+            cp.client.user.email,
+            'APC Select Auto-Renewal Cancelled',
+            html, msg,
+            context={'subject': 'APC Select Auto-Renewal Cancelled'},
+        )
+    except Exception:
+        logger.exception('_handle_subscription_cancelled: email failed')
 
 
 def _handle_refund(charge):
