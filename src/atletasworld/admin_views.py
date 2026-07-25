@@ -1673,6 +1673,20 @@ def owner_client_approve(request, pk):
 
 @login_required
 @user_passes_test(is_owner)
+@require_POST
+def owner_client_toggle_select_invite(request, pk):
+    """Toggle APC Select invite status for a client."""
+    from django.shortcuts import get_object_or_404
+    client = get_object_or_404(Client, pk=pk)
+    client.select_invited = not client.select_invited
+    client.save(update_fields=['select_invited'])
+    status = 'invited' if client.select_invited else 'invite revoked'
+    messages.success(request, f'{client} APC Select {status}.')
+    return redirect('owner_client_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(is_owner)
 def owner_client_reject(request, pk):
     """Reject a coach or renter client access request."""
     from django.shortcuts import get_object_or_404

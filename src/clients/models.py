@@ -51,6 +51,8 @@ class Client(ExportModelOperationsMixin("client"), models.Model):
 
     stripe_customer_id = models.CharField(max_length=100, blank=True,
                                            help_text="Stripe Customer ID (cus_xxx)")
+    select_invited = models.BooleanField(default=False,
+                                         help_text="Owner has invited this client to purchase APC Select membership")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

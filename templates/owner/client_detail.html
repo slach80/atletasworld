@@ -108,6 +108,25 @@
     </div>
 </div>
 {% endif %}
+
+<!-- ── APC Select Invite ──────────────────────────────────────────────────── -->
+<div class="mb-6 rounded-xl border-2 p-4 flex items-center justify-between
+    {% if client.select_invited %}border-indigo-300 bg-indigo-50{% else %}border-gray-200 bg-gray-50{% endif %}">
+    <div>
+        <p class="text-sm font-semibold {% if client.select_invited %}text-indigo-800{% else %}text-gray-700{% endif %}">
+            {% if client.select_invited %}✦ APC Select — Invite active{% else %}APC Select — Not invited{% endif %}
+        </p>
+        <p class="text-xs text-gray-500 mt-0.5">Controls whether this client can see and purchase the APC Select membership.</p>
+    </div>
+    <form method="POST" action="{% url 'owner_client_toggle_select_invite' client.pk %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150
+                {% if client.select_invited %}bg-red-100 text-red-700 hover:bg-red-200{% else %}bg-indigo-600 text-white hover:bg-indigo-700{% endif %}">
+            {% if client.select_invited %}Revoke invite{% else %}Invite to Select{% endif %}
+        </button>
+    </form>
+</div>
 <!-- ────────────────────────────────────────────────────────────────────────── -->
 
 <div class="grid lg:grid-cols-3 gap-6">

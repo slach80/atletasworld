@@ -585,8 +585,8 @@ def packages_list(request):
         expiry_date__gte=timezone.localdate()
     )
 
-    # Separate select membership from regular packages
-    select_packages = Package.objects.filter(is_active=True, is_purchasable=True, package_type='select').order_by('price')
+    # Separate select membership from regular packages — only shown to invited clients
+    select_packages = Package.objects.filter(is_active=True, is_purchasable=True, package_type='select').order_by('price') if client.select_invited else Package.objects.none()
     available_packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=False
     ).exclude(package_type__in=['team', 'select']).order_by('price')
