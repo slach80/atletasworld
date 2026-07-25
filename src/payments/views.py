@@ -524,21 +524,24 @@ def create_package_subscription(request, package_id):
             s.Customer.modify(customer_id,
                 invoice_settings={'default_payment_method': payment_method_id})
 
-        # Trial period only for members who already paid via Stripe for their current term.
-        # Manual/offline signups (no stripe_payment_id) pay immediately on subscription.
+        # Billing cycle anchored to initial payment date.
+        # trial_end = start_date + 1 month, so the subscription billing date matches
+        # when they originally paid. If that date is already past, charge immediately.
         import datetime as _dt
+        from dateutil.relativedelta import relativedelta
         trial_end = None
-        paid_legacy_cp = ClientPackage.objects.filter(
+        legacy_cp = ClientPackage.objects.filter(
             client=client,
             package=package,
             status='expired',
             stripe_subscription_id='',
-        ).filter(stripe_payment_id__startswith='pi_').order_by('-expiry_date').first()
-        if paid_legacy_cp and paid_legacy_cp.expiry_date > timezone.localdate():
-            trial_end = int(_dt.datetime.combine(
-                paid_legacy_cp.expiry_date, _dt.time.min
-            ).timestamp())
-            logger.info('Select subscription: trial_end=%s for Stripe-paid legacy cp #%s', paid_legacy_cp.expiry_date, paid_legacy_cp.pk)
+        ).order_by('-start_date').first()
+        if legacy_cp and legacy_cp.start_date:
+            next_billing = legacy_cp.start_date + relativedelta(months=1)
+            if next_billing > timezone.localdate():
+                trial_end = int(_dt.datetime.combine(next_billing, _dt.time.min).timestamp())
+                logger.info('Select subscription: trial_end=%s (1 month from start %s) for cp #%s',
+                            next_billing, legacy_cp.start_date, legacy_cp.pk)
 
         sub_kwargs = dict(
             customer=customer_id,
@@ -555,13 +558,6 @@ def create_package_subscription(request, package_id):
 
         subscription = s.Subscription.create(**sub_kwargs)
 
-        # Persist subscription_id in its own metadata so _activate_package can store it
-        s.Subscription.modify(subscription.id, metadata={
-            'client_id': str(client.pk),
-            'package_id': str(package.pk),
-            'subscription_id': subscription.id,
-        })
-
         # For trial subscriptions activate the ClientPackage immediately.
         if subscription.status == 'trialing':
             _activate_package(
@@ -570,6 +566,13 @@ def create_package_subscription(request, package_id):
                 payment_intent_id=f'trial_{subscription.id}',
                 subscription_id=subscription.id,
             )
+
+        # Persist subscription_id in its own metadata so _activate_package can store it
+        s.Subscription.modify(subscription.id, metadata={
+            'client_id': str(client.pk),
+            'package_id': str(package.pk),
+            'subscription_id': subscription.id,
+        })
 
         return JsonResponse({
             'subscription_id': subscription.id,
