@@ -172,7 +172,7 @@ See `docs/site-audit-2026-03-18.md` for full audit. Open items:
 3. ~~`owner_field_slots` — `FieldError: booked_at`~~ ✅ fixed (use `date__month`)
 4. ~~Client dashboard "Session today" banner triggered on Sunday for Monday sessions~~ ✅ fixed (check `scheduled_date == today` before datetime math)
 
-**Next up**: Google OAuth setup — domain + SSL are live at `atletasperformancecenter.com`. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to EC2 `.env`, then enable the social login buttons.
+**Google OAuth** ✅ live — `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` added to EC2 `.env`, social login buttons enabled.
 
 ## APC Select Subscription — Key Facts
 
@@ -234,4 +234,4 @@ When a feature maps to a hustle module:
 - **Task #13 — Email players on Select game publish**: When a `SelectGame` is published, `fanout_select_game_rsvps` signal (`src/clients/signals.py:186`) sends in-app notifications only. Add email to each eligible player's parent (client) with game date/time/location and RSVP link. Hook into the existing fan-out loop after `Notification.objects.create`. Use the `base_email.html` template pattern; guard with `PRODUCTION_EMAIL_ENABLED`.
 - ~~**Task #12 — APC Select Membership recurring billing**~~ ✅ complete (2026-07-22) — Stripe webhooks live, subscription confirmed working in production.
 - **Task #11 — Enable Venmo in Stripe Dashboard**: No code changes needed, pure Stripe config.
-- **Task #7 — Google OAuth login**: Needs `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` in EC2 `.env` from Mirko, then enable social login buttons.
+- ~~**Task #7 — Google OAuth login**~~ ✅ complete (2026-07-26)
