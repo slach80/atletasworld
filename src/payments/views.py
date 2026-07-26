@@ -535,7 +535,7 @@ def create_package_subscription(request, package_id):
             package=package,
             status='expired',
             stripe_subscription_id='',
-        ).order_by('-start_date').first()
+        ).order_by('start_date').first()  # oldest = original purchase date
         if legacy_cp and legacy_cp.start_date:
             next_billing = legacy_cp.start_date + relativedelta(months=1)
             if next_billing > timezone.localdate():
