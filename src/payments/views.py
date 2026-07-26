@@ -1168,6 +1168,7 @@ def _handle_subscription_renewed(invoice):
     from datetime import timedelta
     subscription_id = invoice.get('subscription')
     if not subscription_id:
+        logger.warning('_handle_subscription_renewed: no subscription in invoice %s', invoice.get('id'))
         return
     cp = ClientPackage.objects.filter(
         stripe_subscription_id=subscription_id, status='active'
@@ -1179,12 +1180,14 @@ def _handle_subscription_renewed(invoice):
             s = _stripe()
             try:
                 sub = s.Subscription.retrieve(subscription_id)
-            except Exception:
-                logger.exception('_handle_subscription_renewed: could not retrieve sub %s', subscription_id)
+                logger.info('_handle_subscription_renewed: retrieved subscription %s for first invoice', subscription_id)
+            except Exception as e:
+                logger.exception('_handle_subscription_renewed: could not retrieve sub %s: %s', subscription_id, e)
                 return
             meta = sub.get('metadata', {})
             client_id  = meta.get('client_id')
             package_id = meta.get('package_id')
+            logger.info('_handle_subscription_renewed: first invoice for %s — client_id=%s, package_id=%s', subscription_id, client_id, package_id)
             if client_id and package_id:
                 payment_intent_id = invoice.get('payment_intent') or f'invoice_{invoice.get("id", "")}'
                 _activate_package(
@@ -1196,6 +1199,8 @@ def _handle_subscription_renewed(invoice):
                 logger.info('_handle_subscription_renewed: activated new subscription %s for client %s', subscription_id, client_id)
             else:
                 logger.warning('_handle_subscription_renewed: no client_id/package_id in sub %s metadata', subscription_id)
+        else:
+            logger.warning('_handle_subscription_renewed: no cp found for %s and billing_reason=%s (not subscription_create)', subscription_id, invoice.get('billing_reason'))
         return
 
     tier = cp.package.billing_tier or 'monthly'
