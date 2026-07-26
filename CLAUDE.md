@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Activate venv and run local server (always port 8001)
-cd /Users/DT87019/Projects/atletasworld
+cd /home/slach/Projects/atletasworld
 source venv/bin/activate
 cd src && python manage.py runserver 0.0.0.0:8001
 
@@ -31,22 +31,55 @@ python manage.py load_demo_data
 python manage.py load_team_demo_data
 ```
 
+## CT315 Dev Server (Proxmox — atletasworld-dev)
+
+- **Host**: CT315 on pve-05 — `192.168.1.235`
+- **Access**: `ssh root@192.168.1.105 "pct exec 315 -- bash"`
+- **Stopped by default** — start at session open, stop at session close
+
+```bash
+# Session open — start CT315
+ssh root@192.168.1.105 "pct start 315"
+
+# Run full test suite on CT315 (before every push)
+make test-dev
+
+# UI/UX testing — start dev server at http://192.168.1.235:8001
+make dev-start
+ssh root@192.168.1.105 "pct exec 315 -- /opt/atletasworld/dev-server.sh"
+
+# Session close — stop CT315
+make dev-stop
+# or: ssh root@192.168.1.105 "pct stop 315"
+```
+
+**Session rules:**
+- Start CT315 automatically at the beginning of every session
+- Run `make test-dev` before every `git push origin main`
+- Stop CT315 at session close — always check `pct status 315` before closing
+
 ## Production (EC2)
 
 - **Server**: `3.135.174.227` — Ubuntu 24.04, us-east-2c
 - **Domain**: `atletasperformancecenter.com` ✅ live
 - **App dir**: `/var/www/atletasworld/`
-- **SSH**: `ssh -i ~/Documents/certs/atletasworld-prod.pem ubuntu@3.135.174.227`
+- **SSH**: `ssh ubuntu@3.135.174.227` (password-less ubuntu user)
 - **Deploy key**: `~/Documents/certs/atletasworld-deploy-key` (used by GitHub Actions)
 - **Env file**: `/var/www/atletasworld/.env` (not in git)
+- **DB**: SQLite at `/var/www/atletasworld/src/db.sqlite3`
 - **Services**: Gunicorn + Celery via Supervisor, Nginx reverse proxy, Redis
+- **Stripe restricted key**: `/home/slach/Projects/api/stripe-apc.api` (live mode, for prod DB fixes)
 
-Push to `main` → GitHub Actions runs tests (GitHub-hosted) → deploys via self-hosted runner on EC2.
+Push to `main` → GitHub Actions runs 199 tests → if pass, deploys via self-hosted runner on EC2.
 
 Restart services manually:
 ```bash
 sudo supervisorctl restart atletasworld atletasworld-celery
 ```
+
+### Production DB changes
+**Always ask before running** — show the proposed command and wait for explicit confirmation.
+Never bulk-update prod DB without user approval. Single-record fixes still require confirmation.
 
 ## Project Structure
 
@@ -141,14 +174,41 @@ See `docs/site-audit-2026-03-18.md` for full audit. Open items:
 
 **Next up**: Google OAuth setup — domain + SSL are live at `atletasperformancecenter.com`. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to EC2 `.env`, then enable the social login buttons.
 
+## APC Select Subscription — Key Facts
+
+- **Package**: `Package pk=9`, `package_type='select'`, `stripe_price_id='price_1TvoTd3YFeMHn83GTjLB27fz'`
+- **Invite gate**: `Client.select_invited` — toggle in Owner Portal → client detail page
+- **Billing anchor**: `start_date + 1 month` from oldest expired package → if past, charge immediately; if future, trial until then
+- **Stripe restricted key**: `rk_live_...` stored at `/home/slach/Projects/api/stripe-apc.api`
+- **Webhook secret**: in `/var/www/atletasworld/.env` as `STRIPE_WEBHOOK_SECRET`
+- **Check subscriptions**: `stripe.Subscription.list(limit=20)` using the restricted key
+
+### Fix missing ClientPackage (paid Stripe sub, no DB record)
+```python
+# On prod shell: ssh ubuntu@3.135.174.227 then manage.py shell
+from clients.models import Client, ClientPackage, Package
+from django.utils import timezone; from datetime import timedelta
+c = Client.objects.get(user__email='EMAIL')
+pkg = Package.objects.get(pk=9)
+ClientPackage.objects.create(
+    client=c, package=pkg, status='active',
+    start_date=timezone.localdate(),
+    expiry_date=timezone.localdate() + timedelta(weeks=4),
+    sessions_remaining=pkg.sessions_included,
+    stripe_subscription_id='sub_xxx',
+    stripe_payment_id='sub_activated_manual',
+)
+```
+
 ## Session Close Checklist
 
 Run these checks before closing a development session:
 
 ### Required
+- [ ] **Stop CT315**: `make dev-stop` or `ssh root@192.168.1.105 "pct stop 315"`
 - [ ] **Django check passes**: `cd src && python manage.py check` → must report 0 issues
 - [ ] **All changes committed**: `git status` → working tree clean
-- [ ] **Tests passing**: CI build green (or run locally if needed)
+- [ ] **Tests passing**: `make test-dev` or CI build green
 - [ ] **Pushed to main**: `git push origin main` → triggers auto-deploy
 
 ### Optional (if applicable)
