@@ -2320,10 +2320,17 @@ def owner_team_detail(request, pk):
 
     # Select membership packages for team players — all statuses, newest per player
     from clients.models import ClientPackage
+    from django.db.models import Case, When, Value, IntegerField
     _raw_team_packages = ClientPackage.objects.filter(
         player__team=team,
         package__package_type='select',
-    ).select_related('package', 'player').order_by('player_id', '-expiry_date')
+    ).select_related('package', 'player').annotate(
+        status_rank=Case(
+            When(status='active', then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        )
+    ).order_by('player_id', 'status_rank', '-expiry_date')
 
     # Keep only the most-recent package per player, then compute display status
     _seen_players = set()
