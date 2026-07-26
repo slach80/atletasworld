@@ -2318,13 +2318,34 @@ def owner_team_detail(request, pk):
         session_type_id__in=SELECT_SESSION_TYPE_IDS,
     ).select_related('player', 'coach__user', 'session_type').order_by('scheduled_date')[:20]
 
-    # Active, non-expired packages for team players
+    # Select membership packages for team players — all statuses, newest per player
     from clients.models import ClientPackage
-    team_packages = ClientPackage.objects.filter(
+    _raw_team_packages = ClientPackage.objects.filter(
         player__team=team,
-        status='active',
-        expiry_date__gte=today,
-    ).select_related('package', 'player').order_by('expiry_date')
+        package__package_type='select',
+    ).select_related('package', 'player').order_by('player_id', '-expiry_date')
+
+    # Keep only the most-recent package per player, then compute display status
+    _seen_players = set()
+    team_packages = []
+    for cp in _raw_team_packages:
+        pid = cp.player_id
+        if pid in _seen_players:
+            continue
+        _seen_players.add(pid)
+        if cp.status == 'active' and cp.expiry_date:
+            days_left = (cp.expiry_date - today).days
+            if days_left < 0:
+                cp._display_status = 'overdue'
+            elif days_left <= 14:
+                cp._display_status = 'expiring'
+            else:
+                cp._display_status = 'active'
+        elif cp.status == 'expired':
+            cp._display_status = 'expired'
+        else:
+            cp._display_status = cp.status
+        team_packages.append(cp)
 
     context = {
         'team': team,
