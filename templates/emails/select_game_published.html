@@ -1,0 +1,31 @@
+<h2>⚽ APC Select Game — {{ date_str }}</h2>
+
+<p>{{ team_name }} has a game scheduled. Please RSVP on your dashboard so the coaching staff can confirm the lineup.</p>
+
+<div class="highlight-box">
+    <div class="label">Team</div>
+    <div class="value">{{ team_name }}</div>
+</div>
+
+<div class="highlight-box">
+    <div class="label">Date &amp; Time</div>
+    <div class="value">{{ date_str }} at {{ time_str }}</div>
+</div>
+
+<div class="highlight-box">
+    <div class="label">Location</div>
+    <div class="value"><a href="{{ location_map_url }}" target="_blank" style="color:#1a1a1a;text-decoration:underline;">{{ location }}</a></div>
+</div>
+
+{% if notes %}
+<div class="highlight-box">
+    <div class="label">Notes</div>
+    <div class="value">{{ notes }}</div>
+</div>
+{% endif %}
+
+<p style="text-align: center; margin-top: 25px;">
+    <a href="{{ rsvp_url }}" class="btn">RSVP Now</a>
+</p>
+
+<p>Please respond as soon as possible so the coaching staff can plan accordingly.</p>

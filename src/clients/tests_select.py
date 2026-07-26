@@ -466,3 +466,107 @@ def test_rsvp_client_without_rsvp_gets_403():
     url = reverse('clients:select_game_rsvp', kwargs={'game_id': game.pk})
     response = tc.post(url, {'status': 'coming'})
     assert response.status_code == 403
+
+
+# ===========================================================================
+# F. Email notification tests
+# ===========================================================================
+
+@pytest.mark.django_db
+def test_publish_game_sends_email_when_enabled(settings, mailoutbox):
+    """Email is sent to each new RSVP recipient when PRODUCTION_EMAIL_ENABLED=True."""
+    settings.PRODUCTION_EMAIL_ENABLED = True
+
+    mgr_user = _make_user('email_mgr')
+    mgr_client = _make_client_obj(mgr_user)
+    team = _make_select_team(mgr_client, slug='email-team')
+
+    member_user = _make_user('email_member')
+    member_client = _make_client_obj(member_user)
+    pkg = _make_select_package()
+    player = _make_player(member_client, team=team)
+    _make_active_client_package(member_client, pkg, player=player)
+
+    game = _make_select_game(team, created_by=mgr_user, status='draft')
+    game.status = 'published'
+    game.save()
+
+    assert len(mailoutbox) == 1
+    mail = mailoutbox[0]
+    assert member_user.email in mail.to
+    assert 'APC Select Game' in mail.subject
+    assert team.name in mail.subject or team.name in mail.body
+
+
+@pytest.mark.django_db
+def test_publish_game_no_email_when_disabled(settings, mailoutbox):
+    """No email is sent when PRODUCTION_EMAIL_ENABLED=False (default in tests)."""
+    settings.PRODUCTION_EMAIL_ENABLED = False
+
+    mgr_user = _make_user('noemail_mgr')
+    mgr_client = _make_client_obj(mgr_user)
+    team = _make_select_team(mgr_client, slug='noemail-team')
+
+    member_user = _make_user('noemail_member')
+    member_client = _make_client_obj(member_user)
+    pkg = _make_select_package()
+    player = _make_player(member_client, team=team)
+    _make_active_client_package(member_client, pkg, player=player)
+
+    game = _make_select_game(team, created_by=mgr_user, status='draft')
+    game.status = 'published'
+    game.save()
+
+    assert len(mailoutbox) == 0
+
+
+@pytest.mark.django_db
+def test_publish_game_email_idempotent_no_duplicate_emails(settings, mailoutbox):
+    """Re-saving a published game does not send additional emails."""
+    settings.PRODUCTION_EMAIL_ENABLED = True
+
+    mgr_user = _make_user('idem_email_mgr')
+    mgr_client = _make_client_obj(mgr_user)
+    team = _make_select_team(mgr_client, slug='idem-email-team')
+
+    member_user = _make_user('idem_email_member')
+    member_client = _make_client_obj(member_user)
+    pkg = _make_select_package()
+    player = _make_player(member_client, team=team)
+    _make_active_client_package(member_client, pkg, player=player)
+
+    game = _make_select_game(team, created_by=mgr_user, status='draft')
+    game.status = 'published'
+    game.save()
+
+    first_count = len(mailoutbox)
+
+    # Re-save (e.g. owner edits notes)
+    game.notes = 'Updated location details'
+    game.save()
+
+    assert len(mailoutbox) == first_count  # no new emails
+
+
+@pytest.mark.django_db
+def test_publish_game_email_contains_date_and_location(settings, mailoutbox):
+    """Email body contains the game date and location."""
+    settings.PRODUCTION_EMAIL_ENABLED = True
+
+    mgr_user = _make_user('content_mgr')
+    mgr_client = _make_client_obj(mgr_user)
+    team = _make_select_team(mgr_client, slug='content-team')
+
+    member_user = _make_user('content_member')
+    member_client = _make_client_obj(member_user)
+    pkg = _make_select_package()
+    player = _make_player(member_client, team=team)
+    _make_active_client_package(member_client, pkg, player=player)
+
+    game = _make_select_game(team, created_by=mgr_user, status='draft')
+    game.status = 'published'
+    game.save()
+
+    assert len(mailoutbox) == 1
+    mail = mailoutbox[0]
+    assert 'APC Field 1' in mail.body

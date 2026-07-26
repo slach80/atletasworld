@@ -217,7 +217,18 @@ def fanout_select_game_rsvps(sender, instance, **kwargs):
     for client in instance.guest_invitees.all():
         team_client_ids.add(client.pk)
 
+    from django.conf import settings as _settings
     from clients.models import Client as ClientModel
+    from clients.services import NotificationService
+    from django.template.loader import render_to_string
+    from urllib.parse import quote
+
+    site_url = getattr(_settings, 'SITE_URL', 'https://atletasperformancecenter.com')
+    email_enabled = getattr(_settings, 'PRODUCTION_EMAIL_ENABLED', False)
+    date_str = instance.date.strftime('%A, %B %-d')
+    time_str = instance.start_time.strftime('%-I:%M %p')
+    location_map_url = 'https://www.google.com/maps/search/' + quote(instance.location, safe='') if instance.location else 'https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9'
+
     for client_id in team_client_ids:
         try:
             client = ClientModel.objects.get(pk=client_id)
@@ -229,17 +240,51 @@ def fanout_select_game_rsvps(sender, instance, **kwargs):
             defaults={'status': 'pending'},
         )
         if created:
-            date_str = instance.date.strftime('%A, %B %-d')
             try:
                 Notification.objects.create(
                     client=client,
                     notification_type='promotional',
                     title=f'APC Select Game — {date_str}',
                     message=(
-                        f'{instance.team.name} has a game on {date_str} at {instance.start_time.strftime("%-I:%M %p")} '
+                        f'{instance.team.name} has a game on {date_str} at {time_str} '
                         f'at {instance.location}. Please RSVP on your dashboard.'
                     ),
                     method='in_app',
                 )
             except Exception:
                 pass  # never block fan-out on notification failure
+
+            if email_enabled:
+                try:
+                    client_name = client.user.first_name or client.user.username
+                    rsvp_url = f'{site_url}/portal/'
+                    ctx = {
+                        'client_name': client_name,
+                        'team_name': instance.team.name,
+                        'date_str': date_str,
+                        'time_str': time_str,
+                        'location': instance.location,
+                        'location_map_url': location_map_url,
+                        'notes': instance.notes or '',
+                        'rsvp_url': rsvp_url,
+                        'site_url': site_url,
+                        'current_year': today.year,
+                    }
+                    subject = f'APC Select Game — {date_str}'
+                    html_content = render_to_string('emails/select_game_published.html', ctx)
+                    text_content = (
+                        f'{subject}\n\n'
+                        f'Hi {client_name},\n\n'
+                        f'{instance.team.name} has a game on {date_str} at {time_str} '
+                        f'at {instance.location}.\n\n'
+                        f'Please RSVP: {rsvp_url}'
+                    )
+                    NotificationService.send_email(
+                        to_email=client.user.email,
+                        subject=subject,
+                        html_content=html_content,
+                        text_content=text_content,
+                        context=ctx,
+                    )
+                except Exception:
+                    pass  # never block fan-out on email failure
