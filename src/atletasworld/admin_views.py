@@ -233,6 +233,27 @@ def owner_dashboard(request):
         status='exhausted', expiry_date__gte=today
     ).count()
 
+    # Package breakdown by type for dashboard tile
+    _type_order = ['select', 'special', 'standard', 'team']
+    _type_labels = {'select': 'Select', 'special': 'Summer/Camp', 'standard': 'Standard', 'team': 'Team'}
+    _soon = today + timedelta(days=14)
+    _breakdown_raw = {}
+    for cp in ClientPackage.objects.filter(status__in=['active', 'exhausted'], expiry_date__gte=today).select_related('package'):
+        pt = cp.package.package_type or 'standard'
+        if pt not in _breakdown_raw:
+            _breakdown_raw[pt] = {'active': 0, 'expiring': 0, 'exhausted': 0}
+        if cp.status == 'active':
+            _breakdown_raw[pt]['active'] += 1
+            if cp.expiry_date <= _soon:
+                _breakdown_raw[pt]['expiring'] += 1
+        elif cp.status == 'exhausted':
+            _breakdown_raw[pt]['exhausted'] += 1
+    packages_breakdown = [
+        {'label': _type_labels.get(pt, pt.title()), 'type': pt, **counts}
+        for pt, counts in sorted(_breakdown_raw.items(), key=lambda x: _type_order.index(x[0]) if x[0] in _type_order else 99)
+        if counts['active'] or counts['exhausted']
+    ]
+
     # ── Stripe ─────────────────────────────────────────────────────────────────
     from payments.models import Payment
     stripe_confirmed = Payment.objects.filter(status='succeeded').aggregate(
@@ -274,6 +295,7 @@ def owner_dashboard(request):
         'current_year': current_year,
         # Packages
         'active_packages_count': active_packages_count,
+        'packages_breakdown': packages_breakdown,
         'expiring_soon_packages': expiring_soon_packages,
         'packages_exhausted': packages_exhausted,
         # Stripe
