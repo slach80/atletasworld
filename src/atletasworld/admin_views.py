@@ -2340,18 +2340,16 @@ def owner_team_detail(request, pk):
         if pid in _seen_players:
             continue
         _seen_players.add(pid)
-        if cp.status == 'active' and cp.expiry_date:
-            days_left = (cp.expiry_date - today).days
-            if days_left < 0:
-                cp.display_status = 'overdue'
-            elif days_left <= 14:
-                cp.display_status = 'expiring'
-            else:
-                cp.display_status = 'active'
-        elif cp.status == 'expired':
+        days_left = (cp.expiry_date - today).days if cp.expiry_date else -1
+        if days_left < 0:
             cp.display_status = 'expired'
+        elif cp.status == 'active' and days_left <= 14:
+            cp.display_status = 'expiring'
+        elif cp.status == 'active':
+            cp.display_status = 'active'
         else:
-            cp.display_status = cp.status
+            # Paid one-time, expiry_date still in future — access is valid
+            cp.display_status = 'paid'
         team_packages.append(cp)
 
     context = {
