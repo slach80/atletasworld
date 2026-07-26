@@ -632,6 +632,7 @@ def packages_list(request):
         Q(expires_at__isnull=True) | Q(expires_at__gte=today)
     ).aggregate(total=Sum('amount'))['total'] or 0 if has_select_membership else 0
 
+    players = client.players.filter(is_active=True)
     unassigned_packages = [p for p in active_packages if not p.player_id]
     single_player = players.first() if unassigned_packages and players.count() == 1 else None
 
