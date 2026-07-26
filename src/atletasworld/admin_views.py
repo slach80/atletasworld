@@ -2309,28 +2309,27 @@ def owner_team_detail(request, pk):
     # Get assigned coaches
     coaches = team.coaches.all().select_related('user')
 
-    # Get recent and upcoming bookings for team players
-    recent_bookings = Booking.objects.filter(
-        player__team=team
-    ).select_related('player', 'coach__user', 'session_type').order_by('-scheduled_date')[:10]
-
+    # Upcoming Select practice/game sessions only
+    SELECT_SESSION_TYPE_IDS = [21, 22, 23, 25]
     upcoming_bookings = Booking.objects.filter(
         player__team=team,
         scheduled_date__gte=today,
-        status__in=['pending', 'confirmed']
-    ).select_related('player', 'coach__user', 'session_type').order_by('scheduled_date')[:10]
+        status__in=['pending', 'confirmed'],
+        session_type_id__in=SELECT_SESSION_TYPE_IDS,
+    ).select_related('player', 'coach__user', 'session_type').order_by('scheduled_date')[:20]
 
-    # Get package usage for team players
+    # Active, non-expired packages for team players
     from clients.models import ClientPackage
     team_packages = ClientPackage.objects.filter(
-        player__team=team
-    ).select_related('package', 'player').order_by('-purchase_date')[:10]
+        player__team=team,
+        status='active',
+        expiry_date__gte=today,
+    ).select_related('package', 'player').order_by('expiry_date')
 
     context = {
         'team': team,
         'players': players,
         'coaches': coaches,
-        'recent_bookings': recent_bookings,
         'upcoming_bookings': upcoming_bookings,
         'team_packages': team_packages,
         'player_count': players.count(),
