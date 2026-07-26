@@ -12,6 +12,23 @@
             <span class="text-gray-800">My Packages</span>
         </div>
 
+        <!-- Unassigned package alert -->
+        {% if unassigned_packages %}
+        <div class="mb-4 p-4 bg-blue-50 border border-blue-300 rounded-xl flex items-start gap-3">
+            <span class="text-blue-500 text-xl mt-0.5">&#9432;</span>
+            <div>
+                <p class="text-sm font-semibold text-blue-800">
+                    {% if unassigned_packages|length == 1 %}1 package needs a player assigned{% else %}{{ unassigned_packages|length }} packages need a player assigned{% endif %}
+                </p>
+                {% if single_player %}
+                <p class="text-xs text-blue-700 mt-0.5">You only have one player — <strong>{{ single_player.first_name }}</strong> will be assigned automatically. Use the dropdown below to confirm.</p>
+                {% else %}
+                <p class="text-xs text-blue-700 mt-0.5">Packages can't be used for bookings until a player is assigned. Use the dropdown on each card below.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Active Packages -->
         <div class="bg-white rounded-xl shadow-md p-8 mb-8">
             <h1 class="text-2xl font-bold text-gray-800 mb-6">Active Packages</h1>
@@ -38,11 +55,25 @@
                         </div>
                     </div>
 
-                    {% if pkg.player %}
-                    <p class="text-sm text-gray-600 mb-3">
-                        <span class="font-medium">Assigned to:</span> {{ pkg.player }}
-                    </p>
-                    {% endif %}
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Assigned to:</label>
+                        {% if not pkg.player %}
+                        <div class="flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg mb-2">
+                            <span class="text-blue-500 text-sm">&#9432;</span>
+                            <span class="text-xs text-blue-700 font-medium">No player assigned — select one below to enable bookings</span>
+                        </div>
+                        {% endif %}
+                        <select class="text-sm px-3 py-1.5 border {% if not pkg.player %}border-blue-400{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-secondary package-assign-dropdown bg-white w-full"
+                                data-package-id="{{ pkg.id }}"
+                                onchange="assignPackageToPlayer({{ pkg.id }}, this.value)">
+                            <option value="">-- Select player --</option>
+                            {% for player in players %}
+                            <option value="{{ player.id }}" {% if pkg.player_id == player.id %}selected{% endif %}>
+                                {{ player.first_name }} {{ player.last_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between text-gray-600">
@@ -1068,6 +1099,32 @@ function getCookie(n) {
 
 // Init
 renderCart();
+
+function assignPackageToPlayer(packageId, playerId) {
+    const csrfToken = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='));
+    const csrf = csrfToken ? csrfToken.split('=')[1] : '';
+    fetch(`/portal/packages/${packageId}/assign/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
+        body: JSON.stringify({player_id: playerId || null})
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            // Remove the blue warning banner on the card if now assigned
+            const select = document.querySelector(`[data-package-id="${packageId}"]`);
+            if (select && playerId) {
+                const warning = select.closest('.border-2')?.querySelector('.bg-blue-50');
+                if (warning) warning.remove();
+                select.classList.remove('border-blue-400');
+                select.classList.add('border-gray-300');
+            }
+        } else {
+            console.error('Assign failed:', d);
+        }
+    })
+    .catch(e => console.error('Assign error:', e));
+}
 </script>
 {% endif %}
 {% endblock %}

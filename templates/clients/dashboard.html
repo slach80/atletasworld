@@ -89,6 +89,24 @@
         </div>
         {% endif %}
 
+        <!-- Unassigned package alert -->
+        {% if unassigned_packages %}
+        <div class="mb-4 p-4 bg-blue-50 border border-blue-300 rounded-xl flex items-start gap-3">
+            <span class="text-blue-500 text-xl mt-0.5">&#9432;</span>
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-blue-800">
+                    {% if unassigned_packages|length == 1 %}1 package has no player assigned{% else %}{{ unassigned_packages|length }} packages have no player assigned{% endif %}
+                </p>
+                {% if single_player %}
+                <p class="text-xs text-blue-700 mt-0.5">We noticed you only have one player — <strong>{{ single_player.first_name }}</strong> will be assigned automatically when you visit your <a href="{% url 'clients:packages' %}" class="underline">packages page</a>.</p>
+                {% else %}
+                <p class="text-xs text-blue-700 mt-0.5">Sessions can only be booked once a player is assigned. Go to <a href="{% url 'clients:packages' %}" class="underline font-medium">My Packages</a> and use the dropdown on each package to assign a player.</p>
+                {% endif %}
+            </div>
+            <a href="{% url 'clients:packages' %}" class="shrink-0 text-xs font-semibold text-blue-700 underline hover:text-blue-900">Fix now</a>
+        </div>
+        {% endif %}
+
         <!-- Package expiry alerts -->
         {% if expiring_soon %}
         <div class="mb-6 space-y-2">

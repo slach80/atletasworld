@@ -94,6 +94,10 @@ def dashboard(request):
         if (p.expiry_date - today).days <= 14
     ]
 
+    # Active packages with no player assigned
+    unassigned_packages = [p for p in active_packages if not p.player_id]
+    single_player = players.first() if unassigned_packages and players.count() == 1 else None
+
     from clients.services import _booking_location, _location_map_url
     for b in upcoming_bookings:
         b.effective_location = _booking_location(b)
@@ -154,6 +158,8 @@ def dashboard(request):
         'sessions_completed_total': sessions_completed_total,
         'next_booking_soon': next_booking_soon,
         'expiring_soon': expiring_soon,
+        'unassigned_packages': unassigned_packages,
+        'single_player': single_player,
         'has_select_membership': has_select_membership,
         'select_credit_balance': select_credit_balance,
         'select_pkg': select_pkg,
@@ -626,7 +632,8 @@ def packages_list(request):
         Q(expires_at__isnull=True) | Q(expires_at__gte=today)
     ).aggregate(total=Sum('amount'))['total'] or 0 if has_select_membership else 0
 
-    players = client.players.filter(is_active=True)
+    unassigned_packages = [p for p in active_packages if not p.player_id]
+    single_player = players.first() if unassigned_packages and players.count() == 1 else None
 
     from django.conf import settings as django_settings
     context = {
@@ -640,6 +647,8 @@ def packages_list(request):
         'has_select_membership': has_select_membership,
         'select_credit_balance': select_credit_balance,
         'stripe_public_key': django_settings.STRIPE_PUBLIC_KEY,
+        'unassigned_packages': unassigned_packages,
+        'single_player': single_player,
     }
     return render(request, 'clients/packages.html', context)
 
