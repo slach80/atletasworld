@@ -83,13 +83,16 @@ class Command(BaseCommand):
         coach_user.save()
         coach, _ = Coach.objects.get_or_create(user=coach_user, defaults=dict(is_active=True))
 
+        # ── Owner client profile (needed for Team.manager FK) ─────────────────
+        owner_client, _ = Client.objects.get_or_create(user=owner_user)
+
         # ── Teams ─────────────────────────────────────────────────────────────
         teams = {}
         for year in [2014, 2015, 2016]:
             team, _ = Team.objects.get_or_create(
                 name=f'Demo Select {year}',
                 defaults=dict(is_select=True, is_active=True, age_group=f'U{2026-year}',
-                              max_players=18, manager=owner_user)
+                              max_players=18, manager=owner_client)
             )
             teams[year] = team
 
