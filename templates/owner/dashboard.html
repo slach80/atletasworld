@@ -34,6 +34,14 @@
         <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Clients</p>
         <p class="text-3xl font-black text-blue-500 mt-1">{{ total_clients }}</p>
         <p class="text-xs text-gray-400 mt-0.5">{{ total_players }} players</p>
+        {% if contacts_unregistered %}
+        <div class="mt-2 pt-2 border-t border-gray-100">
+            <a href="{% url 'owner_contacts' %}" class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition">
+                <span>📇</span>
+                <span><strong class="text-gray-700">{{ contacts_unregistered }}</strong> unregistered</span>
+            </a>
+        </div>
+        {% endif %}
     </a>
     <a href="{% url 'owner_bookings' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-orange-400 transition">
         <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Today</p>
@@ -50,9 +58,15 @@
     <a href="{% url 'owner_waivers' %}" class="bg-white rounded-xl shadow-sm border {% if waiver_unsigned_count %}border-red-200 bg-red-50{% else %}border-gray-100{% endif %} p-4 hover:shadow-md transition">
         <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Waivers {{ current_year }}</p>
         <p class="text-3xl font-black {% if waiver_unsigned_count %}text-red-500{% else %}text-green-500{% endif %} mt-1">{{ waiver_signed_count }}</p>
-        <p class="text-xs {% if waiver_unsigned_count %}text-red-500 font-semibold{% else %}text-gray-400{% endif %} mt-0.5">
-            {% if waiver_unsigned_count %}{{ waiver_unsigned_count }} unsigned{% else %}all signed ✓{% endif %}
-        </p>
+        <p class="text-xs text-gray-400 mt-0.5">signed</p>
+        {% if waiver_unsigned_count %}
+        <div class="mt-2 pt-2 border-t border-red-100">
+            <span class="flex items-center gap-1.5 text-xs text-red-600 font-semibold">
+                <span>📋</span>
+                <span>{{ waiver_unsigned_count }} unsigned — cannot book</span>
+            </span>
+        </div>
+        {% endif %}
     </a>
     <a href="{% url 'owner_packages' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-purple-400 transition col-span-2 sm:col-span-1">
         <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Packages</p>
@@ -82,18 +96,12 @@
 </div>
 
 <!-- ── Alert row ──────────────────────────────────────────────────────────── -->
-{% if rentals_pending or waiver_unsigned_count or expiring_soon_packages or contacts_unregistered or pending_approvals %}
+{% if rentals_pending or expiring_soon_packages or pending_approvals %}
 <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
     {% if rentals_pending %}
     <a href="{% url 'owner_field_slots' %}" class="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl hover:bg-yellow-100 transition">
         <span class="text-2xl">🏟️</span>
         <div><p class="text-sm font-bold text-yellow-800">{{ rentals_pending }} Rental Request{{ rentals_pending|pluralize }}</p><p class="text-xs text-yellow-600">Awaiting approval</p></div>
-    </a>
-    {% endif %}
-    {% if waiver_unsigned_count %}
-    <a href="{% url 'owner_waivers' %}" class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition">
-        <span class="text-2xl">📋</span>
-        <div><p class="text-sm font-bold text-red-700">{{ waiver_unsigned_count }} Unsigned Waiver{{ waiver_unsigned_count|pluralize }}</p><p class="text-xs text-red-500">Cannot book without signing</p></div>
     </a>
     {% endif %}
     {% if expiring_soon_packages %}
@@ -105,13 +113,7 @@
     {% if pending_approvals %}
     <a href="{% url 'owner_clients' %}" class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition">
         <span class="text-2xl">⏳</span>
-        <div><p class="text-sm font-bold text-blue-700">{{ pending_approvals }} Pending Approval{{ pending_approvals|pluralize }}</p><p class="text-xs text-blue-500">Coach / renter accounts</p></div>
-    </a>
-    {% endif %}
-    {% if contacts_unregistered %}
-    <a href="{% url 'owner_contacts' %}" class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition">
-        <span class="text-2xl">📇</span>
-        <div><p class="text-sm font-bold text-gray-700">{{ contacts_unregistered }} Unregistered Contact{{ contacts_unregistered|pluralize }}</p><p class="text-xs text-gray-500">Invite to create account</p></div>
+        <div><p class="text-sm font-bold text="blue-700">{{ pending_approvals }} Pending Approval{{ pending_approvals|pluralize }}</p><p class="text-xs text-blue-500">Coach / renter accounts</p></div>
     </a>
     {% endif %}
 </div>
