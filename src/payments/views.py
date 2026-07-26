@@ -558,14 +558,17 @@ def create_package_subscription(request, package_id):
 
         subscription = s.Subscription.create(**sub_kwargs)
 
-        # For trial subscriptions activate the ClientPackage immediately.
-        if subscription.status == 'trialing':
+        # For trial subscriptions and active subscriptions (charged immediately),
+        # activate the ClientPackage immediately to avoid race conditions with webhook processing.
+        if subscription.status in ('trialing', 'active'):
+            payment_intent_id = f'trial_{subscription.id}' if subscription.status == 'trialing' else (subscription.latest_invoice.payment_intent.id if subscription.latest_invoice and subscription.latest_invoice.payment_intent else f'sub_{subscription.id}')
             _activate_package(
                 client_id=client.pk,
                 package_id=package.pk,
-                payment_intent_id=f'trial_{subscription.id}',
+                payment_intent_id=payment_intent_id,
                 subscription_id=subscription.id,
             )
+            logger.info('create_package_subscription: activated %s subscription %s for client %s (status=%s)', 'trial' if subscription.status == 'trialing' else 'active', subscription.id, client.pk, subscription.status)
 
         # Persist subscription_id in its own metadata so _activate_package can store it
         s.Subscription.modify(subscription.id, metadata={
