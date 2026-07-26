@@ -30,19 +30,19 @@
         <p class="text-3xl font-black text-owner mt-1">{{ total_coaches }}</p>
         <p class="text-xs text-gray-400 mt-0.5">active</p>
     </a>
-    <a href="{% url 'owner_clients' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-400 transition">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-400 transition cursor-pointer" onclick="location.href='{% url 'owner_clients' %}'">
         <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Clients</p>
         <p class="text-3xl font-black text-blue-500 mt-1">{{ total_clients }}</p>
         <p class="text-xs text-gray-400 mt-0.5">{{ total_players }} players</p>
         {% if contacts_unregistered %}
         <div class="mt-2 pt-2 border-t border-gray-100">
-            <a href="{% url 'owner_contacts' %}" class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition">
+            <a href="{% url 'owner_contacts' %}" onclick="event.stopPropagation()" class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition">
                 <span>📇</span>
                 <span><strong class="text-gray-700">{{ contacts_unregistered }}</strong> unregistered</span>
             </a>
         </div>
         {% endif %}
-    </a>
+    </div>
     <a href="{% url 'owner_bookings' %}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-orange-400 transition">
         <p class="text-xs text-gray-400 font-bold uppercase tracking-wide">Today</p>
         <p class="text-3xl font-black text-orange-500 mt-1">{{ todays_bookings }}</p>
