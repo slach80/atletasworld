@@ -2336,15 +2336,15 @@ def owner_team_detail(request, pk):
         if cp.status == 'active' and cp.expiry_date:
             days_left = (cp.expiry_date - today).days
             if days_left < 0:
-                cp._display_status = 'overdue'
+                cp.display_status = 'overdue'
             elif days_left <= 14:
-                cp._display_status = 'expiring'
+                cp.display_status = 'expiring'
             else:
-                cp._display_status = 'active'
+                cp.display_status = 'active'
         elif cp.status == 'expired':
-            cp._display_status = 'expired'
+            cp.display_status = 'expired'
         else:
-            cp._display_status = cp.status
+            cp.display_status = cp.status
         team_packages.append(cp)
 
     context = {

@@ -132,15 +132,15 @@
                         <div class="text-xs text-gray-400 mt-0.5">Expires {{ cp.expiry_date|date:"M j, Y" }}</div>
                     </div>
                     <span class="px-2 py-0.5 rounded-full text-xs font-semibold
-                        {% if cp._display_status == 'active' %}bg-green-100 text-green-700
-                        {% elif cp._display_status == 'expiring' %}bg-yellow-100 text-yellow-700
-                        {% elif cp._display_status == 'overdue' %}bg-orange-100 text-orange-700
-                        {% elif cp._display_status == 'expired' %}bg-red-100 text-red-600
+                        {% if cp.display_status == 'active' %}bg-green-100 text-green-700
+                        {% elif cp.display_status == 'expiring' %}bg-yellow-100 text-yellow-700
+                        {% elif cp.display_status == 'overdue' %}bg-orange-100 text-orange-700
+                        {% elif cp.display_status == 'expired' %}bg-red-100 text-red-600
                         {% else %}bg-gray-100 text-gray-500{% endif %}">
-                        {% if cp._display_status == 'active' %}Active
-                        {% elif cp._display_status == 'expiring' %}Expiring Soon
-                        {% elif cp._display_status == 'overdue' %}Overdue
-                        {% elif cp._display_status == 'expired' %}Expired
+                        {% if cp.display_status == 'active' %}Active
+                        {% elif cp.display_status == 'expiring' %}Expiring Soon
+                        {% elif cp.display_status == 'overdue' %}Overdue
+                        {% elif cp.display_status == 'expired' %}Expired
                         {% else %}{{ cp.get_status_display }}{% endif %}
                     </span>
                 </div>
