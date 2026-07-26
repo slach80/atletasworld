@@ -950,10 +950,11 @@ async function submitPayment() {
         try {
             const { setupIntent, error } = await stripeJs.confirmSetup({
                 elements: paymentElements,
-                confirmParams: { return_url: window.location.origin + '/portal/packages/?select_joined=1' },
+                confirmParams: { return_url: window.location.origin + '/portal/packages/?setup_complete=1&pkg=' + _selectedTierId },
                 redirect: 'if_required',
             });
             if (error) { showError(error.message); btn.disabled = false; btn.textContent = 'Subscribe'; return; }
+            if (!setupIntent) { window.location.href = '/portal/packages/?setup_complete=1&pkg=' + _selectedTierId; return; }
             const pmId = setupIntent.payment_method;
             const res = await fetch('/portal/packages/' + _selectedTierId + '/subscribe/', {
                 method: 'POST',
@@ -1026,6 +1027,31 @@ async function submitPayment() {
 if (window.location.search.includes('purchased=1')) {
     document.getElementById('payment-success').classList.remove('hidden');
 }
+
+// Complete subscription after SetupIntent redirect (Link, bank redirect, etc.)
+(async function() {
+    const params = new URLSearchParams(window.location.search);
+    const setupIntentSecret = params.get('setup_intent_client_secret');
+    const pkgId = params.get('pkg');
+    if (!setupIntentSecret || !pkgId) return;
+
+    const { setupIntent, error } = await stripeJs.retrieveSetupIntent(setupIntentSecret);
+    if (error || !setupIntent || setupIntent.status !== 'succeeded') return;
+
+    const pmId = setupIntent.payment_method;
+    const res = await fetch('/portal/packages/' + pkgId + '/subscribe/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'payment_method_id=' + encodeURIComponent(pmId),
+    });
+    const data = await res.json();
+    if (data.error) { alert('Subscription error: ' + data.error); return; }
+    if (data.client_secret) {
+        const { error: confErr } = await stripeJs.confirmCardPayment(data.client_secret);
+        if (confErr) { alert('Payment error: ' + confErr.message); return; }
+    }
+    window.location.href = '/portal/packages/?select_joined=1';
+})();
 
 function showError(msg) {
     const el = document.getElementById('payment-errors');
