@@ -89,10 +89,11 @@ class Command(BaseCommand):
         # ── Teams ─────────────────────────────────────────────────────────────
         teams = {}
         for year in [2014, 2015, 2016]:
+            slug = f'demo-select-{year}'
             team, _ = Team.objects.get_or_create(
-                name=f'Demo Select {year}',
-                defaults=dict(is_select=True, is_active=True, age_group=f'U{2026-year}',
-                              max_players=18, manager=owner_client)
+                slug=slug,
+                defaults=dict(name=f'Demo Select {year}', is_select=True, is_active=True,
+                              age_group=f'U{2026-year}', max_players=18, manager=owner_client)
             )
             teams[year] = team
 
