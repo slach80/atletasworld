@@ -561,7 +561,7 @@ def create_package_subscription(request, package_id):
         # For trial subscriptions and active subscriptions (charged immediately),
         # activate the ClientPackage immediately to avoid race conditions with webhook processing.
         if subscription.status in ('trialing', 'active'):
-            payment_intent_id = f'trial_{subscription.id}' if subscription.status == 'trialing' else (subscription.latest_invoice.payment_intent.id if subscription.latest_invoice and subscription.latest_invoice.payment_intent else f'sub_{subscription.id}')
+            payment_intent_id = f'trial_{subscription.id}' if subscription.status == 'trialing' else f'sub_{subscription.id}'
             _activate_package(
                 client_id=client.pk,
                 package_id=package.pk,
