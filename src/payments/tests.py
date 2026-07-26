@@ -16,6 +16,8 @@ from unittest.mock import patch, MagicMock
 from django.test import RequestFactory
 from django.conf import settings
 
+from django.contrib.auth.models import User
+
 from payments.models import Payment
 from payments.views import payments_webhook
 
@@ -260,3 +262,386 @@ class TestWebhook:
             STRIPE_WEBHOOK_SECRET='whsec_test_secret',
             STRIPE_SECRET_KEY='sk_test_dummy',
         )
+
+
+# ── Subscription fixtures ──────────────────────────────────────────────────────
+
+@pytest.fixture
+def select_package(db):
+    from clients.models import Package
+    return Package.objects.create(
+        name='APC Select Membership',
+        package_type='select',
+        billing_tier='monthly',
+        stripe_price_id='price_test_select',
+        price=Decimal('100.00'),
+        sessions_included=2,
+        validity_weeks=4,
+        is_active=True,
+        is_purchasable=True,
+    )
+
+
+@pytest.fixture
+def select_client(db):
+    user = User.objects.create_user(
+        username='selectclient', email='select@example.com', password='pass',
+        first_name='Select', last_name='Member',
+    )
+    from clients.models import Client
+    return Client.objects.create(
+        user=user, client_type='parent',
+        stripe_customer_id='cus_test_select',
+        select_invited=True,
+    )
+
+
+def _webhook_request(event_type, data, secret='whsec_test_secret'):
+    body = json.dumps({'id': 'evt_test', 'type': event_type, 'data': {'object': data}}).encode()
+    ts = str(int(time.time()))
+    sig = hmac.new(secret.encode(), f'{ts}.'.encode() + body, hashlib.sha256).hexdigest()
+    rf = RequestFactory()
+    req = rf.post('/payments/webhook/', data=body, content_type='application/json')
+    req.META['HTTP_STRIPE_SIGNATURE'] = f't={ts},v1={sig}'
+    return req
+
+
+SETTINGS = dict(STRIPE_WEBHOOK_SECRET='whsec_test_secret', STRIPE_SECRET_KEY='sk_test_dummy')
+
+
+@pytest.mark.integration
+class TestSelectSubscriptionWebhooks:
+    """Webhook handlers for Select subscription lifecycle events."""
+
+    # ── invoice.payment_succeeded ──────────────────────────────────────────────
+
+    @patch('payments.views._handle_subscription_renewed')
+    @patch('stripe.Webhook.construct_event')
+    def test_invoice_payment_succeeded_calls_renewal_handler(
+        self, mock_construct, mock_handler, db
+    ):
+        invoice = {'subscription': 'sub_test_001', 'amount_paid': 10000}
+        mock_construct.return_value = {'type': 'invoice.payment_succeeded', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.payment_succeeded', invoice))
+        assert resp.status_code == 200
+        mock_handler.assert_called_once_with(invoice)
+
+    @patch('payments.views.NotificationService', create=True)
+    @patch('stripe.Webhook.construct_event')
+    def test_renewal_extends_expiry_date(self, mock_construct, mock_ns, db, select_client, select_package):
+        from clients.models import ClientPackage
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        cp = ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=2,
+            stripe_subscription_id='sub_test_renew',
+        )
+        invoice = {'subscription': 'sub_test_renew', 'amount_paid': 10000}
+        mock_construct.return_value = {'type': 'invoice.payment_succeeded', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.payment_succeeded', invoice))
+        assert resp.status_code == 200
+        cp.refresh_from_db()
+        assert cp.expiry_date == today + timedelta(weeks=4)  # reset to 4 weeks from today
+
+    # ── customer.subscription.deleted ─────────────────────────────────────────
+
+    @patch('stripe.Webhook.construct_event')
+    def test_cancellation_retains_access_within_paid_period(
+        self, mock_construct, db, select_client, select_package
+    ):
+        from clients.models import ClientPackage
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        cp = ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(days=15),
+            sessions_remaining=2,
+            stripe_subscription_id='sub_test_cancel',
+        )
+        subscription = {'id': 'sub_test_cancel', 'cancel_at': None, 'canceled_at': int(time.time())}
+        mock_construct.return_value = {'type': 'customer.subscription.deleted', 'data': {'object': subscription}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('customer.subscription.deleted', subscription))
+        assert resp.status_code == 200
+        cp.refresh_from_db()
+        assert cp.status == 'active'          # still active — paid through expiry
+        assert cp.stripe_subscription_id == '' # subscription ID cleared — no more auto-renewal
+
+    @patch('stripe.Webhook.construct_event')
+    def test_cancellation_expires_immediately_if_past_expiry(
+        self, mock_construct, db, select_client, select_package
+    ):
+        from clients.models import ClientPackage
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        cp = ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today - timedelta(weeks=5),
+            expiry_date=today - timedelta(days=1),  # already past
+            sessions_remaining=0,
+            stripe_subscription_id='sub_test_expired',
+        )
+        subscription = {'id': 'sub_test_expired', 'cancel_at': None, 'canceled_at': int(time.time())}
+        mock_construct.return_value = {'type': 'customer.subscription.deleted', 'data': {'object': subscription}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('customer.subscription.deleted', subscription))
+        assert resp.status_code == 200
+        cp.refresh_from_db()
+        assert cp.status == 'expired'
+
+    # ── invoice.payment_failed ─────────────────────────────────────────────────
+
+    @patch('stripe.Webhook.construct_event')
+    def test_payment_failed_creates_notification(
+        self, mock_construct, db, select_client, select_package
+    ):
+        from clients.models import ClientPackage, Notification
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        cp = ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=2,
+            stripe_subscription_id='sub_test_failed',
+        )
+        invoice = {'subscription': 'sub_test_failed', 'attempt_count': 1}
+        mock_construct.return_value = {'type': 'invoice.payment_failed', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.payment_failed', invoice))
+        assert resp.status_code == 200
+        assert Notification.objects.filter(client=select_client, title__icontains='Payment Failed').exists()
+
+    @patch('stripe.Webhook.construct_event')
+    def test_payment_failed_only_notifies_on_first_attempt(
+        self, mock_construct, db, select_client, select_package
+    ):
+        from clients.models import ClientPackage, Notification
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=2,
+            stripe_subscription_id='sub_test_retry',
+        )
+        invoice = {'subscription': 'sub_test_retry', 'attempt_count': 2}  # 2nd attempt
+        mock_construct.return_value = {'type': 'invoice.payment_failed', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            payments_webhook(_webhook_request('invoice.payment_failed', invoice))
+        assert not Notification.objects.filter(client=select_client, title__icontains='Payment Failed').exists()
+
+    # ── invoice.upcoming ───────────────────────────────────────────────────────
+
+    @patch('stripe.Webhook.construct_event')
+    def test_upcoming_invoice_creates_reminder_notification(
+        self, mock_construct, db, select_client, select_package
+    ):
+        from clients.models import ClientPackage, Notification
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=2,
+            stripe_subscription_id='sub_test_upcoming',
+        )
+        invoice = {
+            'subscription': 'sub_test_upcoming',
+            'amount_due': 10000,
+            'period_end': int(time.time()) + 86400 * 7,
+        }
+        mock_construct.return_value = {'type': 'invoice.upcoming', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.upcoming', invoice))
+        assert resp.status_code == 200
+        assert Notification.objects.filter(client=select_client, title__icontains='Renewing Soon').exists()
+
+
+@pytest.mark.integration
+class TestSelectSubscriptionBillingLogic:
+    """Tests for trial_end calculation in create_package_subscription."""
+
+    @staticmethod
+    def _make_stripe_mock(status='active', client_secret=None):
+        sub = MagicMock()
+        sub.id = 'sub_mock_001'
+        sub.status = status
+        sub.latest_invoice.payment_intent.client_secret = client_secret
+        return sub
+
+    @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
+    @patch('payments.views._stripe')
+    def test_new_member_no_legacy_package_charges_immediately(
+        self, mock_stripe_fn, mock_customer, db, select_client, select_package
+    ):
+        """No prior package → no trial → charges immediately."""
+        from django.test import Client as TestClient, override_settings
+        mock_s = MagicMock()
+        mock_s.PaymentMethod.attach.return_value = None
+        mock_s.Customer.modify.return_value = None
+        mock_s.Subscription.create.return_value = self._make_stripe_mock(status='active', client_secret='cs_test')
+        mock_s.Subscription.modify.return_value = None
+        mock_stripe_fn.return_value = mock_s
+
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        with override_settings(STRIPE_SECRET_KEY='sk_test_dummy'):
+            resp = tc.post(
+                f'/portal/packages/{select_package.pk}/subscribe/',
+                {'payment_method_id': 'pm_test_001'},
+            )
+        assert resp.status_code == 200
+        call_kwargs = mock_s.Subscription.create.call_args[1]
+        assert 'trial_end' not in call_kwargs  # no trial for new member
+
+    @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
+    @patch('payments.views._stripe')
+    def test_legacy_member_future_anniversary_gets_trial(
+        self, mock_stripe_fn, mock_customer, db, select_client, select_package
+    ):
+        """Legacy member whose 1-month anniversary is in the future → trial until then."""
+        from clients.models import ClientPackage
+        from django.test import Client as TestClient, override_settings
+        from django.utils import timezone
+        from datetime import timedelta
+
+        today = timezone.localdate()
+        # Started 2 weeks ago → anniversary in 2 more weeks
+        ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='expired', start_date=today - timedelta(weeks=2),
+            expiry_date=today + timedelta(weeks=22),
+            sessions_remaining=0,
+            stripe_subscription_id='',
+            stripe_payment_id='pi_legacy_test',
+        )
+        mock_s = MagicMock()
+        mock_s.PaymentMethod.attach.return_value = None
+        mock_s.Customer.modify.return_value = None
+        mock_s.Subscription.create.return_value = self._make_stripe_mock(status='trialing')
+        mock_s.Subscription.modify.return_value = None
+        mock_stripe_fn.return_value = mock_s
+
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        with override_settings(STRIPE_SECRET_KEY='sk_test_dummy'):
+            resp = tc.post(
+                f'/portal/packages/{select_package.pk}/subscribe/',
+                {'payment_method_id': 'pm_test_002'},
+            )
+        assert resp.status_code == 200
+        call_kwargs = mock_s.Subscription.create.call_args[1]
+        assert 'trial_end' in call_kwargs  # trial applied
+
+    @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
+    @patch('payments.views._stripe')
+    def test_legacy_member_past_anniversary_charges_immediately(
+        self, mock_stripe_fn, mock_customer, db, select_client, select_package
+    ):
+        """Legacy member whose 1-month anniversary has passed → no trial."""
+        from clients.models import ClientPackage
+        from django.test import Client as TestClient, override_settings
+        from django.utils import timezone
+        from datetime import timedelta
+
+        today = timezone.localdate()
+        # Started 6 weeks ago → anniversary already passed
+        ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='expired', start_date=today - timedelta(weeks=6),
+            expiry_date=today + timedelta(weeks=18),
+            sessions_remaining=0,
+            stripe_subscription_id='',
+            stripe_payment_id='pi_legacy_past',
+        )
+        mock_s = MagicMock()
+        mock_s.PaymentMethod.attach.return_value = None
+        mock_s.Customer.modify.return_value = None
+        mock_s.Subscription.create.return_value = self._make_stripe_mock(status='active', client_secret='cs_test')
+        mock_s.Subscription.modify.return_value = None
+        mock_stripe_fn.return_value = mock_s
+
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        with override_settings(STRIPE_SECRET_KEY='sk_test_dummy'):
+            resp = tc.post(
+                f'/portal/packages/{select_package.pk}/subscribe/',
+                {'payment_method_id': 'pm_test_003'},
+            )
+        assert resp.status_code == 200
+        call_kwargs = mock_s.Subscription.create.call_args[1]
+        assert 'trial_end' not in call_kwargs  # no trial
+
+
+@pytest.mark.integration
+class TestSelectSubscriptionUI:
+    """Tests for subscription-related UI gating."""
+
+    @staticmethod
+    def _add_player(client):
+        from clients.models import Player
+        return Player.objects.create(
+            client=client, first_name='Test', last_name='Player',
+            birth_year=2012, is_active=True,
+        )
+
+    def test_uninvited_client_cannot_see_select_section(self, db, select_client, select_package):
+        from django.test import Client as TestClient
+        self._add_player(select_client)
+        select_client.select_invited = False
+        select_client.save()
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        resp = tc.get('/portal/packages/')
+        assert resp.status_code == 200
+        assert b'Join APC Select' not in resp.content
+
+    def test_invited_client_sees_select_section(self, db, select_client, select_package):
+        from django.test import Client as TestClient
+        self._add_player(select_client)
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        resp = tc.get('/portal/packages/')
+        assert resp.status_code == 200
+        assert b'Join APC Select' in resp.content
+
+    def test_active_member_sees_already_a_member(self, db, select_client, select_package):
+        from django.test import Client as TestClient
+        from clients.models import ClientPackage
+        from django.utils import timezone
+        from datetime import timedelta
+        self._add_player(select_client)
+        today = timezone.localdate()
+        ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=2,
+        )
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        resp = tc.get('/portal/packages/')
+        assert resp.status_code == 200
+        assert b'Already a Member' in resp.content
