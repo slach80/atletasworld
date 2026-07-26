@@ -64,6 +64,15 @@ class Command(BaseCommand):
             )
         )
 
+        # ── Owner ─────────────────────────────────────────────────────────────
+        owner_user, _ = User.objects.get_or_create(
+            email='owner@selectdemo.test',
+            defaults=dict(username='demo_owner_select', first_name='Demo', last_name='Owner',
+                          is_staff=True, is_superuser=True)
+        )
+        owner_user.set_password('demo123')
+        owner_user.save()
+
         # ── Coach ─────────────────────────────────────────────────────────────
         coach_user, _ = User.objects.get_or_create(
             email='coach@selectdemo.test',
@@ -83,15 +92,6 @@ class Command(BaseCommand):
                               max_players=18, manager=owner_user)
             )
             teams[year] = team
-
-        # ── Owner ─────────────────────────────────────────────────────────────
-        owner_user, _ = User.objects.get_or_create(
-            email='owner@selectdemo.test',
-            defaults=dict(username='demo_owner_select', first_name='Demo', last_name='Owner',
-                          is_staff=True, is_superuser=True)
-        )
-        owner_user.set_password('demo123')
-        owner_user.save()
 
         # ── Clients + Players + Packages ──────────────────────────────────────
         scenarios = [
