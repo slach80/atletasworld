@@ -230,9 +230,20 @@
 
                         {% if stripe_public_key %}
                         <!-- Selected tier summary + join button -->
+                        {% if has_select_sibling_sub %}
+                        <div class="mb-3 flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-xl">
+                            <span class="text-green-600 font-bold text-sm">Sibling discount applied</span>
+                            <span class="text-xs text-green-700">50% off — a sibling is already enrolled</span>
+                        </div>
+                        {% endif %}
                         <div class="mt-4 border-2 border-primary rounded-2xl p-5">
                             <div class="flex items-end gap-2 mb-1">
+                                {% if has_select_sibling_sub %}
+                                <span class="text-2xl font-black text-gray-400 line-through" id="selected-price-orig">${{ select_packages.first.price }}</span>
+                                <span class="text-4xl font-black text-green-600" id="selected-price">${{ select_packages.first.price|floatformat:0 }}</span>
+                                {% else %}
                                 <span class="text-4xl font-black text-primary" id="selected-price">${{ select_packages.first.price }}</span>
+                                {% endif %}
                                 <span class="text-gray-400 pb-1 text-sm" id="selected-interval">
                                     {% with pkg=select_packages.first %}
                                     {% if pkg.billing_tier == 'thirds' %}/every 4 months
@@ -255,6 +266,7 @@
                         var _selectedTierId = {{ select_packages.first.pk }};
                         var _selectedTierPrice = {{ select_packages.first.price }};
                         var _selectedTierName = '{{ select_packages.first.name|escapejs }}';
+                        var _siblingDiscount = {{ has_select_sibling_sub|yesno:"true,false" }};
                         var _selectedTierHasStripe = {{ select_packages.first.stripe_price_id|yesno:"true,false" }};
 
                         var _tierIntervalLabels = {
@@ -289,7 +301,10 @@
                             if (lbl) { lbl.classList.add('border-primary', 'bg-primary/5'); lbl.classList.remove('border-gray-200'); }
 
                             // Update summary
-                            document.getElementById('selected-price').textContent = '$' + price;
+                            const displayPrice = _siblingDiscount ? (price * 0.5) : price;
+                            document.getElementById('selected-price').textContent = '$' + displayPrice.toFixed(0);
+                            const origEl = document.getElementById('selected-price-orig');
+                            if (origEl) origEl.textContent = '$' + price;
                             document.getElementById('selected-interval').textContent = _tierIntervalLabels[tier] || '/month';
 
                             // Update join button behaviour

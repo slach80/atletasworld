@@ -543,6 +543,15 @@ def create_package_subscription(request, package_id):
                 logger.info('Select subscription: trial_end=%s (1 month from start %s) for cp #%s',
                             next_billing, legacy_cp.start_date, legacy_cp.pk)
 
+        # Sibling discount: 50% off if client already has an active subscription
+        # for the same package (another player in the same family).
+        has_sibling_sub = ClientPackage.objects.filter(
+            client=client,
+            package=package,
+            status='active',
+            stripe_subscription_id__gt='',
+        ).exists()
+
         sub_kwargs = dict(
             customer=customer_id,
             items=[{'price': package.stripe_price_id}],
@@ -551,10 +560,14 @@ def create_package_subscription(request, package_id):
                 'client_id': str(client.pk),
                 'package_id': str(package.pk),
                 'subscription_id': '',
+                'sibling_discount': 'true' if has_sibling_sub else 'false',
             },
         )
         if trial_end:
             sub_kwargs['trial_end'] = trial_end
+        if has_sibling_sub:
+            sub_kwargs['discounts'] = [{'coupon': 'SIBLING50'}]
+            logger.info('create_package_subscription: applying SIBLING50 coupon for client %s (sibling already subscribed)', client.pk)
 
         subscription = s.Subscription.create(**sub_kwargs)
 

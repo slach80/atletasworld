@@ -628,6 +628,73 @@ class TestSelectSubscriptionBillingLogic:
         call_kwargs = mock_s.Subscription.create.call_args[1]
         assert 'trial_end' not in call_kwargs  # no trial
 
+    @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
+    @patch('payments.views._stripe')
+    def test_sibling_subscription_applies_50_percent_coupon(
+        self, mock_stripe_fn, mock_customer, db, select_client, select_package
+    ):
+        """Client already has an active sub for same package → SIBLING50 coupon applied."""
+        from clients.models import ClientPackage
+        from django.test import Client as TestClient, override_settings
+        from django.utils import timezone
+        from datetime import timedelta
+
+        today = timezone.localdate()
+        # Existing active subscription for first player
+        ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=0,
+            stripe_subscription_id='sub_existing_sibling',
+            stripe_payment_id='sub_existing_sibling',
+        )
+        mock_s = MagicMock()
+        mock_s.PaymentMethod.attach.return_value = None
+        mock_s.Customer.modify.return_value = None
+        mock_s.Subscription.create.return_value = self._make_stripe_mock(status='active', client_secret='cs_test')
+        mock_s.Subscription.modify.return_value = None
+        mock_stripe_fn.return_value = mock_s
+
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        with override_settings(STRIPE_SECRET_KEY='sk_test_dummy'):
+            resp = tc.post(
+                f'/portal/packages/{select_package.pk}/subscribe/',
+                {'payment_method_id': 'pm_test_sibling'},
+            )
+        assert resp.status_code == 200
+        call_kwargs = mock_s.Subscription.create.call_args[1]
+        assert call_kwargs.get('discounts') == [{'coupon': 'SIBLING50'}]
+        assert call_kwargs['metadata']['sibling_discount'] == 'true'
+
+    @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
+    @patch('payments.views._stripe')
+    def test_no_sibling_subscription_no_coupon(
+        self, mock_stripe_fn, mock_customer, db, select_client, select_package
+    ):
+        """No existing active sub → no SIBLING50 coupon applied."""
+        from django.test import Client as TestClient, override_settings
+
+        mock_s = MagicMock()
+        mock_s.PaymentMethod.attach.return_value = None
+        mock_s.Customer.modify.return_value = None
+        mock_s.Subscription.create.return_value = self._make_stripe_mock(status='active', client_secret='cs_test')
+        mock_s.Subscription.modify.return_value = None
+        mock_stripe_fn.return_value = mock_s
+
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        with override_settings(STRIPE_SECRET_KEY='sk_test_dummy'):
+            resp = tc.post(
+                f'/portal/packages/{select_package.pk}/subscribe/',
+                {'payment_method_id': 'pm_test_no_sibling'},
+            )
+        assert resp.status_code == 200
+        call_kwargs = mock_s.Subscription.create.call_args[1]
+        assert 'discounts' not in call_kwargs
+        assert call_kwargs['metadata']['sibling_discount'] == 'false'
+
 
 @pytest.mark.integration
 class TestSelectSubscriptionUI:

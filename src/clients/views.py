@@ -626,6 +626,10 @@ def packages_list(request):
     ).order_by('event_start_date')
 
     has_select_membership = active_packages.filter(package__package_type='select').exists()
+    # Sibling discount: client already has an active recurring Select subscription
+    has_select_sibling_sub = active_packages.filter(
+        package__package_type='select', stripe_subscription_id__gt=''
+    ).exists()
     select_credit_balance = client.credits.filter(
         status='available'
     ).filter(
@@ -646,6 +650,7 @@ def packages_list(request):
         'special_packages': special_packages,
         'select_packages': select_packages,
         'has_select_membership': has_select_membership,
+        'has_select_sibling_sub': has_select_sibling_sub,
         'select_credit_balance': select_credit_balance,
         'stripe_public_key': django_settings.STRIPE_PUBLIC_KEY,
         'unassigned_packages': unassigned_packages,
