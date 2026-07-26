@@ -80,7 +80,7 @@ class Command(BaseCommand):
             team, _ = Team.objects.get_or_create(
                 name=f'Demo Select {year}',
                 defaults=dict(is_select=True, is_active=True, age_group=f'U{2026-year}',
-                              max_players=18)
+                              max_players=18, manager=owner_user)
             )
             teams[year] = team
 
