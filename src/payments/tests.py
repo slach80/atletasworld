@@ -351,6 +351,40 @@ class TestSelectSubscriptionWebhooks:
         cp.refresh_from_db()
         assert cp.expiry_date == today + timedelta(weeks=4)  # reset to 4 weeks from today
 
+    @patch('payments.views.NotificationService', create=True)
+    @patch('payments.views._stripe')
+    @patch('stripe.Webhook.construct_event')
+    def test_first_invoice_activates_new_package(self, mock_construct, mock_stripe_fn, mock_ns, db, select_client, select_package):
+        """invoice.payment_succeeded with billing_reason=subscription_create and no existing CP creates one."""
+        from clients.models import ClientPackage
+        mock_stripe_obj = MagicMock()
+        mock_stripe_fn.return_value = mock_stripe_obj
+        mock_stripe_obj.Subscription.retrieve.return_value = {
+            'metadata': {
+                'client_id': str(select_client.pk),
+                'package_id': str(select_package.pk),
+            }
+        }
+        invoice = {
+            'subscription': 'sub_test_new_activate',
+            'billing_reason': 'subscription_create',
+            'amount_paid': 10000,
+            'payment_intent': 'pi_test_new_activate',
+            'id': 'in_test_new',
+        }
+        mock_construct.return_value = {'type': 'invoice.payment_succeeded', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.payment_succeeded', invoice))
+        assert resp.status_code == 200
+        cp = ClientPackage.objects.filter(
+            client=select_client,
+            package=select_package,
+            stripe_subscription_id='sub_test_new_activate',
+            status='active',
+        ).first()
+        assert cp is not None, 'ClientPackage should be created on first invoice'
+
     # ── customer.subscription.deleted ─────────────────────────────────────────
 
     @patch('stripe.Webhook.construct_event')

@@ -1173,6 +1173,29 @@ def _handle_subscription_renewed(invoice):
         stripe_subscription_id=subscription_id, status='active'
     ).select_related('package', 'client').first()
     if not cp:
+        # First invoice (billing_reason='subscription_create') fires invoice.payment_succeeded
+        # before any ClientPackage exists. Activate it now using the subscription metadata.
+        if invoice.get('billing_reason') == 'subscription_create':
+            s = _stripe()
+            try:
+                sub = s.Subscription.retrieve(subscription_id)
+            except Exception:
+                logger.exception('_handle_subscription_renewed: could not retrieve sub %s', subscription_id)
+                return
+            meta = sub.get('metadata', {})
+            client_id  = meta.get('client_id')
+            package_id = meta.get('package_id')
+            if client_id and package_id:
+                payment_intent_id = invoice.get('payment_intent') or f'invoice_{invoice.get("id", "")}'
+                _activate_package(
+                    client_id=client_id,
+                    package_id=package_id,
+                    payment_intent_id=payment_intent_id,
+                    subscription_id=subscription_id,
+                )
+                logger.info('_handle_subscription_renewed: activated new subscription %s for client %s', subscription_id, client_id)
+            else:
+                logger.warning('_handle_subscription_renewed: no client_id/package_id in sub %s metadata', subscription_id)
         return
 
     tier = cp.package.billing_tier or 'monthly'
