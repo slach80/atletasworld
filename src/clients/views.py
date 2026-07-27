@@ -1748,12 +1748,24 @@ def create_booking_direct(request):
 
         # If some items require payment, return payment info alongside confirmed bookings
         if payment_items:
+            # Sibling discount: 2nd+ player from the same client booked into the same block pays 50%.
+            # Track which blocks already have a full-price entry in this batch.
+            _full_price_blocks: set = set()
             pending_payment = []
             for item in payment_items:
+                block_id = item['block'].id
+                price = item['price']
+                if price and price > 0:
+                    if block_id in _full_price_blocks:
+                        # Sibling — 50% off
+                        from decimal import Decimal
+                        price = (Decimal(str(price)) * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+                    else:
+                        _full_price_blocks.add(block_id)
                 pending_payment.append({
-                    'block_id': item['block'].id,
+                    'block_id': block_id,
                     'player_id': item['player'].id,
-                    'amount': str(item['price']),
+                    'amount': str(price),
                     'session_type': item['session_type'].name,
                     'player_name': f"{item['player'].first_name} {item['player'].last_name}",
                 })

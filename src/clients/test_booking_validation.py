@@ -702,3 +702,43 @@ class TestEdgeCases(BookingValidationTestCase):
         self.assertTrue(result['success'])
         self.assertNotIn('requires_payment', result)
         self.assertEqual(result['bookings_created'], 1)
+
+    def test_sibling_discount_applied_to_second_player_same_block(self):
+        """2nd sibling in the same drop-in block pays 50% — first sibling pays full price."""
+        block = self._create_block(
+            session_type=self.session_type_dropin,  # allow_package=False → always requires payment
+            max_participants=10,
+        )
+
+        result = self._post_booking([
+            {'block_id': block.id, 'player_id': self.player_noah.id},
+            {'block_id': block.id, 'player_id': self.player_ethan.id},
+        ])
+
+        self.assertTrue(result['success'])
+        self.assertTrue(result['requires_payment'])
+        items = result['pending_payment']
+        self.assertEqual(len(items), 2)
+
+        amounts = sorted(Decimal(i['amount']) for i in items)
+        full_price = self.session_type_dropin.drop_in_price  # 25.00
+        sibling_price = (full_price * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+        self.assertEqual(amounts[0], sibling_price)
+        self.assertEqual(amounts[1], full_price)
+
+    def test_single_player_pays_full_price_no_sibling_discount(self):
+        """Single drop-in player always pays full price."""
+        block = self._create_block(
+            session_type=self.session_type_dropin,
+            max_participants=10,
+        )
+
+        result = self._post_booking([
+            {'block_id': block.id, 'player_id': self.player_noah.id},
+        ])
+
+        self.assertTrue(result['success'])
+        self.assertTrue(result['requires_payment'])
+        items = result['pending_payment']
+        self.assertEqual(len(items), 1)
+        self.assertEqual(Decimal(items[0]['amount']), self.session_type_dropin.drop_in_price)

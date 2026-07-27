@@ -658,9 +658,14 @@ function buildCartHtml(){
     html+='</div>';
 
     const total=cart.reduce((s,{slot})=>s+parseFloat(slot.price||0),0);
+    // Detect if any block has 2+ players (sibling discount will apply server-side)
+    const blockCounts={};
+    cart.forEach(({slot})=>{ blockCounts[slot.slot_id]=(blockCounts[slot.slot_id]||0)+1; });
+    const hasSiblingDiscount=Object.values(blockCounts).some(c=>c>1);
     if(total>0){
         html+=`<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex justify-between font-bold text-sm"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+            ${hasSiblingDiscount?'<p class="text-xs text-green-700 mt-1">50% sibling discount will apply at checkout</p>':''}
         </div>`;
     }
 

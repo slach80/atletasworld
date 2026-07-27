@@ -1506,6 +1506,7 @@ def create_batch_booking_payment_intent(request):
     total = Decimal('0')
     descriptions = []
     validated = []
+    _full_price_blocks: set = set()  # tracks which blocks already have a full-price entry (for sibling discount)
 
     for item in items:
         block_id = item.get('block_id')
@@ -1527,6 +1528,12 @@ def create_batch_booking_payment_intent(request):
         price = block.price_override if block.price_override is not None else session_type.get_drop_in_price()
         if not price:
             return JsonResponse({'error': f'Cannot determine price for {session_type.name}.'}, status=400)
+
+        # Sibling discount: 2nd+ player from the same family in the same block pays 50%
+        if block_id in _full_price_blocks:
+            price = (Decimal(str(price)) * Decimal('50') / Decimal('100')).quantize(Decimal('0.01'))
+        else:
+            _full_price_blocks.add(block_id)
 
         total += price
         descriptions.append(f"{session_type.name} ({player.first_name} {player.last_name})")
