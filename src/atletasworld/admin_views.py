@@ -1239,6 +1239,86 @@ def owner_coach_schedule(request, pk):
             except ScheduleBlock.DoesNotExist:
                 messages.error(request, 'Block not found.')
 
+        elif action == 'cancel_block':
+            block_id = request.POST.get('block_id')
+            try:
+                import stripe as _stripe
+                from clients.services import NotificationService
+                from payments.models import Payment
+                from django.utils import timezone as _tz
+
+                _stripe.api_key = settings.STRIPE_SECRET_KEY
+
+                block = ScheduleBlock.objects.get(pk=block_id, coach=coach)
+                bookings = Booking.objects.filter(
+                    coach=coach,
+                    scheduled_date=block.date,
+                    scheduled_time=block.start_time,
+                    status__in=['pending', 'confirmed'],
+                ).select_related('client', 'client_package', 'player', 'session_type')
+
+                cancelled_count = 0
+                refunded_count = 0
+                sessions_restored = 0
+
+                for booking in bookings:
+                    booking.status = 'cancelled'
+                    booking.cancellation_reason = 'admin_cancelled'
+                    booking.cancellation_notes = 'Session block cancelled by owner'
+                    booking.cancelled_at = _tz.now()
+                    booking.cancelled_by = request.user
+                    booking.save(update_fields=[
+                        'status', 'cancellation_reason', 'cancellation_notes',
+                        'cancelled_at', 'cancelled_by',
+                    ])
+
+                    # Restore package session
+                    if booking.client_package and booking.payment_status == 'package':
+                        booking.client_package.sessions_remaining += 1
+                        booking.client_package.sessions_used = max(0, booking.client_package.sessions_used - 1)
+                        booking.client_package.save(update_fields=['sessions_remaining', 'sessions_used'])
+                        sessions_restored += 1
+
+                    # Stripe refund for drop-in paid bookings
+                    if booking.payment_status == 'paid' and booking.amount_paid > 0:
+                        payment = Payment.objects.filter(
+                            booking=booking, status='succeeded'
+                        ).first()
+                        if payment and settings.STRIPE_SECRET_KEY:
+                            try:
+                                _stripe.Refund.create(
+                                    payment_intent=payment.stripe_payment_intent_id,
+                                )
+                                payment.status = 'refunded'
+                                payment.save(update_fields=['status'])
+                                booking.payment_status = 'refunded'
+                                booking.save(update_fields=['payment_status'])
+                                refunded_count += 1
+                            except _stripe.error.StripeError as e:
+                                logger.error(
+                                    'cancel_block: Stripe refund failed for booking %s — %s',
+                                    booking.pk, e.user_message,
+                                )
+
+                    # Send cancellation notification
+                    try:
+                        NotificationService.send_booking_cancellation(booking)
+                    except Exception:
+                        pass
+
+                    cancelled_count += 1
+
+                block.delete()
+
+                parts = [f'{cancelled_count} booking(s) cancelled and clients notified']
+                if sessions_restored:
+                    parts.append(f'{sessions_restored} package session(s) restored')
+                if refunded_count:
+                    parts.append(f'{refunded_count} Stripe refund(s) issued')
+                messages.success(request, 'Session cancelled — ' + ', '.join(parts) + '.')
+            except ScheduleBlock.DoesNotExist:
+                messages.error(request, 'Block not found.')
+
         elif action == 'bulk_set_location':
             location_val = request.POST.get('bulk_location', '').strip()
             day_filter = request.POST.get('bulk_day', '')
