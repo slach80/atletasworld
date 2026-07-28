@@ -35,7 +35,7 @@
     <table class="w-full">
         <thead class="bg-gray-50 border-b">
             <tr>
-                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Client</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide max-w-[140px]">Client</th>
                 <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Email</th>
                 <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Phone</th>
                 <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Players</th>
@@ -47,8 +47,8 @@
         <tbody class="divide-y divide-gray-100">
             {% for client in clients %}
             <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{% url 'owner_client_detail' client.pk %}'">
-                <td class="py-3 px-3">
-                    <a href="{% url 'owner_client_detail' client.pk %}" class="text-sm font-semibold text-owner hover:underline">{{ client.user.get_full_name|default:client.user.email }}</a>
+                <td class="py-3 px-3 max-w-[140px]">
+                    <a href="{% url 'owner_client_detail' client.pk %}" class="text-sm font-semibold text-owner hover:underline block truncate" title="{{ client.user.get_full_name|default:client.user.email }}">{{ client.user.get_full_name|default:client.user.email }}</a>
                     <div class="text-xs text-gray-500 flex items-center gap-1 flex-wrap mt-0.5">
                         {{ client.get_client_type_display }}
                         {% if client.approval_status == 'pending' %}<span class="px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded text-xs font-semibold">Pending</span>{% endif %}
@@ -56,7 +56,9 @@
                         {% if client.approval_status == 'rejected' %}<span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">❌</span>{% endif %}
                     </div>
                 </td>
-                <td class="py-3 px-3 text-xs text-gray-600 hidden md:table-cell">{{ client.user.email }}</td>
+                <td class="py-3 px-3 text-xs text-gray-600 hidden md:table-cell max-w-[160px]">
+                    <span class="block truncate" title="{{ client.user.email }}">{{ client.user.email }}</span>
+                </td>
                 <td class="py-3 px-3 text-xs text-gray-600 hidden lg:table-cell">{{ client.phone|default:"-" }}</td>
                 <td class="py-3 px-3">
                     <span class="text-sm font-bold {% if client.player_count > 0 %}text-purple-600{% else %}text-gray-400{% endif %}">{{ client.player_count }}</span>
