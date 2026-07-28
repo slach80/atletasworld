@@ -34,8 +34,8 @@
 </div>
 
 <!-- Teams Table -->
-<div class="bg-white rounded-xl shadow-md overflow-hidden">
-    <table class="w-full">
+<div class="bg-white rounded-xl shadow-md overflow-x-auto -mx-4 sm:mx-0 px-0">
+    <table class="w-full min-w-max">
         <thead class="bg-gray-50 border-b">
             <tr>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Team</th>
@@ -44,17 +44,16 @@
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Manager</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
                 <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Coaches</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             {% for team in teams %}
-            <tr class="hover:bg-gray-50">
+            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{% url 'owner_team_detail' team.pk %}'">
                 <td class="py-4 px-6">
-                    <div class="font-semibold text-gray-800">
+                    <a href="{% url 'owner_team_detail' team.pk %}" class="font-semibold text-owner hover:underline">
                         {{ team.name }}
                         {% if team.is_select %}<span class="ml-2 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded font-medium">Select</span>{% endif %}
-                    </div>
+                    </a>
                     {% if team.club_name %}<div class="text-xs text-gray-500">{{ team.club_name }}</div>{% endif %}
                 </td>
                 <td class="py-4 px-6">
@@ -73,7 +72,7 @@
                     {{ team.manager.user.get_full_name|default:team.manager.user.email }}
                 </td>
                 <td class="py-4 px-6">
-                    <span class="font-bold {% if team.active_player_count > 0 %}text-secondary{% else %}text-gray-400{% endif %}">
+                    <span class="font-bold {% if team.active_player_count > 0 %}text-purple-600{% else %}text-gray-400{% endif %}">
                         {{ team.active_player_count }} / {{ team.max_players }}
                     </span>
                 </td>
@@ -82,13 +81,10 @@
                         {{ team.coach_count }}
                     </span>
                 </td>
-                <td class="py-4 px-6">
-                    <a href="{% url 'owner_team_detail' team.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">View</a>
-                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="py-8 text-center text-gray-500">No teams found.</td>
+                <td colspan="6" class="py-8 text-center text-gray-500">No teams found.</td>
             </tr>
             {% endfor %}
         </tbody>
