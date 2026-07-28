@@ -35,45 +35,41 @@
     <table class="w-full">
         <thead class="bg-gray-50 border-b">
             <tr>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Client</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Email</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Phone</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Players</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Active Packages</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Bookings</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Joined</th>
-                <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Client</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Email</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Phone</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Players</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Packages</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Bookings</th>
+                <th class="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Joined</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             {% for client in clients %}
-            <tr class="hover:bg-gray-50">
-                <td class="py-4 px-6">
-                    <div class="font-semibold text-gray-800">{{ client.user.get_full_name|default:client.user.email }}</div>
-                    <div class="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{% url 'owner_client_detail' client.pk %}'">
+                <td class="py-3 px-3">
+                    <a href="{% url 'owner_client_detail' client.pk %}" class="text-sm font-semibold text-owner hover:underline">{{ client.user.get_full_name|default:client.user.email }}</a>
+                    <div class="text-xs text-gray-500 flex items-center gap-1 flex-wrap mt-0.5">
                         {{ client.get_client_type_display }}
-                        {% if client.approval_status == 'pending' %}<span class="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">⏳ Pending</span>{% endif %}
+                        {% if client.approval_status == 'pending' %}<span class="px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded text-xs font-semibold">Pending</span>{% endif %}
                         {% if client.approval_status == 'approved' and client.needs_approval %}<span class="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs">✅</span>{% endif %}
                         {% if client.approval_status == 'rejected' %}<span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">❌</span>{% endif %}
                     </div>
                 </td>
-                <td class="py-4 px-6 text-sm text-gray-600">{{ client.user.email }}</td>
-                <td class="py-4 px-6 text-sm text-gray-600">{{ client.phone|default:"-" }}</td>
-                <td class="py-4 px-6">
-                    <span class="font-bold {% if client.player_count > 0 %}text-purple-600{% else %}text-gray-400{% endif %}">{{ client.player_count }}</span>
+                <td class="py-3 px-3 text-xs text-gray-600 hidden md:table-cell">{{ client.user.email }}</td>
+                <td class="py-3 px-3 text-xs text-gray-600 hidden lg:table-cell">{{ client.phone|default:"-" }}</td>
+                <td class="py-3 px-3">
+                    <span class="text-sm font-bold {% if client.player_count > 0 %}text-purple-600{% else %}text-gray-400{% endif %}">{{ client.player_count }}</span>
                 </td>
-                <td class="py-4 px-6">
-                    <span class="{% if client.active_packages > 0 %}text-secondary font-bold{% else %}text-gray-400{% endif %}">{{ client.active_packages }}</span>
+                <td class="py-3 px-3">
+                    <span class="text-sm {% if client.active_packages > 0 %}text-green-600 font-bold{% else %}text-gray-400{% endif %}">{{ client.active_packages }}</span>
                 </td>
-                <td class="py-4 px-6 font-semibold">{{ client.total_bookings }}</td>
-                <td class="py-4 px-6 text-sm text-gray-500">{{ client.user.date_joined|date:"M j, Y" }}</td>
-                <td class="py-4 px-6">
-                    <a href="{% url 'owner_client_detail' client.pk %}" class="px-3 py-1 text-sm bg-owner text-white rounded hover:bg-indigo-700 hover:scale-[1.02] active:scale-100 transition-all duration-150">View</a>
-                </td>
+                <td class="py-3 px-3 text-sm font-semibold hidden lg:table-cell">{{ client.total_bookings }}</td>
+                <td class="py-3 px-3 text-xs text-gray-500 hidden lg:table-cell">{{ client.user.date_joined|date:"M j, Y" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="py-8 text-center text-gray-500">No clients found.</td>
+                <td colspan="7" class="py-8 text-center text-gray-500">No clients found.</td>
             </tr>
             {% endfor %}
         </tbody>
