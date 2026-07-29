@@ -1224,8 +1224,10 @@ def _handle_subscription_renewed(invoice):
     if tier not in _BILLING_TIER_WEEKS:
         logger.warning('Subscription renewed: unknown billing_tier %r on package %s — defaulting to 4 weeks', tier, cp.package_id)
     cp.expiry_date = timezone.localdate() + timedelta(weeks=weeks)
-    cp.save(update_fields=['expiry_date'])
-    logger.info('Subscription renewed: ClientPackage #%s extended to %s (%s weeks, tier=%s)', cp.pk, cp.expiry_date, weeks, tier)
+    if cp.package.sessions_included > 0:
+        cp.sessions_remaining = cp.package.sessions_included
+    cp.save(update_fields=['expiry_date', 'sessions_remaining'])
+    logger.info('Subscription renewed: ClientPackage #%s extended to %s (%s weeks, tier=%s, sessions_remaining=%s)', cp.pk, cp.expiry_date, weeks, tier, cp.sessions_remaining)
 
     # Notify the member — in-app + email
     msg = (f'Your APC Select membership has been renewed. '
@@ -1378,8 +1380,13 @@ def _handle_subscription_cancelled(subscription):
         logger.info('Subscription cancelled: ClientPackage #%s expired immediately', cp.pk)
 
     # Notify the member — in-app + email
+    # Distinguish voluntary cancel (still within paid period) from payment-failure cancel (expired immediately)
     site_url = 'https://atletasperformancecenter.com'
-    if cp.expiry_date and cp.expiry_date > today:
+    cancellation_reason = subscription.get('cancellation_details', {}).get('reason', '')
+    payment_failed_cancel = (not (cp.expiry_date and cp.expiry_date > today)
+                             or cancellation_reason == 'payment_failed')
+    if not payment_failed_cancel:
+        subject = 'APC Select Auto-Renewal Cancelled'
         msg = (f'Your APC Select auto-renewal has been cancelled. '
                f'Your access continues through {cp.expiry_date.strftime("%B %-d, %Y")} — '
                f'no further charges will be made.')
@@ -1391,27 +1398,27 @@ def _handle_subscription_cancelled(subscription):
                 f'<p style="text-align:center;margin-top:20px;">'
                 f'<a href="{site_url}/portal/packages/" class="btn">Manage Membership</a></p>')
     else:
-        msg = 'Your APC Select membership has been cancelled.'
-        html = (f'<h2>APC Select Membership Cancelled</h2>'
-                f'<p>Your APC Select membership has been cancelled.</p>'
-                f'<p>You can re-subscribe at any time from your account.</p>'
+        subject = 'APC Select — Membership Expired'
+        msg = (f'Your APC Select membership has expired due to a payment failure. '
+               f'Please update your payment method and re-subscribe to regain access.')
+        html = (f'<h2>APC Select Membership Expired</h2>'
+                f'<p>Your APC Select membership has expired because we were unable to process your payment after multiple attempts.</p>'
+                f'<p>To regain access, please update your payment method and re-subscribe.</p>'
                 f'<p style="text-align:center;margin-top:20px;">'
-                f'<a href="{site_url}/portal/packages/" class="btn">View Packages</a></p>')
+                f'<a href="{site_url}/portal/packages/" class="btn">Re-subscribe</a></p>')
     try:
         from clients.models import Notification
         Notification.objects.create(
             client=cp.client, notification_type='promotional',
-            title='APC Select Auto-Renewal Cancelled', message=msg, method='in_app',
+            title=subject, message=msg, method='in_app',
         )
     except Exception:
         logger.exception('_handle_subscription_cancelled: in-app notification failed')
     try:
         from clients.services import NotificationService
         NotificationService.send_email(
-            cp.client.user.email,
-            'APC Select Auto-Renewal Cancelled',
-            html, msg,
-            context={'subject': 'APC Select Auto-Renewal Cancelled'},
+            cp.client.user.email, subject, html, msg,
+            context={'subject': subject},
         )
     except Exception:
         logger.exception('_handle_subscription_cancelled: email failed')

@@ -350,6 +350,32 @@ class TestSelectSubscriptionWebhooks:
         assert resp.status_code == 200
         cp.refresh_from_db()
         assert cp.expiry_date == today + timedelta(weeks=4)  # reset to 4 weeks from today
+        assert cp.sessions_remaining == 2  # reset to package.sessions_included
+
+    @patch('payments.views.NotificationService', create=True)
+    @patch('stripe.Webhook.construct_event')
+    def test_renewal_resets_depleted_sessions(self, mock_construct, mock_ns, db, select_client, select_package):
+        """Renewal resets sessions_remaining to sessions_included even when depleted."""
+        from clients.models import ClientPackage
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        cp = ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=0,  # depleted — would block bookings without reset
+            stripe_subscription_id='sub_test_depleted',
+        )
+        invoice = {'subscription': 'sub_test_depleted', 'amount_paid': 10000}
+        mock_construct.return_value = {'type': 'invoice.payment_succeeded', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.payment_succeeded', invoice))
+        assert resp.status_code == 200
+        cp.refresh_from_db()
+        assert cp.sessions_remaining == select_package.sessions_included  # restored to 2
+        assert cp.expiry_date == today + timedelta(weeks=4)
 
     @patch('payments.views.NotificationService', create=True)
     @patch('payments.views._stripe')
