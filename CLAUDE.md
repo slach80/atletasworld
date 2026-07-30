@@ -246,11 +246,11 @@ When a feature maps to a hustle module:
   4. `coaches/views.py` (1,535 lines) → `coaches/views/` package
   5. `clients/tasks.py` (1,164 lines) → `clients/tasks/` package (verify Celery autodiscover after split)
   6. `bookings/api.py` — extract `BookingViewSet.create` (~507 lines) to `bookings/services.py` (logic extraction, not just reorganization)
-- **#3 — Refund amount `Decimal`**: `owner_views/finances.py` `owner_issue_refund` — change `int(float(amount_str) * 100)` to `int(Decimal(amount_str) * 100)`
-- **#4 — Log swallowed exceptions**: `clients/services.py` lines 76, 118, 186, 280 — bare `pass` in `except Exception` blocks; add `logger.debug()` at minimum
-- **#5 — AI assist leaks exception text**: `owner_views/ai_assist.py` `owner_blog_ai_assist` — return generic message, log server-side; also `timeout=120` ties up gunicorn worker
-- **#6 — `owner_blog_ai_assist` missing `@require_POST`**: `owner_views/ai_assist.py` — add decorator for consistency
-- **#7 — Remove `.env.dev.bak` from git**: `git rm --cached .env.dev.bak && echo '.env.dev.bak' >> .gitignore`
-- **#8 — Clean repo root**: ~25 PNG screenshots + ~15 `test_*.py` playwright scripts at repo root → move to `.screenshots/` (gitignored) and `scripts/playwright/`
-- **#9 — Hardcoded Ollama fallback IP**: `owner_views/ai_assist.py` — fallback `http://192.168.1.70:11434` will time out on prod; bail cleanly when `OLLAMA_BASE_URL` unset
+- ~~**#3 — Refund amount `Decimal`**~~ ✅ complete (2026-07-30)
+- ~~**#4 — Log swallowed exceptions**~~ ✅ complete (2026-07-30) — 4 bare `pass` blocks in `clients/services.py` now log at debug level
+- ~~**#5 — AI assist leaks exception text**~~ ✅ complete (2026-07-30) — logs server-side, returns generic message to client
+- ~~**#6 — `owner_blog_ai_assist` missing `@require_POST`**~~ ✅ complete (2026-07-30) — all 3 AI assist views now use `@require_POST`
+- ~~**#7 — Remove `.env.dev.bak` from git**~~ ✅ complete (2026-07-30)
+- ~~**#8 — Clean repo root**~~ ✅ complete (2026-07-30) — 18 playwright scripts → `scripts/playwright/`, PNGs → `.screenshots/`
+- ~~**#9 — Hardcoded Ollama fallback IP**~~ ✅ complete (2026-07-30) — bails with 503 when `OLLAMA_BASE_URL` unset
 - **#10 — Owner portal test coverage**: 66 views, zero tests; highest-value coverage gap
