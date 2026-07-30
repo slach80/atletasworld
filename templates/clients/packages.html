@@ -420,31 +420,31 @@
                     <div class="flex flex-wrap gap-2 mb-6">
                         {% with first_pkg=group_packages|first %}
                         {% if first_pkg.sessions_included > 0 %}
-                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
-                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span class="fall-highlight-pill">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                             {{ first_pkg.sessions_included }} sessions included
                         </span>
                         {% else %}
-                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
-                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span class="fall-highlight-pill">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                             Unlimited sessions
                         </span>
                         {% endif %}
                         {% endwith %}
-                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
-                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span class="fall-highlight-pill">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                             60-min sessions
                         </span>
-                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
-                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span class="fall-highlight-pill">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                             APC Indoor Facility
                         </span>
-                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
-                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span class="fall-highlight-pill">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                             Auto-cancels Nov 8
                         </span>
-                        <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span class="fall-highlight-pill fall-highlight-pill--blue">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             Pay monthly or in full
                         </span>
                     </div>
@@ -526,103 +526,72 @@
                 {% endfor %}
                 {% endif %}
 
-                <!-- Training Packages -->
+                <!-- Fall flat packages (Basic 4/8 Fall etc.) -->
+                {% if fall_flat_packages %}
                 <div class="bg-white rounded-xl shadow-md p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Training Packages</h2>
-                    <p class="text-gray-600 mb-6">Purchase a package to save on training sessions!</p>
-
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-secondary text-black text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">Fall 2026</span>
+                    </div>
+                    <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Fall Training Packages</h2>
+                    <p class="text-gray-500 text-sm mb-6">Aug 17 – Nov 8 &nbsp;·&nbsp; Pay in full</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {% for package in available_packages %}
-                        <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 flex flex-col">
-                            <div class="mb-4">
-                                <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
-                                <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
-                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
-                                    &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
-                                </p>
-                            </div>
-                            <div class="mb-5 flex-1">
-                                <div class="text-4xl font-black text-primary">${{ package.price }}</div>
-                                {% if package.description %}
-                                <p class="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">{{ package.description }}</p>
-                                {% endif %}
-                            </div>
-                            <ul class="space-y-2 text-sm mb-5">
-                                <li class="flex items-center gap-2 text-gray-600">
-                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions included{% else %}Unlimited sessions{% endif %}
-                                </li>
-                                <li class="flex items-center gap-2 text-gray-600">
-                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    Valid {{ package.validity_weeks }} weeks
-                                </li>
-                                {% if package.event_start_date %}
-                                <li class="flex items-center gap-2 text-gray-600">
-                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                    {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
-                                </li>
-                                {% endif %}
-                                {% if has_select_membership %}
-                                <li class="flex items-center gap-2 text-secondary font-bold">
-                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    $40 Select credit applicable
-                                </li>
-                                {% endif %}
-                            </ul>
-                            {% if stripe_public_key %}
-                            <button onclick="addToCart({{ package.pk }}, '{{ package.name|escapejs }}', {{ package.price }}, 'training')"
-                                    class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 hover:scale-[1.02] active:scale-100 transition-all duration-150 group-hover:bg-secondary group-hover:text-primary">
-                                + Add to Cart
-                            </button>
-                            {% endif %}
-                        </div>
-                        {% empty %}
-                        <p class="text-gray-500 col-span-2 text-center py-8">No packages available at this time.</p>
+                        {% for package in fall_flat_packages %}
+                        {% include "clients/_package_card.html" with type="training" %}
                         {% endfor %}
                     </div>
                 </div>
+                {% endif %}
 
-                <!-- Special Event Packages -->
+                <!-- Summer Program -->
+                {% if summer_packages %}
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-orange-500 text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">Summer 2026</span>
+                    </div>
+                    <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Summer Program</h2>
+                    <p class="text-gray-500 text-sm mb-6">May 18 – Aug 8 &nbsp;·&nbsp; APC Indoor Facility</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {% for package in summer_packages %}
+                        {% include "clients/_package_card.html" with type="training" %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- KCFC / Partner Programs -->
+                {% if kcfc_packages %}
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Partner Programs</h2>
+                    <p class="text-gray-500 text-sm mb-6">KCFC Strength &amp; Skill — Aug 17 – Nov 8</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {% for package in kcfc_packages %}
+                        {% include "clients/_package_card.html" with type="training" %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Camps -->
                 {% if special_packages %}
                 <div class="bg-white rounded-xl shadow-md p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Event &amp; Camp Packages</h2>
-                    <p class="text-gray-600 mb-6">Time-limited packages tied to specific programs.</p>
+                    <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Camps</h2>
+                    <p class="text-gray-500 text-sm mb-6">Intensive programs and special events.</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {% for package in special_packages %}
-                        <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 flex flex-col">
-                            <div class="mb-4">
-                                <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
-                                <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
-                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
-                                    &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
-                                </p>
-                            </div>
-                            <div class="text-4xl font-black text-primary mb-5">${{ package.price }}</div>
-                            <ul class="space-y-2 text-sm mb-5 flex-1">
-                                <li class="flex items-center gap-2 text-gray-600">
-                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
-                                </li>
-                                {% if package.event_start_date %}
-                                <li class="flex items-center gap-2 text-gray-600">
-                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                    {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
-                                </li>
-                                {% endif %}
-                                {% if package.event_location %}
-                                <li class="flex items-center gap-2 text-gray-600">
-                                    <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
-                                    {{ package.event_location }}
-                                </li>
-                                {% endif %}
-                            </ul>
-                            {% if stripe_public_key %}
-                            <button onclick="addToCart({{ package.pk }}, '{{ package.name|escapejs }}', {{ package.price }}, 'event')"
-                                    class="mt-auto w-full py-3 bg-primary text-secondary rounded-xl font-black text-sm uppercase tracking-wide hover:bg-gray-800 hover:scale-[1.02] active:scale-100 transition-all duration-150 group-hover:bg-secondary group-hover:text-primary">
-                                + Add to Cart
-                            </button>
-                            {% endif %}
-                        </div>
+                        {% include "clients/_package_card.html" with type="event" %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Other Packages -->
+                {% if other_packages %}
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Other Packages</h2>
+                    <p class="text-gray-500 text-sm mb-6">Drop-in, punch cards, and more.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {% for package in other_packages %}
+                        {% include "clients/_package_card.html" with type="training" %}
                         {% endfor %}
                     </div>
                 </div>

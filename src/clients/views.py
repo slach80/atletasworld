@@ -618,12 +618,31 @@ def packages_list(request):
 
     # Separate select membership from regular packages — only shown to invited clients
     select_packages = Package.objects.filter(is_active=True, is_purchasable=True, package_type='select').order_by('price') if client.select_invited else Package.objects.none()
-    available_packages = Package.objects.filter(
-        is_active=True, is_purchasable=True, is_special=False, program_group=''
+    _all_purchasable = Package.objects.filter(
+        is_active=True, is_purchasable=True, program_group=''
     ).exclude(package_type__in=['team', 'select']).order_by('price')
+
+    # Partition into display sections
+    import datetime as _dt
+    _fall_start = _dt.date(2026, 8, 17)
+    _summer_end = _dt.date(2026, 8, 16)
+
+    summer_packages  = [p for p in _all_purchasable if 'summer' in p.name.lower()]
+    kcfc_packages    = [p for p in _all_purchasable if 'kcfc'   in p.name.lower()]
+    # Fall flat packages — have Fall dates but no program_group (Basic 4/8 Fall etc.)
+    fall_flat_packages = [p for p in _all_purchasable
+                          if p.event_start_date and p.event_start_date >= _fall_start
+                          and 'summer' not in p.name.lower()
+                          and 'kcfc' not in p.name.lower()]
     special_packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=True
     ).order_by('event_start_date')
+    _grouped_ids = ({p.pk for p in summer_packages} | {p.pk for p in kcfc_packages}
+                    | {p.pk for p in fall_flat_packages})
+    _special_ids = set(special_packages.values_list('pk', flat=True))
+    other_packages   = [p for p in _all_purchasable
+                        if p.pk not in _grouped_ids and p.pk not in _special_ids]
+    available_packages = list(_all_purchasable)  # kept for any legacy template references
 
     # Fall program groups — packages sharing a program_group shown as a single card with billing picker
     _grouped_qs = Package.objects.filter(
@@ -655,7 +674,11 @@ def packages_list(request):
         'active_packages': active_packages,
         'expired_packages': expired_packages,
         'available_packages': available_packages,
+        'summer_packages': summer_packages,
+        'kcfc_packages': kcfc_packages,
+        'fall_flat_packages': fall_flat_packages,
         'special_packages': special_packages,
+        'other_packages': other_packages,
         'select_packages': select_packages,
         'fall_program_groups': fall_program_groups,
         'has_select_membership': has_select_membership,
