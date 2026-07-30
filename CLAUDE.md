@@ -235,3 +235,22 @@ When a feature maps to a hustle module:
 - ~~**Task #12 — APC Select Membership recurring billing**~~ ✅ complete (2026-07-22) — Stripe webhooks live, subscription confirmed working in production.
 - **Task #11 — Enable Venmo in Stripe Dashboard**: No code changes needed, pure Stripe config.
 - ~~**Task #7 — Google OAuth login**~~ ✅ complete (2026-07-26)
+
+## Code Review Backlog (from docs/code-review-2026-07-22.md)
+
+- ~~**#1 — Split `admin_views.py`**~~ ✅ complete (2026-07-30) — 70 views split into `owner_views/` package (22 domain modules); shim keeps `urls.py`/`tasks.py` unchanged.
+- **#2 — Split remaining god-objects** (deferred — implement separately, same Option B shim pattern):
+  1. `clients/views.py` (2,533 lines) → `clients/views/` package
+  2. `clients/models.py` (1,625 lines) → `clients/models/` package (**higher risk** — migrations reference `clients.models.X`)
+  3. `payments/views.py` (1,619 lines) → extract `_handle_*` webhook handlers to `webhook_handlers.py`
+  4. `coaches/views.py` (1,535 lines) → `coaches/views/` package
+  5. `clients/tasks.py` (1,164 lines) → `clients/tasks/` package (verify Celery autodiscover after split)
+  6. `bookings/api.py` — extract `BookingViewSet.create` (~507 lines) to `bookings/services.py` (logic extraction, not just reorganization)
+- **#3 — Refund amount `Decimal`**: `owner_views/finances.py` `owner_issue_refund` — change `int(float(amount_str) * 100)` to `int(Decimal(amount_str) * 100)`
+- **#4 — Log swallowed exceptions**: `clients/services.py` lines 76, 118, 186, 280 — bare `pass` in `except Exception` blocks; add `logger.debug()` at minimum
+- **#5 — AI assist leaks exception text**: `owner_views/ai_assist.py` `owner_blog_ai_assist` — return generic message, log server-side; also `timeout=120` ties up gunicorn worker
+- **#6 — `owner_blog_ai_assist` missing `@require_POST`**: `owner_views/ai_assist.py` — add decorator for consistency
+- **#7 — Remove `.env.dev.bak` from git**: `git rm --cached .env.dev.bak && echo '.env.dev.bak' >> .gitignore`
+- **#8 — Clean repo root**: ~25 PNG screenshots + ~15 `test_*.py` playwright scripts at repo root → move to `.screenshots/` (gitignored) and `scripts/playwright/`
+- **#9 — Hardcoded Ollama fallback IP**: `owner_views/ai_assist.py` — fallback `http://192.168.1.70:11434` will time out on prod; bail cleanly when `OLLAMA_BASE_URL` unset
+- **#10 — Owner portal test coverage**: 66 views, zero tests; highest-value coverage gap
