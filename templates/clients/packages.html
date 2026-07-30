@@ -409,11 +409,45 @@
                 {% if fall_program_groups %}
                 {% for group_name, group_packages in fall_program_groups.items %}
                 <div class="bg-white rounded-xl shadow-md p-8">
-                    <div class="flex items-center gap-3 mb-1">
+                    <div class="flex items-center gap-2 flex-wrap mb-1">
                         <span class="bg-secondary/10 text-secondary text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">Fall 2026</span>
+                        <span class="bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full">Flexible payment plans available</span>
                     </div>
                     <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">{{ group_name }}</h2>
-                    <p class="text-gray-500 text-sm mb-6">Aug 17 – Nov 8 &nbsp;·&nbsp; 12 weeks &nbsp;·&nbsp; 60-min sessions</p>
+                    <p class="text-gray-500 text-sm mb-4">Aug 17 – Nov 8 &nbsp;·&nbsp; 12 weeks &nbsp;·&nbsp; 60-min sessions</p>
+
+                    <!-- Highlights -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        {% with first_pkg=group_packages|first %}
+                        {% if first_pkg.sessions_included > 0 %}
+                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
+                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            {{ first_pkg.sessions_included }} sessions included
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
+                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            Unlimited sessions
+                        </span>
+                        {% endif %}
+                        {% endwith %}
+                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
+                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            60-min sessions
+                        </span>
+                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
+                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            APC Indoor Facility
+                        </span>
+                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">
+                            <svg class="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            Auto-cancels Nov 8
+                        </span>
+                        <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Pay monthly or in full
+                        </span>
+                    </div>
 
                     <!-- Billing option picker -->
                     <div class="space-y-3 mb-6" id="fall-tiers-{{ forloop.counter }}">
@@ -449,18 +483,6 @@
                         </label>
                         {% endfor %}
                     </div>
-
-                    <!-- Sessions info -->
-                    <p class="text-sm text-gray-500 mb-6">
-                        {% with first_pkg=group_packages|first %}
-                        {% if first_pkg.sessions_included > 0 %}
-                            {{ first_pkg.sessions_included }} sessions included
-                        {% else %}
-                            Unlimited sessions
-                        {% endif %}
-                        {% endwith %}
-                        &nbsp;·&nbsp; APC Indoor Facility
-                    </p>
 
                     <!-- Enroll button -->
                     <button id="fall-enroll-btn-{{ forloop.counter }}"
