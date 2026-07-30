@@ -62,3 +62,6 @@ docs/clients/*.xlsx
 docs/clients/*.pdf
 .playwright-mcp/
 *.png
+.screenshots/
+.env.dev.bak
+scripts/playwright/

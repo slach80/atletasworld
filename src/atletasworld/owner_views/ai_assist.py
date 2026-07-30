@@ -1,7 +1,10 @@
+import logging
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from ._auth import is_owner
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -68,7 +71,9 @@ def owner_blog_ai_assist(request):
     if not prompt:
         return JsonResponse({'error': 'Invalid action'}, status=400)
 
-    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
+    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', '')
+    if not ollama_url:
+        return JsonResponse({'error': 'AI assist is not configured on this server.'}, status=503)
     model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')
 
     try:
@@ -89,18 +94,17 @@ def owner_blog_ai_assist(request):
     except _requests.exceptions.Timeout:
         return JsonResponse({'error': 'Ollama timed out — the model may be loading, try again in a moment.'}, status=504)
     except Exception as e:
-        return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
+        logger.error('owner_blog_ai_assist error: %s', e)
+        return JsonResponse({'error': 'AI assist unavailable.'}, status=503)
 
 
 @login_required
 @user_passes_test(is_owner)
+@require_POST
 def owner_naming_ai_assist(request):
     """AI Assist for package / session-type name and description fields."""
     import requests as _requests
     from django.conf import settings as _settings
-
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
 
     action = request.POST.get('action', '')
     name = request.POST.get('name', '').strip()
@@ -149,7 +153,9 @@ def owner_naming_ai_assist(request):
     if action == 'write_description' and not name:
         return JsonResponse({'error': 'Enter a name first so AI knows what to describe.'}, status=400)
 
-    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
+    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', '')
+    if not ollama_url:
+        return JsonResponse({'error': 'AI assist is not configured on this server.'}, status=503)
     model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')
 
     try:
@@ -164,18 +170,17 @@ def owner_naming_ai_assist(request):
     except _requests.exceptions.Timeout:
         return JsonResponse({'error': 'Ollama timed out — try again in a moment.'}, status=504)
     except Exception as e:
-        return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
+        logger.error('owner_naming_ai_assist error: %s', e)
+        return JsonResponse({'error': 'AI assist unavailable.'}, status=503)
 
 
 @login_required
 @user_passes_test(is_owner)
+@require_POST
 def owner_notification_ai_assist(request):
     """AI Assist for the owner notification composer (subject + message)."""
     import requests as _requests
     from django.conf import settings as _settings
-
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
 
     action = request.POST.get('action', '')
     subject = request.POST.get('subject', '').strip()
@@ -224,7 +229,9 @@ def owner_notification_ai_assist(request):
     if action in ('grammar', 'shorten', 'subject') and not message:
         return JsonResponse({'error': 'Message is empty — nothing to improve.'}, status=400)
 
-    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', 'http://192.168.1.70:11434')
+    ollama_url = getattr(_settings, 'OLLAMA_BASE_URL', '')
+    if not ollama_url:
+        return JsonResponse({'error': 'AI assist is not configured on this server.'}, status=503)
     model = getattr(_settings, 'OLLAMA_MODEL', 'qwen3:8b-32k')
 
     try:
@@ -239,4 +246,5 @@ def owner_notification_ai_assist(request):
     except _requests.exceptions.Timeout:
         return JsonResponse({'error': 'Ollama timed out — try again in a moment.'}, status=504)
     except Exception as e:
-        return JsonResponse({'error': f'AI assist unavailable: {str(e)}'}, status=503)
+        logger.error('owner_notification_ai_assist error: %s', e)
+        return JsonResponse({'error': 'AI assist unavailable.'}, status=503)

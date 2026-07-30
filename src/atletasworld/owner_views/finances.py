@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
@@ -264,7 +265,7 @@ def owner_issue_refund(request, payment_id):
     try:
         kwargs = {'payment_intent': payment.stripe_payment_intent_id}
         if amount_str:
-            kwargs['amount'] = int(float(amount_str) * 100)
+            kwargs['amount'] = int(Decimal(amount_str) * 100)
         stripe.Refund.create(**kwargs)
         messages.success(request, f'Refund initiated for {payment.client} — ${payment.amount}. Status updates via webhook.')
     except stripe.error.StripeError as e:

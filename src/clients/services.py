@@ -74,7 +74,7 @@ def _booking_location(booking):
         if block.location_override:
             return block.location_override
     except Exception:
-        pass
+        logger.debug('_booking_location: could not resolve block for booking %s', booking.pk)
     return booking.session_type.location if booking.session_type else ''
 
 
@@ -116,7 +116,7 @@ class NotificationService:
                     try:
                         ctx['unsubscribe_url'] = make_unsubscribe_url(allowed[0], ctx['site_url'])
                     except Exception:
-                        pass
+                        logger.debug('send_email: failed to generate unsubscribe URL for %s', allowed[0])
                 full_html = render_to_string('emails/base_email.html', ctx)
             else:
                 full_html = html_content
@@ -184,7 +184,7 @@ class NotificationService:
         try:
             context['unsubscribe_token'] = UnsubscribeToken.get_or_create_for_client(client).token
         except Exception:
-            pass
+            logger.debug('send_notification_from_template: failed to get unsubscribe token for client %s', client.pk)
 
         results = []
 
@@ -278,6 +278,7 @@ class NotificationService:
         try:
             _unsub_token = UnsubscribeToken.get_or_create_for_client(client).token
         except Exception:
+            logger.debug('send_upcoming_event_reminders: failed to get unsubscribe token for client %s', client.pk)
             _unsub_token = None
 
         # Merge all event contexts into one dict (later events win on key conflicts)
