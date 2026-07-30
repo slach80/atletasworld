@@ -570,3 +570,142 @@ def test_publish_game_email_contains_date_and_location(settings, mailoutbox):
     assert len(mailoutbox) == 1
     mail = mailoutbox[0]
     assert 'APC Field 1' in mail.body
+
+
+# ===========================================================================
+# F. Owner team roster management tests
+# ===========================================================================
+
+def _make_owner_user(username='troster_owner'):
+    user = _make_user(username)
+    user.is_staff = True
+    user.save()
+    return user
+
+
+@pytest.mark.django_db
+def test_owner_team_detail_renders_primary_roster():
+    """Team detail page shows primary roster players."""
+    owner = _make_owner_user('tdr_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='tdr-team')
+    player = _make_player(mgr_client, team=team, first='Jamie', last='Roster')
+
+    tc = TestClient()
+    tc.force_login(owner)
+    url = reverse('owner_team_detail', kwargs={'pk': team.pk})
+    resp = tc.get(url)
+    assert resp.status_code == 200
+    assert b'Jamie' in resp.content
+    assert b'Roster' in resp.content
+
+
+@pytest.mark.django_db
+def test_owner_team_assign_primary_sets_team():
+    """POST assign_primary sets player.team to this team."""
+    owner = _make_owner_user('tap_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='tap-team')
+    player = _make_player(mgr_client, team=None, first='Sam', last='Primary')
+
+    tc = TestClient()
+    tc.force_login(owner)
+    url = reverse('owner_team_detail', kwargs={'pk': team.pk})
+    resp = tc.post(url, {'action': 'assign_primary', 'player_id': str(player.pk)})
+    assert resp.status_code == 302
+    player.refresh_from_db()
+    assert player.team_id == team.pk
+
+
+@pytest.mark.django_db
+def test_owner_team_remove_primary_clears_team():
+    """POST remove_primary sets player.team to None."""
+    owner = _make_owner_user('trp_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='trp-team')
+    player = _make_player(mgr_client, team=team, first='Pat', last='Primary')
+
+    tc = TestClient()
+    tc.force_login(owner)
+    url = reverse('owner_team_detail', kwargs={'pk': team.pk})
+    resp = tc.post(url, {'action': 'remove_primary', 'player_id': str(player.pk)})
+    assert resp.status_code == 302
+    player.refresh_from_db()
+    assert player.team_id is None
+
+
+@pytest.mark.django_db
+def test_owner_team_add_guest_callup():
+    """POST add_guest adds player to select_teams M2M."""
+    owner = _make_owner_user('tag_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='tag-team')
+
+    other_user = _make_user('tag_other')
+    other_client = _make_client_obj(other_user)
+    player = _make_player(other_client, team=None, first='Riley', last='Guest')
+
+    tc = TestClient()
+    tc.force_login(owner)
+    url = reverse('owner_team_detail', kwargs={'pk': team.pk})
+    resp = tc.post(url, {'action': 'add_guest', 'player_id': str(player.pk)})
+    assert resp.status_code == 302
+    assert team in player.select_teams.all()
+
+
+@pytest.mark.django_db
+def test_owner_team_remove_guest_callup():
+    """POST remove_guest removes player from select_teams M2M."""
+    owner = _make_owner_user('trg_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='trg-team')
+
+    other_user = _make_user('trg_other')
+    other_client = _make_client_obj(other_user)
+    player = _make_player(other_client, team=None, first='Casey', last='Guest')
+    player.select_teams.add(team)
+
+    tc = TestClient()
+    tc.force_login(owner)
+    url = reverse('owner_team_detail', kwargs={'pk': team.pk})
+    resp = tc.post(url, {'action': 'remove_guest', 'player_id': str(player.pk)})
+    assert resp.status_code == 302
+    assert team not in player.select_teams.all()
+
+
+@pytest.mark.django_db
+def test_owner_team_detail_shows_guest_section_for_select_team():
+    """Guest callups section is visible on Select team detail page."""
+    owner = _make_owner_user('tgs_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='tgs-team')
+
+    tc = TestClient()
+    tc.force_login(owner)
+    url = reverse('owner_team_detail', kwargs={'pk': team.pk})
+    resp = tc.get(url)
+    assert resp.status_code == 200
+    assert b'Guest Callup' in resp.content
+
+
+@pytest.mark.django_db
+def test_owner_team_detail_available_players_excludes_roster():
+    """Players already on the team do not appear in the add modal player list."""
+    owner = _make_owner_user('tae_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='tae-team')
+    player_on = _make_player(mgr_client, team=team, first='On', last='Roster')
+
+    other_user = _make_user('tae_other')
+    other_client = _make_client_obj(other_user)
+    player_off = _make_player(other_client, team=None, first='Off', last='Roster')
+
+    tc = TestClient()
+    tc.force_login(owner)
+    url = reverse('owner_team_detail', kwargs={'pk': team.pk})
+    resp = tc.get(url)
+    assert resp.status_code == 200
+    available = list(resp.context['available_players'])
+    ids = [p.pk for p in available]
+    assert player_on.pk not in ids
+    assert player_off.pk in ids

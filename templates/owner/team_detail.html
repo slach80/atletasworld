@@ -38,17 +38,21 @@
 </div>
 
 <!-- Stats -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
     <div class="bg-white rounded-xl shadow-sm p-4 text-center">
         <div class="inline-block text-3xl font-bold text-secondary bg-primary rounded-xl px-3 py-1.5">{{ player_count }}</div>
-        <div class="text-sm text-gray-500">Players</div>
+        <div class="text-sm text-gray-500">Primary</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-purple-600">{{ guest_count }}</div>
+        <div class="text-sm text-gray-500">Guest Callups</div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-4 text-center">
         <div class="text-3xl font-bold text-blue-600">{{ coach_count }}</div>
         <div class="text-sm text-gray-500">Coaches</div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-4 text-center">
-        <div class="text-3xl font-bold text-purple-600">{{ upcoming_bookings|length }}</div>
+        <div class="text-3xl font-bold text-orange-500">{{ upcoming_bookings|length }}</div>
         <div class="text-sm text-gray-500">Upcoming Sessions</div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-4 text-center">
@@ -59,40 +63,120 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    <!-- Players Roster -->
-    <div class="lg:col-span-2 bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
-            <h2 class="font-semibold text-gray-700">Player Roster</h2>
-            <span class="text-sm text-gray-500">{{ player_count }} / {{ team.max_players }}</span>
+    <!-- Roster sections -->
+    <div class="lg:col-span-2 space-y-6">
+
+        <!-- Primary Roster -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+                <div>
+                    <h2 class="font-semibold text-gray-700">Primary Roster</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">These players have this team as their home team</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500">{{ player_count }} / {{ team.max_players }}</span>
+                    <button onclick="document.getElementById('addPrimaryModal').classList.remove('hidden')"
+                            class="px-3 py-1.5 bg-owner text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition">
+                        + Add Player
+                    </button>
+                </div>
+            </div>
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Player</th>
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Birth Year</th>
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Position</th>
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Parent</th>
+                        <th class="py-3 px-6"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for player in players %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-6">
+                            <a href="{% url 'owner_player_detail' player.pk %}" class="font-medium text-indigo-600 hover:underline">{{ player.first_name }} {{ player.last_name }}</a>
+                        </td>
+                        <td class="py-3 px-6 text-sm text-gray-600">{{ player.birth_year|default:"-" }}</td>
+                        <td class="py-3 px-6 text-sm text-gray-600">{{ player.primary_position|default:"-" }}</td>
+                        <td class="py-3 px-6 text-sm text-gray-600">
+                            {% if player.client %}{{ player.client.user.get_full_name }}{% else %}-{% endif %}
+                        </td>
+                        <td class="py-3 px-6 text-right">
+                            <form method="post" onsubmit="return confirm('Remove {{ player.first_name }} from primary roster?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_primary">
+                                <input type="hidden" name="player_id" value="{{ player.pk }}">
+                                <button type="submit" class="text-xs text-red-500 hover:text-red-700 hover:underline">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-gray-400 text-sm">No players on primary roster. Use "Add Player" to assign players.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <table class="w-full">
-            <thead>
-                <tr class="border-b">
-                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Player</th>
-                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Age Group</th>
-                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Position</th>
-                    <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Parent</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for player in players %}
-                <tr class="hover:bg-gray-50">
-                    <td class="py-3 px-6">
-                        <div class="font-medium text-gray-800">{{ player.first_name }} {{ player.last_name }}</div>
-                    </td>
-                    <td class="py-3 px-6 text-sm text-gray-600">{{ player.age_group|default:"-" }}</td>
-                    <td class="py-3 px-6 text-sm text-gray-600">{{ player.position|default:"-" }}</td>
-                    <td class="py-3 px-6 text-sm text-gray-600">
-                        {% if player.client %}{{ player.client.user.get_full_name }}{% else %}-{% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="py-6 text-center text-gray-400 text-sm">No players on roster.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+        <!-- Guest Callups (Select teams only) -->
+        {% if team.is_select %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+                <div>
+                    <h2 class="font-semibold text-gray-700">Guest Callups</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Players eligible to play for this team from other rosters</p>
+                </div>
+                <button onclick="document.getElementById('addGuestModal').classList.remove('hidden')"
+                        class="px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition">
+                    + Add Guest
+                </button>
+            </div>
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Player</th>
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Birth Year</th>
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Primary Team</th>
+                        <th class="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase">Parent</th>
+                        <th class="py-3 px-6"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for player in guest_players %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-6">
+                            <a href="{% url 'owner_player_detail' player.pk %}" class="font-medium text-purple-600 hover:underline">{{ player.first_name }} {{ player.last_name }}</a>
+                        </td>
+                        <td class="py-3 px-6 text-sm text-gray-600">{{ player.birth_year|default:"-" }}</td>
+                        <td class="py-3 px-6 text-sm text-gray-600">
+                            {% if player.team %}
+                                <a href="{% url 'owner_team_detail' player.team.pk %}" class="text-indigo-600 hover:underline">{{ player.team.name }}</a>
+                            {% else %}<span class="text-gray-400">None</span>{% endif %}
+                        </td>
+                        <td class="py-3 px-6 text-sm text-gray-600">
+                            {% if player.client %}{{ player.client.user.get_full_name }}{% else %}-{% endif %}
+                        </td>
+                        <td class="py-3 px-6 text-right">
+                            <form method="post" onsubmit="return confirm('Remove {{ player.first_name }} from guest callups?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_guest">
+                                <input type="hidden" name="player_id" value="{{ player.pk }}">
+                                <button type="submit" class="text-xs text-red-500 hover:text-red-700 hover:underline">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-gray-400 text-sm">No guest callups. Use "Add Guest" to add players from other teams.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
     </div>
 
     <!-- Right Column: Coaches + Packages -->
@@ -266,4 +350,92 @@
         </form>
     </div>
 </div>
+
+<!-- Add Primary Player Modal -->
+<div id="addPrimaryModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h2 class="text-lg font-bold text-gray-800">Add Player to Primary Roster</h2>
+            <button onclick="document.getElementById('addPrimaryModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="assign_primary">
+            <div class="px-6 py-4">
+                {% if available_players %}
+                <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Select Player</label>
+                <input type="text" id="primarySearch" placeholder="Search players..."
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-owner"
+                       oninput="filterSelect('primaryPlayerSelect', this.value)">
+                <select name="player_id" id="primaryPlayerSelect" required size="8"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-owner">
+                    {% for player in available_players %}
+                    <option value="{{ player.pk }}">{{ player.first_name }} {{ player.last_name }}{% if player.birth_year %} ({{ player.birth_year }}){% endif %}{% if player.team %} — {{ player.team.name }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-400 mt-2">This will set this team as the player's home team. Any previous home team assignment will be replaced.</p>
+                {% else %}
+                <p class="text-sm text-gray-500 text-center py-4">All active players are already on this team.</p>
+                {% endif %}
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('addPrimaryModal').classList.add('hidden')"
+                        class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                {% if available_players %}
+                <button type="submit" class="px-5 py-2 bg-owner text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">Add to Roster</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Guest Callup Modal -->
+{% if team.is_select %}
+<div id="addGuestModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h2 class="text-lg font-bold text-gray-800">Add Guest Callup</h2>
+            <button onclick="document.getElementById('addGuestModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_guest">
+            <div class="px-6 py-4">
+                {% if available_players %}
+                <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Select Player</label>
+                <input type="text" id="guestSearch" placeholder="Search players..."
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                       oninput="filterSelect('guestPlayerSelect', this.value)">
+                <select name="player_id" id="guestPlayerSelect" required size="8"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {% for player in available_players %}
+                    <option value="{{ player.pk }}">{{ player.first_name }} {{ player.last_name }}{% if player.birth_year %} ({{ player.birth_year }}){% endif %}{% if player.team %} — {{ player.team.name }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-400 mt-2">The player keeps their primary team. This only adds them as eligible for this team's sessions.</p>
+                {% else %}
+                <p class="text-sm text-gray-500 text-center py-4">All active players are already on this team.</p>
+                {% endif %}
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('addGuestModal').classList.add('hidden')"
+                        class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                {% if available_players %}
+                <button type="submit" class="px-5 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition">Add Guest Callup</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function filterSelect(selectId, query) {
+    const select = document.getElementById(selectId);
+    const q = query.toLowerCase();
+    Array.from(select.options).forEach(opt => {
+        opt.hidden = q && !opt.text.toLowerCase().includes(q);
+    });
+}
+</script>
 {% endblock %}

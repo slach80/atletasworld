@@ -2377,7 +2377,7 @@ def owner_teams(request):
 @login_required
 @user_passes_test(is_owner)
 def owner_team_detail(request, pk):
-    """Show detailed team info; handle team edit and deactivate via POST."""
+    """Show detailed team info; handle team edit, deactivate, and roster management via POST."""
     from clients.models import Team
     from django.shortcuts import get_object_or_404
     from datetime import timedelta
@@ -2403,30 +2403,64 @@ def owner_team_detail(request, pk):
             team.save()
             messages.success(request, f'Team "{team.name}" deactivated.')
             return redirect('owner_teams')
+        elif action == 'assign_primary':
+            player_id = request.POST.get('player_id')
+            if player_id:
+                player = get_object_or_404(Player, pk=player_id, is_active=True)
+                player.team = team
+                player.save()
+                messages.success(request, f'{player.first_name} {player.last_name} assigned to {team.name}.')
+        elif action == 'remove_primary':
+            player_id = request.POST.get('player_id')
+            if player_id:
+                player = get_object_or_404(Player, pk=player_id, team=team)
+                player.team = None
+                player.save()
+                messages.success(request, f'{player.first_name} {player.last_name} removed from {team.name}.')
+        elif action == 'add_guest':
+            player_id = request.POST.get('player_id')
+            if player_id:
+                player = get_object_or_404(Player, pk=player_id, is_active=True)
+                player.select_teams.add(team)
+                messages.success(request, f'{player.first_name} {player.last_name} added as guest callup.')
+        elif action == 'remove_guest':
+            player_id = request.POST.get('player_id')
+            if player_id:
+                player = get_object_or_404(Player, pk=player_id, is_active=True)
+                player.select_teams.remove(team)
+                messages.success(request, f'{player.first_name} {player.last_name} removed from guest callups.')
         return redirect('owner_team_detail', pk=pk)
 
     today = timezone.localdate()
 
-    # Get team players with details
-    players = Player.objects.filter(team=team, is_active=True).select_related('client__user')
+    # Primary roster (FK) and guest callups (M2M)
+    primary_players = Player.objects.filter(team=team, is_active=True).select_related('client__user').order_by('first_name', 'last_name')
+    guest_players = team.select_guest_players.filter(is_active=True).select_related('client__user').order_by('first_name', 'last_name')
+
+    # Players not on this team in any capacity — for the add modals
+    primary_ids = set(primary_players.values_list('id', flat=True))
+    guest_ids = set(guest_players.values_list('id', flat=True))
+    already_on_team = primary_ids | guest_ids
+    available_players = Player.objects.filter(is_active=True).exclude(id__in=already_on_team).select_related('client__user').order_by('first_name', 'last_name')
 
     # Get assigned coaches
     coaches = team.coaches.all().select_related('user')
 
-    # Upcoming Select practice/game sessions only
+    # Upcoming Select practice/game sessions — both primary and guest players
     SELECT_SESSION_TYPE_IDS = [21, 22, 23, 25]
+    all_team_player_ids = already_on_team
     upcoming_bookings = Booking.objects.filter(
-        player__team=team,
+        player_id__in=all_team_player_ids,
         scheduled_date__gte=today,
         status__in=['pending', 'confirmed'],
         session_type_id__in=SELECT_SESSION_TYPE_IDS,
     ).select_related('player', 'coach__user', 'session_type').order_by('scheduled_date')[:20]
 
-    # Select membership packages for team players — all statuses, newest per player
+    # Select membership packages for all team players (primary + guest)
     from clients.models import ClientPackage
     from django.db.models import Case, When, Value, IntegerField
     _raw_team_packages = ClientPackage.objects.filter(
-        player__team=team,
+        player_id__in=all_team_player_ids,
         package__package_type='select',
     ).select_related('package', 'player').annotate(
         status_rank=Case(
@@ -2452,17 +2486,19 @@ def owner_team_detail(request, pk):
         elif cp.status == 'active':
             cp.display_status = 'active'
         else:
-            # Paid one-time, expiry_date still in future — access is valid
             cp.display_status = 'paid'
         team_packages.append(cp)
 
     context = {
         'team': team,
-        'players': players,
+        'players': primary_players,
+        'guest_players': guest_players,
+        'available_players': available_players,
         'coaches': coaches,
         'upcoming_bookings': upcoming_bookings,
         'team_packages': team_packages,
-        'player_count': players.count(),
+        'player_count': primary_players.count(),
+        'guest_count': guest_players.count(),
         'coach_count': coaches.count(),
     }
     return render(request, 'owner/team_detail.html', context)
