@@ -510,22 +510,18 @@
                         </script>
                     {% endfor %}
                     </div>
-                </div>
-                {% endif %}
 
-                <!-- Fall flat packages (Basic 4/8 Fall etc.) -->
-                {% if fall_flat_packages %}
-                <div class="bg-white rounded-xl shadow-md p-8">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="bg-secondary text-black text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">Fall 2026</span>
+                    <!-- Basic Fall packages — same card, below the subscription options -->
+                    {% if fall_flat_packages %}
+                    <div class="border-t border-gray-200 mt-4 pt-4">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Also available — Pay in Full</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {% for package in fall_flat_packages %}
+                            {% include "clients/_package_card.html" with type="training" %}
+                            {% endfor %}
+                        </div>
                     </div>
-                    <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Fall Training Packages</h2>
-                    <p class="text-gray-500 text-sm mb-6">Aug 17 – Nov 8 &nbsp;·&nbsp; Pay in full</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {% for package in fall_flat_packages %}
-                        {% include "clients/_package_card.html" with type="training" %}
-                        {% endfor %}
-                    </div>
+                    {% endif %}
                 </div>
                 {% endif %}
 
