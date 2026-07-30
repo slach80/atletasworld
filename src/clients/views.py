@@ -619,11 +619,19 @@ def packages_list(request):
     # Separate select membership from regular packages — only shown to invited clients
     select_packages = Package.objects.filter(is_active=True, is_purchasable=True, package_type='select').order_by('price') if client.select_invited else Package.objects.none()
     available_packages = Package.objects.filter(
-        is_active=True, is_purchasable=True, is_special=False
+        is_active=True, is_purchasable=True, is_special=False, program_group=''
     ).exclude(package_type__in=['team', 'select']).order_by('price')
     special_packages = Package.objects.filter(
         is_active=True, is_purchasable=True, is_special=True
     ).order_by('event_start_date')
+
+    # Fall program groups — packages sharing a program_group shown as a single card with billing picker
+    _grouped_qs = Package.objects.filter(
+        is_active=True, is_purchasable=True, program_group__gt=''
+    ).order_by('program_group', 'price')
+    fall_program_groups = {}
+    for _pkg in _grouped_qs:
+        fall_program_groups.setdefault(_pkg.program_group, []).append(_pkg)
 
     has_select_membership = active_packages.filter(package__package_type='select').exists()
     # Sibling discount: client already has an active recurring Select subscription
@@ -649,6 +657,7 @@ def packages_list(request):
         'available_packages': available_packages,
         'special_packages': special_packages,
         'select_packages': select_packages,
+        'fall_program_groups': fall_program_groups,
         'has_select_membership': has_select_membership,
         'has_select_sibling_sub': has_select_sibling_sub,
         'select_credit_balance': select_credit_balance,

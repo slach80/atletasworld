@@ -568,6 +568,11 @@ def create_package_subscription(request, package_id):
         if has_sibling_sub:
             sub_kwargs['discounts'] = [{'coupon': 'SIBLING50'}]
             logger.info('create_package_subscription: applying SIBLING50 coupon for client %s (sibling already subscribed)', client.pk)
+        if package.event_end_date:
+            import datetime as _dt2
+            cancel_at_dt = _dt2.datetime.combine(package.event_end_date, _dt2.time(23, 59, 59))
+            sub_kwargs['cancel_at'] = int(cancel_at_dt.timestamp())
+            logger.info('create_package_subscription: cancel_at=%s (event_end_date=%s) for package %s', cancel_at_dt, package.event_end_date, package.pk)
 
         subscription = s.Subscription.create(**sub_kwargs)
 
@@ -1223,7 +1228,10 @@ def _handle_subscription_renewed(invoice):
     weeks = _BILLING_TIER_WEEKS.get(tier, 4)
     if tier not in _BILLING_TIER_WEEKS:
         logger.warning('Subscription renewed: unknown billing_tier %r on package %s — defaulting to 4 weeks', tier, cp.package_id)
-    cp.expiry_date = timezone.localdate() + timedelta(weeks=weeks)
+    if cp.package.event_end_date:
+        cp.expiry_date = cp.package.event_end_date
+    else:
+        cp.expiry_date = timezone.localdate() + timedelta(weeks=weeks)
     if cp.package.sessions_included > 0:
         cp.sessions_remaining = cp.package.sessions_included
     cp.save(update_fields=['expiry_date', 'sessions_remaining'])

@@ -538,6 +538,103 @@ class TestSelectSubscriptionWebhooks:
         assert resp.status_code == 200
         assert Notification.objects.filter(client=select_client, title__icontains='Renewing Soon').exists()
 
+    # ── Fall Program event package ─────────────────────────────────────────────
+
+    @patch('payments.views.NotificationService', create=True)
+    @patch('stripe.Webhook.construct_event')
+    def test_renewal_uses_event_end_date_for_expiry(
+        self, mock_construct, mock_ns, db, select_client
+    ):
+        """Renewal of a Fall Program package pins expiry to event_end_date, not today+N weeks."""
+        import datetime
+        from clients.models import Package, ClientPackage
+        from django.utils import timezone
+        today = timezone.localdate()
+        fall_pkg = Package.objects.create(
+            name='Elite 24 Fall — Monthly',
+            package_type='elite24',
+            billing_tier='monthly',
+            stripe_price_id='price_test_fall_monthly',
+            price=Decimal('160.00'),
+            sessions_included=24,
+            validity_weeks=12,
+            is_active=True,
+            is_purchasable=True,
+            event_start_date=datetime.date(2026, 8, 17),
+            event_end_date=datetime.date(2026, 11, 8),
+            program_group='Elite 24 Fall',
+        )
+        cp = ClientPackage.objects.create(
+            client=select_client, package=fall_pkg,
+            status='active', start_date=today,
+            expiry_date=today + datetime.timedelta(weeks=4),
+            sessions_remaining=24,
+            stripe_subscription_id='sub_test_fall_renew',
+        )
+        invoice = {'subscription': 'sub_test_fall_renew', 'amount_paid': 16000}
+        mock_construct.return_value = {'type': 'invoice.payment_succeeded', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.payment_succeeded', invoice))
+        assert resp.status_code == 200
+        cp.refresh_from_db()
+        assert cp.expiry_date == datetime.date(2026, 11, 8)   # pinned to event_end_date
+        assert cp.sessions_remaining == 24                    # reset to sessions_included
+
+    @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test_fall')
+    @patch('payments.views._stripe')
+    @patch('stripe.Webhook.construct_event')
+    def test_fall_subscription_sets_cancel_at(
+        self, mock_construct, mock_stripe_fn, mock_get_customer, db, select_client
+    ):
+        """create_package_subscription passes cancel_at when package has event_end_date."""
+        import datetime
+        from clients.models import Package
+        from django.test import RequestFactory
+        from django.test import override_settings
+        from payments.views import create_package_subscription
+
+        fall_pkg = Package.objects.create(
+            name='Elite 24 Fall — Monthly',
+            package_type='elite24',
+            billing_tier='monthly',
+            stripe_price_id='price_test_fall',
+            price=Decimal('160.00'),
+            sessions_included=24,
+            validity_weeks=12,
+            is_active=True,
+            is_purchasable=True,
+            event_start_date=datetime.date(2026, 8, 17),
+            event_end_date=datetime.date(2026, 11, 8),
+            program_group='Elite 24 Fall',
+        )
+
+        mock_s = MagicMock()
+        mock_stripe_fn.return_value = mock_s
+        mock_s.PaymentMethod.attach.return_value = MagicMock()
+        mock_s.Customer.modify.return_value = MagicMock()
+        mock_sub = MagicMock()
+        mock_sub.id = 'sub_test_fall'
+        mock_sub.status = 'active'
+        mock_sub.latest_invoice = MagicMock(payment_intent=MagicMock(client_secret='pi_secret'))
+        mock_s.Subscription.create.return_value = mock_sub
+        mock_s.Subscription.modify.return_value = mock_sub
+
+        rf = RequestFactory()
+        req = rf.post(f'/portal/packages/{fall_pkg.pk}/subscribe/', {'payment_method_id': 'pm_test'})
+        req.user = select_client.user
+
+        import datetime as _dt
+        expected_cancel_at = int(_dt.datetime.combine(datetime.date(2026, 11, 8), _dt.time(23, 59, 59)).timestamp())
+
+        with override_settings(**SETTINGS):
+            resp = create_package_subscription(req, fall_pkg.pk)
+
+        assert resp.status_code == 200
+        call_kwargs = mock_s.Subscription.create.call_args[1]
+        assert 'cancel_at' in call_kwargs
+        assert call_kwargs['cancel_at'] == expected_cancel_at
+
 
 @pytest.mark.integration
 class TestSelectSubscriptionBillingLogic:

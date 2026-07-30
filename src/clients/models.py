@@ -247,6 +247,10 @@ class Package(models.Model):
         max_length=20, choices=BILLING_TIER_CHOICES, blank=True, default='',
         help_text="Billing interval for Select membership tiers. Leave blank for one-time packages."
     )
+    program_group = models.CharField(
+        max_length=100, blank=True, default='',
+        help_text="Groups packages into a single card with billing picker (e.g. 'Elite 24 Fall')"
+    )
 
     def __str__(self):
         return f"{self.name} - ${self.price}"

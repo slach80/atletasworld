@@ -405,6 +405,105 @@
             <!-- Package Cards -->
             <div class="flex-1 min-w-0 space-y-8">
 
+                <!-- Fall Program -->
+                {% if fall_program_groups %}
+                {% for group_name, group_packages in fall_program_groups.items %}
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <div class="flex items-center gap-3 mb-1">
+                        <span class="bg-secondary/10 text-secondary text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">Fall 2026</span>
+                    </div>
+                    <h2 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">{{ group_name }}</h2>
+                    <p class="text-gray-500 text-sm mb-6">Aug 17 – Nov 8 &nbsp;·&nbsp; 12 weeks &nbsp;·&nbsp; 60-min sessions</p>
+
+                    <!-- Billing option picker -->
+                    <div class="space-y-3 mb-6" id="fall-tiers-{{ forloop.counter }}">
+                        {% for pkg in group_packages %}
+                        <label id="fall-tier-label-{{ pkg.pk }}"
+                               onclick="selectFallTier({{ forloop.parentloop.counter }}, {{ pkg.pk }}, {{ pkg.price }}, '{{ pkg.name|escapejs }}', '{{ pkg.billing_tier }}', {{ pkg.stripe_price_id|yesno:'true,false' }})"
+                               class="flex items-center justify-between border-2 {% if forloop.first %}border-secondary bg-secondary/5{% else %}border-gray-200{% endif %} rounded-xl px-5 py-4 cursor-pointer hover:border-secondary transition-all">
+                            <div class="flex items-center gap-3">
+                                <div id="fall-tier-dot-{{ pkg.pk }}" class="w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                    {% if forloop.first %}<div class="w-2 h-2 bg-secondary rounded-full"></div>{% endif %}
+                                </div>
+                                <div>
+                                    <span class="font-bold text-gray-900">
+                                        {% if pkg.billing_tier == 'monthly' %}Monthly
+                                        {% elif pkg.billing_tier == 'half' %}Every 2 Months
+                                        {% else %}Pay in Full{% endif %}
+                                    </span>
+                                    {% if pkg.billing_tier == 'monthly' %}
+                                    <span class="text-xs text-gray-400 ml-2">3 payments</span>
+                                    {% elif pkg.billing_tier == 'half' %}
+                                    <span class="text-xs text-gray-400 ml-2">2 payments</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-black text-xl text-gray-900">${{ pkg.price|floatformat:0 }}</span>
+                                {% if pkg.billing_tier == 'monthly' or pkg.billing_tier == 'half' %}
+                                <span class="text-xs text-gray-400 block">per payment</span>
+                                {% else %}
+                                <span class="text-xs text-gray-400 block">one-time</span>
+                                {% endif %}
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Sessions info -->
+                    <p class="text-sm text-gray-500 mb-6">
+                        {% with first_pkg=group_packages|first %}
+                        {% if first_pkg.sessions_included > 0 %}
+                            {{ first_pkg.sessions_included }} sessions included
+                        {% else %}
+                            Unlimited sessions
+                        {% endif %}
+                        {% endwith %}
+                        &nbsp;·&nbsp; APC Indoor Facility
+                    </p>
+
+                    <!-- Enroll button -->
+                    <button id="fall-enroll-btn-{{ forloop.counter }}"
+                            onclick="startFallEnroll({{ forloop.counter }})"
+                            class="w-full bg-secondary text-black font-black py-4 rounded-xl hover:bg-secondary/90 transition-all text-lg uppercase tracking-wide">
+                        Enroll — $<span id="fall-selected-price-{{ forloop.counter }}">{% with first=group_packages|first %}{{ first.price|floatformat:0 }}{% endwith %}</span>
+                    </button>
+                </div>
+
+                <script>
+                (function() {
+                    var _fallGroupIdx = {{ forloop.counter }};
+                    var _fallSelectedPkgId = {{ group_packages|first|default_if_none:0 }};
+                    var _fallSelectedPrice = parseFloat('{{ group_packages|first|default_if_none:0 }}');
+                    var _fallSelectedName = '{{ group_packages|first|default_if_none:"" }}';
+                    var _fallSelectedHasStripe = {{ group_packages|first|yesno:'true,false' }};
+
+                    // Override with actual first pkg values via inline data
+                    {% with first=group_packages|first %}
+                    _fallSelectedPkgId = {{ first.pk }};
+                    _fallSelectedPrice = parseFloat('{{ first.price }}');
+                    _fallSelectedName = '{{ first.name|escapejs }}';
+                    _fallSelectedHasStripe = {{ first.stripe_price_id|yesno:'true,false' }};
+                    {% endwith %}
+
+                    // Register tier data for this group
+                    if (!window._fallGroups) window._fallGroups = {};
+                    window._fallGroups[_fallGroupIdx] = {
+                        selectedPkgId: _fallSelectedPkgId,
+                        selectedPrice: _fallSelectedPrice,
+                        selectedName: _fallSelectedName,
+                        hasStripe: _fallSelectedHasStripe,
+                        allPkgIds: [{% for pkg in group_packages %}{{ pkg.pk }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                    };
+
+                    // Update the button label on load
+                    var priceEl = document.getElementById('fall-selected-price-' + _fallGroupIdx);
+                    if (priceEl) priceEl.textContent = _fallSelectedPrice.toFixed(0);
+                })();
+                </script>
+                {% endfor %}
+                {% endif %}
+
                 <!-- Training Packages -->
                 <div class="bg-white rounded-xl shadow-md p-8">
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Training Packages</h2>
@@ -680,6 +779,60 @@ function escHtml(s) {
 let paymentElements = null;
 let activePromoCode = '';
 let pendingAdd = null; // {package_id, name, price, type}
+
+// ── Fall Program billing tier picker ────────────────────────────────────────
+// Select/Fall shared subscription state
+if (typeof _selectedTierId === 'undefined') var _selectedTierId = null;
+if (typeof _selectedTierPrice === 'undefined') var _selectedTierPrice = 0;
+if (typeof _selectedTierName === 'undefined') var _selectedTierName = '';
+if (typeof _selectSubscribeMode === 'undefined') var _selectSubscribeMode = false;
+window._fallGroups = window._fallGroups || {};
+
+function selectFallTier(groupIdx, pkgId, price, name, tier, hasStripe) {
+    if (!window._fallGroups[groupIdx]) window._fallGroups[groupIdx] = {};
+    var g = window._fallGroups[groupIdx];
+    g.selectedPkgId = pkgId;
+    g.selectedPrice = parseFloat(price);
+    g.selectedName = name;
+    g.hasStripe = hasStripe;
+
+    (g.allPkgIds || []).forEach(function(id) {
+        var dot = document.getElementById('fall-tier-dot-' + id);
+        var lbl = document.getElementById('fall-tier-label-' + id);
+        if (dot) dot.innerHTML = '';
+        if (lbl) { lbl.classList.remove('border-secondary', 'bg-secondary/5'); lbl.classList.add('border-gray-200'); }
+    });
+    var selDot = document.getElementById('fall-tier-dot-' + pkgId);
+    var selLbl = document.getElementById('fall-tier-label-' + pkgId);
+    if (selDot) selDot.innerHTML = '<div class="w-2 h-2 bg-secondary rounded-full"></div>';
+    if (selLbl) { selLbl.classList.add('border-secondary', 'bg-secondary/5'); selLbl.classList.remove('border-gray-200'); }
+
+    var priceEl = document.getElementById('fall-selected-price-' + groupIdx);
+    if (priceEl) priceEl.textContent = parseFloat(price).toFixed(0);
+}
+
+function startFallEnroll(groupIdx) {
+    var g = window._fallGroups && window._fallGroups[groupIdx];
+    if (!g) return;
+    if (g.hasStripe) {
+        _selectedTierId = g.selectedPkgId;
+        _selectedTierPrice = g.selectedPrice;
+        _selectedTierName = g.selectedName;
+        _selectSubscribeMode = true;
+        cart = [{
+            id: Date.now(),
+            package_id: g.selectedPkgId,
+            name: g.selectedName,
+            price: g.selectedPrice,
+            player_id: null,
+            player_name: 'Fall Program',
+            type: 'select',
+        }];
+        openCheckout();
+    } else {
+        addToCart(g.selectedPkgId, g.selectedName, g.selectedPrice, 'training');
+    }
+}
 
 function addToCart(pkgId, name, price, type) {
     if (playerList.length === 1) {
