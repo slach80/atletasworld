@@ -30,6 +30,12 @@
             <div>Manager: <span class="font-medium text-gray-700">{{ team.manager.user.get_full_name }}</span></div>
             <div>{{ team.manager.user.email }}</div>
         </div>
+        {% if team.is_select %}
+        <a href="{% url 'owner_select_games' %}"
+           class="px-3 py-1.5 text-sm font-medium text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 transition">
+            Games
+        </a>
+        {% endif %}
         <button onclick="document.getElementById('editTeamModal').classList.remove('hidden')"
                 class="px-3 py-1.5 bg-owner text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
             Edit
