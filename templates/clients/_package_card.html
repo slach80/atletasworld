@@ -1,7 +1,7 @@
 <div class="group border-2 border-gray-100 rounded-2xl p-6 hover:border-secondary hover:shadow-xl transition-all duration-200 flex flex-col">
     <div class="mb-4">
         <h3 class="font-black text-lg text-gray-900 leading-tight">{{ package.name }}</h3>
-        <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
+        <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">
             {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions{% else %}Unlimited{% endif %}
             &nbsp;·&nbsp; {{ package.validity_weeks }} weeks
         </p>
@@ -9,26 +9,26 @@
     <div class="mb-5 flex-1">
         <div class="text-4xl font-black text-primary">${{ package.price }}</div>
         {% if package.description %}
-        <p class="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">{{ package.description }}</p>
+        <p class="text-xs text-gray-600 mt-2 leading-relaxed line-clamp-3">{{ package.description }}</p>
         {% endif %}
     </div>
     <ul class="space-y-2 text-sm mb-5">
-        <li class="flex items-center gap-2 text-gray-600">
+        <li class="flex items-center gap-2 text-gray-700">
             <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
             {% if package.sessions_included > 0 %}{{ package.sessions_included }} sessions included{% else %}Unlimited sessions{% endif %}
         </li>
-        <li class="flex items-center gap-2 text-gray-600">
+        <li class="flex items-center gap-2 text-gray-700">
             <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
             Valid {{ package.validity_weeks }} weeks
         </li>
         {% if package.event_start_date %}
-        <li class="flex items-center gap-2 text-gray-600">
+        <li class="flex items-center gap-2 text-gray-700">
             <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             {{ package.event_start_date|date:"M j" }} – {{ package.event_end_date|date:"M j, Y" }}
         </li>
         {% endif %}
         {% if package.event_location %}
-        <li class="flex items-center gap-2 text-gray-600">
+        <li class="flex items-center gap-2 text-gray-700">
             <svg class="w-4 h-4 text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
             {{ package.event_location }}
         </li>

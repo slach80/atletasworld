@@ -454,9 +454,9 @@
                         {% for pkg in group_packages %}
                         <label id="fall-tier-label-{{ pkg.pk }}"
                                onclick="selectFallTier({{ forloop.parentloop.counter }}, {{ pkg.pk }}, {{ pkg.price }}, '{{ pkg.name|escapejs }}', '{{ pkg.billing_tier }}', {{ pkg.stripe_price_id|yesno:'true,false' }})"
-                               class="flex items-center justify-between border-2 {% if forloop.first %}border-secondary bg-secondary/5{% else %}border-gray-200{% endif %} rounded-xl px-5 py-4 cursor-pointer hover:border-secondary transition-all">
+                               class="flex items-center justify-between border-2 {% if forloop.first %}border-secondary bg-secondary/5{% else %}border-gray-300{% endif %} rounded-xl px-5 py-4 cursor-pointer hover:border-secondary transition-all">
                             <div class="flex items-center gap-3">
-                                <div id="fall-tier-dot-{{ pkg.pk }}" class="w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                <div id="fall-tier-dot-{{ pkg.pk }}" class="w-4 h-4 rounded-full border-2 border-gray-400 flex items-center justify-center">
                                     {% if forloop.first %}<div class="w-2 h-2 bg-secondary rounded-full"></div>{% endif %}
                                 </div>
                                 <div>
@@ -466,18 +466,18 @@
                                         {% else %}Pay in Full{% endif %}
                                     </span>
                                     {% if pkg.billing_tier == 'monthly' %}
-                                    <span class="text-xs text-gray-400 ml-2">3 payments</span>
+                                    <span class="text-xs text-gray-500 ml-2">3 payments</span>
                                     {% elif pkg.billing_tier == 'half' %}
-                                    <span class="text-xs text-gray-400 ml-2">2 payments</span>
+                                    <span class="text-xs text-gray-500 ml-2">2 payments</span>
                                     {% endif %}
                                 </div>
                             </div>
                             <div class="text-right">
                                 <span class="font-black text-xl text-gray-900">${{ pkg.price|floatformat:0 }}</span>
                                 {% if pkg.billing_tier == 'monthly' or pkg.billing_tier == 'half' %}
-                                <span class="text-xs text-gray-400 block">per payment</span>
+                                <span class="text-xs text-gray-500 block">per payment</span>
                                 {% else %}
-                                <span class="text-xs text-gray-400 block">one-time</span>
+                                <span class="text-xs text-gray-500 block">one-time</span>
                                 {% endif %}
                             </div>
                         </label>
