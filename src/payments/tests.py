@@ -123,8 +123,8 @@ class TestWebhook:
         }
         return _make_webhook_request(payload, self.WEBHOOK_SECRET)
 
-    @patch('payments.views._send_payment_receipt')
-    @patch('payments.views._activate_package')
+    @patch('payments.webhook_handlers._send_payment_receipt')
+    @patch('payments.webhook_handlers._activate_package')
     @patch('stripe.Webhook.construct_event')
     def test_package_purchase_activates_package(
         self, mock_construct, mock_activate, mock_receipt, db, client_profile, package_basic4
@@ -169,7 +169,7 @@ class TestWebhook:
             subscription_id='',
         )
 
-    @patch('payments.views._send_payment_receipt')
+    @patch('payments.webhook_handlers._send_payment_receipt')
     @patch('stripe.Webhook.construct_event')
     def test_multi_package_purchase_creates_client_package(
         self, mock_construct, mock_receipt, db, client_profile, player, package_basic4
@@ -232,7 +232,7 @@ class TestWebhook:
 
         assert response.status_code == 400
 
-    @patch('payments.views._send_payment_receipt')
+    @patch('payments.webhook_handlers._send_payment_receipt')
     @patch('stripe.Webhook.construct_event')
     def test_payment_failed_updates_status(self, mock_construct, mock_receipt, db, client_profile):
         """payment_intent.payment_failed must set Payment.status to 'failed'."""
@@ -378,7 +378,7 @@ class TestSelectSubscriptionWebhooks:
         assert cp.expiry_date == today + timedelta(weeks=4)
 
     @patch('payments.views.NotificationService', create=True)
-    @patch('payments.views._stripe')
+    @patch('payments.webhook_handlers._stripe')
     @patch('stripe.Webhook.construct_event')
     def test_first_invoice_activates_new_package(self, mock_construct, mock_stripe_fn, mock_ns, db, select_client, select_package):
         """invoice.payment_succeeded with billing_reason=subscription_create and no existing CP creates one."""
