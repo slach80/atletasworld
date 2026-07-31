@@ -8,7 +8,6 @@ from celery import shared_task
 from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta
-from email.mime.image import MIMEImage
 import logging
 
 from clients.services import _booking_location, _location_map_url, _make_ics
@@ -16,35 +15,14 @@ from clients.services import _booking_location, _location_map_url, _make_ics
 logger = logging.getLogger(__name__)
 
 
-def is_celery_enabled():
-    """Check if Celery is enabled in settings."""
-    return getattr(settings, 'CELERY_ENABLED', False)
-
-
-def run_task(task_func, *args, **kwargs):
-    """
-    Run a Celery task either async (if enabled) or sync (if disabled).
-
-    Usage:
-        run_task(send_booking_confirmation_task, booking_id=123)
-    """
-    if is_celery_enabled():
-        # Run asynchronously via Celery
-        return task_func.delay(*args, **kwargs)
-    else:
-        # Run synchronously (no Celery worker needed)
-        logger.info(f"Celery disabled, running {task_func.__name__} synchronously")
-        return task_func(*args, **kwargs)
-
-
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.send_weekly_reminders')
 def send_weekly_reminders(self):
     """
     Send weekly reminders to clients who haven't booked this week.
     Runs every Monday at 9 AM.
     """
-    from .models import Client, NotificationTemplate
-    from .services import NotificationService
+    from clients.models import Client, NotificationTemplate
+    from clients.services import NotificationService
     from bookings.models import Booking
 
     try:
@@ -90,14 +68,14 @@ def send_weekly_reminders(self):
     return f"Sent weekly reminders to {sent_count} clients"
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.check_inactive_clients')
 def check_inactive_clients(self):
     """
     Target clients who haven't booked in 3+ weeks with re-engagement campaign.
     Runs daily at 10 AM.
     """
-    from .models import Client, NotificationTemplate, Notification
-    from .services import NotificationService
+    from clients.models import Client, NotificationTemplate, Notification
+    from clients.services import NotificationService
     from bookings.models import Booking
 
     try:
@@ -161,7 +139,7 @@ def check_inactive_clients(self):
     return f"Sent inactive client notifications to {sent_count} clients"
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.send_booking_reminders')
 def send_booking_reminders(self):
     """Send session reminders grouped by client — ONE email per client, even if they
     have multiple players with sessions coming up.
@@ -175,8 +153,8 @@ def send_booking_reminders(self):
     reminder_hours_before preference and booking_reminders opt-out.
     Deduplicates per booking via Notification records.
     """
-    from .models import Notification, NotificationPreference
-    from .services import NotificationService
+    from clients.models import Notification, NotificationPreference
+    from clients.services import NotificationService
     from bookings.models import Booking
     from django.template.loader import render_to_string
     from datetime import datetime as _dt
@@ -216,7 +194,7 @@ def send_booking_reminders(self):
                 opted_out = False
 
             # Master opt-out / suppression list — no email of any kind.
-            from .models import EmailSuppression
+            from clients.models import EmailSuppression
             if opted_out or method == 'none' or EmailSuppression.is_suppressed(client.user.email):
                 continue
 
@@ -271,7 +249,7 @@ def send_booking_reminders(self):
             else:
                 subject = "⏰ Reminder: Upcoming Training Session"
 
-            from .models import make_unsubscribe_url
+            from clients.models import make_unsubscribe_url
             ctx = {
                 'client_name':  client_name,
                 'sessions':     sessions,
@@ -342,14 +320,14 @@ def send_booking_reminders(self):
     return f"Sent booking reminders to {sent_count} client(s)"
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.check_expiring_packages')
 def check_expiring_packages(self):
     """
     Send notifications for packages expiring in 7 days.
     Runs daily at 9 AM.
     """
-    from .models import ClientPackage, NotificationTemplate, Notification
-    from .services import NotificationService
+    from clients.models import ClientPackage, NotificationTemplate, Notification
+    from clients.services import NotificationService
 
     try:
         template = NotificationTemplate.objects.get(
@@ -467,14 +445,14 @@ def check_expiring_packages(self):
     return f"Sent package expiring notifications to {sent_count} clients"
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.send_upcoming_event_reminders')
 def send_upcoming_event_reminders(self):
     """
     Send reminders about upcoming special events/clinics.
     Runs daily at 8 AM.
     """
-    from .models import Package, Client, NotificationTemplate
-    from .services import NotificationService
+    from clients.models import Package, Client, NotificationTemplate
+    from clients.services import NotificationService
 
     try:
         template = NotificationTemplate.objects.get(
@@ -523,14 +501,14 @@ def send_upcoming_event_reminders(self):
     return f"Sent event reminders to {sent_count} clients"
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.send_custom_campaign')
 def send_custom_campaign(self, template_id, target_filters=None):
     """
     Send custom marketing campaign to targeted clients.
     Triggered manually from admin.
     """
-    from .models import Client, NotificationTemplate
-    from .services import NotificationService
+    from clients.models import Client, NotificationTemplate
+    from clients.services import NotificationService
 
     try:
         template = NotificationTemplate.objects.get(id=template_id)
@@ -584,13 +562,13 @@ def send_custom_campaign(self, template_id, target_filters=None):
     return f"Custom campaign sent to {sent_count} clients"
 
 
-@shared_task
+@shared_task(name='clients.tasks.cleanup_old_notifications')
 def cleanup_old_notifications():
     """
     Clean up notifications older than 90 days.
     Runs weekly on Sunday at 2 AM.
     """
-    from .models import Notification
+    from clients.models import Notification
 
     cutoff = timezone.now() - timedelta(days=90)
     deleted_count, _ = Notification.objects.filter(
@@ -602,14 +580,14 @@ def cleanup_old_notifications():
     return f"Cleaned up {deleted_count} old notifications"
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.send_assessment_notification_task')
 def send_assessment_notification_task(self, assessment_id):
     """
     Send assessment notification asynchronously.
     Called after coach submits an assessment.
     """
     from coaches.models import PlayerAssessment
-    from .services import NotificationService
+    from clients.services import NotificationService
 
     try:
         assessment = PlayerAssessment.objects.get(id=assessment_id)
@@ -625,7 +603,7 @@ def send_assessment_notification_task(self, assessment_id):
         raise self.retry(exc=e, countdown=60)
 
 
-@shared_task(bind=True, max_retries=2)
+@shared_task(bind=True, max_retries=2, name='clients.tasks.flush_notification_group')
 def flush_notification_group(self, group_key):
     """Flush a NotificationOutbox group and send ONE combined email.
 
@@ -636,8 +614,8 @@ def flush_notification_group(self, group_key):
     Retries up to 2 times (60 s apart) on transient failures so a brief SMTP
     hiccup doesn't permanently lose the notification.
     """
-    from .models import NotificationOutbox
-    from .services import NotificationService
+    from clients.models import NotificationOutbox
+    from clients.services import NotificationService
 
     try:
         outbox = NotificationOutbox.objects.get(group_key=group_key)
@@ -653,14 +631,14 @@ def flush_notification_group(self, group_key):
         raise self.retry(exc=exc, countdown=60)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, name='clients.tasks.send_booking_confirmation_task')
 def send_booking_confirmation_task(self, booking_id):
     """
     Send booking confirmation asynchronously.
     Called after a booking is created.
     """
     from bookings.models import Booking
-    from .services import NotificationService
+    from clients.services import NotificationService
 
     try:
         booking = Booking.objects.get(id=booking_id)
@@ -672,493 +650,3 @@ def send_booking_confirmation_task(self, booking_id):
     except Exception as e:
         logger.error(f"Failed to send booking confirmation: {e}")
         raise self.retry(exc=e, countdown=60)
-
-
-@shared_task(bind=True, max_retries=0, ignore_result=True)
-def send_bulk_email_task(self, recipients=None, subject='', message='', from_email='',
-                         send_as_html=False, broadcast_id=None,
-                         recipient_group='', extra_params=None):
-    """
-    Send bulk email. Two calling modes:
-      1. recipients=[...] — explicit list (used by attachment/sync path)
-      2. recipient_group='contacts_all' + extra_params={...} — task resolves the list
-         (used by the async no-attachment path; keeps the view instant)
-    Updates EmailBroadcast log when done.
-    Uses a single persistent SMTP connection to avoid Gmail rate-limiting.
-    """
-    import re
-    from django.core.mail import EmailMessage, get_connection
-    from .models import EmailBroadcast
-
-    # Resolve recipient list from group if not provided directly
-    if recipients is None:
-        from atletasworld.admin_views import _resolve_recipient_emails
-        extra = extra_params or {}
-        resolved = _resolve_recipient_emails(
-            recipient_group,
-            package_id=extra.get('package_id', ''),
-            contact_source=extra.get('contact_source', ''),
-            individual_emails=extra.get('individual_emails') or [],
-        )
-        recipients = list(resolved)
-        if broadcast_id:
-            try:
-                EmailBroadcast.objects.filter(id=broadcast_id).update(
-                    recipient_emails=','.join(recipients)
-                )
-            except Exception as e:
-                logger.warning(f"send_bulk_email_task: could not update recipient_emails: {e}")
-
-    if not recipients:
-        logger.warning(f"send_bulk_email_task: no recipients for group '{recipient_group}'")
-        if broadcast_id:
-            EmailBroadcast.objects.filter(id=broadcast_id).update(sent_count=0, failed_count=0)
-        return "No recipients"
-
-    sent_count = 0
-    failed_count = 0
-
-    site_url = settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'https://atletasperformancecenter.com'
-
-    # Build body once — it's identical for every recipient
-    if send_as_html:
-        html_message = message.replace('\n', '<br>')
-        body = f'''<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333333; background-color: #f5f5f5; margin: 0; padding: 0; }}
-    .email-wrapper {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; }}
-    .email-header {{ background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); padding: 30px; text-align: center; }}
-    .email-header img {{ max-height: 60px; width: auto; }}
-    .email-header h1 {{ color: #ffffff; margin: 12px 0 0 0; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }}
-    .email-body {{ padding: 40px 30px; }}
-    .email-body p {{ margin: 0 0 15px 0; color: #555555; }}
-    .divider {{ border: none; border-top: 1px solid #eeeeee; margin: 30px 0; }}
-    .signature {{ font-size: 14px; color: #444444; }}
-    .signature strong {{ color: #1a1a1a; font-size: 15px; }}
-    .signature .title {{ color: #888888; font-size: 13px; margin: 2px 0; }}
-    .signature .contact {{ color: #888888; font-size: 13px; margin: 2px 0; }}
-    .signature .contact a {{ color: #1a1a1a; text-decoration: none; }}
-    .signature-bar {{ width: 40px; height: 3px; background-color: #D7FF00; margin: 10px 0; }}
-    .email-footer {{ background-color: #1a1a1a; padding: 25px 30px; text-align: center; }}
-    .email-footer p {{ color: #888888; font-size: 12px; margin: 4px 0; }}
-    .email-footer a {{ color: #D7FF00; text-decoration: none; }}
-</style>
-</head>
-<body>
-<div class="email-wrapper">
-    <div class="email-header">
-        <a href="{site_url}" target="_blank" style="display:inline-block;"><img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" onerror="this.style.display=\'none\'" style="border:0;"></a>
-    </div>
-    <div class="email-body">
-        {html_message}
-        <hr class="divider">
-        <div class="signature">
-            <div class="signature-bar"></div>
-            <strong>Atletas Performance Center</strong><br>
-            <div class="title">High Performance &amp; Athletic Development</div>
-            <div class="contact">📧 <a href="mailto:info@atletasperformancecenter.com">info@atletasperformancecenter.com</a></div>
-            <div class="contact">🌐 <a href="{site_url}">{site_url.replace("https://", "")}</a></div>
-        </div>
-    </div>
-    <div class="email-footer">
-        <a href="{site_url}" target="_blank" style="display:inline-block;"><img src="{site_url}/static/img/apc-logo-yellow.png" alt="Atletas Performance Center" height="36" style="height:36px;width:auto;display:inline-block;border:0;margin-bottom:8px;"></a>
-        <p>
-            <a href="https://www.instagram.com/atletasperformancecenter/" target="_blank">Instagram</a> &nbsp;|&nbsp;
-            <a href="https://www.facebook.com/profile.php?id=61572009236369" target="_blank">Facebook</a>
-        </p>
-        <p style="margin-top: 8px;">
-            <a href="{site_url}/portal/notifications/" style="color:#aaaaaa;font-size:11px;">Manage Notification Preferences</a>
-            &nbsp;|&nbsp;
-            <a href="__UNSUBSCRIBE_URL__" style="color:#aaaaaa;font-size:11px;">Unsubscribe</a>
-        </p>
-        <p style="margin-top: 12px; font-size: 11px; color: #555555;">
-            &copy; 2026 Atletas Performance Center. All rights reserved.
-        </p>
-    </div>
-</div>
-</body>
-</html>'''
-    else:
-        body = message + (
-            f"\n\n--\nAtletas Performance Center\nHigh Performance & Athletic Development\n"
-            f"info@atletasperformancecenter.com\n{site_url}\n"
-            f"Manage preferences: {site_url}/portal/notifications/\n"
-            f"Unsubscribe: __UNSUBSCRIBE_URL__"
-        )
-
-    # Load attachment file data from disk (saved by the view before dispatching to Celery)
-    extra = extra_params or {}
-    attachment_files = []   # list of (name, data, content_type)
-    inline_image_file = None  # (name, data, content_type)
-
-    for att_info in extra.get('attachments') or []:
-        try:
-            with open(att_info['path'], 'rb') as fh:
-                attachment_files.append((att_info['name'], fh.read(), att_info['content_type']))
-        except Exception as e:
-            logger.warning(f"send_bulk_email_task: could not read attachment {att_info.get('path')}: {e}")
-
-    img_info = extra.get('inline_image')
-    if img_info:
-        try:
-            with open(img_info['path'], 'rb') as fh:
-                inline_image_file = (img_info['name'], fh.read(), img_info['content_type'])
-        except Exception as e:
-            logger.warning(f"send_bulk_email_task: could not read inline_image {img_info.get('path')}: {e}")
-
-    import time
-    send_delay = getattr(settings, 'BULK_EMAIL_SEND_DELAY', 0.5)
-
-    # Reuse one SMTP connection for all recipients to avoid Gmail rate-limiting
-    connection = get_connection()
-    try:
-        connection.open()
-    except Exception as e:
-        logger.error(f"send_bulk_email_task: failed to open SMTP connection: {e}")
-        if broadcast_id:
-            EmailBroadcast.objects.filter(id=broadcast_id).update(
-                sent_count=0, failed_count=len(recipients))
-        return f"Sent 0, failed {len(recipients)} (SMTP connection failed)"
-
-    try:
-        from .models import EmailSuppression, make_unsubscribe_url
-        for email_addr in recipients:
-            # Skip malformed addresses (commas, spaces, missing domain dot)
-            if not re.match(r'^[^@\s,]+@[^@\s,]+\.[^@\s,]+$', email_addr):
-                failed_count += 1
-                logger.warning(f"send_bulk_email_task: skipping malformed address: {email_addr!r}")
-                continue
-
-            # Honor the universal opt-out — never email anyone who unsubscribed.
-            if EmailSuppression.is_suppressed(email_addr):
-                logger.info(f"send_bulk_email_task: skipping unsubscribed address: {email_addr!r}")
-                continue
-
-            # Substitute the per-recipient one-click unsubscribe link.
-            try:
-                unsub_url = make_unsubscribe_url(email_addr, site_url)
-            except Exception:
-                unsub_url = f"{site_url}/portal/notifications/"
-            recipient_body = body.replace('__UNSUBSCRIBE_URL__', unsub_url)
-
-            try:
-                if inline_image_file or (send_as_html and attachment_files):
-                    # HTML email with inline image or HTML + attachments
-                    this_body = recipient_body
-                    if inline_image_file:
-                        img_name, img_data, img_ctype = inline_image_file
-                        img_tag = '<img src="cid:inline_image" style="max-width:100%;height:auto;margin:20px 0"><br><br>'
-                        # Inject image tag before body content
-                        this_body = this_body.replace('<div class="email-body">', f'<div class="email-body">{img_tag}', 1)
-                    email_msg = EmailMessage(subject=subject, body=this_body,
-                                             from_email=from_email, to=[email_addr],
-                                             connection=connection)
-                    email_msg.content_subtype = 'html'
-                    if inline_image_file:
-                        img_name, img_data, img_ctype = inline_image_file
-                        mime_image = MIMEImage(img_data)
-                        mime_image.add_header('Content-ID', '<inline_image>')
-                        mime_image.add_header('Content-Disposition', 'inline', filename=img_name)
-                        email_msg.attach(mime_image)
-                    for att_name, att_data, att_ctype in attachment_files:
-                        email_msg.attach(att_name, att_data, att_ctype)
-                else:
-                    email_msg = EmailMessage(subject=subject, body=recipient_body,
-                                             from_email=from_email, to=[email_addr],
-                                             connection=connection)
-                    if send_as_html:
-                        email_msg.content_subtype = 'html'
-                    for att_name, att_data, att_ctype in attachment_files:
-                        email_msg.attach(att_name, att_data, att_ctype)
-                email_msg.send(fail_silently=False)
-                sent_count += 1
-                if send_delay > 0:
-                    time.sleep(send_delay)
-            except Exception as e:
-                failed_count += 1
-                logger.error(f"send_bulk_email_task: failed to send to {email_addr}: {e}")
-                # Reopen connection in case it was dropped
-                try:
-                    connection.close()
-                    connection.open()
-                except Exception:
-                    pass
-    finally:
-        try:
-            connection.close()
-        except Exception:
-            pass
-
-    # Clean up temp files saved by the view
-    import os
-    for att_info in extra.get('attachments') or []:
-        try:
-            os.unlink(att_info['path'])
-        except Exception:
-            pass
-    if img_info:
-        try:
-            os.unlink(img_info['path'])
-        except Exception:
-            pass
-
-    if broadcast_id:
-        try:
-            EmailBroadcast.objects.filter(id=broadcast_id).update(
-                sent_count=sent_count,
-                failed_count=failed_count,
-            )
-        except Exception as e:
-            logger.error(f"send_bulk_email_task: failed to update broadcast log {broadcast_id}: {e}")
-
-    logger.info(f"send_bulk_email_task: sent={sent_count} failed={failed_count} broadcast_id={broadcast_id}")
-    return f"Sent {sent_count}, failed {failed_count}"
-
-
-# ── Stripe Health Check ────────────────────────────────────────────────────────
-
-STRIPE_ALERT_RECIPIENT = 'info@atletasperformancecenter.com'
-
-
-@shared_task(name='clients.tasks.check_stripe_health')
-def check_stripe_health():
-    """
-    Daily health check for Stripe connectivity.
-    Sends an alert email to info@ if:
-      - STRIPE_SECRET_KEY is missing or empty
-      - The key is in test mode (sk_test_) instead of live (sk_live_)
-      - The Stripe API call fails (network error, invalid key, etc.)
-    """
-    from django.core.mail import send_mail
-
-    key = getattr(settings, 'STRIPE_SECRET_KEY', '') or ''
-
-    issues = []
-
-    if not key:
-        issues.append('STRIPE_SECRET_KEY is not set.')
-    elif not key.startswith(('sk_live', 'rk_live')):
-        issues.append(f'Stripe key is in TEST mode (starts with "{key[:10]}…"). Switch to a live key for real payments.')
-
-    if key:
-        try:
-            import stripe
-            stripe.api_key = key
-            stripe.Balance.retrieve()
-        except Exception as e:
-            issues.append(f'Stripe API connection failed: {e}')
-
-    if issues:
-        body = (
-            "⚠️ Stripe Health Alert — Atletas Performance Center\n\n"
-            + "\n".join(f"• {issue}" for issue in issues)
-            + "\n\nPlease review your Stripe configuration at "
-            "https://atletasperformancecenter.com/owner-portal/payments/\n"
-        )
-        try:
-            send_mail(
-                subject='⚠️ Stripe Connection Issue — APC',
-                message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[STRIPE_ALERT_RECIPIENT],
-                fail_silently=False,
-            )
-            logger.warning(f"check_stripe_health: alert sent — {issues}")
-        except Exception as e:
-            logger.error(f"check_stripe_health: failed to send alert email: {e}")
-        return f"Alert sent: {issues}"
-
-    logger.info("check_stripe_health: Stripe OK")
-    return "OK"
-
-
-# ── Referral Program Tasks ──────────────────────────────────────────────────────
-
-
-@shared_task(bind=True, max_retries=3)
-def grant_referral_reward(self, referral_id):
-    """
-    Grant referral reward after first purchase.
-
-    - Client referrers: Create ClientCredit with 60-day expiry
-    - Coach referrers: Create ReferralPayout for owner review
-
-    Called by ReferralService.check_and_activate() after a referral is activated.
-    """
-    from .models import Referral, ClientCredit, ReferralPayout
-    from decimal import Decimal
-
-    try:
-        referral = Referral.objects.select_related('referrer_user', 'referred_user').get(id=referral_id)
-    except Referral.DoesNotExist:
-        logger.error(f"grant_referral_reward: Referral {referral_id} not found")
-        return "Referral not found"
-
-    if referral.status != 'activated':
-        logger.warning(f"grant_referral_reward: Referral {referral_id} not activated (status={referral.status})")
-        return "Referral not activated"
-
-    if not referral.reward_amount or referral.reward_amount <= Decimal('0'):
-        logger.error(f"grant_referral_reward: Referral {referral_id} has no reward_amount")
-        return "No reward amount"
-
-    try:
-        if referral.referrer_type == 'client':
-            # Grant store credit to client referrer
-            from .models import Client
-            try:
-                referrer_client = Client.objects.get(user=referral.referrer_user)
-            except Client.DoesNotExist:
-                logger.error(f"grant_referral_reward: Client profile not found for user {referral.referrer_user.pk}")
-                return "Client profile not found"
-
-            expiry_date = timezone.localdate() + timedelta(days=60)
-
-            credit, created = ClientCredit.objects.get_or_create(
-                client=referrer_client,
-                referral=referral,
-                defaults={
-                    'amount': referral.reward_amount,
-                    'balance': referral.reward_amount,
-                    'reason': f'Referral reward: {referral.referred_user.get_full_name() or referral.referred_user.username} joined',
-                    'expiry_date': expiry_date,
-                }
-            )
-
-            if not created:
-                logger.warning(f"grant_referral_reward: Credit already exists for referral {referral_id}")
-                return "Credit already exists"
-
-            logger.info(f"Granted ${referral.reward_amount} credit to client {referrer_client} for referral {referral_id}")
-            return f"Granted ${referral.reward_amount} credit to {referrer_client.user.get_full_name()}"
-
-        elif referral.referrer_type == 'coach':
-            # Create payout request for coach referrer
-            payout, created = ReferralPayout.objects.get_or_create(
-                referral=referral,
-                defaults={
-                    'coach_user': referral.referrer_user,
-                    'amount': referral.reward_amount,
-                    'status': 'pending',
-                }
-            )
-
-            if not created:
-                logger.warning(f"grant_referral_reward: Payout already exists for referral {referral_id}")
-                return "Payout already exists"
-
-            logger.info(f"Created ${referral.reward_amount} payout request for coach {referral.referrer_user} (referral {referral_id})")
-            return f"Created ${referral.reward_amount} payout request for {referral.referrer_user.get_full_name()}"
-
-        else:
-            logger.error(f"grant_referral_reward: Unknown referrer_type '{referral.referrer_type}' for referral {referral_id}")
-            return f"Unknown referrer_type: {referral.referrer_type}"
-
-    except Exception as e:
-        logger.exception(f"grant_referral_reward: failed for referral {referral_id}")
-        raise self.retry(exc=e, countdown=60)
-
-
-@shared_task
-def expire_stale_referrals():
-    """
-    Mark referrals as expired if the 60-day window has passed without activation.
-
-    Runs daily at 3 AM via Celery Beat.
-    """
-    from .models import Referral
-
-    expired_count = Referral.objects.filter(
-        status='pending',
-        referral_window_expires__lt=timezone.now()
-    ).update(status='expired')
-
-    logger.info(f"expire_stale_referrals: marked {expired_count} referrals as expired")
-    return f"Marked {expired_count} referrals as expired"
-
-
-@shared_task
-def send_game_day_digest():
-    """Send a 24-hour pre-game attendance digest to owner and creating coach.
-
-    Runs daily at 8 AM via Celery Beat.
-    Finds all published SelectGames scheduled for tomorrow and emails the
-    attendance summary (coming / not coming / no response) to the creator and coach.
-    """
-    from bookings.models import SelectGame
-    from django.core.mail import send_mail
-    from django.conf import settings as _s
-    from django.db.models import Count, Q
-
-    tomorrow = timezone.localdate() + timedelta(days=1)
-    games = SelectGame.objects.filter(
-        date=tomorrow,
-        status='published',
-    ).select_related('team', 'created_by', 'coach__user').prefetch_related(
-        'rsvps__client__user', 'rsvps__player'
-    ).annotate(
-        coming_count=Count('rsvps', filter=Q(rsvps__status='coming')),
-        not_coming_count=Count('rsvps', filter=Q(rsvps__status='not_coming')),
-        pending_count=Count('rsvps', filter=Q(rsvps__status='pending')),
-    )
-
-    if not games:
-        return 'No games tomorrow'
-
-    sent = 0
-    for game in games:
-        # Build roster text
-        lines = [
-            f'APC Select Game — {game.team.name}',
-            f'{game.date.strftime("%A, %B %-d, %Y")} at {game.start_time.strftime("%-I:%M %p")}',
-            f'Location: {game.location}',
-            '',
-            f'✅ Coming: {game.coming_count}',
-            f'❌ Not Coming: {game.not_coming_count}',
-            f'⏳ No Response: {game.pending_count}',
-            '',
-        ]
-        coming_rsvps = [r for r in game.rsvps.all() if r.status == 'coming']
-        if coming_rsvps:
-            lines.append('CONFIRMED ATTENDANCE:')
-            for r in coming_rsvps:
-                name = str(r.player) if r.player else str(r.client)
-                lines.append(f'  • {name}')
-
-        not_coming_rsvps = [r for r in game.rsvps.all() if r.status == 'not_coming']
-        if not_coming_rsvps:
-            lines.append('')
-            lines.append('NOT COMING:')
-            for r in not_coming_rsvps:
-                name = str(r.player) if r.player else str(r.client)
-                lines.append(f'  • {name}')
-
-        body = '\n'.join(lines)
-        subject = f'[APC Select] Game Day Tomorrow — {game.team.name}'
-        from_email = getattr(_s, 'DEFAULT_FROM_EMAIL', 'noreply@atletasperformancecenter.com')
-
-        recipients = []
-        if game.created_by and game.created_by.email:
-            recipients.append(game.created_by.email)
-        if game.coach and game.coach.user.email and game.coach.user.email not in recipients:
-            recipients.append(game.coach.user.email)
-        # Also notify all Owner group users
-        from django.contrib.auth.models import User
-        for owner in User.objects.filter(groups__name='Owner', is_active=True):
-            if owner.email and owner.email not in recipients:
-                recipients.append(owner.email)
-
-        if recipients and getattr(_s, 'PRODUCTION_EMAIL_ENABLED', False):
-            try:
-                send_mail(subject, body, from_email, recipients, fail_silently=True)
-                sent += 1
-            except Exception as e:
-                logger.error('send_game_day_digest: email failed for game %s: %s', game.pk, e)
-        else:
-            logger.info('send_game_day_digest (dev): game %s — %s', game.pk, body[:120])
-
-    return f'Game day digest sent for {sent}/{len(games)} games'
