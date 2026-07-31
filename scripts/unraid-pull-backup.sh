@@ -1,49 +1,64 @@
 #!/usr/bin/env bash
-# Runs on Unraid — pulls the latest DB backup from EC2 via SSH.
+# Runs on Unraid — pulls DB from EC2, writes hourly copies to Unraid,
+# then syncs daily snapshots to LACHNAS (/mnt/lachnas_backups).
 #
-# Setup (run once on Unraid):
-#   1. Copy your EC2 key to Unraid:
-#      scp ~/Documents/certs/atletasworld-deploy-key root@192.168.1.40:/root/.ssh/atletasworld-deploy-key
-#      chmod 600 /root/.ssh/atletasworld-deploy-key
-#   2. Test access:
-#      ssh -i /root/.ssh/atletasworld-deploy-key ubuntu@3.135.174.227 "ls /var/www/atletasworld/backups/"
-#   3. Create local backup dir on Unraid (adjust share path as needed):
-#      mkdir -p /mnt/user/backup/atletasworld
-#   4. Add to Unraid cron (Settings → Scheduler, or /etc/cron.d/atletasworld-backup):
-#      0 */2 * * * /root/scripts/unraid-pull-backup.sh >> /var/log/atletasworld-backup.log 2>&1
+# Retention:
+#   Unraid  (/mnt/user/backup/atletasworld/)   hourly, 3 days (72 files)
+#   LACHNAS (/mnt/lachnas_backups/atletasworld/) daily,  7 days
 #
-# This pulls every 2 hours. Adjust cron interval to taste.
+# One-time setup on Unraid:
+#   1. Copy EC2 deploy key:
+#        mkdir -p /root/.ssh
+#        scp slach@192.168.1.92:~/Documents/certs/atletasworld-deploy-key \
+#            root@192.168.1.40:/root/.ssh/atletasworld-deploy-key
+#        # (or copy manually via Unraid terminal)
+#        chmod 600 /root/.ssh/atletasworld-deploy-key
+#   2. Smoke-test SSH:
+#        ssh -i /root/.ssh/atletasworld-deploy-key ubuntu@3.135.174.227 "echo ok"
+#   3. Copy this script to Unraid:
+#        scp scripts/unraid-pull-backup.sh root@192.168.1.40:/root/scripts/unraid-pull-backup.sh
+#        ssh root@192.168.1.40 "chmod +x /root/scripts/unraid-pull-backup.sh"
+#   4. Add to Unraid cron (Settings → Scheduler, or edit /etc/cron.d/):
+#        0 * * * * /root/scripts/unraid-pull-backup.sh >> /var/log/atletasworld-backup.log 2>&1
 
 set -euo pipefail
 
 EC2_HOST="ubuntu@3.135.174.227"
 EC2_KEY="/root/.ssh/atletasworld-deploy-key"
-EC2_BACKUP_DIR="/var/www/atletasworld/backups"
-LOCAL_DIR="/mnt/user/backup/atletasworld"
-KEEP_DAYS=30
 
-mkdir -p "$LOCAL_DIR"
+HOURLY_DIR="/mnt/user/backup/atletasworld/hourly"
+DAILY_DIR="/mnt/lachnas_backups/atletasworld/daily"
+
+HOURLY_KEEP_DAYS=3
+DAILY_KEEP_DAYS=7
+
+mkdir -p "$HOURLY_DIR" "$DAILY_DIR"
 
 TIMESTAMP=$(date +%F-%H%M)
-DEST="$LOCAL_DIR/db-${TIMESTAMP}.sqlite3"
+HOURLY_DEST="$HOURLY_DIR/db-${TIMESTAMP}.sqlite3"
+DATE_ONLY=$(date +%F)
+DAILY_DEST="$DAILY_DIR/db-${DATE_ONLY}.sqlite3"
 
-echo "[$(date)] Pulling backup from EC2..."
+echo "[$(date)] Triggering backup on EC2..."
+ssh -i "$EC2_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=15 "$EC2_HOST" \
+    "/var/www/atletasworld/scripts/backup-db.sh" > /dev/null
 
-# Ensure a fresh backup exists on EC2 first
-ssh -i "$EC2_KEY" -o StrictHostKeyChecking=no "$EC2_HOST" \
-    "/var/www/atletasworld/scripts/backup-db.sh"
+echo "[$(date)] Pulling backup..."
+scp -i "$EC2_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=15 \
+    "${EC2_HOST}:/tmp/atletasworld-db-backup.sqlite3" \
+    "$HOURLY_DEST"
 
-# Pull it
-scp -i "$EC2_KEY" -o StrictHostKeyChecking=no \
-    "${EC2_HOST}:${EC2_BACKUP_DIR}/db-latest.sqlite3" \
-    "$DEST"
+SIZE=$(du -sh "$HOURLY_DEST" | cut -f1)
+echo "Hourly saved: $HOURLY_DEST ($SIZE)"
 
-echo "Saved: $DEST ($(du -sh "$DEST" | cut -f1))"
+# Write daily snapshot to LACHNAS (overwrite same-day file if re-run)
+cp "$HOURLY_DEST" "$DAILY_DEST"
+echo "Daily saved:  $DAILY_DEST ($SIZE)"
 
-# Keep a stable latest copy
-ln -sf "$DEST" "$LOCAL_DIR/db-latest.sqlite3"
+# Prune hourly backups older than HOURLY_KEEP_DAYS
+find "$HOURLY_DIR" -name "db-*.sqlite3" -mtime +${HOURLY_KEEP_DAYS} -delete
 
-# Prune old Unraid backups
-find "$LOCAL_DIR" -name "db-*.sqlite3" -mtime +${KEEP_DAYS} -delete
+# Prune daily backups older than DAILY_KEEP_DAYS
+find "$DAILY_DIR" -name "db-*.sqlite3" -mtime +${DAILY_KEEP_DAYS} -delete
 
-echo "[$(date)] Done. Unraid backup: $DEST"
+echo "[$(date)] Done."
