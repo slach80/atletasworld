@@ -245,7 +245,7 @@ When a feature maps to a hustle module:
   3. ~~`payments/views.py`~~ ✅ complete (2026-07-30) → webhook handlers extracted to `payments/webhook_handlers.py`
   4. ~~`coaches/views.py`~~ ✅ complete (2026-07-30) → `coaches/views/` package (11 modules)
   5. ~~`clients/tasks.py`~~ ✅ complete (2026-07-30) → `clients/tasks/` package (5 modules); Celery task names verified
-  6. **`bookings/api.py`** — `BookingViewSet.create` (~507 lines) → `bookings/services.py` (logic extraction, separate session — higher risk)
+  6. ~~**`bookings/api.py`**~~ ✅ complete (2026-07-30) — `BookingViewSet.create` (506L) extracted to `bookings/booking_service.py`; `BookingError` exception class; ViewSet is now a ~20-line dispatcher
 - ~~**#3 — Refund amount `Decimal`**~~ ✅ complete (2026-07-30)
 - ~~**#4 — Log swallowed exceptions**~~ ✅ complete (2026-07-30) — 4 bare `pass` blocks in `clients/services.py` now log at debug level
 - ~~**#5 — AI assist leaks exception text**~~ ✅ complete (2026-07-30) — logs server-side, returns generic message to client
