@@ -239,13 +239,13 @@ When a feature maps to a hustle module:
 ## Code Review Backlog (from docs/code-review-2026-07-22.md)
 
 - ~~**#1 — Split `admin_views.py`**~~ ✅ complete (2026-07-30) — 70 views split into `owner_views/` package (22 domain modules); shim keeps `urls.py`/`tasks.py` unchanged.
-- **#2 — Split remaining god-objects** (deferred — implement separately, same Option B shim pattern):
-  1. `clients/views.py` (2,533 lines) → `clients/views/` package
-  2. `clients/models.py` (1,625 lines) → `clients/models/` package (**higher risk** — migrations reference `clients.models.X`)
-  3. `payments/views.py` (1,619 lines) → extract `_handle_*` webhook handlers to `webhook_handlers.py`
-  4. `coaches/views.py` (1,535 lines) → `coaches/views/` package
-  5. `clients/tasks.py` (1,164 lines) → `clients/tasks/` package (verify Celery autodiscover after split)
-  6. `bookings/api.py` — extract `BookingViewSet.create` (~507 lines) to `bookings/services.py` (logic extraction, not just reorganization)
+- **#2 — Split remaining god-objects**:
+  1. ~~`clients/views.py`~~ ✅ complete (2026-07-30) → `clients/views/` package (9 modules)
+  2. ~~`clients/models.py`~~ ✅ complete (2026-07-30) → `clients/models/` package (5 modules); `makemigrations --check` confirmed 0 new migrations
+  3. ~~`payments/views.py`~~ ✅ complete (2026-07-30) → webhook handlers extracted to `payments/webhook_handlers.py`
+  4. ~~`coaches/views.py`~~ ✅ complete (2026-07-30) → `coaches/views/` package (11 modules)
+  5. ~~`clients/tasks.py`~~ ✅ complete (2026-07-30) → `clients/tasks/` package (5 modules); Celery task names verified
+  6. **`bookings/api.py`** — `BookingViewSet.create` (~507 lines) → `bookings/services.py` (logic extraction, separate session — higher risk)
 - ~~**#3 — Refund amount `Decimal`**~~ ✅ complete (2026-07-30)
 - ~~**#4 — Log swallowed exceptions**~~ ✅ complete (2026-07-30) — 4 bare `pass` blocks in `clients/services.py` now log at debug level
 - ~~**#5 — AI assist leaks exception text**~~ ✅ complete (2026-07-30) — logs server-side, returns generic message to client
