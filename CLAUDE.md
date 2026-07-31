@@ -253,4 +253,4 @@ When a feature maps to a hustle module:
 - ~~**#7 — Remove `.env.dev.bak` from git**~~ ✅ complete (2026-07-30)
 - ~~**#8 — Clean repo root**~~ ✅ complete (2026-07-30) — 18 playwright scripts → `scripts/playwright/`, PNGs → `.screenshots/`
 - ~~**#9 — Hardcoded Ollama fallback IP**~~ ✅ complete (2026-07-30) — bails with 503 when `OLLAMA_BASE_URL` unset
-- **#10 — Owner portal test coverage**: 66 views, zero tests; highest-value coverage gap
+- ~~**#10 — Owner portal test coverage**~~ ✅ complete (2026-07-30) — 90 tests in `src/atletasworld/tests_owner_views.py`; 14 classes covering auth walls, CRUD lifecycle, JSON endpoints, Stripe mock, AI assist; 308 total tests passing
