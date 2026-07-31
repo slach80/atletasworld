@@ -1,27 +1,33 @@
 #!/usr/bin/env bash
-# Run on EC2 via cron every 15-60 min, e.g.:
+# Runs on EC2 — creates a timestamped hot backup of the SQLite DB.
+# Unraid pulls from EC2 via scripts/unraid-pull-backup.sh (see that file).
+#
+# Cron (optional, to keep a local rotation on EC2):
 #   */30 * * * * /var/www/atletasworld/scripts/backup-db.sh >> /var/log/atletasworld/backup.log 2>&1
 set -euo pipefail
 
 DB_PATH="/var/www/atletasworld/src/db.sqlite3"
-BUCKET="${BACKUP_S3_BUCKET:-}"   # set in environment or crontab
-TIMESTAMP=$(date +%F-%H%M)
-TMP="/tmp/db-${TIMESTAMP}.sqlite3"
+BACKUP_DIR="/var/www/atletasworld/backups"
+KEEP_DAYS=3  # local EC2 retention — Unraid is the real store
 
 if [ ! -f "$DB_PATH" ]; then
     echo "ERROR: DB not found at $DB_PATH"
     exit 1
 fi
 
-# Hot backup — safe while gunicorn/celery are running (WAL mode recommended)
-sqlite3 "$DB_PATH" ".backup '$TMP'"
-echo "Backup created: $TMP ($(du -sh "$TMP" | cut -f1))"
+mkdir -p "$BACKUP_DIR"
 
-if [ -n "$BUCKET" ]; then
-    aws s3 cp "$TMP" "s3://${BUCKET}/atletasworld-db/${TIMESTAMP}.sqlite3" \
-        --storage-class STANDARD_IA
-    echo "Uploaded to s3://${BUCKET}/atletasworld-db/${TIMESTAMP}.sqlite3"
-    rm -f "$TMP"
-else
-    echo "WARNING: BACKUP_S3_BUCKET not set — backup kept locally at $TMP only"
-fi
+TIMESTAMP=$(date +%F-%H%M)
+DEST="$BACKUP_DIR/db-${TIMESTAMP}.sqlite3"
+
+# Hot backup — safe while gunicorn/celery are running (WAL mode recommended)
+sqlite3 "$DB_PATH" ".backup '$DEST'"
+echo "Backup created: $DEST ($(du -sh "$DEST" | cut -f1))"
+
+# Keep a stable "latest" symlink Unraid can always pull
+ln -sf "$DEST" "$BACKUP_DIR/db-latest.sqlite3"
+
+# Prune old local backups — keep only last KEEP_DAYS days
+find "$BACKUP_DIR" -name "db-*.sqlite3" -mtime +${KEEP_DAYS} -delete
+
+echo "Done. Latest: $BACKUP_DIR/db-latest.sqlite3"
