@@ -3,6 +3,19 @@ from clients.models import Client
 from bookings.models import Booking
 
 
+class ProcessedWebhookEvent(models.Model):
+    """Deduplication table for Stripe webhook events — prevents double-processing on retries."""
+    event_id = models.CharField(max_length=255, unique=True)
+    event_type = models.CharField(max_length=100)
+    processed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['processed_at'])]
+
+    def __str__(self):
+        return f'{self.event_type} — {self.event_id}'
+
+
 class Payment(models.Model):
     """Payment records via Stripe."""
     STATUS_CHOICES = [

@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404
 
 from django.utils import timezone
 from clients.models import Client, Package, ClientPackage
-from payments.models import Payment
+from payments.models import Payment, ProcessedWebhookEvent
 from payments.stripe_utils import get_stripe as _stripe, get_or_create_stripe_customer as _get_or_create_stripe_customer
 from payments.webhook_handlers import (
     _handle_payment_succeeded,
@@ -653,9 +653,19 @@ def payments_webhook(request):
             return HttpResponse(status=400)
 
     event_type = event.get('type', '')
+    event_id   = event.get('id', '')
     data       = event['data']['object']
 
-    logger.info('Stripe webhook: %s', event_type)
+    logger.info('Stripe webhook: %s (%s)', event_type, event_id)
+
+    # Idempotency guard — Stripe may re-deliver events on timeout/5xx retries.
+    _, created = ProcessedWebhookEvent.objects.get_or_create(
+        event_id=event_id,
+        defaults={'event_type': event_type},
+    )
+    if not created:
+        logger.info('Webhook %s already processed — skipping', event_id)
+        return HttpResponse(status=200)
 
     dispatch = {
         'payment_intent.succeeded':       _handle_payment_succeeded,
@@ -669,9 +679,12 @@ def payments_webhook(request):
     handler = dispatch.get(event_type)
     if handler:
         try:
-            handler(data)
+            with transaction.atomic():
+                handler(data)
         except Exception:
             logger.exception('Webhook handler failed for %s', event_type)
+            # Delete the dedup record so Stripe can retry successfully after the bug is fixed.
+            ProcessedWebhookEvent.objects.filter(event_id=event_id).delete()
             return HttpResponse(status=500)
 
     return HttpResponse(status=200)

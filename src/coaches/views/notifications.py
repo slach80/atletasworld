@@ -42,8 +42,10 @@ def send_notification(request):
     message = request.POST.get('message', '')
 
     if player_ids and message:
-        # Get unique clients from selected players
-        players = Player.objects.filter(id__in=player_ids).select_related('client')
+        # Scope to players this coach has actually worked with — prevents messaging arbitrary parents.
+        players = Player.objects.filter(
+            id__in=player_ids, bookings__coach=coach
+        ).distinct().select_related('client')
         notified_clients = set()
         sent_count = 0
 

@@ -12,7 +12,8 @@ Booking lifecycle:
     pending/confirmed ──► cancelled   (only allowed > 24 h before the session)
     pending/confirmed ──► rescheduled (creates a new Booking, cancels this one)
 """
-from django.db import models
+from django.db import models, transaction
+from django.db.models import F
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django_prometheus.models import ExportModelOperationsMixin
@@ -530,19 +531,17 @@ class Booking(ExportModelOperationsMixin("booking"), models.Model):
         return True
 
     def use_package(self, package):
-        """Use a session from client package."""
-        if package.sessions_remaining <= 0:
-            raise ValidationError("No sessions remaining in package.")
-
+        """Use a session from client package, atomically to prevent over-decrement."""
         if not package.is_valid:
             raise ValidationError("Package is expired or inactive.")
 
+        consumed = package.use_session()
+        if not consumed:
+            raise ValidationError("No sessions remaining in package.")
+
         self.client_package = package
         self.payment_status = 'package'
-        package.sessions_remaining -= 1
-        package.sessions_used += 1
-        package.save()
-        self.save()
+        self.save(update_fields=['client_package', 'payment_status'])
         return True
 
     def clean(self):

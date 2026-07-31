@@ -303,8 +303,6 @@ urlpatterns = [
     # Apple Pay domain verification — download file from Stripe Dashboard → Settings → Apple Pay
     # then place it at static/apple-developer-merchantid-domain-association
     path('.well-known/apple-developer-merchantid-domain-association', apple_pay_verification),
-    path('api/analytics/', include('analytics.urls')),
-    path('api/reviews/', include('reviews.urls')),
 ]
 
 if settings.DEBUG:

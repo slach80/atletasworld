@@ -76,11 +76,11 @@ def coach_select_games(request):
 @coach_required
 def coach_select_game_detail(request, game_id):
     """Coach view: single Select game roster and RSVP board."""
-    from bookings.models import SelectGame, SelectGameRSVP
+    from bookings.models import SelectGame, SelectGameRSVP, Booking
     from clients.models import Client
 
     coach = get_object_or_404(Coach, user=request.user)
-    game = get_object_or_404(SelectGame, pk=game_id)
+    game = get_object_or_404(SelectGame, pk=game_id, coach=coach)
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -104,7 +104,9 @@ def coach_select_game_detail(request, game_id):
         return redirect('coaches:select_game_detail', game_id=game_id)
 
     rsvps = game.rsvps.select_related('client__user', 'player').order_by('client__user__first_name')
-    all_clients = Client.objects.select_related('user').order_by('user__first_name')
+    # Limit guest candidates to clients this coach has worked with, not the entire roster.
+    coached_client_ids = Booking.objects.filter(coach=coach).values_list('client_id', flat=True).distinct()
+    all_clients = Client.objects.filter(pk__in=coached_client_ids).select_related('user').order_by('user__first_name')
 
     return render(request, 'coaches/select_game_detail.html', {
         'coach': coach,

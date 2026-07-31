@@ -410,7 +410,7 @@
                 <div class="bg-white rounded-xl shadow-md p-5 sm:p-6">
                     <!-- Shared header -->
                     <div class="flex items-center gap-2 flex-wrap mb-1">
-                        <span class="bg-secondary text-black text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">Fall 2026</span>
+                        <span class="bg-secondary text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full" style="color:#000!important">Fall 2026</span>
                         <span class="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Flexible payment plans available</span>
                     </div>
                     <h2 class="text-xl font-black uppercase tracking-tight text-gray-900 mb-1">Fall Program</h2>
@@ -463,7 +463,7 @@
                                         <div>
                                             <span class="font-bold text-sm text-gray-900">
                                                 {% if pkg.billing_tier == 'monthly' %}Monthly
-                                                {% elif pkg.billing_tier == 'half' %}Every 2 Months
+                                                {% elif pkg.billing_tier == 'half' %}Pay in 2 Installments
                                                 {% else %}Pay in Full{% endif %}
                                             </span>
                                             {% if pkg.billing_tier == 'monthly' %}
@@ -488,7 +488,8 @@
                             <!-- Enroll button -->
                             <button id="fall-enroll-btn-{{ forloop.counter }}"
                                     onclick="startFallEnroll({{ forloop.counter }})"
-                                    class="w-full bg-secondary text-black font-black py-3 rounded-xl hover:bg-secondary/90 transition-all text-sm uppercase tracking-wide">
+                                    class="w-full bg-secondary font-black py-3 rounded-xl hover:bg-secondary/90 transition-all text-sm uppercase tracking-wide"
+                                    style="color:#000!important">
                                 Enroll — $<span id="fall-selected-price-{{ forloop.counter }}">{% with first=group_packages|first %}{{ first.price|floatformat:0 }}{% endwith %}</span>
                             </button>
                         </div>

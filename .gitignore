@@ -56,6 +56,9 @@ npm-debug.log*
 # Demo credentials (local only)
 demo_credentials.json
 
+# Local exploration / scratch outputs
+graphify-out-before/
+
 # Client data — PII, do not commit
 docs/clients/*.csv
 docs/clients/*.xlsx

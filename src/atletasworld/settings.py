@@ -206,6 +206,9 @@ ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['first_name*', 'last_name*', 'email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_RATE_LIMITS = {
+    'login_failed': '5/5m',   # max 5 failed logins per IP per 5 minutes
+}
 LOGIN_REDIRECT_URL = '/login-redirect/'
 LOGOUT_REDIRECT_URL = '/'
 
@@ -341,5 +344,5 @@ CSRF_TRUSTED_ORIGINS = env.list(
 )
 
 # Ollama — local LLM for blog AI assist (slach-office)
-OLLAMA_BASE_URL = env('OLLAMA_BASE_URL', default='http://192.168.1.70:11434')
+OLLAMA_BASE_URL = env('OLLAMA_BASE_URL', default='')
 OLLAMA_MODEL = env('OLLAMA_MODEL', default='qwen3:8b-32k')

@@ -1,4 +1,5 @@
-from django.db import models
+from django.db import models, transaction
+from django.db.models import F
 from django.utils import timezone
 from django_prometheus.models import ExportModelOperationsMixin
 
@@ -102,9 +103,9 @@ class ClientPackage(ExportModelOperationsMixin("client_package"), models.Model):
     sessions_remaining = models.IntegerField()
     sessions_used = models.IntegerField(default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    stripe_payment_id = models.CharField(max_length=100, blank=True,
+    stripe_payment_id = models.CharField(max_length=100, blank=True, db_index=True,
                                           help_text="Stripe PaymentIntent ID for one-time purchase")
-    stripe_subscription_id = models.CharField(max_length=100, blank=True,
+    stripe_subscription_id = models.CharField(max_length=100, blank=True, db_index=True,
                                                help_text="Stripe Subscription ID for recurring packages")
     notes = models.TextField(blank=True)
 
@@ -125,20 +126,28 @@ class ClientPackage(ExportModelOperationsMixin("client_package"), models.Model):
     def use_session(self):
         """Consume one session from this package when a booking is confirmed.
 
-        For session-counted packages (sessions_included > 0), decrements
-        sessions_remaining and increments sessions_used.  Automatically marks
-        the package as 'exhausted' when the last session is used so it no
-        longer appears as active to the booking system.
-
-        Unlimited packages (sessions_included == 0) are unaffected — their
-        validity is controlled purely by expiry_date.
+        Uses a conditional atomic update to prevent concurrent over-decrement.
+        Returns True if a session was consumed, False if none remained.
+        Unlimited packages (sessions_included == 0) always return True.
         """
-        if self.package.sessions_included > 0:
-            self.sessions_remaining -= 1
-            self.sessions_used += 1
+        if self.package.sessions_included == 0:
+            return True
+
+        with transaction.atomic():
+            updated = ClientPackage.objects.filter(
+                pk=self.pk, sessions_remaining__gt=0
+            ).update(
+                sessions_remaining=F('sessions_remaining') - 1,
+                sessions_used=F('sessions_used') + 1,
+            )
+            if not updated:
+                return False
+            # Reload to check if now exhausted
+            self.refresh_from_db(fields=['sessions_remaining', 'sessions_used'])
             if self.sessions_remaining <= 0:
+                ClientPackage.objects.filter(pk=self.pk, status='active').update(status='exhausted')
                 self.status = 'exhausted'
-            self.save()
+        return True
 
     def calculate_upgrade_cost(self, new_package):
         """Calculate how much a client owes to upgrade to a higher-tier package.
@@ -175,9 +184,10 @@ class ClientPackage(ExportModelOperationsMixin("client_package"), models.Model):
             else:
                 remaining_value = 0
 
-        # Upgrade cost = new price minus the credit for unused value (floor at $0)
-        upgrade_cost = max(0, float(new_package.price) - float(remaining_value))
-        return round(upgrade_cost, 2)
+        from decimal import Decimal, ROUND_HALF_UP
+        remaining_value = Decimal(str(remaining_value)) if not isinstance(remaining_value, Decimal) else remaining_value
+        upgrade_cost = max(Decimal('0'), new_package.price - remaining_value)
+        return upgrade_cost.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     def get_upgrade_options(self):
         """Get available upgrade packages with calculated costs."""
@@ -203,6 +213,12 @@ class ClientPackage(ExportModelOperationsMixin("client_package"), models.Model):
             models.Index(fields=['client', 'expiry_date']),
             models.Index(fields=['status', 'expiry_date']),
             models.Index(fields=['purchase_date']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(sessions_remaining__gte=0),
+                name='clientpackage_sessions_remaining_non_negative',
+            ),
         ]
 
 

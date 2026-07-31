@@ -36,13 +36,28 @@ def bookings_list(request):
     past_bookings = Booking.objects.filter(
         client=client,
         scheduled_date__lt=timezone.localdate()
-    ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')
+    ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')[:200]
 
     from django.conf import settings as django_settings
-    from clients.services import _booking_location, _location_map_url
-    for b in list(upcoming_bookings) + list(past_bookings):
-        b.effective_location = _booking_location(b)
-        b.effective_location_map_url = _location_map_url(b.effective_location)
+    from clients.services import _location_map_url
+
+    all_bookings = list(upcoming_bookings) + list(past_bookings)
+
+    # Batch-resolve block location overrides — one query instead of one per booking.
+    dates = {b.scheduled_date for b in all_bookings}
+    block_location_map = {
+        (bl.coach_id, bl.date, bl.start_time): bl.location_override
+        for bl in ScheduleBlock.objects.filter(date__in=dates).only(
+            'coach_id', 'date', 'start_time', 'location_override'
+        )
+        if bl.location_override
+    }
+    for b in all_bookings:
+        loc = block_location_map.get((b.coach_id, b.scheduled_date, b.scheduled_time))
+        if not loc:
+            loc = b.session_type.location if b.session_type else ''
+        b.effective_location = loc
+        b.effective_location_map_url = _location_map_url(loc)
 
     context = {
         'client': client,
@@ -111,6 +126,10 @@ def booking_reschedule(request, booking_id):
         new_block = get_object_or_404(ScheduleBlock, id=block_id)
         if not new_block.is_available:
             messages.error(request, 'That slot is no longer available. Please choose another.')
+            return redirect('clients:booking_reschedule', booking_id=booking_id)
+        # Verify the target block supports the same session type as the original booking.
+        if booking.session_type and not new_block.catalog_session_types.filter(pk=booking.session_type_id).exists():
+            messages.error(request, 'That slot does not support the session type of your original booking.')
             return redirect('clients:booking_reschedule', booking_id=booking_id)
         try:
             new_booking = Booking.objects.create(

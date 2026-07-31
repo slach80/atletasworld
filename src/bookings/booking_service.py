@@ -8,6 +8,7 @@ import logging
 from decimal import Decimal
 from datetime import timedelta
 
+from django.db import transaction
 from django.utils import timezone
 
 from bookings.models import AvailabilitySlot, Booking, SessionType
@@ -46,7 +47,16 @@ def create_booking(user, slot_id, slot_type, player_id, package_id, promo_code_s
 
     Parameters match what BookingViewSet.create reads from request.data, with
     promo_code_str already stripped and uppercased by the caller.
+
+    The entire function runs inside transaction.atomic() so that the slot/block
+    row lock (select_for_update) and the booking row are committed together or
+    rolled back atomically on any error.
     """
+    with transaction.atomic():
+        return _create_booking_inner(user, slot_id, slot_type, player_id, package_id, promo_code_str, notes)
+
+
+def _create_booking_inner(user, slot_id, slot_type, player_id, package_id, promo_code_str, notes):
     if not hasattr(user, 'client'):
         raise BookingError('Only clients can create bookings', 403)
 
@@ -112,9 +122,9 @@ def create_booking(user, slot_id, slot_type, player_id, package_id, promo_code_s
     session_type = None  # initialised here; set inside the schedule_block branch only
 
     if slot_type == 'schedule_block':
-        # Book against a ScheduleBlock — only fetch publicly available slots
+        # Book against a ScheduleBlock — lock the row to prevent concurrent oversell.
         try:
-            block = ScheduleBlock.objects.get(pk=slot_id, status='available')
+            block = ScheduleBlock.objects.select_for_update().get(pk=slot_id, status='available')
         except ScheduleBlock.DoesNotExist:
             raise BookingError('This slot is no longer available', 400)
         if not block.is_available:
@@ -148,12 +158,6 @@ def create_booking(user, slot_id, slot_type, player_id, package_id, promo_code_s
             status='pending',
             client_notes=notes,
         )
-        # Mark the block as booked
-        block.current_participants += 1
-        if block.current_participants >= block.max_participants:
-            block.status = 'booked'
-        block.save()
-
         session_name = session_type.name if session_type else SCHEDULE_BLOCK_CALENDARS.get(block.session_type, {}).get('name', 'Training Session')
 
         # --- APC Select routing ---
@@ -161,12 +165,13 @@ def create_booking(user, slot_id, slot_type, player_id, package_id, promo_code_s
         if sf_check in ('select_practice', 'select_game') and not is_exempt:
             if not get_client_select_membership(user):
                 booking.delete()
-                block.current_participants -= 1
-                if block.status == 'booked':
-                    block.status = 'available'
-                block.save()
                 raise BookingError('APC Select membership required to book this session.', 400)
             if sf_check == 'select_game':
+                block.current_participants = F('current_participants') + 1
+                block.save(update_fields=['current_participants'])
+                block.refresh_from_db(fields=['current_participants', 'max_participants'])
+                if block.current_participants >= block.max_participants:
+                    ScheduleBlock.objects.filter(pk=block.pk).update(status='booked')
                 booking.payment_status = 'paid'
                 booking.amount_paid = Decimal('0.00')
                 booking.save(update_fields=['payment_status', 'amount_paid'])
@@ -214,6 +219,11 @@ def create_booking(user, slot_id, slot_type, player_id, package_id, promo_code_s
                     scheduled_date__lt=month_end,
                 ).exclude(pk=booking.pk).count()
                 if month_count < 2:
+                    block.current_participants = F('current_participants') + 1
+                    block.save(update_fields=['current_participants'])
+                    block.refresh_from_db(fields=['current_participants', 'max_participants'])
+                    if block.current_participants >= block.max_participants:
+                        ScheduleBlock.objects.filter(pk=block.pk).update(status='booked')
                     booking.payment_status = 'paid'
                     booking.amount_paid = Decimal('0.00')
                     booking.save(update_fields=['payment_status', 'amount_paid'])
@@ -385,6 +395,22 @@ def create_booking(user, slot_id, slot_type, player_id, package_id, promo_code_s
                         discount_code_obj = dc
         except Exception:
             pass  # never block a booking due to promo code failure
+
+    # All validation passed — now increment the slot/block participant counter atomically.
+    if slot_type == 'schedule_block':
+        block.current_participants = F('current_participants') + 1
+        block.save(update_fields=['current_participants'])
+        block.refresh_from_db(fields=['current_participants', 'max_participants'])
+        if block.current_participants >= block.max_participants:
+            ScheduleBlock.objects.filter(pk=block.pk).update(status='booked')
+    else:
+        slot.current_bookings = F('current_bookings') + 1
+        slot.save(update_fields=['current_bookings'])
+        slot.refresh_from_db(fields=['current_bookings', 'max_bookings'])
+        if slot.current_bookings >= slot.max_bookings:
+            AvailabilitySlot.objects.filter(pk=slot.pk).update(status='fully_booked')
+        elif slot.current_bookings > 0:
+            AvailabilitySlot.objects.filter(pk=slot.pk, status='available').update(status='partially_booked')
 
     if package:
         # CRITICAL VALIDATION: Prevent special event packages from booking other special events
