@@ -1,0 +1,12 @@
+{% extends "owner/base.html" %}
+{% block content %}
+<h1>Referral Payouts</h1>
+<p>Status filter: {{ status_filter }}</p>
+{% for payout in payouts %}
+<div>
+  {{ payout.coach_user.get_full_name }} — ${{ payout.amount }} — {{ payout.status }}
+</div>
+{% empty %}
+<p>No payouts found.</p>
+{% endfor %}
+{% endblock %}
