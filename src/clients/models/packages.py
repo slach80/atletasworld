@@ -165,28 +165,35 @@ class ClientPackage(ExportModelOperationsMixin("client_package"), models.Model):
             new_package (Package): The package the client wants to upgrade to.
 
         Returns:
-            float: The amount (≥ 0) the client must pay.  Returns the full
-                   new_package.price if the current package is no longer valid.
+            Decimal: The amount (≥ 0) the client must pay.  Returns the full
+                     new_package.price if the current package is no longer valid.
         """
+        from decimal import Decimal, ROUND_HALF_UP
+
+        def to_decimal(value):
+            return value if isinstance(value, Decimal) else Decimal(str(value))
+
+        new_price = to_decimal(new_package.price)
+
         if not self.is_valid:
-            return new_package.price  # Full price if current package invalid
+            return new_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)  # Full price if current package invalid
+
+        current_price = to_decimal(self.package.price)
 
         # Calculate value of remaining sessions
         if self.package.sessions_included > 0:
-            price_per_session = self.package.price / self.package.sessions_included
+            price_per_session = current_price / self.package.sessions_included
             remaining_value = price_per_session * self.sessions_remaining
         else:
             # For unlimited packages, prorate by days remaining in the term
             total_days = (self.expiry_date - self.start_date).days
             remaining_days = (self.expiry_date - timezone.localdate()).days
             if remaining_days > 0 and total_days > 0:
-                remaining_value = (self.package.price * remaining_days) / total_days
+                remaining_value = (current_price * remaining_days) / total_days
             else:
-                remaining_value = 0
+                remaining_value = Decimal('0')
 
-        from decimal import Decimal, ROUND_HALF_UP
-        remaining_value = Decimal(str(remaining_value)) if not isinstance(remaining_value, Decimal) else remaining_value
-        upgrade_cost = max(Decimal('0'), new_package.price - remaining_value)
+        upgrade_cost = max(Decimal('0'), new_price - remaining_value)
         return upgrade_cost.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     def get_upgrade_options(self):
