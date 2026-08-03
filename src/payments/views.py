@@ -52,7 +52,7 @@ def create_package_payment_intent(request, package_id):
     if not settings.STRIPE_SECRET_KEY:
         return JsonResponse({'error': 'Payments not yet configured.'}, status=503)
 
-    from decimal import Decimal
+    from decimal import Decimal, InvalidOperation
     from clients.models import DiscountCode, DiscountCodeUse
 
     package = get_object_or_404(Package, pk=package_id, is_active=True)
@@ -110,6 +110,14 @@ def create_package_payment_intent(request, package_id):
     apply_credit    = request.POST.get('apply_credit') == '1'
     if apply_credit:
         remaining = subtotal - discount_amount
+        credit_amount_str = request.POST.get('credit_amount', '').strip()
+        if credit_amount_str:
+            try:
+                requested = Decimal(credit_amount_str)
+                if requested >= 0:
+                    remaining = min(remaining, requested)
+            except InvalidOperation:
+                pass
         for credit in client.credits.filter(status='available').order_by('expires_at'):
             if credit.is_usable and remaining > 0:
                 use_amount = min(credit.amount, remaining)
@@ -258,7 +266,7 @@ def create_batch_package_payment_intent(request):
     already has that same package active or is in the same batch.
     """
     import json
-    from decimal import Decimal
+    from decimal import Decimal, InvalidOperation
     from clients.models import DiscountCode, DiscountCodeUse, Player
 
     if not settings.STRIPE_SECRET_KEY:
@@ -271,6 +279,7 @@ def create_batch_package_payment_intent(request):
 
     promo_code_str = (data.get('promo_code') or '').strip().upper()
     apply_credit = data.get('apply_credit', False)
+    credit_amount_raw = data.get('credit_amount')
 
     # Normalize input to items list: [{package_id, player_ids}]
     items_input = data.get('items')
@@ -378,6 +387,13 @@ def create_batch_package_payment_intent(request):
     credit_applied = Decimal('0')
     if apply_credit:
         remaining = subtotal - discount_amount
+        if credit_amount_raw is not None:
+            try:
+                requested = Decimal(str(credit_amount_raw))
+                if requested >= 0:
+                    remaining = min(remaining, requested)
+            except InvalidOperation:
+                pass
         for credit in client.credits.filter(status='available').order_by('expires_at'):
             if credit.is_usable and remaining > 0:
                 use_amount = min(credit.amount, remaining)
@@ -752,7 +768,7 @@ def create_batch_booking_payment_intent(request):
     import json
     from coaches.models import ScheduleBlock
     from clients.models import Player
-    from decimal import Decimal
+    from decimal import Decimal, InvalidOperation
 
     if not settings.STRIPE_SECRET_KEY:
         return JsonResponse({'error': 'Stripe is not configured.'}, status=400)
@@ -763,6 +779,7 @@ def create_batch_booking_payment_intent(request):
     items = data.get('items', [])
     promo_code_str = data.get('promo_code', '').strip().upper()
     apply_credit = data.get('apply_credit', False)
+    credit_amount_raw = data.get('credit_amount')
     if not items:
         return JsonResponse({'error': 'No items provided.'}, status=400)
 
@@ -832,6 +849,13 @@ def create_batch_booking_payment_intent(request):
     credit_applied = Decimal('0.00')
     if apply_credit:
         remaining = total - discount_amount
+        if credit_amount_raw is not None:
+            try:
+                requested = Decimal(str(credit_amount_raw))
+                if requested >= 0:
+                    remaining = min(remaining, requested)
+            except InvalidOperation:
+                pass
         for credit in client.credits.filter(status='available').order_by('expires_at'):
             if credit.is_usable and remaining > 0:
                 use_amount = min(credit.amount, remaining)

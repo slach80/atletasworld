@@ -696,10 +696,19 @@
         {% if has_select_membership and select_credit_balance > 0 %}
         <div id="credit-row" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
             <label class="flex items-center gap-2 cursor-pointer text-sm text-green-800">
-                <input type="checkbox" id="apply-credit-check" onchange="initCheckoutPayment()"
+                <input type="checkbox" id="apply-credit-check" data-balance="{{ select_credit_balance|floatformat:2 }}"
+                       onchange="onCreditCheckToggle()"
                        class="rounded border-green-300 text-green-600 focus:ring-green-400">
-                <span>Apply <strong>${{ select_credit_balance|floatformat:2 }}</strong> APC Select credit</span>
+                <span>Apply APC Select credit (up to <strong>${{ select_credit_balance|floatformat:2 }}</strong> available)</span>
             </label>
+            <div id="credit-amount-row" class="hidden mt-2 flex items-center gap-2">
+                <span class="text-green-800 text-sm">$</span>
+                <input type="number" id="credit-amount-input" min="0" step="0.01"
+                       max="{{ select_credit_balance|floatformat:2 }}"
+                       onchange="initCheckoutPayment()" oninput="clampCreditAmount()"
+                       class="w-28 px-2 py-1 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent">
+                <span class="text-xs text-green-700">to apply</span>
+            </div>
         </div>
         {% endif %}
 
@@ -953,8 +962,36 @@ function openCheckout() {
     if (pr) { pr.classList.add('hidden'); pr.textContent = ''; }
     const cc = document.getElementById('apply-credit-check');
     if (cc) cc.checked = false;
+    const creditAmountRow = document.getElementById('credit-amount-row');
+    if (creditAmountRow) creditAmountRow.classList.add('hidden');
+    const creditAmountInput = document.getElementById('credit-amount-input');
+    if (creditAmountInput) creditAmountInput.value = '';
 
     document.getElementById('payment-modal').classList.remove('hidden');
+    initCheckoutPayment();
+}
+
+function clampCreditAmount() {
+    const amtInput = document.getElementById('credit-amount-input');
+    if (!amtInput) return;
+    const balance = parseFloat(amtInput.max) || 0;
+    let val = parseFloat(amtInput.value);
+    if (isNaN(val) || val < 0) val = 0;
+    if (val > balance) val = balance;
+    amtInput.value = val.toFixed(2);
+}
+
+function onCreditCheckToggle() {
+    const cc = document.getElementById('apply-credit-check');
+    const row = document.getElementById('credit-amount-row');
+    const amtInput = document.getElementById('credit-amount-input');
+    if (!cc || !row || !amtInput) return;
+    if (cc.checked) {
+        row.classList.remove('hidden');
+        if (!amtInput.value) amtInput.value = parseFloat(cc.dataset.balance || '0').toFixed(2);
+    } else {
+        row.classList.add('hidden');
+    }
     initCheckoutPayment();
 }
 
@@ -1011,11 +1048,16 @@ async function initCheckoutPayment() {
     }));
 
     const cc = document.getElementById('apply-credit-check');
+    const applyCredit = !!(cc && cc.checked);
     const body = {
         items: items,
         promo_code: activePromoCode || '',
-        apply_credit: !!(cc && cc.checked),
+        apply_credit: applyCredit,
     };
+    if (applyCredit) {
+        const amtInput = document.getElementById('credit-amount-input');
+        body.credit_amount = amtInput ? (parseFloat(amtInput.value) || 0) : 0;
+    }
 
     try {
         const res = await fetch('/portal/packages/batch-pay/', {

@@ -97,12 +97,13 @@ def generate_referral_code(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender='clients.ClientPackage')
 def seed_select_credits(sender, instance, created, **kwargs):
-    """Seed 6×$40 monthly training credits whenever an APC Select package is activated.
+    """Seed 6×$40 monthly training credits the first time a client ever activates APC Select.
 
     Runs on every save where status becomes 'active', so it covers admin assignments,
     manual creation, and any future path that bypasses the Stripe webhook.
-    Guard: skips if the client already has any select_monthly credits from this package
-    so it's safe to call multiple times (e.g. status toggled active → inactive → active).
+    Guard: this is a one-time, lifetime grant per client — skips if the client already has
+    ANY select_monthly credits from a prior Select activation (a different ClientPackage row),
+    since Select renewals create a new ClientPackage row each cycle but should not re-grant credit.
     """
     if instance.status != 'active':
         return
@@ -116,7 +117,6 @@ def seed_select_credits(sender, instance, created, **kwargs):
     already = ClientCredit.objects.filter(
         client=instance.client,
         credit_type='select_monthly',
-        source_package=instance,
     ).exists()
     if already:
         return
