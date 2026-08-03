@@ -628,12 +628,20 @@ def create_package_subscription(request, package_id):
             'subscription_id': subscription.id,
         })
 
+        # Stripe Basil (2025-03-31+) removed Invoice.payment_intent entirely — accessing it
+        # raises AttributeError. Use dict-style access (safe across API versions) and pull
+        # the client secret from Basil's confirmation_secret when SCA confirmation is needed.
+        client_secret = None
+        latest_invoice = subscription.latest_invoice
+        if latest_invoice:
+            confirmation_secret = latest_invoice.get('confirmation_secret')
+            if confirmation_secret:
+                client_secret = confirmation_secret.get('client_secret')
+
         return JsonResponse({
             'subscription_id': subscription.id,
             'status': subscription.status,
-            'client_secret': subscription.latest_invoice.payment_intent.client_secret
-                             if subscription.latest_invoice and subscription.latest_invoice.payment_intent
-                             else None,
+            'client_secret': client_secret,
         })
 
     except stripe.error.StripeError as e:

@@ -354,6 +354,35 @@ class TestSelectSubscriptionWebhooks:
 
     @patch('payments.views.NotificationService', create=True)
     @patch('stripe.Webhook.construct_event')
+    def test_renewal_extends_expiry_date_basil_invoice_shape(self, mock_construct, mock_ns, db, select_client, select_package):
+        """Stripe's Basil API (2025-03-31+) moved invoice.subscription to
+        invoice.parent.subscription_details.subscription — renewal must still work."""
+        from clients.models import ClientPackage
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        cp = ClientPackage.objects.create(
+            client=select_client, package=select_package,
+            status='active', start_date=today,
+            expiry_date=today + timedelta(weeks=4),
+            sessions_remaining=2,
+            stripe_subscription_id='sub_test_renew_basil',
+        )
+        invoice = {
+            'amount_paid': 10000,
+            'parent': {'subscription_details': {'subscription': 'sub_test_renew_basil'}},
+        }
+        mock_construct.return_value = {'type': 'invoice.payment_succeeded', 'data': {'object': invoice}}
+        from django.test import override_settings
+        with override_settings(**SETTINGS):
+            resp = payments_webhook(_webhook_request('invoice.payment_succeeded', invoice))
+        assert resp.status_code == 200
+        cp.refresh_from_db()
+        assert cp.expiry_date == today + timedelta(weeks=4)
+        assert cp.sessions_remaining == 2
+
+    @patch('payments.views.NotificationService', create=True)
+    @patch('stripe.Webhook.construct_event')
     def test_renewal_resets_depleted_sessions(self, mock_construct, mock_ns, db, select_client, select_package):
         """Renewal resets sessions_remaining to sessions_included even when depleted."""
         from clients.models import ClientPackage
@@ -616,7 +645,7 @@ class TestSelectSubscriptionWebhooks:
         mock_sub = MagicMock()
         mock_sub.id = 'sub_test_fall'
         mock_sub.status = 'active'
-        mock_sub.latest_invoice = MagicMock(payment_intent=MagicMock(client_secret='pi_secret'))
+        mock_sub.latest_invoice = {'confirmation_secret': {'client_secret': 'pi_secret'}}
         mock_s.Subscription.create.return_value = mock_sub
         mock_s.Subscription.modify.return_value = mock_sub
 
@@ -645,7 +674,10 @@ class TestSelectSubscriptionBillingLogic:
         sub = MagicMock()
         sub.id = 'sub_mock_001'
         sub.status = status
-        sub.latest_invoice.payment_intent.client_secret = client_secret
+        invoice = {}
+        if client_secret:
+            invoice['confirmation_secret'] = {'client_secret': client_secret}
+        sub.latest_invoice = invoice
         return sub
 
     @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
@@ -672,6 +704,35 @@ class TestSelectSubscriptionBillingLogic:
         assert resp.status_code == 200
         call_kwargs = mock_s.Subscription.create.call_args[1]
         assert 'trial_end' not in call_kwargs  # no trial for new member
+
+    @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
+    @patch('payments.views._stripe')
+    def test_subscription_response_does_not_crash_when_invoice_has_no_confirmation_secret(
+        self, mock_stripe_fn, mock_customer, db, select_client, select_package
+    ):
+        """Stripe's Basil API removed Invoice.payment_intent entirely (raises AttributeError
+        on access). When an invoice needs no further confirmation (e.g. already paid
+        off-session), latest_invoice has no confirmation_secret at all — must return
+        client_secret: None instead of crashing (this was the actual "Network error"
+        production bug: the subscription/package activated successfully server-side but
+        the response construction crashed, so the client only ever saw a JSON parse error)."""
+        from django.test import Client as TestClient, override_settings
+        mock_s = MagicMock()
+        mock_s.PaymentMethod.attach.return_value = None
+        mock_s.Customer.modify.return_value = None
+        mock_s.Subscription.create.return_value = self._make_stripe_mock(status='active', client_secret=None)
+        mock_s.Subscription.modify.return_value = None
+        mock_stripe_fn.return_value = mock_s
+
+        tc = TestClient()
+        tc.force_login(select_client.user)
+        with override_settings(STRIPE_SECRET_KEY='sk_test_dummy'):
+            resp = tc.post(
+                f'/portal/packages/{select_package.pk}/subscribe/',
+                {'payment_method_id': 'pm_test_001'},
+            )
+        assert resp.status_code == 200
+        assert resp.json()['client_secret'] is None
 
     @patch('payments.views._get_or_create_stripe_customer', return_value='cus_test')
     @patch('payments.views._stripe')

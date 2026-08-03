@@ -1180,7 +1180,7 @@ async function submitPayment() {
             const data = await res.json();
             if (data.error) { showError(data.error); btn.disabled = false; btn.textContent = 'Subscribe'; return; }
             if (data.client_secret) {
-                const { error: confErr } = await stripeJs.confirmCardPayment(data.client_secret);
+                const { error: confErr } = await stripeJs.confirmPayment({ clientSecret: data.client_secret, redirect: 'if_required' });
                 if (confErr) { showError(confErr.message); btn.disabled = false; btn.textContent = 'Subscribe'; return; }
             }
             window.location.href = '/portal/packages/?select_joined=1';
@@ -1263,7 +1263,7 @@ if (window.location.search.includes('purchased=1')) {
     const data = await res.json();
     if (data.error) { alert('Subscription error: ' + data.error); return; }
     if (data.client_secret) {
-        const { error: confErr } = await stripeJs.confirmCardPayment(data.client_secret);
+        const { error: confErr } = await stripeJs.confirmPayment({ clientSecret: data.client_secret, redirect: 'if_required' });
         if (confErr) { alert('Payment error: ' + confErr.message); return; }
     }
     window.location.href = '/portal/packages/?select_joined=1';

@@ -16,6 +16,20 @@ from payments.stripe_utils import get_stripe as _stripe
 logger = logging.getLogger(__name__)
 
 
+def _invoice_subscription_id(invoice):
+    """Extract the subscription ID from an Invoice, across Stripe API versions.
+
+    Pre-Basil (before 2025-03-31), invoices had a flat `subscription` field.
+    Basil moved it to `invoice.parent.subscription_details.subscription`.
+    """
+    sub_id = invoice.get('subscription')
+    if sub_id:
+        return sub_id
+    parent = invoice.get('parent') or {}
+    details = parent.get('subscription_details') or {}
+    return details.get('subscription')
+
+
 def _handle_payment_succeeded(intent):
     """PaymentIntent succeeded → activate package or mark rental paid."""
     try:
@@ -543,7 +557,7 @@ _BILLING_TIER_WEEKS = {
 def _handle_subscription_renewed(invoice):
     """Subscription billing cycle succeeded → extend ClientPackage expiry and notify member."""
     from datetime import timedelta
-    subscription_id = invoice.get('subscription')
+    subscription_id = _invoice_subscription_id(invoice)
     if not subscription_id:
         logger.warning('_handle_subscription_renewed: no subscription in invoice %s', invoice.get('id'))
         return
@@ -628,7 +642,7 @@ def _handle_subscription_renewed(invoice):
 
 def _handle_subscription_payment_failed(invoice):
     """Subscription payment failed → notify member to update their card."""
-    subscription_id = invoice.get('subscription')
+    subscription_id = _invoice_subscription_id(invoice)
     if not subscription_id:
         return
     # Only notify on the first failure attempt (attempt_count == 1) to avoid spam
@@ -671,7 +685,7 @@ def _handle_subscription_payment_failed(invoice):
 
 def _handle_invoice_upcoming(invoice):
     """Upcoming invoice (7 days before renewal) → remind member of upcoming charge."""
-    subscription_id = invoice.get('subscription')
+    subscription_id = _invoice_subscription_id(invoice)
     if not subscription_id:
         return
     cp = ClientPackage.objects.filter(
