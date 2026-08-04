@@ -1,0 +1,439 @@
+{% extends "clients/base.html" %}
+{% load static %}
+
+{% block title %}{{ player.full_name }} Performance - Atletas Performance Center{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center text-sm text-gray-500 mb-6">
+        <a href="{% url 'clients:dashboard' %}" class="hover:text-secondary">Dashboard</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        <a href="{% url 'performance' %}" class="hover:text-secondary">Performance</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        <span class="text-gray-800">{{ player.full_name }}</span>
+    </div>
+
+    <!-- Player Header -->
+    <div class="bg-gradient-to-r from-gray-700 to-primary rounded-2xl p-6 text-white mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center">
+                {% if player.photo %}
+                <img src="{{ player.photo.url }}" alt="{{ player.full_name }}"
+                     class="w-20 h-20 rounded-full object-cover mr-4">
+                {% else %}
+                <div class="w-20 h-20 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl font-bold mr-4">
+                    {{ player.first_name.0 }}{{ player.last_name.0 }}
+                </div>
+                {% endif %}
+                <div>
+                    <h1 class="text-3xl font-bold font-['Bilgen']">{{ player.full_name }}</h1>
+                    <p class="text-gray-200">{{ player.age_group|default:"" }} {% if player.skill_level %}• {{ player.get_skill_level_display }}{% endif %}</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex gap-6">
+                <div class="text-center">
+                    <div class="text-3xl font-bold">{{ results_count }}</div>
+                    <div class="text-sm text-gray-200">Total Assessments</div>
+                </div>
+                {% if latest_test %}
+                <div class="text-center">
+                    <div class="text-lg font-semibold">{{ latest_test.test_date|date:"M d, Y" }}</div>
+                    <div class="text-sm text-gray-200">Last Assessed</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Frame Filter -->
+    <div class="mb-6">
+        <div class="bg-white rounded-xl shadow-md p-4 sm:p-5">
+            <!-- Mobile: Stacked Layout -->
+            <div class="block sm:hidden">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Time Period</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="?timeframe=4w" class="px-3 py-2.5 text-sm font-semibold rounded-lg transition-all text-center {% if timeframe == '4w' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 active:bg-gray-200{% endif %}">
+                        4 Weeks
+                    </a>
+                    <a href="?timeframe=3m" class="px-3 py-2.5 text-sm font-semibold rounded-lg transition-all text-center {% if timeframe == '3m' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 active:bg-gray-200{% endif %}">
+                        3 Months
+                    </a>
+                    <a href="?timeframe=6m" class="px-3 py-2.5 text-sm font-semibold rounded-lg transition-all text-center {% if timeframe == '6m' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 active:bg-gray-200{% endif %}">
+                        6 Months
+                    </a>
+                    <a href="?timeframe=1y" class="px-3 py-2.5 text-sm font-semibold rounded-lg transition-all text-center {% if timeframe == '1y' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 active:bg-gray-200{% endif %}">
+                        1 Year
+                    </a>
+                    <a href="?timeframe=all" class="col-span-2 px-3 py-2.5 text-sm font-semibold rounded-lg transition-all text-center {% if timeframe == 'all' or not timeframe %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 active:bg-gray-200{% endif %}">
+                        All Time
+                    </a>
+                </div>
+            </div>
+
+            <!-- Desktop: Inline Layout -->
+            <div class="hidden sm:flex items-center gap-4 flex-wrap">
+                <span class="text-sm font-semibold text-gray-700 whitespace-nowrap">Time Period:</span>
+                <div class="flex gap-2 flex-wrap flex-1 justify-end">
+                    <a href="?timeframe=4w" class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-all {% if timeframe == '4w' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow{% endif %}">
+                        4 Weeks
+                    </a>
+                    <a href="?timeframe=3m" class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-all {% if timeframe == '3m' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow{% endif %}">
+                        3 Months
+                    </a>
+                    <a href="?timeframe=6m" class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-all {% if timeframe == '6m' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow{% endif %}">
+                        6 Months
+                    </a>
+                    <a href="?timeframe=1y" class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-all {% if timeframe == '1y' %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow{% endif %}">
+                        1 Year
+                    </a>
+                    <a href="?timeframe=all" class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-all {% if timeframe == 'all' or not timeframe %}bg-secondary text-gray-900 shadow-sm{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow{% endif %}">
+                        All Time
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Eligibility Banner -->
+    <div class="mb-6">
+        {% if is_eligible %}
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <p class="text-green-800 dark:text-green-300">
+                <span class="font-semibold">✓ Eligible this week</span> — {{ eligibility_reason }}
+            </p>
+        </div>
+        {% else %}
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <p class="text-yellow-800 dark:text-yellow-300">
+                <span class="font-semibold">⚠ Not currently eligible</span> — {{ eligibility_reason }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Metrics Grid -->
+    {% if metrics_data %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for metric in metrics_data %}
+        <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <!-- Metric Header -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <h3 class="text-lg font-bold text-gray-800">{{ metric.definition.name }}</h3>
+                        {% if metric.definition.description %}
+                        <button type="button"
+                                class="info-btn flex-shrink-0"
+                                onclick="showMetricInfo('{{ metric.definition.name|escapejs }}', '{{ metric.definition.description|escapejs }}')"
+                                title="Learn more about this metric">
+                            <svg class="w-5 h-5 text-blue-500 hover:text-blue-700 cursor-pointer transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-500">{{ metric.definition.unit }}</p>
+                </div>
+                <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded flex-shrink-0">
+                    {{ metric.definition.system|title }}
+                </span>
+            </div>
+
+            <!-- Latest Value & Changes -->
+            <div class="mb-4">
+                <div class="flex items-baseline gap-2 mb-3">
+                    <span class="text-5xl font-bold text-gray-800">{{ metric.latest|floatformat:1 }}</span>
+                    <span class="text-lg text-gray-500">{{ metric.definition.unit }}</span>
+                </div>
+
+                <!-- Change vs Last Test -->
+                {% if metric.delta %}
+                <div class="flex items-center gap-2 mb-2">
+                    {% if metric.definition.trend_direction == 'increasing' %}
+                        {% if metric.delta > 0 %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 font-bold text-sm rounded-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                            {% if metric.delta_percent %}{{ metric.delta_percent|floatformat:1 }}%{% else %}+{{ metric.delta|floatformat:1 }}{% endif %}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 font-bold text-sm rounded-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            {% if metric.delta_percent %}{{ metric.delta_percent|floatformat:1 }}%{% else %}{{ metric.delta|floatformat:1 }}{% endif %}
+                        </span>
+                        {% endif %}
+                    {% elif metric.definition.trend_direction == 'decreasing' %}
+                        {% if metric.delta < 0 %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 font-bold text-sm rounded-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            {% if metric.delta_percent %}{{ metric.delta_percent|floatformat:1|cut:"-" }}%{% else %}{{ metric.delta|floatformat:1 }}{% endif %}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 font-bold text-sm rounded-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                            {% if metric.delta_percent %}{{ metric.delta_percent|floatformat:1 }}%{% else %}+{{ metric.delta|floatformat:1 }}{% endif %}
+                        </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-700 font-bold text-sm rounded-lg">
+                            {% if metric.delta_percent %}{{ metric.delta_percent|floatformat:1 }}%{% else %}{{ metric.delta|floatformat:1 }}{% endif %}
+                        </span>
+                    {% endif %}
+                    <span class="text-gray-500 text-sm">vs last test</span>
+                </div>
+                {% endif %}
+
+                <!-- Overall Progress -->
+                {% if metric.overall_percent and metric.count >= 2 %}
+                <div class="text-xs text-gray-500">
+                    {% if metric.definition.trend_direction == 'increasing' %}
+                        {% if metric.overall_change > 0 %}
+                        <span class="text-green-600 font-medium">↑ {{ metric.overall_percent|floatformat:1 }}%</span> total improvement
+                        {% elif metric.overall_change < 0 %}
+                        <span class="text-red-600 font-medium">↓ {{ metric.overall_percent|floatformat:1 }}%</span> from baseline
+                        {% endif %}
+                    {% elif metric.definition.trend_direction == 'decreasing' %}
+                        {% if metric.overall_change < 0 %}
+                        <span class="text-green-600 font-medium">↓ {{ metric.overall_percent|floatformat:1|cut:"-" }}%</span> total improvement
+                        {% elif metric.overall_change > 0 %}
+                        <span class="text-red-600 font-medium">↑ {{ metric.overall_percent|floatformat:1 }}%</span> from baseline
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Interactive Chart -->
+            <div class="h-32 mb-3">
+                <canvas id="chart-{{ forloop.counter }}" class="w-full h-full cursor-pointer"></canvas>
+            </div>
+
+            <!-- Count -->
+            <div class="text-xs text-gray-500">
+                {{ metric.count }} test{{ metric.count|pluralize }} • {{ metric.first_value|floatformat:1 }} to {{ metric.latest|floatformat:1 }}
+            </div>
+        </div>
+
+        <!-- Store chart data for JS -->
+        <script>
+        window.chartData{{ forloop.counter }} = {{ metric.points|safe }};
+        window.chartTrend{{ forloop.counter }} = "{{ metric.definition.trend_direction }}";
+        window.chartUnit{{ forloop.counter }} = "{{ metric.definition.unit|escapejs }}";
+        </script>
+        {% endfor %}
+    </div>
+
+    <!-- Initialize Charts -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for metric in metrics_data %}
+        renderMetricChart('chart-{{ forloop.counter }}', window.chartData{{ forloop.counter }}, window.chartTrend{{ forloop.counter }}, window.chartUnit{{ forloop.counter }});
+        {% endfor %}
+    });
+
+    function renderMetricChart(canvasId, data, trendDirection, unit) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+
+        const labels = data.map(d => d.formatted_date);
+        const values = data.map(d => d.value);
+
+        // Color based on trend direction
+        const lineColor = trendDirection === 'increasing' ? '#10b981' : trendDirection === 'decreasing' ? '#f97316' : '#6366f1';
+        const isDark = document.documentElement.classList.contains('dark');
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Value',
+                    data: values,
+                    borderColor: lineColor,
+                    backgroundColor: lineColor + '20',
+                    pointBackgroundColor: lineColor,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {display: false},
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label;
+                            },
+                            label: function(context) {
+                                const value = context.parsed.y.toFixed(1);
+                                return value + (unit ? ' ' + unit : '');
+                            },
+                            afterLabel: function(context) {
+                                const idx = context.dataIndex;
+                                if (idx > 0) {
+                                    const prev = values[idx - 1];
+                                    const curr = values[idx];
+                                    const change = curr - prev;
+                                    const pct = ((change / prev) * 100).toFixed(1);
+                                    return change > 0 ? `↑ +${pct}% from previous` : `↓ ${pct}% from previous`;
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            display: false,
+                        }
+                    },
+                    y: {
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false,
+                        },
+                        ticks: {
+                            color: isDark ? '#9ca3af' : '#6b7280',
+                            font: {
+                                size: 10,
+                            },
+                            callback: function(value) {
+                                return value.toFixed(0);
+                            }
+                        }
+                    }
+                },
+                onHover: (event, activeElements) => {
+                    event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                }
+            }
+        });
+
+        return chart;
+    }
+
+    // Unified metric info modal (works for all screen sizes)
+    function showMetricInfo(title, description) {
+        // Remove any existing modals
+        const existing = document.getElementById('metric-info-modal');
+        if (existing) existing.remove();
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'metric-info-modal';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fadeIn';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 animate-slideUp">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <h3 class="text-xl font-bold text-gray-800">${title}</h3>
+                    </div>
+                    <button onclick="document.getElementById('metric-info-modal').remove()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-gray-700 leading-relaxed mb-6">${description}</p>
+                <button onclick="document.getElementById('metric-info-modal').remove()"
+                        class="w-full bg-secondary hover:bg-[#b8e000] text-gray-900 font-bold py-3 rounded-lg transition-colors">
+                    Got it
+                </button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close on backdrop click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) modal.remove();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        });
+    }
+
+    // Add simple CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.2s ease-out;
+        }
+        .animate-slideUp {
+            animation: slideUp 0.3s ease-out;
+        }
+    `;
+    document.head.appendChild(style);
+    </script>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl shadow-md p-12 text-center">
+        <div class="text-6xl mb-4">📊</div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">No Assessment Data Yet</h3>
+        {% if profile %}
+        <p class="text-gray-600 mb-4">
+            {{ player.first_name }}'s first assessment will appear here once completed.
+        </p>
+        {% else %}
+        <p class="text-gray-600 mb-4">
+            {{ player.first_name }}'s profile is not yet linked to our assessment system.
+        </p>
+        {% endif %}
+        <p class="text-sm text-gray-500">
+            Contact us to schedule an assessment or for more information.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

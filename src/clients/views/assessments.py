@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.conf import settings
 
 from clients.models import Client, Player
 from coaches.models import PlayerAssessment
@@ -17,9 +18,33 @@ def assessments_view(request):
         player__client=client
     ).select_related('player', 'coach', 'booking__session_type').order_by('-assessment_date')
 
+    # Get VALD performance data if enabled
+    vald_enabled = settings.VALD_SYNC_ENABLED
+    vald_players = []
+    if vald_enabled:
+        try:
+            from performance.models import ValdProfile, ValdTestResult
+            for player in players:
+                try:
+                    profile = player.vald_profile
+                    latest = profile.results.first()
+                    total_count = profile.results.count()
+                    vald_players.append({
+                        'player': player,
+                        'profile': profile,
+                        'latest_test': latest,
+                        'total_assessments': total_count,
+                    })
+                except ValdProfile.DoesNotExist:
+                    pass
+        except ImportError:
+            vald_enabled = False
+
     context = {
         'client': client,
         'assessments': assessments,
+        'vald_enabled': vald_enabled,
+        'vald_players': vald_players,
     }
     return render(request, 'clients/assessments.html', context)
 

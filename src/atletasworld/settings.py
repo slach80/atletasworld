@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'analytics',
     'reviews',
     'blog',
+    'performance',
 ]
 
 MIDDLEWARE = [
@@ -299,6 +300,40 @@ VAPID_PRIVATE_KEY = env('VAPID_PRIVATE_KEY', default='')
 # Production Email via SendGrid/Mailgun (PAID)
 # Default uses Django console backend (FREE for development)
 PRODUCTION_EMAIL_ENABLED = env.bool('PRODUCTION_EMAIL_ENABLED', default=False)
+
+# ── VALD Performance API ───────────────────────────────────────────────────
+VALD_CLIENT_ID = env('VALD_CLIENT_ID', default='')
+VALD_CLIENT_SECRET = env('VALD_CLIENT_SECRET', default='')
+VALD_TENANT_ID = env('VALD_TENANT_ID', default='')
+VALD_REGION = env('VALD_REGION', default='use')  # 'use' | 'aue' | 'euw'
+VALD_AUTH_URL = env('VALD_AUTH_URL', default='https://auth.prd.vald.com')
+VALD_API_BASES = {
+    # (system, region) → base URL; region-locked per VALD docs.
+    # NOTE: host naming is inconsistent across VALD systems — confirmed via DNS
+    # probe against the real tenant in Phase 0 (2026-08-03), not documented anywhere.
+    ('forcedecks', 'use'): 'https://prd-use-api-extforcedecks.valdperformance.com',
+    ('forcedecks', 'aue'): 'https://prd-aue-api-extforcedecks.valdperformance.com',
+    ('forcedecks', 'euw'): 'https://prd-euw-api-extforcedecks.valdperformance.com',
+    ('profiles', 'use'): 'https://prd-use-api-externalprofile.valdperformance.com',
+    ('profiles', 'aue'): 'https://prd-aue-api-externalprofile.valdperformance.com',
+    ('profiles', 'euw'): 'https://prd-euw-api-externalprofile.valdperformance.com',
+    ('tenants', 'use'): 'https://prd-use-api-externaltenants.valdperformance.com',
+    ('tenants', 'aue'): 'https://prd-aue-api-externaltenants.valdperformance.com',
+    ('tenants', 'euw'): 'https://prd-euw-api-externaltenants.valdperformance.com',
+    # smartspeed hosts added in Phase 3 once Swagger-confirmed
+}
+VALD_SYNC_ENABLED = env.bool('VALD_SYNC_ENABLED', default=False)
+
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'vald': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': env('REDIS_URL', default='redis://localhost:6379/0'),
+    },
+}
 
 # Celery for background tasks (requires Redis - FREE locally, paid in cloud)
 CELERY_ENABLED = env.bool('CELERY_ENABLED', default=False)

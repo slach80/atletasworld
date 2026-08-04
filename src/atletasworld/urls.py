@@ -283,6 +283,9 @@ urlpatterns = [
     path('unsubscribe/one-click/<str:token>/', unsubscribe_oneclick, name='email_unsubscribe_oneclick'),
     path('unsubscribe/<str:token>/', unsubscribe_landing, name='email_unsubscribe'),
 
+    # Owner portal — VALD performance (not in admin_views.py)
+    path('owner-portal/performance/', include('performance.urls_owner')),
+
     # Grappelli admin (must be before admin)
     path('grappelli/', include('grappelli.urls')),
 
@@ -293,6 +296,8 @@ urlpatterns = [
 
     # Client portal pages
     path('portal/', include('clients.urls')),
+    # Performance detail routes (integrated into assessments page)
+    path('portal/performance/', include('performance.urls')),
 
     # Coach portal pages
     path('coach-portal/', include('coaches.urls')),

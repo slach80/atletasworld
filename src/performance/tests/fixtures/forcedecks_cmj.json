@@ -1,0 +1,28 @@
+{
+  "_comment": "Mock ForceDecks CMJ test response for Phase 1 testing",
+  "testId": "test-cmj-001",
+  "profileId": "profile-123",
+  "tenantId": "tenant-abc",
+  "testType": "CMJ",
+  "testDate": "2026-07-20T14:30:00.000Z",
+  "modifiedDateUtc": "2026-07-20T14:35:00.000Z",
+  "results": [
+    {
+      "resultId": "CMJ_JumpHeight",
+      "value": 32.5,
+      "unit": "cm"
+    },
+    {
+      "resultId": "CMJ_PeakForce",
+      "value": 1850.2,
+      "unit": "N"
+    },
+    {
+      "resultId": "CMJ_RSI",
+      "value": 1.25,
+      "unit": ""
+    }
+  ],
+  "trialCount": 3,
+  "notes": "Phase 1 test fixture — sanitized PII"
+}

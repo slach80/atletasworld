@@ -1,0 +1,188 @@
+{% extends "owner/base.html" %}
+{% load static %}
+
+{% block title %}{{ player.full_name }} Performance - Owner Portal{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-6">
+    <!-- Breadcrumb -->
+    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <a href="{% url 'owner_performance' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400">VALD Performance</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        <span class="text-gray-800 dark:text-gray-200">{{ player.full_name }}</span>
+    </div>
+
+    <!-- Player Header -->
+    <div class="flex justify-between items-center flex-wrap gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1">{{ player.full_name }}</h1>
+            <p class="text-gray-600 dark:text-gray-400">{{ player.age_group|default:"" }}</p>
+        </div>
+        {% if profile %}
+        <div class="text-sm text-right text-gray-600 dark:text-gray-400">
+            <div>VALD Profile: <span class="font-mono">{{ profile.vald_profile_id }}</span></div>
+            <div>Matched via {{ profile.get_match_method_display }} on {{ profile.matched_at|date:"M d, Y" }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if not profile %}
+    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+        <p class="text-yellow-800 dark:text-yellow-300">Not linked to a VALD profile yet. Match it from the
+            <a href="{% url 'owner_performance' %}" class="underline">VALD Performance</a> table.</p>
+    </div>
+    {% endif %}
+
+    <!-- Metrics Grid -->
+    {% if metrics_data %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {% for metric in metrics_data %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">{{ metric.definition.name }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ metric.definition.unit }} · {{ metric.definition.system }}</p>
+                </div>
+                {% if not metric.definition.show_in_client_portal %}
+                <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded flex-shrink-0">Owner only</span>
+                {% endif %}
+            </div>
+            <div class="text-4xl font-bold text-gray-800 dark:text-white mb-3">{{ metric.latest|floatformat:2 }}</div>
+            <div class="h-28 mb-2">
+                <canvas id="owner-chart-{{ forloop.counter }}" class="w-full h-full"></canvas>
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">{{ metric.count }} test{{ metric.count|pluralize }}</div>
+        </div>
+        <script>
+        window.ownerChartData{{ forloop.counter }} = {{ metric.points|safe }};
+        </script>
+        {% endfor %}
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isDark = document.documentElement.classList.contains('dark');
+        {% for metric in metrics_data %}
+        (function() {
+            const ctx = document.getElementById('owner-chart-{{ forloop.counter }}');
+            if (!ctx) return;
+            const data = window.ownerChartData{{ forloop.counter }};
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.week),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        borderColor: '#6366f1',
+                        backgroundColor: '#6366f120',
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {legend: {display: false}},
+                    scales: {
+                        x: {display: false},
+                        y: {
+                            display: true,
+                            position: 'right',
+                            ticks: {color: isDark ? '#9ca3af' : '#6b7280', font: {size: 10}},
+                            grid: {color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'},
+                        }
+                    }
+                }
+            });
+        })();
+        {% endfor %}
+    });
+    </script>
+    {% elif profile %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center mb-8">
+        <p class="text-gray-600 dark:text-gray-400">No test results synced for this profile yet.</p>
+    </div>
+    {% endif %}
+
+    <!-- Raw Test Results -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+        <div class="p-6 border-b dark:border-gray-700">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white">Raw Test Results</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                        <th class="text-left py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
+                        <th class="text-left py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Test Type</th>
+                        <th class="text-left py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">VALD Test ID</th>
+                        <th class="text-right py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Metrics</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr class="border-b dark:border-gray-700">
+                        <td class="py-2 px-4 text-sm dark:text-gray-300">{{ result.test_date|date:"M d, Y H:i" }}</td>
+                        <td class="py-2 px-4 text-sm dark:text-gray-300">{{ result.test_type }}</td>
+                        <td class="py-2 px-4 text-sm font-mono text-gray-500 dark:text-gray-400">{{ result.vald_test_id|truncatechars:20 }}</td>
+                        <td class="py-2 px-4 text-right">
+                            <!-- Curated metrics dict only — not raw_payload, which will carry every
+                                 trial-level result field (hundreds per test) once real sync lands. -->
+                            <details>
+                                <summary class="text-indigo-600 dark:text-indigo-400 text-sm cursor-pointer">View ({{ result.metrics|length }})</summary>
+                                <pre class="mt-2 text-left text-xs bg-gray-50 dark:bg-gray-900 dark:text-gray-300 p-3 rounded overflow-x-auto max-h-64">{{ result.metrics|pprint }}</pre>
+                            </details>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500 dark:text-gray-400">No results yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sync History -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-6 border-b dark:border-gray-700">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white">Recent Sync Runs</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                        <th class="text-left py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">System</th>
+                        <th class="text-left py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Started</th>
+                        <th class="text-left py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                        <th class="text-right py-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Records</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sync in sync_runs %}
+                    <tr class="border-b dark:border-gray-700">
+                        <td class="py-2 px-4 text-sm dark:text-gray-300">{{ sync.system }}</td>
+                        <td class="py-2 px-4 text-sm text-gray-600 dark:text-gray-400">{{ sync.started_at|date:"M d, Y H:i" }}</td>
+                        <td class="py-2 px-4 text-sm dark:text-gray-300">{{ sync.get_status_display }}</td>
+                        <td class="py-2 px-4 text-right text-sm dark:text-gray-300">{{ sync.records_synced }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500 dark:text-gray-400">No sync runs yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

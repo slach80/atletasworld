@@ -1,0 +1,37 @@
+{
+  "_comment": "Mock /resultdefinitions response for Phase 1 testing",
+  "resultDefinitions": [
+    {
+      "resultId": "CMJ_JumpHeight",
+      "system": "forcedecks",
+      "name": "Jump Height",
+      "unit": "cm",
+      "trendDirection": "increasing",
+      "description": "Maximum vertical displacement during CMJ"
+    },
+    {
+      "resultId": "CMJ_PeakForce",
+      "system": "forcedecks",
+      "name": "Peak Force",
+      "unit": "N",
+      "trendDirection": "increasing",
+      "description": "Maximum force exerted during takeoff"
+    },
+    {
+      "resultId": "CMJ_RSI",
+      "system": "forcedecks",
+      "name": "Reactive Strength Index",
+      "unit": "",
+      "trendDirection": "increasing",
+      "description": "Jump height / contact time"
+    },
+    {
+      "resultId": "Sprint_10m",
+      "system": "smartspeed",
+      "name": "10m Sprint Time",
+      "unit": "s",
+      "trendDirection": "decreasing",
+      "description": "Time to cover 10 meters from standing start"
+    }
+  ]
+}

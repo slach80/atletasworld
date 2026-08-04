@@ -11,13 +11,14 @@
 
             <!-- Players dropdown -->
             <div class="relative group">
-                <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' or request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">
+                <button class="flex items-center gap-1 px-3 py-2 rounded {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' or request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' or request.resolver_match.url_name == 'performance' or request.resolver_match.url_name == 'performance_detail' %}bg-secondary/10 text-secondary font-semibold{% else %}text-white hover:bg-white/10{% endif %} transition">
                     Players
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <div class="absolute left-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                <div class="absolute left-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                     <a href="{% url 'clients:players' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'players' or request.resolver_match.url_name == 'player_form' or request.resolver_match.url_name == 'player_edit' %}text-gray-900 font-semibold{% endif %} rounded-t-lg">👥 My Players</a>
-                    <a href="{% url 'clients:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">📋 Assessments</a>
+                    <a href="{% url 'clients:assessments' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'assessments' or request.resolver_match.url_name == 'player_assessments' %}text-gray-900 font-semibold{% endif %}">📋 Assessments</a>
+                    <a href="{% url 'performance' %}" class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 {% if request.resolver_match.url_name == 'performance' or request.resolver_match.url_name == 'performance_detail' %}text-gray-900 font-semibold{% endif %} rounded-b-lg">📊 Performance</a>
                 </div>
             </div>
             <!-- Account dropdown -->
@@ -59,6 +60,7 @@
         <p class="px-3 pt-1 text-xs text-gray-500 uppercase tracking-wider">Players</p>
         <a href="{% url 'clients:players' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">👥 My Players</a>
         <a href="{% url 'clients:assessments' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📋 Assessments</a>
+        <a href="{% url 'performance' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📊 Performance</a>
         <p class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wider">Account</p>
         <a href="{% url 'clients:bookings' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📅 My Bookings</a>
         <a href="{% url 'clients:packages' %}" class="block px-5 py-2 rounded text-white hover:bg-white/10">📦 Packages</a>

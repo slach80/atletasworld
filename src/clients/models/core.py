@@ -167,6 +167,11 @@ class Player(ExportModelOperationsMixin("player"), models.Model):
         return f"{self.first_name} {self.last_name} ({self.birth_year})"
 
     @property
+    def full_name(self):
+        """Player's full name."""
+        return f"{self.first_name} {self.last_name}"
+
+    @property
     def age(self):
         return timezone.now().year - self.birth_year
 
