@@ -709,3 +709,72 @@ def test_owner_team_detail_available_players_excludes_roster():
     ids = [p.pk for p in available]
     assert player_on.pk not in ids
     assert player_off.pk in ids
+
+
+# ---------------------------------------------------------------------------
+# Select game creation — regression for date/time strings never being
+# parsed before SelectGame.objects.create(), which crashed the post_save
+# RSVP-fanout signal's instance.date.strftime() call (reported by Mirko).
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+def test_owner_create_select_game_parses_date_and_time():
+    """POSTed date/time strings (from <input type=date/time>) must become
+    real date/time objects — not raw strings — before the game is saved."""
+    from bookings.models import SelectGame
+
+    owner = _make_owner_user('ocg_owner')
+    mgr_client = _make_client_obj(owner)
+    team = _make_select_team(mgr_client, slug='ocg-team')
+
+    tc = TestClient()
+    tc.force_login(owner)
+    resp = tc.post(reverse('owner_select_games'), {
+        'action': 'create',
+        'team_id': str(team.pk),
+        'date': '2026-08-09',
+        'start_time': '10:00',
+        'end_time': '11:30',
+        'location': 'Hocker Grove Middle',
+        'publish': '1',
+    })
+    assert resp.status_code == 302
+
+    game = SelectGame.objects.get(team=team)
+    assert game.date == date(2026, 8, 9)
+    assert game.start_time == time(10, 0)
+    assert game.end_time == time(11, 30)
+    assert game.status == 'published'
+
+
+@pytest.mark.django_db
+def test_coach_create_select_game_parses_date_and_time():
+    """Same regression, via the coach-portal create-game form."""
+    from bookings.models import SelectGame
+    from coaches.models import Coach
+
+    from django.contrib.auth.models import Group
+    coach_user = _make_user('ccg_coach')
+    coach_user.groups.add(Group.objects.get_or_create(name='Coach')[0])
+    coach = Coach.objects.create(user=coach_user, slug='ccg-coach')
+    mgr_client = _make_client_obj(_make_owner_user('ccg_owner'))
+    team = _make_select_team(mgr_client, slug='ccg-team')
+
+    tc = TestClient()
+    tc.force_login(coach_user)
+    resp = tc.post(reverse('coaches:select_games'), {
+        'action': 'create',
+        'team_id': str(team.pk),
+        'date': '2026-08-09',
+        'start_time': '10:00',
+        'end_time': '',
+        'location': 'Hocker Grove Middle',
+        'publish': '0',
+    })
+    assert resp.status_code == 302
+
+    game = SelectGame.objects.get(team=team)
+    assert game.date == date(2026, 8, 9)
+    assert game.start_time == time(10, 0)
+    assert game.end_time is None
+    assert game.status == 'draft'

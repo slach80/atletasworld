@@ -27,6 +27,10 @@ def coach_select_games(request):
             publish = request.POST.get('publish') == '1'
 
             try:
+                from datetime import date as date_cls, time as time_cls
+                date = date_cls.fromisoformat(date)
+                start_time = time_cls.fromisoformat(start_time)
+                end_time = time_cls.fromisoformat(end_time) if end_time else None
                 team = Team.objects.get(pk=team_id, is_select=True)
                 game = SelectGame.objects.create(
                     team=team,

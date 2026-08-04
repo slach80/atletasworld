@@ -231,6 +231,7 @@ When a feature maps to a hustle module:
 
 ## Backlog
 
+- **Task #14 — VALD ForceDecks: finish profile matching + build result sync**: Phase 1 deployed to prod (2026-08-03) — CMJ "Countermovement Jump" (`JUMP_HEIGHT_INCHES`) live in client/owner portals, real credentials wired, `vald_sync_result_definitions` and `vald_match_profiles` management commands built. Dry-run against real roster: 24 auto-matched, 2 ambiguous (duplicate "Ryan Rivera" roster entries; "Arona Dieme" birth-year mismatch), 2 duplicate VALD Hub profiles ("Ian Johnson", "London Lueders" — need merging in Hub), 8 no roster match. Sent Mirko a cleanup list. **Blocked on his fixes** before running `vald_match_profiles` for real on prod. After that: still need to build the actual Phase 2 sync task (`performance/tasks.py` — pull `/tests` + `/trials`, best-of-trial aggregation, upsert into `ValdTestResult`) — "Sync Now" button is still a stub.
 - ~~**Task #13 — Email players on Select game publish**~~ ✅ complete (2026-07-26) — `fanout_select_game_rsvps` now emails each new RSVP recipient (guarded by `PRODUCTION_EMAIL_ENABLED`); `select_game_published.html` template added; 4 tests.
 - ~~**Task #12 — APC Select Membership recurring billing**~~ ✅ complete (2026-07-22) — Stripe webhooks live, subscription confirmed working in production.
 - **Task #11 — Enable Venmo in Stripe Dashboard**: No code changes needed, pure Stripe config.
