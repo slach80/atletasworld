@@ -54,7 +54,13 @@ class Command(BaseCommand):
             name_key = (_norm(player.first_name), _norm(player.last_name))
             by_name_only.setdefault(name_key, []).append(player)
 
-        auto_matched, ambiguous, no_match, already_linked = [], [], [], []
+        auto_matched, ambiguous, no_match, already_linked, duplicate_profiles = [], [], [], [], []
+        # Players claimed within this run — the initial `players` queryset
+        # snapshot goes stale mid-loop, so two VALD profiles for the same
+        # person (a real Hub data-quality issue, not hypothetical — seen in
+        # production) would otherwise both match the same Player and the
+        # second create() would crash on the OneToOneField.
+        claimed_player_ids = set()
 
         for profile in profiles:
             profile_id = profile['profileId']
@@ -69,7 +75,15 @@ class Command(BaseCommand):
                 already_linked.append(profile)
                 continue
 
-            candidates = by_name_and_dob.get((given, family, dob_year), [])
+            all_candidates = by_name_and_dob.get((given, family, dob_year), [])
+            candidates = [p for p in all_candidates if p.id not in claimed_player_ids]
+
+            if not candidates and all_candidates:
+                # Every name+DOB match was already claimed this run — a
+                # second VALD profile for someone we just matched.
+                duplicate_profiles.append((profile, all_candidates))
+                continue
+
             if len(candidates) == 1:
                 player = candidates[0]
                 if not dry_run:
@@ -79,6 +93,7 @@ class Command(BaseCommand):
                         vald_tenant_id=tenant_id,
                         match_method='auto_name_dob',
                     )
+                claimed_player_ids.add(player.id)
                 auto_matched.append((profile, player))
                 continue
 
@@ -107,6 +122,15 @@ class Command(BaseCommand):
             )
             for c in candidates:
                 self.stdout.write(f"    - Player #{c.id} {c.full_name} (birth_year={c.birth_year})")
+
+        self.stdout.write(self.style.WARNING(f"\nDUPLICATE VALD PROFILES - same person, two Hub profiles ({len(duplicate_profiles)}):"))
+        for profile, candidates in duplicate_profiles:
+            self.stdout.write(
+                f"  {profile.get('givenName', '').strip()} {profile.get('familyName', '').strip()} "
+                f"(profile {profile_id_short(profile)}) already matched to "
+                f"Player #{candidates[0].id} {candidates[0].full_name} via another VALD profile — "
+                f"merge these profiles in VALD Hub, or match manually if they're different people."
+            )
 
         self.stdout.write(self.style.NOTICE(f"\nNO ROSTER MATCH ({len(no_match)}):"))
         for profile in no_match:
