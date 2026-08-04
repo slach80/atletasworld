@@ -3,7 +3,7 @@ Tests for performance.models.
 """
 import pytest
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, timezone as dt_timezone
 
 from clients.models import Client, Player
 from performance.models import ValdProfile, ValdTestResult, ValdResultDefinition, ValdSyncRun
@@ -90,7 +90,7 @@ class TestValdTestResult:
 
     def test_iso_week_property(self, vald_profile):
         """Derive ISO week from test_date."""
-        test_date = timezone.datetime(2026, 7, 27, 10, 0, tzinfo=timezone.utc)
+        test_date = timezone.datetime(2026, 7, 27, 10, 0, tzinfo=dt_timezone.utc)
 
         result = ValdTestResult.objects.create(
             vald_test_id='test-iso',
@@ -171,7 +171,7 @@ class TestValdSyncRun:
 
     def test_cursor_incremental_sync(self):
         """Cursor returns last_synced_at from latest OK run."""
-        last_synced = timezone.datetime(2026, 7, 20, 12, 0, 0, tzinfo=timezone.utc)
+        last_synced = timezone.datetime(2026, 7, 20, 12, 0, 0, tzinfo=dt_timezone.utc)
 
         run = ValdSyncRun.objects.create(system='forcedecks')
         run.finish_ok(records_synced=3, last_synced_at=last_synced)
