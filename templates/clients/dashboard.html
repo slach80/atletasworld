@@ -224,53 +224,65 @@
                 <!-- APC Select Member Card -->
                 {% if has_select_membership %}
                 <div class="rounded-2xl mb-4 overflow-hidden border-2 border-primary bg-gradient-to-br from-gray-900 to-primary">
-                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div>
                             <span class="inline-block bg-secondary text-gray-900 text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded mb-1.5">Active Membership</span>
                             <h2 class="text-xl font-black text-white uppercase tracking-tight">APC Select</h2>
-                            {% if select_team %}
-                            <p class="text-indigo-300 text-sm font-bold mt-0.5">{{ select_team.name }}</p>
+                            {% if select_memberships|length == 1 %}
+                            {% with m=select_memberships.0 %}
+                            {% if m.team %}
+                            <p class="text-indigo-300 text-sm font-bold mt-0.5">{{ m.team.name }}</p>
                             {% endif %}
-                            {% if select_pkg.stripe_subscription_id %}
-                            <p class="text-gray-400 text-xs mt-0.5">Auto-renews {{ select_pkg.expiry_date|date:"M j, Y" }}</p>
-                            {% elif select_pkg.expiry_date %}
-                            <p class="text-gray-400 text-xs mt-0.5">Expires {{ select_pkg.expiry_date|date:"M j, Y" }} &middot; <a href="{% url 'clients:packages' %}" class="text-secondary hover:underline">Enable auto-renewal</a></p>
+                            {% endwith %}
+                            {% else %}
+                            <p class="text-gray-400 text-xs mt-0.5">{{ select_memberships|length }} players enrolled</p>
                             {% endif %}
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-3 shrink-0">
-                            <!-- Practice counter -->
-                            <div class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-center">
-                                <p class="text-xs text-gray-400 uppercase tracking-widest">Practices This Month</p>
-                                <p class="text-3xl font-black text-white">{{ select_practices_this_month }}<span class="text-gray-500 text-lg">/2</span></p>
-                                {% if select_practices_remaining > 0 %}
-                                <p class="text-xs text-secondary">{{ select_practices_remaining }} free remaining</p>
-                                {% else %}
-                                <p class="text-xs text-yellow-400">Use credit for next session</p>
-                                {% endif %}
-                            </div>
-                            <!-- Credit balance -->
-                            <div class="bg-white/10 border border-white/20 rounded-xl px-5 py-3 text-center">
-                                <p class="text-xs text-gray-400 uppercase tracking-widest">Credit Balance</p>
-                                <p class="text-3xl font-black text-secondary">${{ select_credit_balance|floatformat:2 }}</p>
-                                <p class="text-xs text-gray-400">expires Dec 31</p>
+                        <div class="shrink-0">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Your Member Discounts</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                                    <span class="text-secondary font-black text-lg leading-none">$40</span>
+                                    <span class="text-white text-xs leading-tight">monthly credit<br><span class="text-gray-400">toward any training</span></span>
+                                </div>
+                                <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                                    <span class="text-secondary font-black text-lg leading-none">$5</span>
+                                    <span class="text-white text-xs leading-tight">pickup games<br><span class="text-gray-400">flat rate (auto-applied)</span></span>
+                                </div>
+                                <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                                    <span class="text-secondary font-black text-lg leading-none">10%</span>
+                                    <span class="text-white text-xs leading-tight">off clinics &amp; camps<br><span class="text-gray-400">auto-applied at checkout</span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="bg-white/5 border-t border-white/10 px-6 py-4">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Your Member Discounts</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-                                <span class="text-secondary font-black text-lg leading-none">$40</span>
-                                <span class="text-white text-xs leading-tight">monthly credit<br><span class="text-gray-400">toward any training</span></span>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Player Memberships</p>
+                        <div class="space-y-2">
+                            {% for m in select_memberships %}
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/10 rounded-lg px-3 py-2">
+                                <div>
+                                    <span class="text-white text-sm font-bold">{{ m.player.first_name|default:"Unassigned" }} {{ m.player.last_name }}</span>
+                                    {% if m.team %}<span class="text-indigo-300 text-xs font-bold ml-2">{{ m.team.name }}</span>{% endif %}
+                                    <br>
+                                    {% if m.package.stripe_subscription_id %}
+                                    <span class="text-gray-400 text-xs">Auto-renews {{ m.package.expiry_date|date:"M j, Y" }}</span>
+                                    {% elif m.package.expiry_date %}
+                                    <span class="text-gray-400 text-xs">Expires {{ m.package.expiry_date|date:"M j, Y" }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex gap-4 shrink-0 text-right">
+                                    <div>
+                                        <p class="text-gray-500 text-[10px] uppercase tracking-widest">Practices</p>
+                                        <p class="text-white text-sm font-black">{{ m.practices_this_month }}<span class="text-gray-500 text-xs">/2</span></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-500 text-[10px] uppercase tracking-widest">Credit</p>
+                                        <p class="text-secondary text-sm font-black">${{ m.credit_balance|floatformat:2 }}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-                                <span class="text-secondary font-black text-lg leading-none">$5</span>
-                                <span class="text-white text-xs leading-tight">pickup games<br><span class="text-gray-400">flat rate (auto-applied)</span></span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-                                <span class="text-secondary font-black text-lg leading-none">10%</span>
-                                <span class="text-white text-xs leading-tight">off clinics &amp; camps<br><span class="text-gray-400">auto-applied at checkout</span></span>
-                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -290,6 +302,9 @@
                                     <p class="font-black text-gray-900">{{ rsvp.game.date|date:"l, M j" }} &middot; {{ rsvp.game.start_time|time:"g:i A" }}</p>
                                     <p class="text-sm text-gray-600">{{ rsvp.game.location }}</p>
                                     <p class="text-xs text-indigo-600 font-bold mt-0.5">{{ rsvp.game.team.name }}</p>
+                                    {% if rsvp.player %}
+                                    <p class="text-xs font-bold text-gray-700 mt-0.5">Attending: {{ rsvp.player.first_name }} {{ rsvp.player.last_name }}</p>
+                                    {% endif %}
                                     {% if rsvp.game.notes %}<p class="text-xs text-gray-500 mt-0.5">{{ rsvp.game.notes }}</p>{% endif %}
                                 </div>
                                 <div class="flex gap-2 shrink-0">

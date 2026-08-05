@@ -444,11 +444,13 @@ def test_rsvp_client_with_rsvp_can_update_status():
     url = reverse('clients:select_game_rsvp', kwargs={'game_id': game.pk})
     response = tc.post(url, {'status': 'coming'})
 
-    assert response.status_code == 200
-    import json
-    data = json.loads(response.content)
-    assert data['ok'] is True
-    assert data['status'] == 'coming'
+    # Redirects back to the dashboard rather than returning raw JSON — the RSVP
+    # buttons are plain HTML forms (full-page POST), so a JSON response would
+    # leave the client's browser showing a bare JSON blob instead of the page.
+    assert response.status_code == 302
+    assert reverse('clients:dashboard') in response['Location']
+    rsvp = SelectGameRSVP.objects.get(game=game, client=member_client)
+    assert rsvp.status == 'coming'
 
 
 @pytest.mark.django_db
@@ -465,7 +467,8 @@ def test_rsvp_client_without_rsvp_gets_403():
     tc.force_login(uninvited_user)
     url = reverse('clients:select_game_rsvp', kwargs={'game_id': game.pk})
     response = tc.post(url, {'status': 'coming'})
-    assert response.status_code == 403
+    assert response.status_code == 302
+    assert reverse('clients:dashboard') in response['Location']
 
 
 # ===========================================================================

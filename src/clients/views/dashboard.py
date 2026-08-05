@@ -81,20 +81,19 @@ def dashboard(request):
         b.effective_location = _booking_location(b)
         b.effective_location_map_url = _location_map_url(b.effective_location)
 
-    # APC Select membership
+    # APC Select membership(s) — a client can have one active Select package per
+    # enrolled player, so surface all of them (not just the first).
     from django.db.models import Q, Sum
-    select_pkg = active_packages.filter(package__package_type='select').select_related('package').first()
-    has_select_membership = select_pkg is not None
-    select_credit_balance = client.credits.filter(
-        status='available'
-    ).filter(
-        Q(expires_at__isnull=True) | Q(expires_at__gte=today)
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    from clients.models import ClientCredit
+    select_packages = list(
+        active_packages.filter(package__package_type='select').select_related('package', 'player__team')
+    )
+    has_select_membership = bool(select_packages)
 
-    # Select team, practice counter, and upcoming game RSVPs
-    select_team = None
-    select_practices_this_month = 0
-    select_practices_remaining = 2
+    # Practices and credit are tracked per player — each enrolled player has their own
+    # 2-free-practices/month allowance and their own $40/month credit grant, independent
+    # of any siblings also on Select.
+    select_memberships = []
     upcoming_game_rsvps = []
     if has_select_membership:
         from bookings.models import Booking as _Booking, SessionType as _ST, SelectGameRSVP
@@ -102,28 +101,38 @@ def dashboard(request):
         select_practice_type_ids = list(
             _ST.objects.filter(session_format='select_practice', is_active=True).values_list('id', flat=True)
         )
-        # Combine across all active players for this client
-        select_practices_this_month = _Booking.objects.filter(
-            client=client,
-            session_type_id__in=select_practice_type_ids,
-            status='confirmed',
-            scheduled_date__gte=month_start,
-        ).count()
-        select_practices_remaining = max(0, 2 - select_practices_this_month)
 
-        # Select team from any active player's primary team
-        active_players = client.players.filter(is_active=True).select_related('team')
-        for p in active_players:
-            if p.team and p.team.is_select:
-                select_team = p.team
-                break
+        for cp in select_packages:
+            player_practices = _Booking.objects.filter(
+                client=client,
+                player_id=cp.player_id,
+                session_type_id__in=select_practice_type_ids,
+                status='confirmed',
+                scheduled_date__gte=month_start,
+            ).count()
+            player_credit_balance = ClientCredit.objects.filter(
+                client=client, player_id=cp.player_id, status='available',
+            ).filter(
+                Q(expires_at__isnull=True) | Q(expires_at__gte=today)
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            select_memberships.append({
+                'package': cp,
+                'player': cp.player,
+                'team': cp.player.team if cp.player_id else None,
+                'practices_this_month': player_practices,
+                'practices_remaining': max(0, 2 - player_practices),
+                'credit_balance': player_credit_balance,
+            })
 
-        # Upcoming game RSVPs for this client
+        # Upcoming game RSVPs for this client, including which player is attending
         upcoming_game_rsvps = SelectGameRSVP.objects.filter(
             client=client,
             game__date__gte=today,
             game__status='published',
-        ).select_related('game__team').order_by('game__date', 'game__start_time')
+        ).select_related('game__team', 'player').order_by('game__date', 'game__start_time')
+
+    # Kept for backward compatibility with any code still reading a single team
+    select_team = select_memberships[0]['team'] if select_memberships else None
 
     context = {
         'client': client,
@@ -139,11 +148,8 @@ def dashboard(request):
         'unassigned_packages': unassigned_packages,
         'single_player': single_player,
         'has_select_membership': has_select_membership,
-        'select_credit_balance': select_credit_balance,
-        'select_pkg': select_pkg,
         'select_team': select_team,
-        'select_practices_this_month': select_practices_this_month,
-        'select_practices_remaining': select_practices_remaining,
+        'select_memberships': select_memberships,
         'upcoming_game_rsvps': upcoming_game_rsvps,
     }
     return render(request, 'clients/dashboard.html', context)

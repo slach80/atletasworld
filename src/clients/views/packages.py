@@ -131,6 +131,16 @@ def package_assign(request, package_id):
             # Verify player belongs to the same client
             player = get_object_or_404(Player, pk=player_id, client=client, is_active=True)
             package.player = player
+
+            # This package's own select_monthly credits may have been granted before a
+            # player was assigned (player is unset at Stripe webhook time). Attribute them
+            # to the now-known player before saving, so the seed_select_credits signal's
+            # per-player guard sees them and doesn't grant a duplicate batch.
+            if package.package.package_type == 'select':
+                from clients.models import ClientCredit
+                ClientCredit.objects.filter(
+                    source_package=package, credit_type='select_monthly', player__isnull=True,
+                ).update(player=player)
         else:
             # Unassign package
             package.player = None

@@ -305,11 +305,20 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None, s
     if package.package_type == 'select':
         from clients.models import ClientCredit
         from datetime import date
-        # Only create credits if the client has no unused select_monthly credits already.
-        # Prevents stacking on re-subscription or accidental duplicate activations.
-        existing = ClientCredit.objects.filter(
-            client=client, credit_type='select_monthly', status='available'
-        ).count()
+        # Only create credits if this specific player has no unused select_monthly credits
+        # already. Scoped per player (not per client) so a client with multiple kids in
+        # Select gets a separate grant per enrolled player. cp.player is usually unset at
+        # webhook time (assigned afterward via the portal's "Assigned to" dropdown), in
+        # which case we fall back to a client-wide + unassigned check; clients/signals.py's
+        # package_assign flow backfills attribution once a player is actually assigned.
+        if cp.player_id:
+            existing = ClientCredit.objects.filter(
+                player_id=cp.player_id, credit_type='select_monthly', status='available'
+            ).count()
+        else:
+            existing = ClientCredit.objects.filter(
+                client=client, credit_type='select_monthly', status='available', player__isnull=True
+            ).count()
         if existing == 0:
             year_end = date(timezone.localdate().year, 12, 31)
             for month in range(1, 7):
@@ -318,6 +327,7 @@ def _activate_package(client_id, package_id, payment_intent_id, metadata=None, s
                     amount=Decimal('40.00'),
                     credit_type='select_monthly',
                     source_package=cp,
+                    player=cp.player,
                     expires_at=year_end,
                     notes=f'APC Select — Month {month} training credit ($40 toward any APC Training session or package)',
                 )

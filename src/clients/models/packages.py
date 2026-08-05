@@ -258,6 +258,14 @@ class ClientCredit(models.Model):
         null=True, blank=True, related_name='granted_credits',
         help_text='The APC Select ClientPackage that generated this credit'
     )
+    # Which player this credit is attributed to, snapshotted at grant time.
+    # Deliberately independent of source_package.player — if the package is later
+    # reassigned to a different player, this credit's attribution does not follow it.
+    player = models.ForeignKey(
+        'Player', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='credits',
+        help_text='Player this credit is attributed to (set at creation, not inferred from the package)'
+    )
     # For referral credits — which Referral generated this
     referral = models.ForeignKey(
         'clients.Referral', on_delete=models.SET_NULL,

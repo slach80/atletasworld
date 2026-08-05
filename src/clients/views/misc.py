@@ -309,32 +309,42 @@ def add_referral_code(request):
 # ============================================================================
 
 @login_required
+@require_POST
 def select_game_rsvp(request, game_id):
-    """Client RSVP endpoint for a Select game. POST only."""
-    from bookings.models import SelectGame, SelectGameRSVP
-    from django.http import JsonResponse as _JsonResponse
+    """Client RSVP endpoint for a Select game. POST only.
 
-    if request.method != 'POST':
-        return _JsonResponse({'error': 'POST required'}, status=405)
+    The dashboard's RSVP buttons are plain HTML forms (full-page POST, no JS
+    interception), so this must redirect back rather than return raw JSON —
+    returning JSON here left the client's whole browser tab showing a bare
+    '{"ok": true, ...}' page instead of the dashboard after every RSVP click.
+    """
+    from bookings.models import SelectGame, SelectGameRSVP
 
     client, _ = Client.objects.get_or_create(user=request.user)
 
     try:
         game = SelectGame.objects.get(pk=game_id, status='published')
     except SelectGame.DoesNotExist:
-        return _JsonResponse({'error': 'Game not found'}, status=404)
+        messages.error(request, 'Game not found.')
+        return redirect('clients:dashboard')
 
     # Must have an RSVP record (created by fan-out signal) to respond
     try:
         rsvp = SelectGameRSVP.objects.get(game=game, client=client)
     except SelectGameRSVP.DoesNotExist:
-        return _JsonResponse({'error': 'You are not invited to this game'}, status=403)
+        messages.error(request, 'You are not invited to this game.')
+        return redirect('clients:dashboard')
 
     rsvp_status = request.POST.get('status')
     if rsvp_status not in ('coming', 'not_coming'):
-        return _JsonResponse({'error': 'Invalid status'}, status=400)
+        messages.error(request, 'Invalid RSVP status.')
+        return redirect('clients:dashboard')
 
     rsvp.status = rsvp_status
     rsvp.save(update_fields=['status', 'updated_at'])
+    messages.success(
+        request,
+        f"RSVP updated — you're marked as {'Going' if rsvp_status == 'coming' else 'Not Going'}."
+    )
 
-    return _JsonResponse({'ok': True, 'status': rsvp.status})
+    return redirect('clients:dashboard')

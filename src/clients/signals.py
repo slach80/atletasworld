@@ -97,13 +97,20 @@ def generate_referral_code(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender='clients.ClientPackage')
 def seed_select_credits(sender, instance, created, **kwargs):
-    """Seed 6×$40 monthly training credits the first time a client ever activates APC Select.
+    """Seed 6×$40 monthly training credits the first time a player is ever enrolled in APC Select.
 
     Runs on every save where status becomes 'active', so it covers admin assignments,
     manual creation, and any future path that bypasses the Stripe webhook.
-    Guard: this is a one-time, lifetime grant per client — skips if the client already has
-    ANY select_monthly credits from a prior Select activation (a different ClientPackage row),
+    Guard: this is a one-time, lifetime grant per enrolled player — skips if that player already
+    has ANY select_monthly credits from a prior Select activation (a different ClientPackage row),
     since Select renewals create a new ClientPackage row each cycle but should not re-grant credit.
+    Scoped per player (not per client) so a client with multiple kids in Select — each with their
+    own membership — gets a separate credit grant per player rather than one shared, client-wide
+    grant that only the first-enrolled player would ever trigger.
+
+    Attribution is snapshotted onto ClientCredit.player at creation time (not inferred from
+    source_package.player), so later reassigning a package to a different player via the
+    "Assigned to" dropdown does not silently drag existing credit history along with it.
     """
     if instance.status != 'active':
         return
@@ -114,10 +121,19 @@ def seed_select_credits(sender, instance, created, **kwargs):
     from decimal import Decimal
     import datetime
 
-    already = ClientCredit.objects.filter(
-        client=instance.client,
-        credit_type='select_monthly',
-    ).exists()
+    if instance.player_id:
+        already = ClientCredit.objects.filter(
+            credit_type='select_monthly',
+            player_id=instance.player_id,
+        ).exists()
+    else:
+        # No player assigned yet — fall back to a client-wide guard so an
+        # unassigned package doesn't grant credit more than once either.
+        already = ClientCredit.objects.filter(
+            client=instance.client,
+            credit_type='select_monthly',
+            player__isnull=True,
+        ).exists()
     if already:
         return
 
@@ -128,6 +144,7 @@ def seed_select_credits(sender, instance, created, **kwargs):
             amount=Decimal('40.00'),
             credit_type='select_monthly',
             source_package=instance,
+            player=instance.player,
             expires_at=year_end,
             notes=f'APC Select — Month {month} training credit ($40 toward any APC Training session or package)',
         )
@@ -198,8 +215,10 @@ def fanout_select_game_rsvps(sender, instance, **kwargs):
 
     today = timezone.localdate()
 
-    # Active Select members on this team (primary team) or guest-called-up to it
-    team_client_ids = set()
+    # Active Select members on this team (primary team) or guest-called-up to it.
+    # Maps client_id -> the specific player whose membership matched this team,
+    # so the RSVP can show which of the client's players is attending.
+    client_player_map = {}
 
     # Primary team members
     for cp in ClientPackage.objects.filter(
@@ -207,15 +226,15 @@ def fanout_select_game_rsvps(sender, instance, **kwargs):
         status='active',
         expiry_date__gte=today,
     ).select_related('client__user', 'player'):
-        if cp.player_id:
+        if cp.player_id and cp.client_id not in client_player_map:
             player = cp.player
             if (player.team_id == instance.team_id or
                     instance.team_id in player.select_teams.values_list('id', flat=True)):
-                team_client_ids.add(cp.client_id)
+                client_player_map[cp.client_id] = player
 
-    # Guest invitees added manually
+    # Guest invitees added manually — no specific player tied to the membership
     for client in instance.guest_invitees.all():
-        team_client_ids.add(client.pk)
+        client_player_map.setdefault(client.pk, None)
 
     from django.conf import settings as _settings
     from clients.models import Client as ClientModel
@@ -229,16 +248,19 @@ def fanout_select_game_rsvps(sender, instance, **kwargs):
     time_str = instance.start_time.strftime('%-I:%M %p')
     location_map_url = 'https://www.google.com/maps/search/' + quote(instance.location, safe='') if instance.location else 'https://maps.app.goo.gl/aZQGbUsx9vTEAZLR9'
 
-    for client_id in team_client_ids:
+    for client_id, matched_player in client_player_map.items():
         try:
             client = ClientModel.objects.get(pk=client_id)
         except ClientModel.DoesNotExist:
             continue
-        _, created = SelectGameRSVP.objects.get_or_create(
+        rsvp, created = SelectGameRSVP.objects.get_or_create(
             game=instance,
             client=client,
-            defaults={'status': 'pending'},
+            defaults={'status': 'pending', 'player': matched_player},
         )
+        if not created and rsvp.player_id is None and matched_player is not None:
+            rsvp.player = matched_player
+            rsvp.save(update_fields=['player'])
         if created:
             try:
                 Notification.objects.create(
