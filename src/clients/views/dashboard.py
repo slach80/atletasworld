@@ -27,20 +27,45 @@ def dashboard(request):
         expiry_date__gte=timezone.localdate()
     )
 
+    from bookings.models import SessionType as _SessionType
+    today = timezone.localdate()
+    select_practice_type_ids = list(
+        _SessionType.objects.filter(session_format='select_practice', is_active=True).values_list('id', flat=True)
+    )
+
     # Get upcoming bookings — exclude orphaned pending-payment bookings from old paid flow,
     # but only when the session type has a non-zero price (free/comp sessions are always shown).
+    # Select practices are broken out separately so they can live in the Select section
+    # instead of being mixed into the general training sessions list.
     upcoming_bookings = Booking.objects.filter(
         client=client,
-        scheduled_date__gte=timezone.localdate(),
+        scheduled_date__gte=today,
         status__in=['pending', 'confirmed']
     ).exclude(
         payment_status='pending', client_package__isnull=True, session_type__price__gt=0
+    ).exclude(
+        session_type_id__in=select_practice_type_ids
     ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')[:5]
+
+    select_upcoming_bookings = Booking.objects.filter(
+        client=client,
+        scheduled_date__gte=today,
+        status__in=['pending', 'confirmed'],
+        session_type_id__in=select_practice_type_ids,
+    ).select_related('player', 'session_type', 'coach').order_by('scheduled_date', 'scheduled_time')
 
     # Get recent bookings (past)
     past_bookings = Booking.objects.filter(
         client=client,
-        scheduled_date__lt=timezone.localdate()
+        scheduled_date__lt=today,
+    ).exclude(
+        session_type_id__in=select_practice_type_ids
+    ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')[:5]
+
+    select_past_bookings = Booking.objects.filter(
+        client=client,
+        scheduled_date__lt=today,
+        session_type_id__in=select_practice_type_ids,
     ).select_related('player', 'session_type', 'coach').order_by('-scheduled_date', '-scheduled_time')[:5]
 
     # Total sessions remaining across all active packages
@@ -54,12 +79,15 @@ def dashboard(request):
         client=client, status__in=['completed', 'cancelled', 'no_show']
     ).count()
 
-    # Next upcoming booking (for same-day reminder)
-    today = timezone.localdate()
+    # Next upcoming booking (for same-day reminder) — checks both regular and Select
+    # practice bookings, since either kind happening today should trigger the reminder.
     today_dt = timezone.now()
-    next_booking = upcoming_bookings.first()
+    next_booking = min(
+        [b for b in list(upcoming_bookings) + list(select_upcoming_bookings) if b.scheduled_date == today],
+        key=lambda b: b.scheduled_time, default=None,
+    )
     next_booking_soon = None
-    if next_booking and next_booking.scheduled_date == today:
+    if next_booking:
         import datetime as dt
         next_dt = dt.datetime.combine(next_booking.scheduled_date, next_booking.scheduled_time)
         next_dt = timezone.make_aware(next_dt) if timezone.is_naive(next_dt) else next_dt
@@ -77,18 +105,20 @@ def dashboard(request):
     single_player = players.first() if unassigned_packages and players.count() == 1 else None
 
     from clients.services import _booking_location, _location_map_url
-    for b in upcoming_bookings:
+    for b in list(upcoming_bookings) + list(select_upcoming_bookings):
         b.effective_location = _booking_location(b)
         b.effective_location_map_url = _location_map_url(b.effective_location)
+
+    # Packages grouped by type for display — Select membership vs everything else
+    # (Summer/Camp/Basic/etc.), rather than one flat undifferentiated list.
+    select_active_packages = [p for p in active_packages if p.package.package_type == 'select']
+    other_active_packages = [p for p in active_packages if p.package.package_type != 'select']
 
     # APC Select membership(s) — a client can have one active Select package per
     # enrolled player, so surface all of them (not just the first).
     from django.db.models import Q, Sum
     from clients.models import ClientCredit
-    select_packages = list(
-        active_packages.filter(package__package_type='select').select_related('package', 'player__team')
-    )
-    has_select_membership = bool(select_packages)
+    has_select_membership = bool(select_active_packages)
 
     # Practices and credit are tracked per player — each enrolled player has their own
     # 2-free-practices/month allowance and their own $40/month credit grant, independent
@@ -96,13 +126,10 @@ def dashboard(request):
     select_memberships = []
     upcoming_game_rsvps = []
     if has_select_membership:
-        from bookings.models import Booking as _Booking, SessionType as _ST, SelectGameRSVP
+        from bookings.models import Booking as _Booking, SelectGameRSVP
         month_start = today.replace(day=1)
-        select_practice_type_ids = list(
-            _ST.objects.filter(session_format='select_practice', is_active=True).values_list('id', flat=True)
-        )
 
-        for cp in select_packages:
+        for cp in select_active_packages:
             player_practices = _Booking.objects.filter(
                 client=client,
                 player_id=cp.player_id,
@@ -138,8 +165,12 @@ def dashboard(request):
         'client': client,
         'players': players,
         'active_packages': active_packages,
+        'select_active_packages': select_active_packages,
+        'other_active_packages': other_active_packages,
         'upcoming_bookings': upcoming_bookings,
         'past_bookings': past_bookings,
+        'select_upcoming_bookings': select_upcoming_bookings,
+        'select_past_bookings': select_past_bookings,
         'sessions_remaining_total': sessions_remaining_total,
         'has_unlimited': has_unlimited,
         'sessions_completed_total': sessions_completed_total,
