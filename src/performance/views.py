@@ -10,7 +10,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_POST
-from django.db.models import Max, Count
+from django.db.models import Max, Count, Q
 
 from clients.models import Player
 from .models import ValdProfile, ValdTestResult, ValdResultDefinition, ValdSyncRun
@@ -246,9 +246,17 @@ def owner_performance(request):
     """
     Owner portal: table of all players with VALD metrics + sync controls.
     """
+    search = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '')
+
     players = Player.objects.filter(is_active=True).select_related(
         'client__user'
     ).prefetch_related('vald_profile__results')
+
+    if search:
+        players = players.filter(
+            Q(first_name__icontains=search) | Q(last_name__icontains=search)
+        )
 
     player_data = []
     for player in players:
@@ -273,6 +281,11 @@ def owner_performance(request):
                 'sync_status': 'unmatched',
             })
 
+    if status_filter in ('ok', 'unmatched'):
+        player_data = [d for d in player_data if d['sync_status'] == status_filter]
+
+    player_data.sort(key=lambda d: (d['player'].first_name.lower(), d['player'].last_name.lower()))
+
     # Recent sync runs
     recent_syncs = ValdSyncRun.objects.all()[:10]
 
@@ -280,6 +293,8 @@ def owner_performance(request):
         'player_data': player_data,
         'recent_syncs': recent_syncs,
         'vald_tenant_id': settings.VALD_TENANT_ID,
+        'search': search,
+        'selected_status': status_filter,
     }
     return render(request, 'owner/performance.html', context)
 
