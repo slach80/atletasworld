@@ -378,10 +378,12 @@ def owner_trigger_sync(request):
 
     Dispatches the Celery task and redirects back to owner_performance.
     """
-    # TODO: import and dispatch sync_all_vald.delay() when tasks.py is built
-    # For Phase 1: just redirect with a message
     from django.contrib import messages
-    messages.info(request, 'Manual sync will be implemented in Phase 2 (Celery tasks)')
+    from clients.tasks._utils import run_task
+    from .tasks import sync_all_vald
+
+    run_task(sync_all_vald)
+    messages.success(request, 'VALD sync started — check Recent Sync Runs below in a moment.')
     return HttpResponseRedirect(reverse('owner_performance'))
 
 

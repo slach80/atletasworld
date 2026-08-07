@@ -1,0 +1,110 @@
+[
+    {
+      "id": "trial-001",
+      "athleteId": "profile-123",
+      "recordedUTC": "2026-07-20T14:30:00.000Z",
+      "lastModifiedUTC": "2026-07-20T14:35:00.000Z",
+      "limb": "Both",
+      "results": [
+        {
+          "resultId": 6553607,
+          "value": 28.5,
+          "time": 34.6,
+          "limb": "Trial",
+          "repeat": 0,
+          "definition": {
+            "id": 6553607,
+            "result": "JUMP_HEIGHT",
+            "name": "Jump Height (Flight Time)",
+            "unit": "Centimeter",
+            "repeatable": false,
+            "asymmetry": false
+          }
+        },
+        {
+          "resultId": 7000001,
+          "value": 0.312,
+          "time": 33.9,
+          "limb": "Trial",
+          "repeat": 0,
+          "definition": {
+            "id": 7000001,
+            "result": "CONTRACTION_TIME",
+            "name": "Contraction Time",
+            "unit": "Second",
+            "repeatable": false,
+            "asymmetry": false
+          }
+        },
+        {
+          "resultId": 655386,
+          "value": 45.0,
+          "time": 0,
+          "limb": "Trial",
+          "repeat": 0,
+          "definition": {
+            "id": 655386,
+            "result": "BODY_WEIGHT",
+            "name": "Bodyweight in Kilograms",
+            "unit": "Kilo",
+            "repeatable": false,
+            "asymmetry": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "trial-002",
+      "athleteId": "profile-123",
+      "recordedUTC": "2026-07-20T14:31:00.000Z",
+      "lastModifiedUTC": "2026-07-20T14:35:00.000Z",
+      "limb": "Both",
+      "results": [
+        {
+          "resultId": 6553607,
+          "value": 32.5,
+          "time": 45.4,
+          "limb": "Trial",
+          "repeat": 0,
+          "definition": {
+            "id": 6553607,
+            "result": "JUMP_HEIGHT",
+            "name": "Jump Height (Flight Time)",
+            "unit": "Centimeter",
+            "repeatable": false,
+            "asymmetry": false
+          }
+        },
+        {
+          "resultId": 7000001,
+          "value": 0.278,
+          "time": 44.7,
+          "limb": "Trial",
+          "repeat": 0,
+          "definition": {
+            "id": 7000001,
+            "result": "CONTRACTION_TIME",
+            "name": "Contraction Time",
+            "unit": "Second",
+            "repeatable": false,
+            "asymmetry": false
+          }
+        },
+        {
+          "resultId": 655386,
+          "value": 45.0,
+          "time": 0,
+          "limb": "Trial",
+          "repeat": 0,
+          "definition": {
+            "id": 655386,
+            "result": "BODY_WEIGHT",
+            "name": "Bodyweight in Kilograms",
+            "unit": "Kilo",
+            "repeatable": false,
+            "asymmetry": false
+          }
+        }
+      ]
+    }
+]

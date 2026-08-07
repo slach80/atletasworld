@@ -66,11 +66,19 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=7, minute=0),
         'options': {'queue': 'notifications'},
     },
+
+    # VALD performance sync - Every night at 2 AM
+    'vald-nightly-sync': {
+        'task': 'performance.tasks.sync_all_vald',
+        'schedule': crontab(hour=2, minute=0),
+        'options': {'queue': 'maintenance'},
+    },
 }
 
 # Task routing
 app.conf.task_routes = {
     'clients.tasks.*': {'queue': 'notifications'},
+    'performance.tasks.*': {'queue': 'maintenance'},
 }
 
 

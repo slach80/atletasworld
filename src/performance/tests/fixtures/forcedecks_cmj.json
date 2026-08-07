@@ -1,28 +1,18 @@
 {
-  "_comment": "Mock ForceDecks CMJ test response for Phase 1 testing",
+  "_comment": "Mock ForceDecks CMJ /tests response — matches the real schema confirmed against VALD's live API in Phase 2: test metadata only, no per-metric results (those live in /trials, see forcedecks_trials.json).",
   "testId": "test-cmj-001",
-  "profileId": "profile-123",
   "tenantId": "tenant-abc",
-  "testType": "CMJ",
-  "testDate": "2026-07-20T14:30:00.000Z",
+  "profileId": "profile-123",
+  "recordingId": "recording-001",
   "modifiedDateUtc": "2026-07-20T14:35:00.000Z",
-  "results": [
-    {
-      "resultId": "CMJ_JumpHeight",
-      "value": 32.5,
-      "unit": "cm"
-    },
-    {
-      "resultId": "CMJ_PeakForce",
-      "value": 1850.2,
-      "unit": "N"
-    },
-    {
-      "resultId": "CMJ_RSI",
-      "value": 1.25,
-      "unit": ""
-    }
-  ],
-  "trialCount": 3,
-  "notes": "Phase 1 test fixture — sanitized PII"
+  "recordedDateUtc": "2026-07-20T14:30:00.000Z",
+  "recordedDateOffset": -300,
+  "recordedDateTimezone": "Central Standard Time",
+  "analysedDateUtc": "2026-07-20T14:31:00.000Z",
+  "analysedDateOffset": -300,
+  "analysedDateTimezone": "Central Standard Time",
+  "testType": "CMJ",
+  "weight": 45.0,
+  "extendedParameters": [],
+  "attributes": []
 }
