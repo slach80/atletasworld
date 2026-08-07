@@ -36,6 +36,7 @@ urlpatterns = [
     path('players/', views.my_players, name='my_players'),
     path('players/<int:player_id>/', views.player_detail, name='player_detail'),
     path('players/<int:player_id>/manual-test-result/', views.add_manual_test_result, name='add_manual_test_result'),
+    path('players/<int:player_id>/manual-test-result/<int:result_id>/edit/', views.edit_manual_test_result, name='edit_manual_test_result'),
 
     # Notifications
     path('notify/', views.notify_parents, name='notify_parents'),

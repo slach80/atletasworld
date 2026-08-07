@@ -210,3 +210,45 @@ def owner_add_manual_test_result(request, pk):
     )
     messages.success(request, f'{valid_types[test_type]} result recorded for {player.first_name}.')
     return redirect('owner_player_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_edit_manual_test_result(request, pk, result_id):
+    """Owner portal: edit a previously entered manual test result."""
+    player = get_object_or_404(Player, pk=pk)
+    result = get_object_or_404(ManualTestResult, id=result_id, player=player)
+
+    if request.method != 'POST':
+        return redirect('owner_player_detail', pk=pk)
+
+    test_type = request.POST.get('test_type', '').strip()
+    value = request.POST.get('value', '').strip()
+    unit = request.POST.get('unit', 'meters').strip() or 'meters'
+    test_date = request.POST.get('test_date', '').strip()
+    notes = request.POST.get('notes', '').strip()
+
+    valid_types = dict(ManualTestResult.TEST_TYPE_CHOICES)
+    if test_type not in valid_types:
+        messages.error(request, 'Invalid test type.')
+        return redirect('owner_player_detail', pk=pk)
+
+    valid_units = dict(ManualTestResult.UNIT_CHOICES)
+    if unit not in valid_units:
+        messages.error(request, 'Invalid unit.')
+        return redirect('owner_player_detail', pk=pk)
+
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        messages.error(request, 'Please enter a numeric result.')
+        return redirect('owner_player_detail', pk=pk)
+
+    result.test_type = test_type
+    result.value = value
+    result.unit = unit
+    result.test_date = test_date or timezone.localdate()
+    result.notes = notes
+    result.save()
+    messages.success(request, f'{valid_types[test_type]} result updated for {player.first_name}.')
+    return redirect('owner_player_detail', pk=pk)

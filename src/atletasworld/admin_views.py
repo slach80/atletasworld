@@ -20,7 +20,7 @@ from .owner_views import (
     owner_bookings, owner_booking_detail,
     owner_clients, owner_client_detail, owner_client_settle_bookings,
     owner_client_approve, owner_client_toggle_select_invite, owner_client_reject,
-    owner_players, owner_player_detail, owner_add_manual_test_result,
+    owner_players, owner_player_detail, owner_add_manual_test_result, owner_edit_manual_test_result,
     owner_teams, owner_team_detail, owner_team_players, owner_team_bookings,
     owner_field_slots, owner_field_slot_edit, owner_field_slot_approve,
     owner_field_slot_reject, owner_field_slot_cancel, owner_field_slot_conflict_check,

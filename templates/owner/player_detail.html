@@ -202,12 +202,58 @@
             {% if manual_test_results %}
             <div class="space-y-2 mb-4">
                 {% for r in manual_test_results %}
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg text-sm">
-                    <div>
-                        <p class="font-semibold text-gray-800">{{ r.get_test_type_display }}</p>
-                        <p class="text-xs text-gray-400">{{ r.test_date|date:"M d, Y" }}{% if r.notes %} · {{ r.notes|truncatechars:80 }}{% endif %}</p>
+                <div class="p-3 bg-gray-50 rounded-lg text-sm">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-gray-800">{{ r.get_test_type_display }}</p>
+                            <p class="text-xs text-gray-400">{{ r.test_date|date:"M d, Y" }}{% if r.notes %} · {{ r.notes|truncatechars:80 }}{% endif %}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-indigo-700">{{ r.value }} {{ r.unit }}</span>
+                            <button type="button" onclick="document.getElementById('edit-manual-{{ r.id }}').classList.toggle('hidden')"
+                                    class="text-xs text-gray-400 hover:text-indigo-600 font-medium">Edit</button>
+                        </div>
                     </div>
-                    <span class="font-bold text-indigo-700">{{ r.value }} {{ r.unit }}</span>
+                    <form method="post" action="{% url 'owner_edit_manual_test_result' player.pk r.id %}"
+                          id="edit-manual-{{ r.id }}" class="hidden mt-3 pt-3 border-t border-gray-200 space-y-3">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Test Type</label>
+                                <select name="test_type" required class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    {% for value, label in manual_test_type_choices %}
+                                    <option value="{{ value }}" {% if value == r.test_type %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                                <input type="date" name="test_date" value="{{ r.test_date|date:'Y-m-d' }}" required
+                                       class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Result</label>
+                                <input type="number" step="0.01" inputmode="decimal" name="value" value="{{ r.value }}" required
+                                       class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Unit</label>
+                                <select name="unit" required class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    {% for value, label in manual_test_unit_choices %}
+                                    <option value="{{ value }}" {% if value == r.unit %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Notes (optional)</label>
+                            <input type="text" name="notes" value="{{ r.notes }}" placeholder="Any context worth noting"
+                                   class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2 rounded-lg transition">
+                            Save Changes
+                        </button>
+                    </form>
                 </div>
                 {% endfor %}
             </div>

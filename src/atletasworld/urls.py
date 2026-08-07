@@ -22,7 +22,7 @@ from .admin_views import (
     owner_session_type_hard_delete, owner_session_type_duplicate,
     owner_coaches, owner_coach_add, owner_coach_edit, owner_coach_delete, owner_coach_schedule,
     owner_bookings, owner_booking_detail,
-    owner_clients, owner_client_detail, owner_client_approve, owner_client_reject, owner_client_settle_bookings, owner_client_toggle_select_invite, owner_package_assign, owner_package_adjust, owner_players, owner_player_detail, owner_add_manual_test_result,
+    owner_clients, owner_client_detail, owner_client_approve, owner_client_reject, owner_client_settle_bookings, owner_client_toggle_select_invite, owner_package_assign, owner_package_adjust, owner_players, owner_player_detail, owner_add_manual_test_result, owner_edit_manual_test_result,
     owner_session_types, owner_session_type_edit,
     owner_session_type_apply_capacities, owner_session_type_roster,
     owner_teams, owner_team_detail,
@@ -193,6 +193,7 @@ urlpatterns = [
     path('owner-portal/players/', owner_players, name='owner_players'),
     path('owner-portal/players/<int:pk>/', owner_player_detail, name='owner_player_detail'),
     path('owner-portal/players/<int:pk>/manual-test-result/', owner_add_manual_test_result, name='owner_add_manual_test_result'),
+    path('owner-portal/players/<int:pk>/manual-test-result/<int:result_id>/edit/', owner_edit_manual_test_result, name='owner_edit_manual_test_result'),
 
     # Owner - Session Types
     path('owner-portal/session-types/', owner_session_types, name='owner_session_types'),

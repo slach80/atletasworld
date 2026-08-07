@@ -149,3 +149,51 @@ def add_manual_test_result(request, player_id):
     )
     messages.success(request, f'{valid_types[test_type]} result recorded for {player.first_name}.')
     return redirect('coaches:player_detail', player_id=player_id)
+
+
+@coach_required
+def edit_manual_test_result(request, player_id, result_id):
+    """Coach portal: edit a previously entered manual test result."""
+    from clients.models import Player
+
+    coach = request.coach
+    player = get_object_or_404(Player, id=player_id)
+    result = get_object_or_404(ManualTestResult, id=result_id, player=player)
+
+    if not Booking.objects.filter(coach=coach, player=player).exists():
+        messages.error(request, 'You have not trained this player.')
+        return redirect('coaches:my_players')
+
+    if request.method != 'POST':
+        return redirect('coaches:player_detail', player_id=player_id)
+
+    test_type = request.POST.get('test_type', '').strip()
+    value = request.POST.get('value', '').strip()
+    unit = request.POST.get('unit', 'meters').strip() or 'meters'
+    test_date = request.POST.get('test_date', '').strip()
+    notes = request.POST.get('notes', '').strip()
+
+    valid_types = dict(ManualTestResult.TEST_TYPE_CHOICES)
+    if test_type not in valid_types:
+        messages.error(request, 'Invalid test type.')
+        return redirect('coaches:player_detail', player_id=player_id)
+
+    valid_units = dict(ManualTestResult.UNIT_CHOICES)
+    if unit not in valid_units:
+        messages.error(request, 'Invalid unit.')
+        return redirect('coaches:player_detail', player_id=player_id)
+
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        messages.error(request, 'Please enter a numeric result.')
+        return redirect('coaches:player_detail', player_id=player_id)
+
+    result.test_type = test_type
+    result.value = value
+    result.unit = unit
+    result.test_date = test_date or timezone.localdate()
+    result.notes = notes
+    result.save()
+    messages.success(request, f'{valid_types[test_type]} result updated for {player.first_name}.')
+    return redirect('coaches:player_detail', player_id=player_id)

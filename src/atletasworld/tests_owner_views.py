@@ -640,6 +640,57 @@ class TestOwnerManualTestResult:
         assert resp.status_code == 302
         assert not ManualTestResult.objects.filter(player=player).exists()
 
+    def test_edit_manual_test_result_valid_post(self, admin_user, player):
+        from coaches.models import ManualTestResult
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=Decimal('1250'), unit='meters',
+            test_date=date(2026, 8, 7),
+        )
+        tc = _tc()
+        tc.force_login(admin_user)
+        resp = tc.post(reverse('owner_edit_manual_test_result', kwargs={'pk': player.pk, 'result_id': result.id}), {
+            'test_type': 'bleep_test',
+            'value': '1300',
+            'unit': 'meters',
+            'test_date': '2026-08-08',
+            'notes': 'Corrected reading',
+        })
+        assert resp.status_code == 302
+        result.refresh_from_db()
+        assert result.value == Decimal('1300.00')
+        assert result.test_date == date(2026, 8, 8)
+        assert result.notes == 'Corrected reading'
+
+    def test_edit_manual_test_result_invalid_unit_rejected(self, admin_user, player):
+        from coaches.models import ManualTestResult
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=Decimal('1250'), unit='meters',
+            test_date=date(2026, 8, 7),
+        )
+        tc = _tc()
+        tc.force_login(admin_user)
+        resp = tc.post(reverse('owner_edit_manual_test_result', kwargs={'pk': player.pk, 'result_id': result.id}), {
+            'test_type': 'bleep_test', 'value': '1300', 'unit': 'furlongs', 'test_date': '2026-08-08',
+        })
+        assert resp.status_code == 302
+        result.refresh_from_db()
+        assert result.value == Decimal('1250.00')  # unchanged
+
+    def test_edit_manual_test_result_requires_owner(self, client_user, player):
+        from coaches.models import ManualTestResult
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=Decimal('1250'), unit='meters',
+            test_date=date(2026, 8, 7),
+        )
+        tc = _tc()
+        tc.force_login(client_user)
+        resp = tc.post(reverse('owner_edit_manual_test_result', kwargs={'pk': player.pk, 'result_id': result.id}), {
+            'test_type': 'bleep_test', 'value': '1300', 'unit': 'meters', 'test_date': '2026-08-08',
+        })
+        assert resp.status_code == 302
+        result.refresh_from_db()
+        assert result.value == Decimal('1250.00')  # unchanged
+
 
 # ── 6. Blog CRUD ──────────────────────────────────────────────────────────────
 

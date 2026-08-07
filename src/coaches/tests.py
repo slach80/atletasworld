@@ -3,6 +3,8 @@ Tests for coaches models.
 """
 import pytest
 from datetime import date, time, timedelta
+from django.test import Client
+from django.urls import reverse
 from django.utils import timezone
 
 from coaches.models import Coach, Availability, ScheduleBlock, PlayerAssessment, ManualTestResult
@@ -371,3 +373,60 @@ class TestManualTestResultModel:
             test_date=date(2026, 8, 7), entered_by=coach_user,
         )
         assert result.entered_by == coach_user
+
+
+@pytest.mark.django_db
+class TestEditManualTestResultView:
+    """Coach portal: editing a previously entered manual test result."""
+
+    def _login_as_coach(self, coach_user):
+        from django.contrib.auth.models import Group
+        coach_user.groups.add(Group.objects.get_or_create(name='Coach')[0])
+        tc = Client()
+        tc.force_login(coach_user)
+        return tc
+
+    def test_coach_can_edit_result_for_trained_player(self, coach_user, coach, player, booking):
+        tc = self._login_as_coach(coach_user)
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=1250, unit='meters',
+            test_date=date(2026, 8, 7),
+        )
+        resp = tc.post(
+            reverse('coaches:edit_manual_test_result', kwargs={'player_id': player.id, 'result_id': result.id}),
+            {'test_type': 'bleep_test', 'value': '1300', 'unit': 'meters', 'test_date': '2026-08-08', 'notes': 'Retest'},
+        )
+        assert resp.status_code == 302
+        result.refresh_from_db()
+        assert result.value == 1300
+        assert result.test_date == date(2026, 8, 8)
+        assert result.notes == 'Retest'
+
+    def test_coach_cannot_edit_result_for_untrained_player(self, coach_user, coach, player):
+        """No Booking links this coach to this player — edit must be rejected."""
+        tc = self._login_as_coach(coach_user)
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=1250, unit='meters',
+            test_date=date(2026, 8, 7),
+        )
+        resp = tc.post(
+            reverse('coaches:edit_manual_test_result', kwargs={'player_id': player.id, 'result_id': result.id}),
+            {'test_type': 'bleep_test', 'value': '1300', 'unit': 'meters', 'test_date': '2026-08-08'},
+        )
+        assert resp.status_code == 302
+        result.refresh_from_db()
+        assert result.value == 1250  # unchanged
+
+    def test_edit_invalid_value_rejected(self, coach_user, coach, player, booking):
+        tc = self._login_as_coach(coach_user)
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=1250, unit='meters',
+            test_date=date(2026, 8, 7),
+        )
+        resp = tc.post(
+            reverse('coaches:edit_manual_test_result', kwargs={'player_id': player.id, 'result_id': result.id}),
+            {'test_type': 'bleep_test', 'value': 'not-a-number', 'unit': 'meters', 'test_date': '2026-08-08'},
+        )
+        assert resp.status_code == 302
+        result.refresh_from_db()
+        assert result.value == 1250  # unchanged
