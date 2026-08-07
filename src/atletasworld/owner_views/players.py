@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db.models import Count, Q
 from clients.models import Player, ClientPackage
 from bookings.models import Booking
-from coaches.models import PlayerAssessment
+from coaches.models import PlayerAssessment, ManualTestResult
 from ._auth import is_owner
 
 
@@ -156,10 +156,57 @@ def owner_player_detail(request, pk):
     from clients.models import ClientPackage
     packages = ClientPackage.objects.filter(client=player.client).select_related('package').order_by('-purchase_date')
     assessments = PlayerAssessment.objects.filter(player=player).select_related('coach__user').order_by('-assessment_date')[:10]
+    manual_test_results = ManualTestResult.objects.filter(player=player).order_by('-test_date')[:20]
     context = {
         'player': player,
         'bookings': bookings,
         'packages': packages,
         'assessments': assessments,
+        'manual_test_results': manual_test_results,
+        'manual_test_type_choices': ManualTestResult.TEST_TYPE_CHOICES,
+        'manual_test_unit_choices': ManualTestResult.UNIT_CHOICES,
     }
     return render(request, 'owner/player_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_owner)
+def owner_add_manual_test_result(request, pk):
+    """Owner portal: manually record a test result that didn't come through VALD (e.g. Bleep Test)."""
+    player = get_object_or_404(Player, pk=pk)
+    if request.method != 'POST':
+        return redirect('owner_player_detail', pk=pk)
+
+    test_type = request.POST.get('test_type', '').strip()
+    value = request.POST.get('value', '').strip()
+    unit = request.POST.get('unit', 'meters').strip() or 'meters'
+    test_date = request.POST.get('test_date', '').strip()
+    notes = request.POST.get('notes', '').strip()
+
+    valid_types = dict(ManualTestResult.TEST_TYPE_CHOICES)
+    if test_type not in valid_types:
+        messages.error(request, 'Invalid test type.')
+        return redirect('owner_player_detail', pk=pk)
+
+    valid_units = dict(ManualTestResult.UNIT_CHOICES)
+    if unit not in valid_units:
+        messages.error(request, 'Invalid unit.')
+        return redirect('owner_player_detail', pk=pk)
+
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        messages.error(request, 'Please enter a numeric result.')
+        return redirect('owner_player_detail', pk=pk)
+
+    ManualTestResult.objects.create(
+        player=player,
+        test_type=test_type,
+        value=value,
+        unit=unit,
+        test_date=test_date or timezone.localdate(),
+        notes=notes,
+        entered_by=request.user,
+    )
+    messages.success(request, f'{valid_types[test_type]} result recorded for {player.first_name}.')
+    return redirect('owner_player_detail', pk=pk)

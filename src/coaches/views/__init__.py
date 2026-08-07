@@ -11,7 +11,7 @@ from .schedule import (
 )
 from .attendance import session_attendance, update_attendance, todays_sessions
 from .assessments import assessments_list, create_assessment, quick_assess_session
-from .players import my_players, player_detail
+from .players import my_players, player_detail, add_manual_test_result
 from .notifications import notify_parents, send_notification, notify_ai_assist
 from .profile import profile_ai_assist, availability, edit_profile, coach_public_profile
 from .referral import referral_page
@@ -35,6 +35,7 @@ __all__ = [
     'quick_assess_session',
     'my_players',
     'player_detail',
+    'add_manual_test_result',
     'notify_parents',
     'send_notification',
     'notify_ai_assist',

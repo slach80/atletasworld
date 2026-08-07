@@ -231,6 +231,28 @@
             <p class="text-gray-500">{{ player.first_name }}'s assessments will appear here after training sessions.</p>
         </div>
         {% endif %}
+
+        <!-- Manual Test Results (non-VALD, e.g. Bleep Test) — trend charts live on the Performance page -->
+        {% if manual_test_groups %}
+        <div class="mt-8 space-y-6">
+            {% for group in manual_test_groups %}
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">{{ group.label }}</h2>
+                <div class="space-y-3">
+                    {% for r in group.results %}
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">{{ r.test_date|date:"M d, Y" }}</p>
+                            {% if r.notes %}<p class="text-xs text-gray-400">{{ r.notes }}</p>{% endif %}
+                        </div>
+                        <span class="text-lg font-bold text-blue-600">{{ r.value }} {{ r.unit }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <script>

@@ -233,7 +233,27 @@
         {% endfor %}
     </div>
 
-    <!-- Initialize Charts -->
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl shadow-md p-12 text-center">
+        <div class="text-6xl mb-4">📊</div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">No Assessment Data Yet</h3>
+        {% if profile %}
+        <p class="text-gray-600 mb-4">
+            {{ player.first_name }}'s first assessment will appear here once completed.
+        </p>
+        {% else %}
+        <p class="text-gray-600 mb-4">
+            {{ player.first_name }}'s profile is not yet linked to our assessment system.
+        </p>
+        {% endif %}
+        <p class="text-sm text-gray-500">
+            Contact us to schedule an assessment or for more information.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Shared chart helpers (used by VALD metrics above and manual test results below) -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         {% for metric in metrics_data %}
@@ -416,24 +436,80 @@
     document.head.appendChild(style);
     </script>
 
-    {% else %}
-    <!-- Empty State -->
-    <div class="bg-white rounded-xl shadow-md p-12 text-center">
-        <div class="text-6xl mb-4">📊</div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">No Assessment Data Yet</h3>
-        {% if profile %}
-        <p class="text-gray-600 mb-4">
-            {{ player.first_name }}'s first assessment will appear here once completed.
-        </p>
-        {% else %}
-        <p class="text-gray-600 mb-4">
-            {{ player.first_name }}'s profile is not yet linked to our assessment system.
-        </p>
-        {% endif %}
-        <p class="text-sm text-gray-500">
-            Contact us to schedule an assessment or for more information.
-        </p>
+    <!-- Manual Test Results (non-VALD, e.g. Bleep Test) -->
+    {% if manual_test_groups %}
+    <div class="mt-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Additional Test Results</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for group in manual_test_groups %}
+            <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">{{ group.label }}</h3>
+                    <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Manual</span>
+                </div>
+                <div class="mb-4">
+                    <div class="flex items-baseline gap-2 mb-3">
+                        <span class="text-5xl font-bold text-gray-800">{{ group.latest_value|floatformat:1 }}</span>
+                        <span class="text-lg text-gray-500">{{ group.unit }}</span>
+                    </div>
+
+                    <!-- Change vs Last Test (more is better, e.g. Bleep Test distance) -->
+                    {% if group.delta %}
+                    <div class="flex items-center gap-2 mb-2">
+                        {% if group.delta > 0 %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 font-bold text-sm rounded-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                            {% if group.delta_percent %}{{ group.delta_percent|floatformat:1 }}%{% else %}+{{ group.delta|floatformat:1 }}{% endif %}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 font-bold text-sm rounded-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            {% if group.delta_percent %}{{ group.delta_percent|floatformat:1 }}%{% else %}{{ group.delta|floatformat:1 }}{% endif %}
+                        </span>
+                        {% endif %}
+                        <span class="text-gray-500 text-sm">vs last test</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Overall Progress -->
+                    {% if group.overall_percent and group.count >= 2 %}
+                    <div class="text-xs text-gray-500">
+                        {% if group.overall_change > 0 %}
+                        <span class="text-green-600 font-medium">↑ {{ group.overall_percent|floatformat:1 }}%</span> total improvement
+                        {% elif group.overall_change < 0 %}
+                        <span class="text-red-600 font-medium">↓ {{ group.overall_percent|floatformat:1|cut:"-" }}%</span> from baseline
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="h-32 mb-3">
+                    {% if group.count > 1 %}
+                    <canvas id="manual-chart-{{ forloop.counter }}" class="w-full h-full"></canvas>
+                    {% else %}
+                    <div class="h-full flex items-center justify-center text-xs text-gray-400 text-center px-4">
+                        Add another {{ group.label }} result to see a trend chart.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="text-xs text-gray-500">
+                    {{ group.count }} test{{ group.count|pluralize }}
+                </div>
+            </div>
+            <script>
+            window.manualChartData{{ forloop.counter }} = {{ group.chart_points|safe }};
+            </script>
+            {% endfor %}
+        </div>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for group in manual_test_groups %}
+        if (window.manualChartData{{ forloop.counter }}.length > 1) {
+            renderMetricChart('manual-chart-{{ forloop.counter }}', window.manualChartData{{ forloop.counter }}, 'increasing', '{{ group.unit }}');
+        }
+        {% endfor %}
+    });
+    </script>
     {% endif %}
 </div>
 {% endblock %}

@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.conf import settings
 
 from clients.models import Client, Player
-from coaches.models import PlayerAssessment
+from coaches.models import PlayerAssessment, ManualTestResult
 
 
 @login_required
@@ -40,11 +40,16 @@ def assessments_view(request):
         except ImportError:
             vald_enabled = False
 
+    manual_test_results = ManualTestResult.objects.filter(
+        player__client=client
+    ).select_related('player').order_by('-test_date')
+
     context = {
         'client': client,
         'assessments': assessments,
         'vald_enabled': vald_enabled,
         'vald_players': vald_players,
+        'manual_test_results': manual_test_results,
     }
     return render(request, 'clients/assessments.html', context)
 
@@ -86,12 +91,24 @@ def player_assessments(request, player_id):
     else:
         averages = {}
 
+    manual_test_results = ManualTestResult.objects.filter(player=player).order_by('-test_date')
+
+    # Grouped by test type for display — trend charts live on the Performance page, not here.
+    manual_test_groups = []
+    valid_types = dict(ManualTestResult.TEST_TYPE_CHOICES)
+    for type_value, type_label in valid_types.items():
+        type_results = [r for r in manual_test_results if r.test_type == type_value]
+        if type_results:
+            manual_test_groups.append({'test_type': type_value, 'label': type_label, 'results': type_results})
+
     context = {
         'client': client,
         'player': player,
         'assessments': assessments,
         'averages': averages,
         'total_assessments': len(assessments),
+        'manual_test_groups': manual_test_groups,
+        'manual_test_results': manual_test_results,
     }
     return render(request, 'clients/player_assessments.html', context)
 

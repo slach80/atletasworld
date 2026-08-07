@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Coach, Availability, ScheduleBlock, SessionAttendance, PlayerAssessment
+from .models import Coach, Availability, ScheduleBlock, SessionAttendance, PlayerAssessment, ManualTestResult
 
 
 @admin.register(Coach)
@@ -158,3 +158,11 @@ class PlayerAssessmentAdmin(admin.ModelAdmin):
             'fields': ('notification_sent',)
         }),
     )
+
+
+@admin.register(ManualTestResult)
+class ManualTestResultAdmin(admin.ModelAdmin):
+    list_display = ['player', 'test_type', 'value', 'unit', 'test_date', 'entered_by']
+    list_filter = ['test_type', 'test_date']
+    search_fields = ['player__first_name', 'player__last_name']
+    date_hierarchy = 'test_date'

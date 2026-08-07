@@ -195,6 +195,67 @@
         </div>
         {% endif %}
 
+        <!-- Manual Test Results (non-VALD, e.g. Bleep Test) -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4">Manual Test Results</h2>
+
+            {% if manual_test_results %}
+            <div class="space-y-2 mb-4">
+                {% for r in manual_test_results %}
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg text-sm">
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ r.get_test_type_display }}</p>
+                        <p class="text-xs text-gray-400">{{ r.test_date|date:"M d, Y" }}{% if r.notes %} · {{ r.notes|truncatechars:80 }}{% endif %}</p>
+                    </div>
+                    <span class="font-bold text-indigo-700">{{ r.value }} {{ r.unit }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm mb-4">No manual test results yet.</p>
+            {% endif %}
+
+            <form method="post" action="{% url 'owner_add_manual_test_result' player.pk %}" class="border-t border-gray-100 pt-4 space-y-3">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Test Type</label>
+                        <select name="test_type" required class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            {% for value, label in manual_test_type_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                        <input type="date" name="test_date" value="{% now 'Y-m-d' %}" required
+                               class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Result</label>
+                        <input type="number" step="0.01" inputmode="decimal" name="value" required placeholder="e.g. 1160"
+                               class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Unit</label>
+                        <select name="unit" required class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            {% for value, label in manual_test_unit_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Notes (optional)</label>
+                    <input type="text" name="notes" placeholder="Any context worth noting"
+                           class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2 rounded-lg transition">
+                    Add Result
+                </button>
+            </form>
+        </div>
+
     </div>
 </div>
 {% endblock %}

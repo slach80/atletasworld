@@ -7,6 +7,7 @@ Coverage:
   TestOwnerPackageCRUD       — 11
   TestOwnerPackageJSON       — 5
   TestOwnerClientActions     — 7
+  TestOwnerManualTestResult  — 6
   TestOwnerBlogCRUD          — 10
   TestOwnerCoachActions      — 8
   TestOwnerDiscountCodes     — 7
@@ -193,6 +194,7 @@ class TestOwnerAuthWall:
             reverse('owner_client_settle_bookings', kwargs={'pk': cl_pk}),
             reverse('owner_players'),
             reverse('owner_player_detail', kwargs={'pk': pl_pk}),
+            reverse('owner_add_manual_test_result', kwargs={'pk': pl_pk}),
             reverse('owner_session_types'),
             reverse('owner_session_type_edit', kwargs={'pk': st_pk}),
             reverse('owner_session_type_delete', kwargs={'pk': st_pk}),
@@ -561,6 +563,82 @@ class TestOwnerClientActions:
         assert resp.status_code == 200
         data = json.loads(resp.content)
         assert 'settled' in data
+
+
+@pytest.mark.django_db
+class TestOwnerManualTestResult:
+    def test_add_manual_test_result_valid_post(self, admin_user, player):
+        from coaches.models import ManualTestResult
+        tc = _tc()
+        tc.force_login(admin_user)
+        resp = tc.post(reverse('owner_add_manual_test_result', kwargs={'pk': player.pk}), {
+            'test_type': 'bleep_test',
+            'value': '1250',
+            'unit': 'meters',
+            'test_date': '2026-08-07',
+            'notes': 'Group 1',
+        })
+        assert resp.status_code == 302
+        result = ManualTestResult.objects.get(player=player)
+        assert result.test_type == 'bleep_test'
+        assert result.value == Decimal('1250.00')
+        assert result.unit == 'meters'
+        assert result.entered_by == admin_user
+
+    def test_add_manual_test_result_invalid_type_rejected(self, admin_user, player):
+        from coaches.models import ManualTestResult
+        tc = _tc()
+        tc.force_login(admin_user)
+        resp = tc.post(reverse('owner_add_manual_test_result', kwargs={'pk': player.pk}), {
+            'test_type': 'not_a_real_type',
+            'value': '1250',
+            'unit': 'meters',
+            'test_date': '2026-08-07',
+        })
+        assert resp.status_code == 302
+        assert not ManualTestResult.objects.filter(player=player).exists()
+
+    def test_add_manual_test_result_invalid_unit_rejected(self, admin_user, player):
+        from coaches.models import ManualTestResult
+        tc = _tc()
+        tc.force_login(admin_user)
+        resp = tc.post(reverse('owner_add_manual_test_result', kwargs={'pk': player.pk}), {
+            'test_type': 'bleep_test',
+            'value': '1250',
+            'unit': 'furlongs',
+            'test_date': '2026-08-07',
+        })
+        assert resp.status_code == 302
+        assert not ManualTestResult.objects.filter(player=player).exists()
+
+    def test_add_manual_test_result_non_numeric_value_rejected(self, admin_user, player):
+        from coaches.models import ManualTestResult
+        tc = _tc()
+        tc.force_login(admin_user)
+        resp = tc.post(reverse('owner_add_manual_test_result', kwargs={'pk': player.pk}), {
+            'test_type': 'bleep_test',
+            'value': 'not-a-number',
+            'unit': 'meters',
+            'test_date': '2026-08-07',
+        })
+        assert resp.status_code == 302
+        assert not ManualTestResult.objects.filter(player=player).exists()
+
+    def test_add_manual_test_result_get_redirects(self, admin_user, player):
+        tc = _tc()
+        tc.force_login(admin_user)
+        resp = tc.get(reverse('owner_add_manual_test_result', kwargs={'pk': player.pk}))
+        assert resp.status_code == 302
+
+    def test_add_manual_test_result_requires_owner(self, client_user, player):
+        from coaches.models import ManualTestResult
+        tc = _tc()
+        tc.force_login(client_user)
+        resp = tc.post(reverse('owner_add_manual_test_result', kwargs={'pk': player.pk}), {
+            'test_type': 'bleep_test', 'value': '1250', 'unit': 'meters', 'test_date': '2026-08-07',
+        })
+        assert resp.status_code == 302
+        assert not ManualTestResult.objects.filter(player=player).exists()
 
 
 # ── 6. Blog CRUD ──────────────────────────────────────────────────────────────

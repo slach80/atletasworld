@@ -4,6 +4,7 @@ VALD Performance views — client portal and owner portal.
 Client views: parent sees their own players' metrics only.
 Owner views: admin sees all players, sync controls, match UI.
 """
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect
@@ -16,6 +17,59 @@ from .models import ValdProfile, ValdTestResult, ValdResultDefinition, ValdSyncR
 from .decorators import require_vald_enabled
 
 
+def _manual_test_groups_for_player(player):
+    """Group ManualTestResult entries (Bleep Test, etc.) by test type, chart-ready.
+
+    Independent of VALD_SYNC_ENABLED — these results don't come from VALD.
+    """
+    from coaches.models import ManualTestResult
+
+    results = ManualTestResult.objects.filter(player=player).order_by('test_date')
+    valid_types = dict(ManualTestResult.TEST_TYPE_CHOICES)
+    groups = []
+    for type_value, type_label in valid_types.items():
+        type_results = [r for r in results if r.test_type == type_value]
+        if not type_results:
+            continue
+
+        values = [float(r.value) for r in type_results]
+        latest_value = values[-1]
+
+        # Delta vs previous test
+        delta = None
+        delta_percent = None
+        if len(values) >= 2:
+            delta = latest_value - values[-2]
+            if values[-2] != 0:
+                delta_percent = (delta / values[-2]) * 100
+
+        # Overall change vs first test on record
+        overall_change = None
+        overall_percent = None
+        if len(values) >= 2:
+            overall_change = latest_value - values[0]
+            if values[0] != 0:
+                overall_percent = (overall_change / values[0]) * 100
+
+        groups.append({
+            'test_type': type_value,
+            'label': type_label,
+            'unit': type_results[-1].unit,
+            'latest_value': latest_value,
+            'count': len(type_results),
+            'results': list(reversed(type_results)),  # newest first, for list display
+            'delta': delta,
+            'delta_percent': delta_percent,
+            'overall_change': overall_change,
+            'overall_percent': overall_percent,
+            'chart_points': [
+                {'formatted_date': r.test_date.strftime('%b %d, %Y'), 'value': float(r.value)}
+                for r in type_results
+            ],
+        })
+    return groups
+
+
 # ── Helper ──────────────────────────────────────────────────────────────────
 def is_owner(user):
     """Check if user is owner (staff/superuser OR in Owner group)."""
@@ -26,7 +80,6 @@ def is_owner(user):
 
 # ── Client Portal Views ─────────────────────────────────────────────────────
 @login_required
-@require_vald_enabled
 def player_performance(request):
     """
     Smart redirect for performance page.
@@ -52,12 +105,14 @@ def player_performance(request):
 
 
 @login_required
-@require_vald_enabled
 def player_detail(request, player_id):
     """
     Client portal: per-player performance metrics and charts.
 
     IDOR protection: only the player's own parent (client__user=request.user).
+
+    Not gated behind VALD_SYNC_ENABLED — manual test results (Bleep Test, etc.)
+    are independent of the VALD integration and must still show when it's off.
     """
     from datetime import timedelta
     from django.utils import timezone
@@ -83,83 +138,92 @@ def player_detail(request, player_id):
 
     since_date = timeframe_filters.get(timeframe)
 
-    try:
-        profile = player.vald_profile
-        # CMJ-only for now — SLJ and box-drop share result IDs (e.g.
-        # JUMP_HEIGHT_INCHES) with CMJ, so mixing test types here would
-        # blend unrelated jump types into the same chart once those land.
-        results_qs = profile.results.filter(test_type='CMJ')
+    profile = None
+    results = []
+    metrics_data = []
+    is_eligible = False
+    eligibility_reason = "VALD integration is not enabled"
 
-        # Apply time filter
-        if since_date:
-            results_qs = results_qs.filter(test_date__gte=since_date)
+    if settings.VALD_SYNC_ENABLED:
+        try:
+            profile = player.vald_profile
+            # CMJ-only for now — SLJ and box-drop share result IDs (e.g.
+            # JUMP_HEIGHT_INCHES) with CMJ, so mixing test types here would
+            # blend unrelated jump types into the same chart once those land.
+            results_qs = profile.results.filter(test_type='CMJ')
 
-        results = results_qs.order_by('test_date')
+            # Apply time filter
+            if since_date:
+                results_qs = results_qs.filter(test_date__gte=since_date)
 
-        # Get visible metric definitions
-        definitions = ValdResultDefinition.objects.filter(
-            show_in_client_portal=True
-        ).order_by('system', 'display_order')
+            results = results_qs.order_by('test_date')
 
-        # Build metric charts data
-        metrics_data = []
-        for defn in definitions:
-            # Extract this metric's values from results
-            points = []
-            for result in results:
-                value = result.metrics.get(defn.result_id)
-                if value is not None:
-                    points.append({
-                        'date': result.test_date.isoformat(),
-                        'value': value,
-                        'week': result.week_key,
-                        'formatted_date': result.test_date.strftime('%b %d, %Y'),
+            # Get visible metric definitions
+            definitions = ValdResultDefinition.objects.filter(
+                show_in_client_portal=True
+            ).order_by('system', 'display_order')
+
+            # Build metric charts data
+            metrics_data = []
+            for defn in definitions:
+                # Extract this metric's values from results
+                points = []
+                for result in results:
+                    value = result.metrics.get(defn.result_id)
+                    if value is not None:
+                        points.append({
+                            'date': result.test_date.isoformat(),
+                            'value': value,
+                            'week': result.week_key,
+                            'formatted_date': result.test_date.strftime('%b %d, %Y'),
+                        })
+
+                if points:  # Only include metrics with data
+                    # Calculate delta and percentage change (latest vs previous)
+                    delta = None
+                    delta_percent = None
+                    if len(points) >= 2:
+                        latest_val = points[-1]['value']
+                        prev_val = points[-2]['value']
+                        delta = latest_val - prev_val
+                        if prev_val != 0:
+                            delta_percent = (delta / prev_val) * 100
+
+                    # Calculate overall improvement (first vs latest)
+                    overall_change = None
+                    overall_percent = None
+                    if len(points) >= 2:
+                        first_val = points[0]['value']
+                        latest_val = points[-1]['value']
+                        overall_change = latest_val - first_val
+                        if first_val != 0:
+                            overall_percent = (overall_change / first_val) * 100
+
+                    metrics_data.append({
+                        'definition': defn,
+                        'points': points,
+                        'latest': points[-1]['value'] if points else None,
+                        'delta': delta,
+                        'delta_percent': delta_percent,
+                        'overall_change': overall_change,
+                        'overall_percent': overall_percent,
+                        'count': len(points),
+                        'first_value': points[0]['value'] if points else None,
                     })
 
-            if points:  # Only include metrics with data
-                # Calculate delta and percentage change (latest vs previous)
-                delta = None
-                delta_percent = None
-                if len(points) >= 2:
-                    latest_val = points[-1]['value']
-                    prev_val = points[-2]['value']
-                    delta = latest_val - prev_val
-                    if prev_val != 0:
-                        delta_percent = (delta / prev_val) * 100
+            # Eligibility logic (simplified for Phase 1)
+            # TODO: integrate with ClientPackage / select_teams in Phase 2
+            is_eligible = False
+            eligibility_reason = "Contact us to book an assessment"
 
-                # Calculate overall improvement (first vs latest)
-                overall_change = None
-                overall_percent = None
-                if len(points) >= 2:
-                    first_val = points[0]['value']
-                    latest_val = points[-1]['value']
-                    overall_change = latest_val - first_val
-                    if first_val != 0:
-                        overall_percent = (overall_change / first_val) * 100
+        except ValdProfile.DoesNotExist:
+            profile = None
+            results = []
+            metrics_data = []
+            is_eligible = False
+            eligibility_reason = "Profile not linked yet"
 
-                metrics_data.append({
-                    'definition': defn,
-                    'points': points,
-                    'latest': points[-1]['value'] if points else None,
-                    'delta': delta,
-                    'delta_percent': delta_percent,
-                    'overall_change': overall_change,
-                    'overall_percent': overall_percent,
-                    'count': len(points),
-                    'first_value': points[0]['value'] if points else None,
-                })
-
-        # Eligibility logic (simplified for Phase 1)
-        # TODO: integrate with ClientPackage / select_teams in Phase 2
-        is_eligible = False
-        eligibility_reason = "Contact us to book an assessment"
-
-    except ValdProfile.DoesNotExist:
-        profile = None
-        results = []
-        metrics_data = []
-        is_eligible = False
-        eligibility_reason = "Profile not linked yet"
+    manual_test_groups = _manual_test_groups_for_player(player)
 
     context = {
         'player': player,
@@ -167,6 +231,7 @@ def player_detail(request, player_id):
         'results_count': len(results),
         'latest_test': results[0] if results else None,
         'metrics_data': metrics_data,
+        'manual_test_groups': manual_test_groups,
         'is_eligible': is_eligible,
         'eligibility_reason': eligibility_reason,
         'timeframe': timeframe,
@@ -219,45 +284,76 @@ def owner_performance(request):
 
 
 @user_passes_test(is_owner)
-@require_vald_enabled
 def owner_player_detail(request, player_id):
     """
     Owner portal: per-player detail + raw payload + match UI.
+
+    Not gated behind VALD_SYNC_ENABLED — manual test results (Bleep Test, etc.)
+    are independent of the VALD integration and must still show when it's off.
     """
     player = get_object_or_404(Player, pk=player_id, is_active=True)
 
-    try:
-        profile = player.vald_profile
-        # CMJ-only for now — see comment in player_detail().
-        results = profile.results.filter(test_type='CMJ').order_by('test_date')
+    profile = None
+    results = []
+    metrics_data = []
 
-        # Get ALL metric definitions (owner sees everything)
-        definitions = ValdResultDefinition.objects.all().order_by('system', 'display_order')
+    if settings.VALD_SYNC_ENABLED:
+        try:
+            profile = player.vald_profile
+            # CMJ-only for now — see comment in player_detail().
+            results = profile.results.filter(test_type='CMJ').order_by('test_date')
 
-        metrics_data = []
-        for defn in definitions:
-            points = []
-            for result in results:
-                value = result.metrics.get(defn.result_id)
-                if value is not None:
-                    points.append({
-                        'date': result.test_date.isoformat(),
-                        'value': value,
-                        'week': result.week_key,
+            # Get ALL metric definitions (owner sees everything)
+            definitions = ValdResultDefinition.objects.all().order_by('system', 'display_order')
+
+            metrics_data = []
+            for defn in definitions:
+                points = []
+                for result in results:
+                    value = result.metrics.get(defn.result_id)
+                    if value is not None:
+                        points.append({
+                            'date': result.test_date.isoformat(),
+                            'value': value,
+                            'week': result.week_key,
+                        })
+
+                if points:
+                    delta = None
+                    delta_percent = None
+                    if len(points) >= 2:
+                        latest_val = points[-1]['value']
+                        prev_val = points[-2]['value']
+                        delta = latest_val - prev_val
+                        if prev_val != 0:
+                            delta_percent = (delta / prev_val) * 100
+
+                    overall_change = None
+                    overall_percent = None
+                    if len(points) >= 2:
+                        first_val = points[0]['value']
+                        latest_val = points[-1]['value']
+                        overall_change = latest_val - first_val
+                        if first_val != 0:
+                            overall_percent = (overall_change / first_val) * 100
+
+                    metrics_data.append({
+                        'definition': defn,
+                        'points': points,
+                        'latest': points[-1]['value'],
+                        'count': len(points),
+                        'delta': delta,
+                        'delta_percent': delta_percent,
+                        'overall_change': overall_change,
+                        'overall_percent': overall_percent,
                     })
 
-            if points:
-                metrics_data.append({
-                    'definition': defn,
-                    'points': points,
-                    'latest': points[-1]['value'],
-                    'count': len(points),
-                })
+        except ValdProfile.DoesNotExist:
+            profile = None
+            results = []
+            metrics_data = []
 
-    except ValdProfile.DoesNotExist:
-        profile = None
-        results = []
-        metrics_data = []
+    manual_test_groups = _manual_test_groups_for_player(player)
 
     # Sync history for this profile
     sync_runs = ValdSyncRun.objects.all()[:5]
@@ -267,6 +363,7 @@ def owner_player_detail(request, player_id):
         'profile': profile,
         'results': results,
         'metrics_data': metrics_data,
+        'manual_test_groups': manual_test_groups,
         'sync_runs': sync_runs,
     }
     return render(request, 'owner/performance_detail.html', context)

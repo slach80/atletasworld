@@ -1,6 +1,10 @@
 {% extends 'coaches/base.html' %}
 {% block title %}Player Detail{% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block content %}
     <div class="max-w-5xl mx-auto px-4 py-6">
         <a href="{% url 'coaches:my_players' %}" class="text-primary hover:underline mb-4 inline-block">&larr; Back to My Players</a>
@@ -66,7 +70,147 @@
                     {% endfor %}
                 </div>
             </div>
+
+            <!-- Manual Test Results (non-VALD, e.g. Bleep Test) -->
+            {% for group in manual_test_groups %}
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xl font-bold">{{ group.label }}</h2>
+                    <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Manual</span>
+                </div>
+                <div class="flex items-baseline gap-2 mb-2">
+                    <span class="text-4xl font-bold text-gray-800">{{ group.latest_value|floatformat:1 }}</span>
+                    <span class="text-lg text-gray-500">{{ group.unit }}</span>
+                </div>
+                {% if group.delta %}
+                <div class="flex items-center gap-2 mb-3 text-sm">
+                    {% if group.delta > 0 %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 font-bold rounded">
+                        ↑ {% if group.delta_percent %}{{ group.delta_percent|floatformat:1 }}%{% else %}+{{ group.delta|floatformat:1 }}{% endif %}
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-700 font-bold rounded">
+                        ↓ {% if group.delta_percent %}{{ group.delta_percent|floatformat:1 }}%{% else %}{{ group.delta|floatformat:1 }}{% endif %}
+                    </span>
+                    {% endif %}
+                    <span class="text-gray-500">vs last test</span>
+                </div>
+                {% endif %}
+                <div class="h-32 mb-4">
+                    {% if group.count > 1 %}
+                    <canvas id="coach-manual-chart-{{ forloop.counter }}" class="w-full h-full"></canvas>
+                    {% else %}
+                    <div class="h-full flex items-center justify-center text-xs text-gray-400 text-center px-4">
+                        Add another {{ group.label }} result to see a trend chart.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="space-y-2 max-h-48 overflow-y-auto border-t pt-3">
+                    {% for r in group.results %}
+                    <div class="flex justify-between items-center text-sm">
+                        <div>
+                            <span class="text-gray-700">{{ r.test_date|date:"M j, Y" }}</span>
+                            {% if r.notes %}<span class="text-gray-400"> · {{ r.notes|truncatechars:60 }}</span>{% endif %}
+                        </div>
+                        <span class="font-semibold text-blue-600">{{ r.value }} {{ r.unit }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <script>
+            window.coachManualChartData{{ forloop.counter }} = {{ group.chart_points|safe }};
+            </script>
+            {% empty %}
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold mb-2">Manual Test Results</h2>
+                <p class="text-gray-500">No manual test results yet.</p>
+            </div>
+            {% endfor %}
+
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-bold mb-4">Add Test Result</h2>
+                <form method="post" action="{% url 'coaches:add_manual_test_result' player.id %}" class="space-y-3">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Test Type</label>
+                            <select name="test_type" required class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                {% for value, label in manual_test_type_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                            <input type="date" name="test_date" value="{% now 'Y-m-d' %}" required
+                                   class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Result</label>
+                            <input type="number" step="0.01" inputmode="decimal" name="value" required placeholder="e.g. 1160"
+                                   class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Unit</label>
+                            <select name="unit" required class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                {% for value, label in manual_test_unit_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Notes (optional)</label>
+                        <input type="text" name="notes" placeholder="Any context worth noting"
+                               class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg transition">
+                        Add Result
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isDark = document.documentElement.classList.contains('dark');
+        {% for group in manual_test_groups %}
+        (function() {
+            const ctx = document.getElementById('coach-manual-chart-{{ forloop.counter }}');
+            if (!ctx) return;
+            const data = window.coachManualChartData{{ forloop.counter }};
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.formatted_date),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        borderColor: '#2563eb',
+                        backgroundColor: '#2563eb20',
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {legend: {display: false}},
+                    scales: {
+                        x: {display: false},
+                        y: {
+                            display: true,
+                            position: 'right',
+                            ticks: {color: isDark ? '#9ca3af' : '#6b7280', font: {size: 10}},
+                            grid: {color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'},
+                        }
+                    }
+                }
+            });
+        })();
+        {% endfor %}
+    });
+    </script>
 <script>
 {% endblock %}

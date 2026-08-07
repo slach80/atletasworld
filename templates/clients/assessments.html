@@ -175,5 +175,35 @@
             <p class="text-gray-500">Player assessments will appear here after training sessions.</p>
         </div>
         {% endif %}
+
+        <!-- Test Results Section (non-VALD, e.g. Bleep Test) -->
+        {% if manual_test_results %}
+        <div class="mt-8">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Test Results</h2>
+                <p class="text-sm text-gray-500">Fitness tests recorded by coaches outside of VALD</p>
+            </div>
+            <div class="space-y-3">
+                {% for r in manual_test_results %}
+                <div class="bg-white rounded-xl shadow-md p-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        {% if r.player.photo %}
+                        <img src="{{ r.player.photo.url }}" class="w-10 h-10 rounded-full object-cover">
+                        {% else %}
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-sm text-gray-600">
+                            {{ r.player.first_name.0 }}{{ r.player.last_name.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="ml-3">
+                            <p class="font-semibold text-gray-800 text-sm">{{ r.player.first_name }} {{ r.player.last_name }} · {{ r.get_test_type_display }}</p>
+                            <p class="text-xs text-gray-400">{{ r.test_date|date:"M d, Y" }}{% if r.notes %} · {{ r.notes }}{% endif %}</p>
+                        </div>
+                    </div>
+                    <span class="text-lg font-bold text-blue-600">{{ r.value }} {{ r.unit }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 {% endblock %}

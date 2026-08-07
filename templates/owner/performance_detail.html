@@ -53,7 +53,21 @@
                 <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded flex-shrink-0">Owner only</span>
                 {% endif %}
             </div>
-            <div class="text-4xl font-bold text-gray-800 dark:text-white mb-3">{{ metric.latest|floatformat:2 }}</div>
+            <div class="text-4xl font-bold text-gray-800 dark:text-white mb-2">{{ metric.latest|floatformat:2 }}</div>
+            {% if metric.delta %}
+            <div class="flex items-center gap-2 mb-3 text-sm">
+                {% if metric.delta > 0 %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 {% if metric.definition.trend_direction == 'increasing' %}bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400{% else %}bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400{% endif %} font-bold rounded">
+                    ↑ {% if metric.delta_percent %}{{ metric.delta_percent|floatformat:1 }}%{% else %}{{ metric.delta|floatformat:1 }}{% endif %}
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 {% if metric.definition.trend_direction == 'decreasing' %}bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400{% else %}bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400{% endif %} font-bold rounded">
+                    ↓ {% if metric.delta_percent %}{{ metric.delta_percent|floatformat:1|cut:"-" }}%{% else %}{{ metric.delta|floatformat:1|cut:"-" }}{% endif %}
+                </span>
+                {% endif %}
+                <span class="text-gray-500 dark:text-gray-400">vs last test</span>
+            </div>
+            {% endif %}
             <div class="h-28 mb-2">
                 <canvas id="owner-chart-{{ forloop.counter }}" class="w-full h-full"></canvas>
             </div>
@@ -110,6 +124,92 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center mb-8">
         <p class="text-gray-600 dark:text-gray-400">No test results synced for this profile yet.</p>
     </div>
+    {% endif %}
+
+    <!-- Manual Test Results (non-VALD, e.g. Bleep Test) -->
+    {% if manual_test_groups %}
+    <div class="mb-8">
+        <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Additional Test Results</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for group in manual_test_groups %}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">{{ group.label }}</h3>
+                    <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded flex-shrink-0">Manual</span>
+                </div>
+                <div class="text-4xl font-bold text-gray-800 dark:text-white mb-2">{{ group.latest_value|floatformat:1 }} <span class="text-lg text-gray-500 dark:text-gray-400">{{ group.unit }}</span></div>
+                {% if group.delta %}
+                <div class="flex items-center gap-2 mb-3 text-sm">
+                    {% if group.delta > 0 %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold rounded">
+                        ↑ {% if group.delta_percent %}{{ group.delta_percent|floatformat:1 }}%{% else %}+{{ group.delta|floatformat:1 }}{% endif %}
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-bold rounded">
+                        ↓ {% if group.delta_percent %}{{ group.delta_percent|floatformat:1 }}%{% else %}{{ group.delta|floatformat:1 }}{% endif %}
+                    </span>
+                    {% endif %}
+                    <span class="text-gray-500 dark:text-gray-400">vs last test</span>
+                </div>
+                {% endif %}
+                <div class="h-28 mb-2">
+                    {% if group.count > 1 %}
+                    <canvas id="manual-owner-chart-{{ forloop.counter }}" class="w-full h-full"></canvas>
+                    {% else %}
+                    <div class="h-full flex items-center justify-center text-xs text-gray-400 dark:text-gray-500 text-center px-4">
+                        Add another {{ group.label }} result to see a trend chart.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">{{ group.count }} test{{ group.count|pluralize }}</div>
+            </div>
+            <script>
+            window.manualOwnerChartData{{ forloop.counter }} = {{ group.chart_points|safe }};
+            </script>
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isDark = document.documentElement.classList.contains('dark');
+        {% for group in manual_test_groups %}
+        (function() {
+            const ctx = document.getElementById('manual-owner-chart-{{ forloop.counter }}');
+            if (!ctx) return;
+            const data = window.manualOwnerChartData{{ forloop.counter }};
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.formatted_date),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        borderColor: '#6366f1',
+                        backgroundColor: '#6366f120',
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {legend: {display: false}},
+                    scales: {
+                        x: {display: false},
+                        y: {
+                            display: true,
+                            position: 'right',
+                            ticks: {color: isDark ? '#9ca3af' : '#6b7280', font: {size: 10}},
+                            grid: {color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'},
+                        }
+                    }
+                }
+            });
+        })();
+        {% endfor %}
+    });
+    </script>
     {% endif %}
 
     <!-- Raw Test Results -->

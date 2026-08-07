@@ -5,7 +5,7 @@ import pytest
 from datetime import date, time, timedelta
 from django.utils import timezone
 
-from coaches.models import Coach, Availability, ScheduleBlock, PlayerAssessment
+from coaches.models import Coach, Availability, ScheduleBlock, PlayerAssessment, ManualTestResult
 from clients.models import Player
 
 
@@ -327,3 +327,47 @@ class TestPlayerAssessmentModel:
         assert player_assessment.highlights == 'Great effort today'
         assert player_assessment.coach_notes == ''
         assert player_assessment.parent_visible_notes == 'Excellent progress on passing'
+
+
+@pytest.mark.unit
+class TestManualTestResultModel:
+    """Test cases for ManualTestResult model (e.g. Bleep Test — entered manually, not via VALD)."""
+
+    def test_creation_defaults(self, player):
+        result = ManualTestResult.objects.create(
+            player=player,
+            test_type='bleep_test',
+            value=1250,
+            unit='meters',
+            test_date=date(2026, 8, 7),
+        )
+        assert result.player == player
+        assert result.test_type == 'bleep_test'
+        assert result.value == 1250
+        assert result.unit == 'meters'
+        assert result.entered_by is None
+        assert result.notes == ''
+
+    def test_string_representation(self, player):
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=1250, unit='meters', test_date=date(2026, 8, 7),
+        )
+        assert str(result) == f"Bleep Test — {player} (1250 meters)"
+
+    def test_ordering_is_by_test_date_descending(self, player):
+        older = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=1000, unit='meters', test_date=date(2026, 1, 1),
+        )
+        newer = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=1300, unit='meters', test_date=date(2026, 8, 7),
+        )
+        results = list(ManualTestResult.objects.filter(player=player))
+        assert results[0] == newer
+        assert results[1] == older
+
+    def test_entered_by_tracks_user(self, player, coach_user):
+        result = ManualTestResult.objects.create(
+            player=player, test_type='bleep_test', value=1250, unit='meters',
+            test_date=date(2026, 8, 7), entered_by=coach_user,
+        )
+        assert result.entered_by == coach_user

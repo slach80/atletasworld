@@ -24,7 +24,7 @@ from .clients import (
     owner_clients, owner_client_detail, owner_client_settle_bookings,
     owner_client_approve, owner_client_toggle_select_invite, owner_client_reject,
 )
-from .players import owner_players, owner_player_detail
+from .players import owner_players, owner_player_detail, owner_add_manual_test_result
 from .teams import (
     owner_teams, owner_team_detail, owner_team_players, owner_team_bookings,
 )

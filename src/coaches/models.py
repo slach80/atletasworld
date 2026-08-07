@@ -256,3 +256,38 @@ class PlayerAssessment(models.Model):
             models.Index(fields=['player', 'assessment_date']),
             models.Index(fields=['booking']),
         ]
+
+
+class ManualTestResult(models.Model):
+    """Coach/owner-entered test result for tests that don't run through an
+    automated system like VALD (e.g. Bleep Test) — typed in directly from
+    the owner or coach portal's player detail page."""
+    TEST_TYPE_CHOICES = [
+        ('bleep_test', 'Bleep Test'),
+    ]
+
+    UNIT_CHOICES = [
+        ('meters', 'Meters (m)'),
+        ('feet', 'Feet (ft)'),
+        ('seconds', 'Time (sec)'),
+    ]
+
+    player = models.ForeignKey('clients.Player', on_delete=models.CASCADE, related_name='manual_test_results')
+    test_type = models.CharField(max_length=30, choices=TEST_TYPE_CHOICES)
+    value = models.DecimalField(max_digits=8, decimal_places=2, help_text="Numeric result, e.g. distance or time")
+    unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='meters')
+    test_date = models.DateField(default=timezone.localdate)
+    notes = models.TextField(blank=True)
+    entered_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='manual_test_results_entered')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.get_test_type_display()} — {self.player} ({self.value} {self.unit})"
+
+    class Meta:
+        ordering = ['-test_date', '-created_at']
+        indexes = [
+            models.Index(fields=['player', 'test_type']),
+            models.Index(fields=['test_type', 'test_date']),
+        ]
