@@ -211,7 +211,7 @@ def fanout_select_game_rsvps(sender, instance, **kwargs):
         return
 
     from bookings.models import SelectGameRSVP
-    from clients.models import ClientPackage, Notification
+    from clients.models import ClientPackage, Notification, Player
 
     today = timezone.localdate()
 
@@ -226,11 +226,22 @@ def fanout_select_game_rsvps(sender, instance, **kwargs):
         status='active',
         expiry_date__gte=today,
     ).select_related('client__user', 'player'):
-        if cp.player_id and cp.client_id not in client_player_map:
-            player = cp.player
-            if (player.team_id == instance.team_id or
-                    instance.team_id in player.select_teams.values_list('id', flat=True)):
-                client_player_map[cp.client_id] = player
+        if cp.client_id in client_player_map:
+            continue
+        player = cp.player
+        if player is None:
+            # cp.player is unset at Stripe webhook time (see
+            # payments/webhook_handlers.py) until the owner/client assigns it
+            # via the portal "Assigned to" dropdown. A client with exactly one
+            # active player is unambiguous; multi-player clients stay
+            # unmatched here (and miss the invite) until assigned, since we
+            # can't guess which kid's team the membership is for.
+            active_players = list(Player.objects.filter(client_id=cp.client_id, is_active=True))
+            if len(active_players) == 1:
+                player = active_players[0]
+        if player and (player.team_id == instance.team_id or
+                       instance.team_id in player.select_teams.values_list('id', flat=True)):
+            client_player_map[cp.client_id] = player
 
     # Guest invitees added manually — no specific player tied to the membership
     for client in instance.guest_invitees.all():

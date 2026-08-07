@@ -281,6 +281,58 @@ def test_publish_game_does_not_fanout_to_other_team_member():
 
 
 @pytest.mark.django_db
+def test_publish_game_fans_out_to_unassigned_package_with_one_player():
+    """ClientPackage.player is unset until the owner/client assigns it via the
+    portal dropdown (normal state right after Stripe checkout). A client with
+    exactly one active player is unambiguous, so the fanout should still find
+    them — this is the bug where such clients silently missed game invites.
+    """
+    from bookings.models import SelectGameRSVP
+
+    mgr_user = _make_user('unassigned_mgr')
+    mgr_client = _make_client_obj(mgr_user)
+    team = _make_select_team(mgr_client, slug='unassigned-team')
+
+    member_user = _make_user('unassigned_member')
+    member_client = _make_client_obj(member_user)
+    pkg = _make_select_package()
+    _make_player(member_client, team=team)
+    _make_active_client_package(member_client, pkg, player=None)
+
+    game = _make_select_game(team, created_by=mgr_user, status='draft')
+    game.status = 'published'
+    game.save()
+
+    assert SelectGameRSVP.objects.filter(game=game, client=member_client).count() == 1
+
+
+@pytest.mark.django_db
+def test_publish_game_skips_unassigned_package_with_multiple_players():
+    """A client with more than one active player and an unassigned package is
+    genuinely ambiguous — we can't guess which kid's team the membership is
+    for, so no RSVP should be created until the owner assigns it.
+    """
+    from bookings.models import SelectGameRSVP
+
+    mgr_user = _make_user('ambig_mgr')
+    mgr_client = _make_client_obj(mgr_user)
+    team = _make_select_team(mgr_client, slug='ambig-team')
+
+    member_user = _make_user('ambig_member')
+    member_client = _make_client_obj(member_user)
+    pkg = _make_select_package()
+    _make_player(member_client, team=team, first='Kid', last='One')
+    _make_player(member_client, team=team, first='Kid', last='Two')
+    _make_active_client_package(member_client, pkg, player=None)
+
+    game = _make_select_game(team, created_by=mgr_user, status='draft')
+    game.status = 'published'
+    game.save()
+
+    assert SelectGameRSVP.objects.filter(game=game, client=member_client).count() == 0
+
+
+@pytest.mark.django_db
 def test_guest_invitee_gets_rsvp_on_publish():
     from bookings.models import SelectGameRSVP
 
