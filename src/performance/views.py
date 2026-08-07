@@ -279,6 +279,7 @@ def owner_performance(request):
     context = {
         'player_data': player_data,
         'recent_syncs': recent_syncs,
+        'vald_tenant_id': settings.VALD_TENANT_ID,
     }
     return render(request, 'owner/performance.html', context)
 
